@@ -1,0 +1,11 @@
+# air.toml
+
+[build]
+  bin = "./cmd/main"
+  exclude_dir = ["assets", "templates"]
+
+[log]
+  format = "console"
+
+[restart]
+  exclude_ext = ["tpl", "log", "tmp"]

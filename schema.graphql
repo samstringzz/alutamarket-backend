@@ -1,0 +1,52 @@
+type User {
+  id: ID!
+  fullname: String!
+  email: String!
+  campus: String!
+  phone: String!
+  password: String!
+  usertype: String!
+  twofa: String
+  active: Boolean!
+  code: String
+  wallet: String
+  stores: [Store!]
+}
+
+type Store {
+  id: ID!
+  url: String
+  title: String
+  products: [Product!]!
+  seller: User!
+  rating: Int!
+}
+
+type Product {
+  id: ID!
+  slug: String!
+  title: String!
+  price: Int!
+  discount: Int!
+  description: String!
+  catgeory: Catgeory!
+  option:
+  reviews:[Review!]
+}
+
+type Review {
+id:ID!
+}
+
+type Catgeory {
+  id: ID!
+  slug: String!
+  name: String!
+  subcategories: [SubCategory!]!
+}
+
+type SubCatgeory {
+  id: ID!
+  name: String!
+  parent: Catgeory!
+}
