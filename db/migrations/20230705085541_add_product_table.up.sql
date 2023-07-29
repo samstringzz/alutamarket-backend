@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS products(
+    "id" bigserial PRIMARY KEY,
+    "name" varchar NOT NULL,
+    "description" varchar,
+    "image" varchar NOT NULL,
+    "price" varchar NOT NULL,
+    "status" varchar NOT NULL, 
+    "quantity" varchar NOT NULL,
+    "campus" varchar NOT NULL,
+    "slug" varchar NOT NULL,
+    "variant" varchar,
+    "category" varchar NOT NULL,
+    "subcategory" varchar NOT NULL,
+    "brand" varchar NOT NULL,
+    "condition" varchar,
+    "created_at" TIMESTAMP DEFAULT current_timestamp,
+    "updated_at" TIMESTAMP DEFAULT current_timestamp,
+    "store" INT NOT NULL,
+    FOREIGN KEY ("store") REFERENCES "store" (id)
+);

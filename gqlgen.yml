@@ -1,0 +1,20 @@
+schema:
+  -schema.graphql
+exec:
+  filename: graph/generated.go
+  package: graph
+
+model:
+  filename: graph/model/models_gen.go
+  package: model
+
+models:
+  User:
+    model: github.com/Chrisentech/aluta-market-api/user.User
+resolver:
+  layout: follow-schema
+  dir: graph
+  package: graph
+  filename_template: "{name}.resolvers.go"
+  
+autobind:[]
