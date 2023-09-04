@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -47,17 +46,27 @@ func (s *service) CreateUser(c context.Context, req *CreateUserReq) (*CreateUser
 		Campus:   req.Campus,
 		Fullname: req.Fullname,
 		Phone:    req.Phone,
-		Usertype: req.UserType,
+		Usertype: req.Usertype,
 	}
 	r, err := s.Respository.CreateUser(ctx, u)
 	if err != nil {
 		return nil, err
 	}
 	res := &CreateUserRes{
-		Message: fmt.Sprintf("Reigistration successful.Verify the OTP sent to %s", r.Phone),
+		Message: fmt.Sprintf("Registration successful.Verify the OTP sent to %s", r.Phone),
 		Status:  http.StatusOK,
+		Data : r,
 	}
 	return res, nil
+}
+func (s *service) GetUsers(c context.Context) ([]*User, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+	r, err := s.Respository.GetUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 func (s *service) Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error) {

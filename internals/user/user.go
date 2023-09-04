@@ -1,6 +1,9 @@
 package user
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type User struct {
 	ID            int64  `json:"id" db:"id"`                   // Unique identifier for the user
@@ -10,7 +13,11 @@ type User struct {
 	Fullname      string `json:"fullname" db:"fullname"`       // Full name of the user
 	Phone         string `json:"phone" db:"phone"`             // Phone number of the user
 	Usertype      string `json:"usertype" db:"usertype"`       // Type of user (e.g., seller,buyer,admin)
-	WalletBalance string `json:"wallet,omitempty" db:"wallet"` // Balance of the user's wallet (only for seller)
+	Active        bool 	`json:"active" db:"active"`  		   // For accesibility of user,
+	Twofa		  bool  `json:"twofa" db:"twofa"`              // Two factor authentication
+	Wallet		  int64  `json:"wallet,omitempty" db:"wallet"` // Balance of the user's wallet (only for seller)
+	Code		  string `json:"code" db:"code"`			   // otp code for verifications
+	CodeExpiry    time.Time `json:"codeexpiry" db:"codeexpiry"`	// Expiry time for otpCode
 }
 
 type CreateUserReq struct {
@@ -19,13 +26,18 @@ type CreateUserReq struct {
 	Password      string `json:"password" db:"password"`       // Password of the user
 	Fullname      string `json:"fullname" db:"fullname"`       // Full name of the user
 	Phone         string `json:"phone" db:"phone"`             // Phone number of the user
-	UserType      string `json:"usertype" db:"usertype"`       // Type of user (e.g., seller,buyer,admin)
-	WalletBalance string `json:"wallet,omitempty" db:"wallet"` // Balance of the user's wallet (only for seller)
+	Usertype      string `json:"usertype" db:"usertype"`       // Type of user (e.g., seller,buyer,admin)
+	Active        bool 	`json:"active" db:"active"`  		   // For accesibility of user,
+	Twofa		  bool  `json:"twofa" db:"twofa"`              // Two factor authentication
+	Wallet		  int64  `json:"wallet,omitempty" db:"wallet"` // Balance of the user's wallet (only for seller)
+	Code		  string `json:"code,omitempty" db:"code"`			   // otp code for verifications
+	CodeExpiry    time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"`	// Expiry time for otpCode
 }
 
 type CreateUserRes struct {
 	Message string
 	Status  int
+	Data    interface {}
 }
 
 type LoginUserReq struct {

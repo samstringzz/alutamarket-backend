@@ -7,18 +7,43 @@ package graph
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/Chrisentech/aluta-market-api/graph/model"
+	"github.com/Chrisentech/aluta-market-api/internals/user"
 )
 
-// CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+// CreateUser is the resolver for the createUser field.
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
+	// var handler *user.Handler
+	dbURI := os.Getenv("DB_URI")
+	userRep := user.NewRepository(dbURI)
+	userSrvc := user.NewService(userRep)
+	userHandler := user.NewHandler(userSrvc)
+	userReq := &user.CreateUserReq{
+		Fullname: input.Fullname,
+		Email:    input.Email,
+		Campus:   input.Campus,
+		Password: input.Password,
+		Phone:    input.Phone,
+		Usertype: input.Usertype,
+		// Code:       input.Code,
+		// Codeexpiry: input.Codeexpiry,
+	}
+	resp, err := userHandler.CreateUser(ctx, userReq)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(&resp.Data)
+	user := &model.User{
+		// Fullname:,
+	}
+	return user, nil
 }
 
-// Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
+// User is the resolver for the user field.
+func (r *queryResolver) User(ctx context.Context) ([]*model.User, error) {
+	panic(fmt.Errorf("not implemented: User - user"))
 }
 
 // Mutation returns MutationResolver implementation.
