@@ -2,19 +2,38 @@
 
 package model
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+import (
+	"time"
+)
+
+type APIResponse struct {
+	Message string  `json:"message"`
+	Status  int     `json:"status"`
+	Data    *string `json:"data,omitempty"`
 }
 
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
+type NewUser struct {
+	Fullname   string     `json:"fullname"`
+	Email      string     `json:"email"`
+	Campus     string     `json:"campus"`
+	Password   string     `json:"password"`
+	Phone      string     `json:"phone"`
+	Usertype   string     `json:"usertype"`
+	Code       *string    `json:"code,omitempty"`
+	Codeexpiry *time.Time `json:"codeexpiry,omitempty"`
 }
 
 type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID         string `json:"id"`
+	Fullname   string `json:"fullname"`
+	Email      string `json:"email"`
+	Campus     string `json:"campus"`
+	Password   string `json:"password"`
+	Phone      string `json:"phone"`
+	Usertype   string `json:"usertype"`
+	Wallet     *int   `json:"wallet,omitempty"`
+	Active     bool   `json:"active"`
+	Twofa      bool   `json:"twofa"`
+	Code       string `json:"code"`
+	Codeexpiry string `json:"codeexpiry"`
 }
