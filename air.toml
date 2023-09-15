@@ -9,3 +9,17 @@
 
 [restart]
   exclude_ext = ["tpl", "log", "tmp"]
+
+
+# Define the entry point for your application
+[build]
+cmd = "server.go"
+
+# Define the directory to watch for changes
+[watcher]
+paths = ["."]
+
+# Define the file extensions to watch (e.g., .go files)
+[watcher.extensions]
+go = ["go"]
+https://www.youtube.com/watch?v=XxnUSZOgMLY = Ecomerce website

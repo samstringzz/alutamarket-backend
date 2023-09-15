@@ -1,18 +1,20 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
-	"github.com/twilio/twilio-go"
-	api "github.com/twilio/twilio-go/rest/api/v2010"
+	// api "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
 func SendMail(reciever string) {
@@ -55,33 +57,63 @@ func GenerateOTP() string {
 	return otp
 }
 
-func SendOtpMessage(otp string, reciever string) (string, error) {
-	accountSID := os.Getenv("TWILIO_ACCOUNT_SID")
-	authToken := os.Getenv("TWILIO_AUTH_TOKEN")
-	os.Setenv("TWILIO_ACCOUNT_SID", accountSID)
-	os.Setenv("TWILIO_AUTH_TOKEN", authToken)
-
-	client := twilio.NewRestClient()
-	params := &api.CreateMessageParams{
-		Body: new(string),
-		From: new(string),
-		To:   &reciever,
+func SendOTPMessage(phoneNumber, otp string) error {
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
 	}
+	rapidAPIKey := os.Getenv("RAPID_API_KEY")
+	token := os.Getenv("ACCESS_TOKEN")
+	url := fmt.Sprintf("https://smsapi-com3.p.rapidapi.com/sms.do?access_token=%s", token)
 
-	*params.Body = "This is the OTP for your registration: " + otp + " (expires in 5 minutes)"
-	*params.From = "+16183614700"
+	// Prepare the payload
+	payload := fmt.Sprintf(`{
+        "to": "%s",
+        "message": "Your OTP code is: %s",
+        "from": "Aluta market",
+        "normalize": "",
+        "group": "",
+        "encoding": "",
+        "flash": "",
+        "test": "",
+        "details": "",
+        "date": "",
+        "date_validate": "",
+        "time_restriction": "follow",
+        "allow_duplicates": "",
+        "idx": "",
+        "check_idx": "",
+        "max_parts": "",
+        "fast": "",
+        "notify_url": "",
+        "format": "json"
+    }`, phoneNumber, otp)
 
-	resp, err := client.Api.CreateMessage(params)
+	// Create a new HTTP POST request
+	req, err := http.NewRequest("POST", url, strings.NewReader(payload))
 	if err != nil {
-		fmt.Println(err.Error())
-		return "", err
+		return err
 	}
 
-	if resp.Sid != nil {
-		fmt.Println(*resp.Sid)
-		return *resp.Sid, nil
-	} else {
-		fmt.Println(resp.Sid)
-		return "", errors.New("failed to send OTP message")
+	// Set the required headers
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("X-RapidAPI-Key", rapidAPIKey)
+	req.Header.Add("X-RapidAPI-Host", "smsapi-com3.p.rapidapi.com")
+
+	// Send the request
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
 	}
+	defer res.Body.Close()
+
+	// Read and print the response
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(res)
+	fmt.Println(string(body))
+
+	return nil
 }

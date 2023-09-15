@@ -1,34 +1,32 @@
 package db
 
 import (
-	"database/sql"
 	"log"
-	"os"
+	"os" // Import the "os" package
+	"github.com/Chrisentech/aluta-market-api/internals/cart"
+	"github.com/Chrisentech/aluta-market-api/internals/product"
+	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-type Database struct {
-	db *sql.DB
-}
+var DB *gorm.DB
 
-func NewDatabse() (*Database, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+func Migrate() *gorm.DB {
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
 	}
-	dbURL := os.Getenv("DB_URI")
-	db, err := sql.Open("postgres", dbURL)
+	dbURI := os.Getenv("DB_URI")
+
+	// Initialize the database
+	db, err := gorm.Open(postgres.Open(dbURI), &gorm.Config{})
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	return &Database{db}, nil
-}
-
-func (d *Database) Close() {
-	d.db.Close()
-}
-
-func (d *Database) GetDB() *sql.DB {
-	return d.db
+	db.Debug()
+	// Auto-migrate models to create tables if they don't exist
+	db.AutoMigrate(&user.User{}, &store.Store{}, &product.Product{},&cart.Cart{}, &product.Category{})
+	return db
 }
