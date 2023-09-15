@@ -4,19 +4,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
+
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
 )
 
 type service struct {
-	Respository
+	Repository
 	timeout time.Duration
 }
 
-func NewService(repository Respository) Service {
+func NewService(repository Repository) Service {
 	return &service{
 		repository,
 		time.Duration(5) * time.Second,
@@ -24,11 +23,12 @@ func NewService(repository Respository) Service {
 }
 
 type MyJWTClaims struct {
-	ID       string `json:"id"`
-	Fullname string `json:"fullname"`
-	Campus   string `json:"campus"`
-	Phone    string `json:"phone"`
-	Usertype string `json:"usertype"`
+	ID       string   `json:"id"`
+	Fullname string   `json:"fullname"`
+	Campus   string   `json:"campus"`
+	Phone    string   `json:"phone"`
+	Usertype string   `json:"usertype"`
+	Stores   []*Store `json:"stores"`
 	jwt.RegisteredClaims
 }
 
@@ -40,7 +40,7 @@ func (s *service) CreateUser(c context.Context, req *CreateUserReq) (*CreateUser
 	if err != nil {
 		return nil, err
 	}
-	u := &User{
+	u := &CreateUserReq{
 		Email:    req.Email,
 		Password: hashedPassword,
 		Campus:   req.Campus,
@@ -48,21 +48,45 @@ func (s *service) CreateUser(c context.Context, req *CreateUserReq) (*CreateUser
 		Phone:    req.Phone,
 		Usertype: req.Usertype,
 	}
-	r, err := s.Respository.CreateUser(ctx, u)
+	r, err := s.Repository.CreateUser(ctx, u)
 	if err != nil {
 		return nil, err
 	}
 	res := &CreateUserRes{
 		Message: fmt.Sprintf("Registration successful.Verify the OTP sent to %s", r.Phone),
 		Status:  http.StatusOK,
-		Data : r,
+		Data:    r,
 	}
 	return res, nil
+}
+func (s *service) VerifyOTP(c context.Context, req *User) (*User, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+	u := &User{
+		Phone: req.Phone,
+		Email: req.Email,
+		Code:  req.Code,
+	}
+	r, err := s.Repository.VerifyOTP(ctx, u)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 func (s *service) GetUsers(c context.Context) ([]*User, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
-	r, err := s.Respository.GetUsers(ctx)
+	r, err := s.Repository.GetUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+func (s *service) GetUser(c context.Context, filter string) (*User, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+	r, err := s.Repository.GetUser(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -73,30 +97,9 @@ func (s *service) Login(c context.Context, req *LoginUserReq) (*LoginUserRes, er
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 
-	u, err := s.Respository.GetUserByEmailOrPhone(ctx, req.Email)
+	u, err := s.Repository.Login(ctx, req)
 	if err != nil {
 		return &LoginUserRes{}, err
 	}
-	err = utils.CheckPassword(req.Password, u.Password)
-	if err != nil {
-		return &LoginUserRes{}, err
-
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, MyJWTClaims{
-		ID:       strconv.Itoa(int(u.ID)),
-		Fullname: u.Fullname,
-		Usertype: u.Usertype,
-		Phone:    u.Phone,
-		Campus:   u.Campus,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    strconv.Itoa(int(u.ID)),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-		},
-	})
-
-	ss, err := token.SignedString([]byte(os.Getenv("SECRET_KEY")))
-	if err != nil {
-		return &LoginUserRes{}, err
-	}
-	return &LoginUserRes{accessToken: ss, ID: strconv.Itoa(int(u.ID))}, nil
+	return u, nil
 }

@@ -5,42 +5,166 @@
 scalar Time
 scalar Data
 
-type ApiResponse {
-  message : String!
-  status: Int!
-  data : Data
+# type ApiResponse {
+#   message: String!
+#   status: Int!
+#   data: Data
+# }
+type Follower{
+  follower_id:Int!
+  follower_name:String!
+  store_id: Int!
+  follower_image:Int!
+}
+type Store {
+  id: ID!
+  link: String!
+  name: String!
+  user: Int!
+  products: [Product!]
+  description: String!
+  followers:[Follower!]
+  has_physical_address:Boolean!
+}
+type VerifyOTP{
+  phone: String!
+  code: String!
+  email:String
 }
 
 type User {
   id: ID!
   fullname: String!
-  email:  String!
+  email: String!
   campus: String!
   password: String!
-  phone:  String!
+  phone: String!
   usertype: String!
+  stores: [Store!]
   wallet: Int
   active: Boolean!
+  access_token:String,
+  refresh_token:String
   twofa: Boolean!
-  code:  String!
-  codeexpiry:  String!
-}
-
-type Query {
-  user: [User!]!
+  code: String!
+  codeexpiry: String!
 }
 
 input NewUser {
   fullname: String!
-  email:  String!
+  email: String!
   campus: String!
   password: String!
-  phone:  String!
+  stores: [Int!]
+  phone: String!
   usertype: String!
-  code:     String
+  code: String
   codeexpiry: Time
+}
+input NewCategory {
+  name: String!
+}
+input NewSubCategory {
+  name: String!
+  category: Int!
+}
+input NewVerifyOTP {
+  phone: String!
+  code: String!
+  email: String
+}
+
+input AddToCartItemInput {
+  productId: ID!
+  quantity: Int!
+  user: Int!
+}
+type Category {
+  id:ID!
+  name: String!
+  slug: String!
+  SubCategories: [SubCategory!]
+}
+
+type SubCategory {
+  name: String!
+  slug: String!
+  category:Int!
+  }
+type CartItem {
+  product: Product!
+  quantity: Int!
+}
+
+type Cart {
+  items: [CartItem!]!
+  total: Float!
+  active: Boolean!
+  user: Int!
+  id: ID
+}
+
+type Product {
+  id: Int!
+  name: String!
+  slug: String!
+  description: String!
+  price: Float!
+  status: Boolean!
+  quantity: Int!
+  campus: String!
+  image: String!
+  variant: String!
+  condition: String!
+  store: Int!
+  category: Int!
+  subcategory: Int!
+}
+input NewProduct {
+  name: String!
+  description: String!
+  price: Float!
+  image:String!
+  quantity: Int!
+  campus: String!
+  variant: String!
+  condition: String!
+  store: Int!
+  category: Int!
+  subcategory: Int!
+}
+
+
+type LoginRes{
+  id:Int!
+  access_token: String!
+  refresh_token: String!
+}
+
+input LoginReq{
+  email: String!
+  password: String!
+}
+
+type Query {
+  Users: [User!]!
+  User(id: ID!): User
+  Categories: [Category!]!
+  Products: [Product!]!
+  Product(id: Int!): Product
+  Category(id: Int!): Category
+  SubCategory(id: ID!): SubCategory
+  Cart(user: Int!): Cart!
 }
 
 type Mutation {
   createUser(input: NewUser!): User!
+  createVerifyOTP(input: NewVerifyOTP!): User!
+  loginUser(input:LoginReq!):LoginRes!
+  createCategory(input: NewCategory!): Category!
+  createProduct(input: NewProduct!): Product!
+  createSubCategory(input: NewSubCategory!): SubCategory!
+  addToCart(input: [AddToCartItemInput!]!): Cart!
+  updateCartItemQuantity(productId: ID!, quantity: Int!): Cart!
+  removeFromCart(productId: ID!): Cart!
 }

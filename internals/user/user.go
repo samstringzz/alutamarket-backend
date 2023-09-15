@@ -3,59 +3,87 @@ package user
 import (
 	"context"
 	"time"
+	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"gorm.io/gorm"
 )
 
+type Store *store.Store
 type User struct {
-	ID            int64  `json:"id" db:"id"`                   // Unique identifier for the user
-	Campus        string `json:"campus" db:"campus"`           // Campus of the user
-	Email         string `json:"email" db:"email"`             // Email address of the user
-	Password      string `json:"password" db:"password"`       // Password of the user
-	Fullname      string `json:"fullname" db:"fullname"`       // Full name of the user
-	Phone         string `json:"phone" db:"phone"`             // Phone number of the user
-	Usertype      string `json:"usertype" db:"usertype"`       // Type of user (e.g., seller,buyer,admin)
-	Active        bool 	`json:"active" db:"active"`  		   // For accesibility of user,
-	Twofa		  bool  `json:"twofa" db:"twofa"`              // Two factor authentication
-	Wallet		  int64  `json:"wallet,omitempty" db:"wallet"` // Balance of the user's wallet (only for seller)
-	Code		  string `json:"code" db:"code"`			   // otp code for verifications
-	CodeExpiry    time.Time `json:"codeexpiry" db:"codeexpiry"`	// Expiry time for otpCode
+	gorm.Model
+	ID         uint32    `gorm:"primaryKey;uniqueIndex;not null;autoIncrement" json:"id" db:"id"` // Unique identifier for the user
+	Campus     string    `json:"campus" db:"campus"`                                              // Campus of the user
+	Email      string    `json:"email" db:"email"`                                                // Email address of the user
+	Password   string    `json:"password" db:"password"`                                          // Password of the user
+	Fullname   string    `json:"fullname" db:"fullname"`                                          // Full name of the user
+	Phone      string    `json:"phone" db:"phone"`                                                // Phone number of the user
+	Usertype   string    `json:"usertype" db:"usertype"`                                          // Type of user (e.g., seller,buyer,admin)
+	Active     bool      `json:"active" db:"active"`                                              // For accesibility of user,
+	Stores     []*Store   
+	Twofa      bool      `json:"twofa" db:"twofa"`                     // Two factor authentication
+	Wallet     uint32    `json:"wallet,omitempty" db:"wallet"`         // Balance of the user's wallet (only for seller)
+	AccessToken     string    `json:"access_token,omitempty" db:"access_token"`         // Balance of the user's wallet (only for seller)
+	RefreshToken     string    `json:"refresh_token,omitempty" db:"refresh_token"`         // Balance of the user's wallet (only for seller)
+	Code       string    `json:"code,omitempty" db:"code"`             // otp code for verifications
+	Codeexpiry time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
+	CreatedAt  time.Time // Set to current time if it is zero on creating
+
 }
 
 type CreateUserReq struct {
-	Campus        string `json:"campus" db:"campus"`           // Campus of the user
-	Email         string `json:"email" db:"email"`             // Email address of the user
-	Password      string `json:"password" db:"password"`       // Password of the user
-	Fullname      string `json:"fullname" db:"fullname"`       // Full name of the user
-	Phone         string `json:"phone" db:"phone"`             // Phone number of the user
-	Usertype      string `json:"usertype" db:"usertype"`       // Type of user (e.g., seller,buyer,admin)
-	Active        bool 	`json:"active" db:"active"`  		   // For accesibility of user,
-	Twofa		  bool  `json:"twofa" db:"twofa"`              // Two factor authentication
-	Wallet		  int64  `json:"wallet,omitempty" db:"wallet"` // Balance of the user's wallet (only for seller)
-	Code		  string `json:"code,omitempty" db:"code"`			   // otp code for verifications
-	CodeExpiry    time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"`	// Expiry time for otpCode
+	Campus     string    `json:"campus" db:"campus"`     // Campus of the user
+	Email      string    `json:"email" db:"email"`       // Email address of the user
+	Password   string    `json:"password" db:"password"` // Password of the user
+	Fullname   string    `json:"fullname" db:"fullname"`
+	Phone      string    `json:"phone" db:"phone"`                     // Phone number of the user
+	Usertype   string    `json:"usertype" db:"usertype"`               // Type of user (e.g., seller,buyer,admin)
+	Active     bool      `json:"active" db:"active"`                   // For accesibility of user,
+	Twofa      bool      `json:"twofa" db:"twofa"`                     // Two factor authentication
+	Wallet     uint32    `json:"wallet,omitempty" db:"wallet"`         // Balance of the user's wallet (only for seller)
+	Code       string    `json:"code,omitempty" db:"code"`             // otp code for verifications
+	Codeexpiry time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
+	StoreName  string `json:"store" db:"store"`
+	StoreUser  uint32 `json:"user_id" db:"user_id"`
+	StoreLink string `json:"link" db:"link"`
+	Description string `json:"description" db:"description"`
+	StoreAddress string `json:"address" db:"store_address"`
+	HasPhysicalAddress bool `json:"has_physical_address" db:"has_physical_address"`
 }
 
 type CreateUserRes struct {
 	Message string
 	Status  int
-	Data    interface {}
+	Data    interface{}
 }
 
+type FilterOption struct {
+	Email string `json:"email" db:"email"`
+	Phone string `json:"phone" db:"phone"`
+	ID    string `json:"id" db:"id"`
+}
 type LoginUserReq struct {
 	Password string `json:"password" db:"password"` // Password of the user for login
 	Email    string `json:"email" db:"email"`       // Email address of the user for login
 }
 
 type LoginUserRes struct {
-	accessToken string // Access token generated for the logged-in user
-	ID          string `json:"id" db:"id"` // Unique identifier for the logged-in user
+	AccessToken string // Access token generated for the logged-in user
+	RefreshToken string // RefreshToken token generated for the logged-in user
+	ID          uint32 `json:"id" db:"id"` // Unique identifier for the logged-in user
 }
 
-type Respository interface {
-	CreateUser(ctx context.Context, user *User) (*User, error)              // Create a new user
+type Repository interface {
+	CreateUser(ctx context.Context, user *CreateUserReq) (*User, error)              // Create a new user
+	GetUsers(ctx context.Context) ([]*User, error)                          // Create a new user
+	GetUser(ctx context.Context, filter string) (*User, error)              // Create a new user
 	GetUserByEmailOrPhone(ctx context.Context, email string) (*User, error) // Get user information by email
+	Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error) // Perform user login
+	VerifyOTP(ctx context.Context, req *User)(*User,error)
 }
 
 type Service interface {
 	CreateUser(c context.Context, req *CreateUserReq) (*CreateUserRes, error) // Create a new user
-	Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error)        // Perform user login
+	GetUsers(ctx context.Context) ([]*User, error)
+	GetUser(ctx context.Context, filter string) (*User, error)         // Create a new user
+	VerifyOTP(ctx context.Context, req *User)(*User,error)
+	Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error) // Perform user login
 }
