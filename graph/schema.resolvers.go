@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/Chrisentech/aluta-market-api/app"
 	"github.com/Chrisentech/aluta-market-api/graph/model"
 	"github.com/Chrisentech/aluta-market-api/internals/cart"
@@ -36,8 +35,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		Password:  input.Password,
 		Phone:     input.Phone,
 		Usertype:  input.Usertype,
-		StoreName: *input.Store,
-		StoreLink: *input.Link,
+		// StoreName: *input.Store,
+		// StoreLink: *input.Link,
 		// Code:       input.Code,
 		// Codeexpiry: input.Codeexpiry,
 	}
