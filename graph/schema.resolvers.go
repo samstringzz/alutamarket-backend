@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+
 	"github.com/Chrisentech/aluta-market-api/app"
 	"github.com/Chrisentech/aluta-market-api/graph/model"
 	"github.com/Chrisentech/aluta-market-api/internals/cart"
@@ -29,12 +30,12 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	userHandler := user.NewHandler(userSrvc)
 
 	userReq := &user.CreateUserReq{
-		Fullname:  input.Fullname,
-		Email:     input.Email,
-		Campus:    input.Campus,
-		Password:  input.Password,
-		Phone:     input.Phone,
-		Usertype:  input.Usertype,
+		Fullname: input.Fullname,
+		Email:    input.Email,
+		Campus:   input.Campus,
+		Password: input.Password,
+		Phone:    input.Phone,
+		Usertype: input.Usertype,
 		// StoreName: *input.Store,
 		// StoreLink: *input.Link,
 		// Code:       input.Code,
@@ -148,8 +149,6 @@ func (r *mutationResolver) CreateCategory(ctx context.Context, input model.NewCa
 
 // CreateProduct is the resolver for the createProduct field.
 func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewProduct) (*model.Product, error) {
-	// var newProduct *
-	// panic(fmt.Errorf("not implemented: CreateProduct - createProduct"))
 	productRep := app.InitializePackage(app.ProductPackage)
 
 	productRepository, ok := productRep.(product.Repository)
@@ -166,11 +165,13 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 		Image:         input.Image,
 		Price:         input.Price,
 		Status:        true,
-		Slug:          utils.GenerateSlug(input.Name),
-		Variant:       input.Variant,
+		Variant:       "",
 		StoreID:       uint32(input.Store),
 		SubCategoryID: uint8(input.Subcategory),
 		CategoryID:    uint8(input.Category),
+	}
+	if *input.Variant != "" {
+		newProduct.Variant = *input.Variant
 	}
 	resp, err := productHandler.CreateProduct(ctx, newProduct)
 	if err != nil {
@@ -183,8 +184,7 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 		Price:       resp.Price,
 		Status:      true,
 		Slug:        utils.GenerateSlug(resp.Name),
-		// Variant:     string(resp.Variant),
-
+		Variant:     resp.Variant,
 		Store:       int(resp.StoreID),
 		Subcategory: int(resp.SubCategoryID),
 		Category:    int(resp.CategoryID),
@@ -343,7 +343,7 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 		// Codeexpiry: resp.Codeexpiry.Format(time.RFC3339),
 		Password: "lol......what do y'need it for?",
 	}
-// user.Stores = append(resp)
+	// user.Stores = append(resp)
 	return user, nil
 }
 
@@ -399,7 +399,7 @@ func (r *queryResolver) Products(ctx context.Context) ([]*model.Product, error) 
 	}
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
-	resp, err := productHandler.GetProducts(ctx)
+	resp, err := productHandler.GetProducts(ctx,"")
 	if err != nil {
 		return nil, err
 	}

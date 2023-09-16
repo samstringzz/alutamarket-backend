@@ -31,7 +31,10 @@ type VerifyOTP{
   code: String!
   email:String
 }
-
+type WishList {
+  user :Int!
+  product:[Product!]!
+}
 type User {
   id: ID!
   fullname: String!
@@ -60,6 +63,10 @@ input NewUser {
   usertype: String!
   code: String
   codeexpiry: Time
+}
+input NewWishlist{
+  user:Int!
+  Product:[Product!]!
 }
 input NewCategory {
   name: String!
@@ -110,12 +117,12 @@ type Product {
   slug: String!
   description: String!
   price: Float!
+  discount:Float!
   status: Boolean!
   quantity: Int!
-  campus: String!
-  image: String!
+  thumbnail:String!
+  image: [String!]!
   variant: String!
-  condition: String!
   store: Int!
   category: Int!
   subcategory: Int!
@@ -123,12 +130,12 @@ type Product {
 input NewProduct {
   name: String!
   description: String!
-  price: Float!
-  image:String!
+  price: Float!  
+  discount:Float!
+  thumbnail:String!
+  image: [String!]!
   quantity: Int!
-  campus: String!
-  variant: String!
-  condition: String!
+  variant: String
   store: Int!
   category: Int!
   subcategory: Int!
@@ -150,7 +157,8 @@ type Query {
   Users: [User!]!
   User(id: ID!): User
   Categories: [Category!]!
-  Products: [Product!]!
+  Products(store:String): [Product!]!
+  getWishListedProducts(user:Int!):[WishList!]!
   Product(id: Int!): Product
   Category(id: Int!): Category
   SubCategory(id: ID!): SubCategory
@@ -161,6 +169,8 @@ type Mutation {
   createUser(input: NewUser!): User!
   createVerifyOTP(input: NewVerifyOTP!): User!
   loginUser(input:LoginReq!):LoginRes!
+  addWishListedProduct(user:Int!,product:Int!):WishList!
+  removeWishListedProduct(user:Int!)
   createCategory(input: NewCategory!): Category!
   createProduct(input: NewProduct!): Product!
   createSubCategory(input: NewSubCategory!): SubCategory!
