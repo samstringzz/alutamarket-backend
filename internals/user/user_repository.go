@@ -98,7 +98,6 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		Usertype:   req.Usertype,
 		Active:     false,
 		Twofa:      false,
-		Wallet:     0,
 		Code:       "12345",
 		Codeexpiry: codeExpiry,
 	}
@@ -257,7 +256,7 @@ func (r *repository) GetUser(ctx context.Context, filter string) (*User, error) 
 	query := r.db.Where("id = ?", filter)
 
 	if err := query.First(&user).Error; err != nil {
-		return nil, err
+		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
 	}
 	return &user, nil
 }

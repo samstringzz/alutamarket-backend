@@ -92,7 +92,6 @@ type ComplexityRoot struct {
 	}
 
 	Product struct {
-		Campus      func(childComplexity int) int
 		Category    func(childComplexity int) int
 		Condition   func(childComplexity int) int
 		Description func(childComplexity int) int
@@ -431,13 +430,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateCartItemQuantity(childComplexity, args["productId"].(string), args["quantity"].(int)), true
-
-	case "Product.campus":
-		if e.complexity.Product.Campus == nil {
-			break
-		}
-
-		return e.complexity.Product.Campus(childComplexity), true
 
 	case "Product.category":
 		if e.complexity.Product.Category == nil {
@@ -1493,8 +1485,6 @@ func (ec *executionContext) fieldContext_CartItem_product(ctx context.Context, f
 				return ec.fieldContext_Product_status(ctx, field)
 			case "quantity":
 				return ec.fieldContext_Product_quantity(ctx, field)
-			case "campus":
-				return ec.fieldContext_Product_campus(ctx, field)
 			case "image":
 				return ec.fieldContext_Product_image(ctx, field)
 			case "variant":
@@ -2402,8 +2392,6 @@ func (ec *executionContext) fieldContext_Mutation_createProduct(ctx context.Cont
 				return ec.fieldContext_Product_status(ctx, field)
 			case "quantity":
 				return ec.fieldContext_Product_quantity(ctx, field)
-			case "campus":
-				return ec.fieldContext_Product_campus(ctx, field)
 			case "image":
 				return ec.fieldContext_Product_image(ctx, field)
 			case "variant":
@@ -3006,50 +2994,6 @@ func (ec *executionContext) fieldContext_Product_quantity(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Product_campus(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Product_campus(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Campus, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Product_campus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Product",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Product_image(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Product_image(ctx, field)
 	if err != nil {
@@ -3581,8 +3525,6 @@ func (ec *executionContext) fieldContext_Query_Products(ctx context.Context, fie
 				return ec.fieldContext_Product_status(ctx, field)
 			case "quantity":
 				return ec.fieldContext_Product_quantity(ctx, field)
-			case "campus":
-				return ec.fieldContext_Product_campus(ctx, field)
 			case "image":
 				return ec.fieldContext_Product_image(ctx, field)
 			case "variant":
@@ -3652,8 +3594,6 @@ func (ec *executionContext) fieldContext_Query_Product(ctx context.Context, fiel
 				return ec.fieldContext_Product_status(ctx, field)
 			case "quantity":
 				return ec.fieldContext_Product_quantity(ctx, field)
-			case "campus":
-				return ec.fieldContext_Product_campus(ctx, field)
 			case "image":
 				return ec.fieldContext_Product_image(ctx, field)
 			case "variant":
@@ -4228,8 +4168,6 @@ func (ec *executionContext) fieldContext_Store_products(ctx context.Context, fie
 				return ec.fieldContext_Product_status(ctx, field)
 			case "quantity":
 				return ec.fieldContext_Product_quantity(ctx, field)
-			case "campus":
-				return ec.fieldContext_Product_campus(ctx, field)
 			case "image":
 				return ec.fieldContext_Product_image(ctx, field)
 			case "variant":
@@ -7209,7 +7147,7 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "price", "image", "quantity", "campus", "variant", "condition", "store", "category", "subcategory"}
+	fieldsInOrder := [...]string{"name", "description", "price", "image", "quantity", "variant", "condition", "store", "category", "subcategory"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7261,20 +7199,11 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 				return it, err
 			}
 			it.Quantity = data
-		case "campus":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("campus"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Campus = data
 		case "variant":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("variant"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7366,7 +7295,7 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"fullname", "email", "campus", "password", "stores", "phone", "usertype", "code", "codeexpiry", "store", "link"}
+	fieldsInOrder := [...]string{"fullname", "email", "campus", "password", "stores", "phone", "usertype", "code", "codeexpiry"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7454,24 +7383,6 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 				return it, err
 			}
 			it.Codeexpiry = data
-		case "store":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("store"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Store = data
-		case "link":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("link"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Link = data
 		}
 	}
 
@@ -7935,11 +7846,6 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "quantity":
 			out.Values[i] = ec._Product_quantity(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "campus":
-			out.Values[i] = ec._Product_campus(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

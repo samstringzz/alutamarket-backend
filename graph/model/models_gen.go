@@ -60,8 +60,7 @@ type NewProduct struct {
 	Price       float64 `json:"price"`
 	Image       string  `json:"image"`
 	Quantity    int     `json:"quantity"`
-	Campus      string  `json:"campus"`
-	Variant     string  `json:"variant"`
+	Variant     *string `json:"variant,omitempty"`
 	Condition   string  `json:"condition"`
 	Store       int     `json:"store"`
 	Category    int     `json:"category"`
@@ -83,8 +82,6 @@ type NewUser struct {
 	Usertype   string     `json:"usertype"`
 	Code       *string    `json:"code,omitempty"`
 	Codeexpiry *time.Time `json:"codeexpiry,omitempty"`
-	Store      *string    `json:"store,omitempty"`
-	Link       *string    `json:"link,omitempty"`
 }
 
 type NewVerifyOtp struct {
@@ -101,7 +98,6 @@ type Product struct {
 	Price       float64 `json:"price"`
 	Status      bool    `json:"status"`
 	Quantity    int     `json:"quantity"`
-	Campus      string  `json:"campus"`
 	Image       string  `json:"image"`
 	Variant     string  `json:"variant"`
 	Condition   string  `json:"condition"`

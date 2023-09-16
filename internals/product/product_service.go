@@ -37,7 +37,7 @@ func (s *service) CreateSubCategory(c context.Context, req SubCategory) (*Catego
 	defer cancel()
 
 	u := SubCategory{
-		Name:   req.Name,
+		Name:       req.Name,
 		CategoryID: req.CategoryID,
 	}
 	r, err := s.Repository.CreateSubCategory(ctx, u)
@@ -83,10 +83,10 @@ func (s *service) GetProduct(c context.Context, id uint32) (*Product, error) {
 	return r, nil
 }
 
-func (s *service) GetProducts(c context.Context) ([]*Product, error) {
+func (s *service) GetProducts(c context.Context, store string) ([]*Product, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
-	r, err := s.Repository.GetProducts(ctx)
+	r, err := s.Repository.GetProducts(ctx, store)
 	if err != nil {
 		return nil, err
 	}
@@ -94,94 +94,43 @@ func (s *service) GetProducts(c context.Context) ([]*Product, error) {
 	return r, nil
 }
 
-// func (s *service) CreateProduct(c context.Context, req *Product) (*Product, error) {
-// 	ctx, cancel := context.WithTimeout(c, s.timeout)
-// 	defer cancel()
+func (s *service) UpdateProduct(c context.Context, req *Product) (*Product, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+	// Update the product in the repository
+	updatedProduct, err := s.Repository.UpdateProduct(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 
-// 	u := &Product{
-// 	Name: req.Name,
-// 	Slug: req.Slug,
-// 	Description: req.Description,
-// 	Quantity: req.Quantity,
-// 	Campus: req.Campus,
-// 	Status: req.Status,
-// 	Image: req.Image,
-// 	Store: req.Store,
-// 	Condition: req.Condition,
-// 	Price: req.Price,
-// 	Category: req.Category,
-// 	SubCategory: req.SubCategory,
-// 	Variant: req.Variant,
-// 	}
-// 	r, err := s.Repository.CreateProduct(ctx, u)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	return updatedProduct, nil
+}
 
-// 	return r, nil
-// }
+func (s *service) AddWishListedProduct(ctx context.Context, userId, productId uint32) (*WishListedProduct, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
 
-// func (s *service) UpdateProduct(c context.Context, req *Product) (*Product, error) {
-//     ctx, cancel := context.WithTimeout(c, s.timeout)
-//     defer cancel()
+	addedWishlists, err := s.Repository.AddWishListedProduct(ctx, userId, productId)
+	if err != nil {
+		return nil, err
+	}
+	return addedWishlists, nil
+}
 
-//     // First, check if the product exists by its ID or another unique identifier
-//     existingProduct, err := s.Repository.GetProduct(ctx, req.ID)
-//     if err != nil {
-//         return nil, err
-//     }
+func (s *service) GetWishListedProducts(ctx context.Context, userId uint32) ([]*WishListedProduct, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
 
-//     // Update only the fields that are present in the req
-//     if req.Name != "" {
-//         existingProduct.Name = req.Name
-//     }
-//     if req.Slug != "" {
-//         existingProduct.Slug = req.Slug
-//     }
-//     if req.Description != "" {
-//         existingProduct.Description = req.Description
-//     }
-//     if req.Quantity != 0 {
-//         existingProduct.Quantity = req.Quantity
-//     }
-//     if req.Campus != "" {
-//         existingProduct.Campus = req.Campus
-//     }
-//     if req.Status != "" {
-//         existingProduct.Status = req.Status
-//     }
-//     if req.Image != "" {
-//         existingProduct.Image = req.Image
-//     }
-//     if req.Condition != "" {
-//         existingProduct.Condition = req.Condition
-//     }
-//     if req.Price != "" {
-//         existingProduct.Price = req.Price
-//     }
+	getWishlists, err := s.Repository.GetWishListedProducts(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	return getWishlists, nil
+}
 
-//     if req.Variant != "" {
-//         existingProduct.Variant = req.Variant
-//     }
-
-//     // Update the product in the repository
-//     updatedProduct, err := s.Repository.UpdateProduct(ctx, existingProduct)
-//     if err != nil {
-//         return nil, err
-//     }
-
-//     return updatedProduct, nil
-// }
-
-// func (s *service) GetProducts(c context.Context) ([]*Product, error) {
-// 	ctx, cancel := context.WithTimeout(c, s.timeout)
-// 	defer cancel()
-
-// 	r, err := s.Repository.GetSubCategory(ctx)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return r, nil
-// }
-
+func (s *service) RemoveWishListedProduct(ctx context.Context, userId uint32) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	err := s.Repository.RemoveWishListedProduct(ctx, userId)
+	return err
+}
