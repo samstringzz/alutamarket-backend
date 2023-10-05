@@ -2,11 +2,13 @@ package cart
 
 import (
 	"context"
-	"fmt"
+	// "fmt"
 	"log"
+	"net/http"
 	"os"
 
-	"github.com/Chrisentech/aluta-market-api/utils"
+	"github.com/Chrisentech/aluta-market-api/errors"
+	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -31,76 +33,151 @@ func NewRepository() Repository {
 		db: db,
 	}
 }
-func (r *repository) AddToCart(ctx context.Context, req []*CartItems, user uint32) (*Cart, error) {
-	// Check if the user's cart exists and is active
-	var cart Cart
-	var items []interface{}
+func calculateTotalCartCost(data []*CartItems) float64 {
+	var total float64
+
+	for _, item := range data {
+		quantity := item.Quantity
+		total += float64(quantity) * (item.Product.Price - item.Product.Discount)
+	}
+	return total
+}
+
+// func (r *repository) AddToCart(ctx context.Context, req *CartItems, user uint32) (*Cart, error) {
+// 	prd := &product.Product{}
+// 	err2 := r.db.Model(prd).Where("id = ?", req.Product.ID).First(prd).Error
+// 	newQuantity := prd.Quantity - req.Quantity
+
+// 	if err2 != nil {
+// 		return nil, errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Product not found")
+// 	}
+// 	if req.Quantity > prd.Quantity {
+// 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Quantity Exceeded")
+// 	}
+// 	r.db.Model(prd).Update("quantity", newQuantity)
+// 	var cart *Cart
+// 	err := r.db.Where("user_id = ? AND active = ?", user, true).First(&cart).Error
+
+// 	if err == nil {
+// 		req.Product = prd
+// 		// Check if the product is already in the cart
+// 		found := false
+// 		for _, item := range cart.Items {
+// 			//Verify that product being deducted is not above product quantity
+
+// 			if req.Product.ID == item.Product.ID {
+// 				if req.Quantity+item.Quantity < 0 {
+// 				r.db.Model(prd).Update("quantity", prd.Quantity+req.Quantity)
+// 				return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Quantity Exceeded")
+// 			}
+// 				item.Quantity += req.Quantity
+// 				found = true
+// 				break
+// 			}
+// 		}
+
+// 		if !found {
+// 			cart.Items = append(cart.Items, req)
+// 		}
+
+// 		cart.Total = calculateTotalCartCost(cart.Items)
+// 		err = r.db.Save(&cart).Error
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return cart, nil
+// 	} else {
+// 		req.Product.Quantity = newQuantity
+// 		req.Product = prd
+// 		cart.Items = append(cart.Items, req)
+// 		cart.UserID = user
+// 		cart.Active = true
+// 		cart.Total += float64(req.Quantity) * (prd.Price - prd.Discount)
+// 		err = r.db.Save(&cart).Error
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
+
+//		return cart, nil
+//	}
+func (r *repository) AddToCart(ctx context.Context, req *CartItems, user uint32) (*Cart, error) {
+	prd := &product.Product{}
+	err2 := r.db.Model(prd).Where("id = ?", req.Product.ID).First(prd).Error
+	newQuantity := prd.Quantity - req.Quantity
+
+	if err2 != nil {
+		return nil, errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Product not found")
+	}
+	if req.Quantity > prd.Quantity {
+		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Quantity Exceeded")
+	}
+	r.db.Model(prd).Update("quantity", newQuantity)
+	var cart *Cart
 	err := r.db.Where("user_id = ? AND active = ?", user, true).First(&cart).Error
-	if err != nil {
-		for _, item := range req {
-			items = append(items, item)
+
+	if err == nil {
+		req.Product = prd
+		// Check if the product is already in the cart
+		found := false
+		for i, item := range cart.Items {
+			if req.Product.ID == item.Product.ID {
+				if req.Quantity+item.Quantity == 0 {
+					// Remove the item from the cart when quantity becomes zero or negative
+					cart.Items = append(cart.Items[:i], cart.Items[i+1:]...)
+					r.db.Model(prd).Update("quantity", prd.Quantity+item.Quantity)
+				} else if req.Quantity+item.Quantity < 0 {
+					r.db.Model(prd).Update("quantity", prd.Quantity+req.Quantity)
+					return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Quantity Exceeded")
+				} else {
+					item.Quantity += req.Quantity
+				}
+				found = true
+				break
+			}
 		}
 
-		cartItemsJSON := utils.MarshalJSON(items)
-		fmt.Println(cartItemsJSON)
+		if !found && req.Quantity > 0 {
+			// Add the product to the cart only if the quantity is positive
+			cart.Items = append(cart.Items, req)
+		}
 
-		// Product does not exist in the cart, add it
-		// cart.Items = cartItemsJSON
-		cart.Total += utils.CalculateTotalCartCost(items) //req.Product.Price
-		cart.UserID = user
-		cart.Active = true
-		fmt.Println(&cart)
+		cart.Total = calculateTotalCartCost(cart.Items)
 		err = r.db.Save(&cart).Error
 		if err != nil {
 			return nil, err
 		}
-
-		return &cart, nil
-	}
-	cartItemsJSON := utils.MarshalJSON(items)
-	fmt.Println(cartItemsJSON)
-
-	for i, item := range req {
-		if item.Product.ID == req[i].Product.ID {
-			// Product exists, update the quantity
-			item.Quantity += item.Quantity
+		return cart, nil
+	} else {
+		req.Product.Quantity = newQuantity
+		req.Product = prd
+		if req.Quantity > 0 {
+			// Add the product to the cart only if the quantity is positive
+			cart.Items = append(cart.Items, req)
 		}
-		cart.Total += float64(item.Quantity) * 10 //req.Product.Price
+		cart.UserID = user
+		cart.Active = true
+		cart.Total += float64(req.Quantity) * (prd.Price - prd.Discount)
+		err = r.db.Save(&cart).Error
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Marshal the cart.Items slice to JSON
-	// cartItemsJSON := utils.MarshalJSON(cart.Items)
-
-	// Unmarshal the JSON data back into the cart.Items field
-	err = utils.UnmarshalJSON(cartItemsJSON, &cart.Items)
-	if err != nil {
-		return nil, err
-	}
-
-	// Save the changes to the database
-	err = r.db.Save(&cart).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return &cart, nil
+	return cart, nil
 }
 
 func (r *repository) GetCart(ctx context.Context, user uint32) (*Cart, error) {
-	var cart Cart
-	items := utils.MarshalJSON(cart.Items)
+	var cart *Cart
 	query := r.db.Where("active = true").Where("user_id = ?", user)
 	if err := query.First(&cart).Error; err != nil {
-		return nil, err
-	}
-	if err := utils.UnmarshalJSON(items, &cart.Items); err != nil {
-		// Handle the error, e.g., log it or return an error response
-		fmt.Println("Error unmarshaling JSON:", err)
+		return &Cart{}, nil
 	}
 
-	return &cart, nil
+	return cart, nil
 }
 
+// This is not needed
 func (r *repository) RemoveFromCart(ctx context.Context, id uint32) (*Cart, error) {
 	// Find the cart with the specified ID that is active
 	var cart Cart
@@ -116,4 +193,20 @@ func (r *repository) RemoveFromCart(ctx context.Context, id uint32) (*Cart, erro
 	}
 
 	return &cart, nil
+}
+
+func (r *repository) MakePayment(ctx context.Context, req Order) (*Order, error) {
+	cart := &Cart{}
+	err := r.db.Model(cart).Where("id ?", req.CartID).First(cart).Error
+	if err != nil {
+		return nil, errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Cart not found")
+	}
+	// totalCharge:= cart.Total + req.Fee
+	if req.PaymentGateway == "flutterwave" {
+		panic("flutter")
+	} else if req.PaymentGateway == "paystack" {
+		panic("paystack")
+	}
+
+	panic("nil-not yet implemented")
 }

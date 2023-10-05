@@ -12,7 +12,7 @@ func NewHandler(s Service) *Handler {
 	}
 }
 
-func (h *Handler) AddToCart(ctx context.Context, input []*CartItems, user uint32) (*Cart, error) {
+func (h *Handler) AddToCart(ctx context.Context, input *CartItems, user uint32) (*Cart, error) {
 	item, err := h.Service.AddToCart(ctx, input, user)
 	if err != nil {
 		return nil, err

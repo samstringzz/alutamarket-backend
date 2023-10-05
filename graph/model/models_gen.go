@@ -29,7 +29,7 @@ type Category struct {
 	ID            string         `json:"id"`
 	Name          string         `json:"name"`
 	Slug          string         `json:"slug"`
-	SubCategories []*SubCategory `json:"SubCategories,omitempty"`
+	Subcategories []*SubCategory `json:"subcategories,omitempty"`
 }
 
 type Follower struct {
@@ -55,16 +55,17 @@ type NewCategory struct {
 }
 
 type NewProduct struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	Image       string  `json:"image"`
-	Quantity    int     `json:"quantity"`
-	Variant     *string `json:"variant,omitempty"`
-	Condition   string  `json:"condition"`
-	Store       int     `json:"store"`
-	Category    int     `json:"category"`
-	Subcategory int     `json:"subcategory"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Price       float64       `json:"price"`
+	Discount    float64       `json:"discount"`
+	Thumbnail   string        `json:"thumbnail"`
+	Image       []string      `json:"image"`
+	Quantity    int           `json:"quantity"`
+	Variant     []*NewVariant `json:"variant,omitempty"`
+	Store       string        `json:"store"`
+	Category    int           `json:"category"`
+	Subcategory int           `json:"subcategory"`
 }
 
 type NewSubCategory struct {
@@ -73,15 +74,20 @@ type NewSubCategory struct {
 }
 
 type NewUser struct {
-	Fullname   string     `json:"fullname"`
-	Email      string     `json:"email"`
-	Campus     string     `json:"campus"`
-	Password   string     `json:"password"`
-	Stores     []int      `json:"stores,omitempty"`
-	Phone      string     `json:"phone"`
-	Usertype   string     `json:"usertype"`
-	Code       *string    `json:"code,omitempty"`
-	Codeexpiry *time.Time `json:"codeexpiry,omitempty"`
+	Fullname   string      `json:"fullname"`
+	Email      string      `json:"email"`
+	Campus     string      `json:"campus"`
+	Password   string      `json:"password"`
+	Stores     *StoreInput `json:"stores,omitempty"`
+	Phone      string      `json:"phone"`
+	Usertype   string      `json:"usertype"`
+	Code       *string     `json:"code,omitempty"`
+	Codeexpiry *time.Time  `json:"codeexpiry,omitempty"`
+}
+
+type NewVariant struct {
+	Title string `json:"title"`
+	Item  string `json:"item"`
 }
 
 type NewVerifyOtp struct {
@@ -90,31 +96,53 @@ type NewVerifyOtp struct {
 	Email *string `json:"email,omitempty"`
 }
 
+type NewWishlist struct {
+	User    int `json:"user"`
+	Product int `json:"product"`
+}
+
 type Product struct {
-	ID          int     `json:"id"`
-	Name        string  `json:"name"`
-	Slug        string  `json:"slug"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	Status      bool    `json:"status"`
-	Quantity    int     `json:"quantity"`
-	Image       string  `json:"image"`
-	Variant     string  `json:"variant"`
-	Condition   string  `json:"condition"`
-	Store       int     `json:"store"`
-	Category    int     `json:"category"`
-	Subcategory int     `json:"subcategory"`
+	ID          int      `json:"id"`
+	Name        string   `json:"name"`
+	Slug        string   `json:"slug"`
+	Description string   `json:"description"`
+	Price       float64  `json:"price"`
+	Discount    float64  `json:"discount"`
+	Status      bool     `json:"status"`
+	Quantity    int      `json:"quantity"`
+	Thumbnail   string   `json:"thumbnail"`
+	Image       []string `json:"image"`
+	Variant     string   `json:"variant"`
+	Store       string   `json:"store"`
+	Category    string   `json:"category"`
+	Subcategory string   `json:"subcategory"`
 }
 
 type Store struct {
 	ID                 string      `json:"id"`
 	Link               string      `json:"link"`
 	Name               string      `json:"name"`
+	Wallet             float64     `json:"wallet"`
 	User               int         `json:"user"`
 	Products           []*Product  `json:"products,omitempty"`
 	Description        string      `json:"description"`
 	Followers          []*Follower `json:"followers,omitempty"`
 	HasPhysicalAddress bool        `json:"has_physical_address"`
+}
+
+type StoreInput struct {
+	ID                 *string `json:"id,omitempty"`
+	Link               string  `json:"link"`
+	Name               string  `json:"name"`
+	User               int     `json:"user"`
+	Description        string  `json:"description"`
+	Address            string  `json:"address"`
+	Wallet             int     `json:"wallet"`
+	HasPhysicalAddress bool    `json:"has_physical_address"`
+	Phone              string  `json:"phone"`
+	Email              *string `json:"email,omitempty"`
+	Thumbnail          *string `json:"thumbnail,omitempty"`
+	Background         *string `json:"background,omitempty"`
 }
 
 type SubCategory struct {
@@ -128,11 +156,11 @@ type User struct {
 	Fullname     string   `json:"fullname"`
 	Email        string   `json:"email"`
 	Campus       string   `json:"campus"`
+	Avatar       *string  `json:"avatar,omitempty"`
 	Password     string   `json:"password"`
 	Phone        string   `json:"phone"`
 	Usertype     string   `json:"usertype"`
 	Stores       []*Store `json:"stores,omitempty"`
-	Wallet       *int     `json:"wallet,omitempty"`
 	Active       bool     `json:"active"`
 	AccessToken  *string  `json:"access_token,omitempty"`
 	RefreshToken *string  `json:"refresh_token,omitempty"`
@@ -145,4 +173,15 @@ type VerifyOtp struct {
 	Phone string  `json:"phone"`
 	Code  string  `json:"code"`
 	Email *string `json:"email,omitempty"`
+}
+
+type WishList struct {
+	UserID           int      `json:"userId"`
+	ProductID        int      `json:"productId"`
+	ProductName      *string  `json:"productName,omitempty"`
+	ProductThumbnail *string  `json:"productThumbnail,omitempty"`
+	ProductPrice     *float64 `json:"productPrice,omitempty"`
+	ProductDiscount  *float64 `json:"productDiscount,omitempty"`
+	ProductStatus    *bool    `json:"productStatus,omitempty"`
+	ProductQuantity  *int     `json:"productQuantity,omitempty"`
 }

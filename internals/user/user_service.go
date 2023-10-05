@@ -28,7 +28,7 @@ type MyJWTClaims struct {
 	Campus   string   `json:"campus"`
 	Phone    string   `json:"phone"`
 	Usertype string   `json:"usertype"`
-	Stores   []*Store `json:"stores"`
+	Stores   []Store `json:"stores"`
 	jwt.RegisteredClaims
 }
 
@@ -47,6 +47,11 @@ func (s *service) CreateUser(c context.Context, req *CreateUserReq) (*CreateUser
 		Fullname: req.Fullname,
 		Phone:    req.Phone,
 		Usertype: req.Usertype,
+		StoreName: req.StoreName,
+		StoreAddress: req.StoreAddress,
+		StoreLink: req.StoreLink,
+		Description:req.Description,
+		HasPhysicalAddress:req.HasPhysicalAddress,
 	}
 	r, err := s.Repository.CreateUser(ctx, u)
 	if err != nil {

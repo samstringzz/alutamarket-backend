@@ -10,44 +10,65 @@ scalar Data
 #   status: Int!
 #   data: Data
 # }
-type Follower{
-  follower_id:Int!
-  follower_name:String!
+type Follower {
+  follower_id: Int!
+  follower_name: String!
   store_id: Int!
-  follower_image:Int!
+  follower_image: Int!
 }
 type Store {
   id: ID!
   link: String!
   name: String!
+  wallet:Float!
   user: Int!
   products: [Product!]
   description: String!
-  followers:[Follower!]
-  has_physical_address:Boolean!
+  followers: [Follower!]
+  has_physical_address: Boolean!
 }
-type VerifyOTP{
+type VerifyOTP {
   phone: String!
   code: String!
-  email:String
+  email: String
 }
 type WishList {
-  user :Int!
-  product:[Product!]!
+  userId: Int!
+  productId: Int!
+  productName: String
+  productThumbnail: String
+  productPrice: Float
+  productDiscount: Float
+  productStatus: Boolean
+  productQuantity: Int
+}
+input StoreInput {
+  id: ID
+  link: String!
+  name: String!
+  user: Int!
+  description: String!
+  address: String!
+  wallet: Int!
+  has_physical_address: Boolean!
+  phone:String!
+  email:String
+  thumbnail:String
+  background:String
 }
 type User {
   id: ID!
   fullname: String!
   email: String!
   campus: String!
+  avatar:String
   password: String!
   phone: String!
   usertype: String!
   stores: [Store!]
-  wallet: Int
   active: Boolean!
-  access_token:String,
-  refresh_token:String
+  access_token: String
+  refresh_token: String
   twofa: Boolean!
   code: String!
   codeexpiry: String!
@@ -58,15 +79,15 @@ input NewUser {
   email: String!
   campus: String!
   password: String!
-  stores: [Int!]
+  stores: StoreInput
   phone: String!
   usertype: String!
   code: String
   codeexpiry: Time
 }
-input NewWishlist{
-  user:Int!
-  Product:[Product!]!
+input NewWishlist {
+  user: Int!
+  product: Int!
 }
 input NewCategory {
   name: String!
@@ -87,17 +108,17 @@ input AddToCartItemInput {
   user: Int!
 }
 type Category {
-  id:ID!
+  id: ID!
   name: String!
   slug: String!
-  SubCategories: [SubCategory!]
+  subcategories: [SubCategory!]
 }
 
 type SubCategory {
   name: String!
   slug: String!
-  category:Int!
-  }
+  category: Int!
+}
 type CartItem {
   product: Product!
   quantity: Int!
@@ -117,64 +138,83 @@ type Product {
   slug: String!
   description: String!
   price: Float!
-  discount:Float!
+  discount: Float!
   status: Boolean!
   quantity: Int!
-  thumbnail:String!
+  thumbnail: String!
   image: [String!]!
   variant: String!
-  store: Int!
-  category: Int!
-  subcategory: Int!
+  store: String!
+  category: String!
+  subcategory: String!
 }
 input NewProduct {
   name: String!
   description: String!
-  price: Float!  
-  discount:Float!
-  thumbnail:String!
+  price: Float!
+  discount: Float!
+  thumbnail: String!
   image: [String!]!
   quantity: Int!
-  variant: String
-  store: Int!
+  variant: [NewVariant]
+  store: String!
   category: Int!
   subcategory: Int!
 }
 
-
-type LoginRes{
-  id:Int!
+type LoginRes {
+  id: Int!
   access_token: String!
   refresh_token: String!
 }
 
-input LoginReq{
+input LoginReq {
   email: String!
   password: String!
 }
-
+input NewVariant {
+  title: String!
+  item: String!
+}
+type ProductPaginationData{
+  products:[Product!]!
+  total: Int!
+}
+type StorePaginationData {
+  products: [Store!]!
+  total: Int!
+}
 type Query {
-  Users: [User!]!
+  Users(limit: Int, offset: Int): [User!]!
   User(id: ID!): User
   Categories: [Category!]!
-  Products(store:String): [Product!]!
-  getWishListedProducts(user:Int!):[WishList!]!
-  Product(id: Int!): Product
   Category(id: Int!): Category
   SubCategory(id: ID!): SubCategory
+  Products(store: String, limit: Int, offset: Int): ProductPaginationData!
+  Product(id: Int!): Product
+  getWishListedProducts(user: Int!): [WishList!]!
   Cart(user: Int!): Cart!
+  searchProducts(query: String!): [Product]
+  Stores(user:Int,limit:Int,offset:Int):StorePaginationData!
+  Store(id:Int!):Store
 }
 
 type Mutation {
   createUser(input: NewUser!): User!
   createVerifyOTP(input: NewVerifyOTP!): User!
-  loginUser(input:LoginReq!):LoginRes!
-  addWishListedProduct(user:Int!,product:Int!):WishList!
-  removeWishListedProduct(user:Int!)
+  loginUser(input: LoginReq!): LoginRes!
+  addWishListedProduct(userId: Int!, productId: Int!): WishList!
+  removeWishListedProduct(user: Int!): WishList
   createCategory(input: NewCategory!): Category!
-  createProduct(input: NewProduct!): Product!
   createSubCategory(input: NewSubCategory!): SubCategory!
-  addToCart(input: [AddToCartItemInput!]!): Cart!
-  updateCartItemQuantity(productId: ID!, quantity: Int!): Cart!
+  createProduct(input: NewProduct!): Product!
+  addToCart(input: AddToCartItemInput!): Cart!
   removeFromCart(productId: ID!): Cart!
+  createStore(input:StoreInput!):Store!
+  updateStore(storeId:Int!):Store!
+  deleteStore(storeId:Int!):Store!
+}
+
+type Subscription {
+  productSearchResults(query: String!): [Product]
 }

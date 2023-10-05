@@ -1,9 +1,5 @@
 package graph
 
-import(
-	//  "sync"
-	// "github.com/Chrisentech/aluta-market-api/internals/cart"
-)
 
 // This file will not be regenerated automatically.
 //
@@ -14,3 +10,6 @@ type Resolver struct{
 	// cartMtx sync.Mutex
 }
 
+func auth(r *Resolver) {
+	
+}
