@@ -17,18 +17,11 @@ func NewService(repository Repository) Service {
 	}
 }
 
-func (s *service) AddToCart(c context.Context, req []*CartItems, user uint32) (*Cart, error) {
+func (s *service) AddToCart(c context.Context, req *CartItems, user uint32) (*Cart, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
-	var u []*CartItems
 	defer cancel()
 
-	for i, item:= range req{
-		u[i] = &CartItems{
-		// Product:  req.Product,
-		Quantity: item.Quantity,
-	}
-	}
-	r, err := s.Repository.AddToCart(ctx, u, user)
+	r, err := s.Repository.AddToCart(ctx, req, user)
 	if err != nil {
 		return nil, err
 	}

@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"gorm.io/driver/postgres"
@@ -70,22 +69,32 @@ func (r *repository) GetProduct(ctx context.Context, id uint32) (*Product, error
 	return &p, nil
 }
 
-func (r *repository) CreateProduct(ctx context.Context, req *Product) (*Product, error) {
-
+func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Product, error) {
+	category, _ := r.GetCategory(ctx, uint32(req.CategoryID))
+	subcategory := req.SubCategoryID
+	subcategoryName := ""
+	for i, item := range category.SubCategories {
+		if i+1 == int(subcategory) {
+			subcategoryName = item.Name
+		} 
+	}
+	if req.Discount >req.Price{
+		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Discount cannot exceed Product Price")
+	}
 	newProduct := &Product{
-		Name:          req.Name,
-		Slug:          utils.GenerateSlug(req.Name),
-		Description:   req.Description,
-		Image:         req.Image,
-		Thumbnail:     req.Thumbnail,
-		Price:         req.Price,
-		Discount:      req.Discount,
-		Status:        req.Status,
-		Quantity:      req.Quantity,
-		Variant:       req.Variant,
-		StoreID:       req.StoreID,
-		CategoryID:    req.CategoryID,
-		SubCategoryID: req.SubCategoryID,
+		Name:        req.Name,
+		Slug:        utils.GenerateSlug(req.Name),
+		Description: req.Description,
+		Image:       req.Image,
+		Thumbnail:   req.Thumbnail,
+		Price:       req.Price,
+		Discount:    req.Discount,
+		Status:      req.Status,
+		Quantity:    req.Quantity,
+		Variant:     req.Variant,
+		Store:       req.Store,
+		Category:    category.Name,
+		Subcategory: subcategoryName,
 	}
 	if err := r.db.Create(newProduct).Error; err != nil {
 
@@ -175,34 +184,32 @@ func (r *repository) AddWishListedProduct(ctx context.Context, userId, productId
 
 func (r *repository) GetWishListedProducts(ctx context.Context, userId uint32) ([]*WishListedProduct, error) {
 	var wishlist []*WishListedProduct
-	if err := r.db.Find(&wishlist).Where("user_id",userId).Error; err != nil {
+	if err := r.db.Where("user_id", userId).Find(&wishlist).Error; err != nil {
 		return nil, err
 	}
-	return wishlist,nil
+	return wishlist, nil
 }
 
-func (r *repository) RemoveWishListedProduct(ctx context.Context, userId uint32) error {
-	existingWishlist :=&WishListedProduct{}
-	err := r.db.Delete(existingWishlist).Error
+func (r *repository) RemoveWishListedProduct(ctx context.Context, id uint32) error {
+	existingWishlist := &WishListedProduct{}
+	err := r.db.Where("id", id).Delete(existingWishlist).Error
 	return err
 }
 
-// recommended and wishlisted Product
-// func (r *repository) GetProduct(ctx context.Context, filter string,filterOption string)(*Product,error){}
-func (r *repository) GetProducts(ctx context.Context, store string) ([]*Product, error) {
+func (r *repository) GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, error) {
 	var products []*Product
+	query := r.db
 	if store != "" {
-		if err := r.db.Where("store_id = ? ", store).Find(&products).Error; err != nil {
-			return nil, err
-		}
-		return products, nil
+		query = query.Where("store_id = ?", store)
 	} else {
-		if err := r.db.Where("status = ? ", true).Find(&products).Error; err != nil {
-			return nil, err
-		}
-		return products, nil
+		query = query.Where("status = ?", true)
 	}
 
+	if err := query.Limit(limit).Offset(offset).Find(&products).Error; err != nil {
+		return nil, err
+	}
+
+	return products, nil
 }
 func (r *repository) GetCategories(ctx context.Context) ([]*Category, error) {
 	var categories []*Category
@@ -220,17 +227,22 @@ func (r *repository) GetCategory(ctx context.Context, id uint32) (*Category, err
 	return &p, nil
 }
 
-// func (r *repository) RecommendedProducts(ctx context.Context, userId uint32, productId uint32)([]*RecommendedProduct,error){
-// cat:= Category{}
-// prd:= Product{}
-// product:= &RecommendedProduct{}
-// store:=Store{}
-// if err :=  r.db.Where("id = ?", productId).First(&prd).Error; err != nil {
-// 		return nil, err
-// 	}
-// allProducts,_ := r.GetProducts(ctx)
+func (r *repository) AddRecommendedProducts(ctx context.Context, userId uint32, productId uint32) error {
+	_, err := r.GetProduct(ctx, productId)
+	if err != nil {
+		return err
+	}
+	// existingProduct.Views = append(existingProduct.Views, userId)
+	// err = r.db.Model(existingProduct).Update("views", existingProduct.Views).Error
+	return err
+}
 
-// for _, p:= range allProducts{
-// []product = ([]product,p)
-// }
-// }
+func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
+	var products []*Product
+	if err := r.db.Where("name ILIKE ? OR category ILIKE ? OR subcategory ILIKE ? OR instances ILIKE ?",
+		"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%").
+		Find(&products).Error; err != nil {
+		return nil, err
+	}
+	return products, nil
+}

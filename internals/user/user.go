@@ -14,15 +14,15 @@ type Store *store.Store
 // type Product *product.Product
 type User struct {
 	gorm.Model
-	ID           uint32 `gorm:"primaryKey;uniqueIndex;not null;autoIncrement" json:"id" db:"id"` // Unique identifier for the user
-	Campus       string `json:"campus" db:"campus"`                                              // Campus of the user
-	Email        string `json:"email" db:"email"`                                                // Email address of the user
-	Password     string `json:"password" db:"password"`                                          // Password of the user
-	Fullname     string `json:"fullname" db:"fullname"`                                          // Full name of the user
-	Phone        string `json:"phone" db:"phone"`                                                // Phone number of the user
-	Usertype     string `json:"usertype" db:"usertype"`                                          // Type of user (e.g., seller,buyer,admin)
-	Active       bool   `json:"active" db:"active"`                                              // For accesibility of user,
-	Stores       []*Store
+	ID           uint32    `gorm:"primaryKey;uniqueIndex;not null;autoIncrement" json:"id" db:"id"` // Unique identifier for the user
+	Campus       string    `json:"campus" db:"campus"`                                              // Campus of the user
+	Email        string    `json:"email" db:"email"`                                                // Email address of the user
+	Password     string    `json:"password" db:"password"`                                          // Password of the user
+	Fullname     string    `json:"fullname" db:"fullname"`                                          // Full name of the user
+	Phone        string    `json:"phone" db:"phone"`                                                // Phone number of the user
+	Usertype     string    `json:"usertype" db:"usertype"`                                          // Type of user (e.g., seller,buyer,admin)
+	Active       bool      `json:"active" db:"active"`                                              // For accesibility of user,
+	Stores       []Store   `gorm:"serializer:json;foreignKey:UserID" json:"stores"`
 	Twofa        bool      `json:"twofa" db:"twofa"`                           // Two factor authentication
 	AccessToken  string    `json:"access_token,omitempty" db:"access_token"`   // Balance of the user's wallet (only for seller)
 	RefreshToken string    `json:"refresh_token,omitempty" db:"refresh_token"` // Balance of the user's wallet (only for seller)
@@ -33,20 +33,20 @@ type User struct {
 }
 
 type CreateUserReq struct {
-	Campus   string `json:"campus" db:"campus"`     // Campus of the user
-	Email    string `json:"email" db:"email"`       // Email address of the user
-	Password string `json:"password" db:"password"` // Password of the user
-	Fullname string `json:"fullname" db:"fullname"`
-	Phone    string `json:"phone" db:"phone"`       // Phone number of the user
-	Usertype string `json:"usertype" db:"usertype"` // Type of user (e.g., seller,buyer,admin)
-	Active   bool   `json:"active" db:"active"`     // For accesibility of user,
-	Twofa    bool   `json:"twofa" db:"twofa"`       // Two factor authentication
-
+	Campus             string    `json:"campus" db:"campus"`     // Campus of the user
+	Email              string    `json:"email" db:"email"`       // Email address of the user
+	Password           string    `json:"password" db:"password"` // Password of the user
+	Fullname           string    `json:"fullname" db:"fullname"`
+	Phone              string    `json:"phone" db:"phone"`                     // Phone number of the user
+	Usertype           string    `json:"usertype" db:"usertype"`               // Type of user (e.g., seller,buyer,admin)
+	Active             bool      `json:"active" db:"active"`                   // For accesibility of user,
+	Twofa              bool      `json:"twofa" db:"twofa"`                     // Two factor authentication
 	Code               string    `json:"code,omitempty" db:"code"`             // otp code for verifications
 	Codeexpiry         time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
-	StoreName          string    `json:"store" db:"store"`
-	StoreUser          uint32    `json:"user_id" db:"user_id"`
+	StoreName          string    `json:"name" db:"name"`
+	StoreUser          uint32    `json:"user" db:"user_id"`
 	StoreLink          string    `json:"link" db:"link"`
+	StorePhone         string    `json:"phone" db:"phone"`
 	Description        string    `json:"description" db:"description"`
 	StoreAddress       string    `json:"address" db:"store_address"`
 	HasPhysicalAddress bool      `json:"has_physical_address" db:"has_physical_address"`
@@ -89,4 +89,5 @@ type Service interface {
 	GetUser(ctx context.Context, filter string) (*User, error) // Create a new user
 	VerifyOTP(ctx context.Context, req *User) (*User, error)
 	Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error) // Perform user login
+
 }

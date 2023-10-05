@@ -12,7 +12,7 @@ func NewHandler(s Service) *Handler {
 	}
 }
 
-func (h *Handler) CreateProduct(ctx context.Context, input *Product) (*Product, error) {
+func (h *Handler) CreateProduct(ctx context.Context, input *NewProduct) (*Product, error) {
 	item, err := h.Service.CreateProduct(ctx, input)
 	if err != nil {
 		return nil, err
@@ -60,8 +60,8 @@ func (h *Handler) GetCategory(ctx context.Context, id uint32) (*Category, error)
 	return item, nil
 }
 
-func (h *Handler) GetProducts(ctx context.Context, store string) ([]*Product, error) {
-	item, err := h.Service.GetProducts(ctx, store)
+func (h *Handler) GetProducts(ctx context.Context, store string,limit int, offset int) ([]*Product, error) {
+	item, err := h.Service.GetProducts(ctx, store,limit,offset)
 	if err != nil {
 		return nil, err
 	}

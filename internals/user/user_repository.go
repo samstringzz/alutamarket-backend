@@ -59,9 +59,9 @@ func (r *repository) GetUserByEmailOrPhone(ctx context.Context, identifier strin
 	return &u, nil
 }
 
-
 func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User, error) {
-	// Start a new database transaction
+	// Start a new database transaction#
+
 	tx := r.db.Begin()
 	if tx.Error != nil {
 		return nil, tx.Error
@@ -78,7 +78,6 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 	fmt.Printf("The generatedOtp is %s", otpCode)
 
 	// utils.SendOTPMessage(req.Phone,otpCode)
-	var createdStore *store.Store
 
 	var count int64
 	codeExpiry := time.Now().Add(5 * time.Minute)
@@ -87,8 +86,9 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		tx.Rollback()
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User already exists")
 	}
+	// createdStore := &store.Store{}
 
-	stores := &store.Store{ID: 1}
+	// stores := &store.Store{ID: 1}
 	newUser := &User{
 		Campus:     req.Campus,
 		Email:      req.Email,
@@ -101,31 +101,28 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		Code:       "12345",
 		Codeexpiry: codeExpiry,
 	}
-	// newUser.Stores = append(newUser.Stores,stores )
 
 	if err := tx.Create(newUser).Error; err != nil {
 		tx.Rollback()
 		return nil, err
 	}
-
-	if req.Usertype == "seller" && req.StoreLink != "" && req.StoreName != "" && req.Description != "" {
-		createdStore = &store.Store{
+	if req.Usertype == "seller" {
+		createdStore := &store.Store{
 			Name:               req.StoreName,
 			Link:               req.StoreLink,
 			UserID:             newUser.ID,
 			Description:        req.Description,
 			HasPhysicalAddress: req.HasPhysicalAddress,
 			Address:            req.StoreAddress,
+			Wallet:             0,
+			Status:             true,
+			Phone: req.StorePhone,
 		}
-		tx.Model(newUser).Update("stores", stores)
-
+		// tx.Model(newUser).Update("stores", stores.ID)
 		if err := tx.Create(createdStore).Error; err != nil {
 			tx.Rollback()
 			return nil, err
 		}
-	}
-	if req.Usertype == "seller" && (req.StoreLink != "" || req.StoreName != "" || req.Description != "") {
-		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "A seller must have a store name,store link")
 	}
 
 	// Commit the transaction if everything succeeded
@@ -139,28 +136,41 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 
 func (r *repository) VerifyOTP(ctx context.Context, req *User) (*User, error) {
 	foundUser := &User{}
+	counter := 0
 	err := r.db.Where("phone = ?", req.Phone).First(foundUser).Error
+	counter++
+
 	if err != nil {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
 	}
-	if req.Code != "12345" {
-		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Incorrect Otp Provided")
-	}
-	if foundUser.ID == 0 {
-		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist in the database")
-	}
-	if foundUser.Active {
-		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User account is verified!")
-	}
-	if err := r.db.Model(foundUser).Update("active", true).Error; err != nil {
-		return nil, err
-	}
-	return foundUser, nil
-}
 
+	// If the code is incorrect, increment the counter and send a new code if the counter is greater than 3.
+	if req.Code != "12345" {
+		if counter > 3 {
+			// Send a new code here.
+			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "New code has been sent")
+		}
+	}
+
+	// If the counter is less than or equal to 3 and the code is correct, verify the user.
+	if counter <= 3 && req.Code == "12345" {
+		if foundUser.ID == 0 {
+			return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist in the database")
+		}
+		if foundUser.Active {
+			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User account is verified!")
+		}
+		if err := r.db.Model(foundUser).Update("active", true).Error; err != nil {
+			return nil, err
+		}
+		return foundUser, nil
+	}
+
+	// If the code is incorrect and the counter is less than or equal to 3, return an error.
+	return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Incorrect Otp Provided")
+}
 func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRes, error) {
 	var user User
-	godotenv.Load()
 
 	if err := r.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
@@ -171,7 +181,7 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 	if err := utils.CheckPassword(req.Password, user.Password); err != nil {
 		return nil, errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid Credentials")
 	}
-   
+
 	// Generate a new refresh token
 	refreshClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, MyJWTClaims{
 		ID:       strconv.Itoa(int(user.ID)),
@@ -210,14 +220,14 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 	if err != nil {
 		return nil, err
 	}
-    r.db.Model(&user).Updates(User{RefreshToken: refreshSS, AccessToken: accessSS})
-     if user.Twofa{
-        //send otp
-	    otpCode := utils.GenerateOTP()
-        r.db.Model(&user).Update("code",otpCode)
-        return nil, errors.NewAppError(http.StatusCreated,"ACTION REQUIRED","This account is 2-FA protected,enter Otp to continue")
-    }
-	
+	r.db.Model(&user).Updates(User{RefreshToken: refreshSS, AccessToken: accessSS})
+	if user.Twofa {
+		//send otp
+		otpCode := utils.GenerateOTP()
+		r.db.Model(&user).Update("code", otpCode)
+		return nil, errors.NewAppError(http.StatusCreated, "ACTION REQUIRED", "This account is 2-FA protected,enter Otp to continue")
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -235,16 +245,12 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 	// Add the access token cookie to the context
 	SetAccessTokenCookie(ctx, &accessCookie)
 
-    
-
 	return &LoginUserRes{AccessToken: accessSS, RefreshToken: refreshSS, ID: user.ID}, nil
 }
 
-
-
 func (r *repository) GetUsers(ctx context.Context) ([]*User, error) {
 	var users []*User
-	if err := r.db.Find(&users).Error; err != nil {
+	if err := r.db.Preload("stores").Find(&users).Error; err != nil {
 		return nil, err
 	}
 	return users, nil
@@ -263,7 +269,7 @@ func (r *repository) GetUser(ctx context.Context, filter string) (*User, error) 
 
 func (r *repository) TwoFa(ctx context.Context, req *User) (bool, error) {
 	var user User
-	if err := r.db.Where("email = ? OR phone = ?", req.Email,req.Phone).First(&user).Error; err != nil {
+	if err := r.db.Where("email = ? OR phone = ?", req.Email, req.Phone).First(&user).Error; err != nil {
 		return false, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
 	}
 	r.db.Model(&user).Update("two_fa", true)

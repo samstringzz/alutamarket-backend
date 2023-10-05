@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"github.com/gin-gonic/gin"
+	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/golang-jwt/jwt/v4"
+    "context"
 )
 
 func isValidSession(tokenString string, secretKey string) bool {
@@ -22,28 +23,19 @@ func isValidSession(tokenString string, secretKey string) bool {
     return true
 }
 
-func AuthMiddleware() gin.HandlerFunc {
-    return func(c *gin.Context) {
-        // Retrieve the cookie
-        cookie, err := c.Request.Cookie("cookie-session")
-        if err != nil {
-            // Cookie not found or error occurred
-            // Handle the error or redirect as needed
-            c.Redirect(http.StatusSeeOther, "/login")
-            return
-        }
-
-        // Extract the value from the cookie
-        cookieValue := cookie.Value
-
-        // Perform authorization checks (e.g., validate access token or user ID)
-        if !isValidSession(cookieValue,os.Getenv("SECRET_KEY")) {
-            // Access denied
-            c.AbortWithStatus(http.StatusUnauthorized)
-            return
-        }
-
-        // Access granted, continue to the next middleware or handler
-        c.Next()
+// Define a custom middleware function that checks the authentication.
+func AuthMiddleware(ctx context.Context) (context.Context, error) {
+    // Extract the token from the context or request
+    token, ok := ctx.Value("token").(string)
+    if !ok {
+        return ctx, errors.NewAppError(http.StatusForbidden, "UNAUTHORIZED", "Authorization token not provided")
     }
+
+    // Validate the token using your token validation logic
+    if !isValidSession(token, os.Getenv("SECRET_KEY")) {
+        return ctx, errors.NewAppError(http.StatusForbidden, "UNAUTHORIZED", "Invalid or expired token")
+    }
+
+    // If the token is valid, proceed with the resolver function
+    return ctx, nil
 }

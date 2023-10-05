@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"reflect"
 	"regexp"
 	"strings"
 )
@@ -35,15 +34,4 @@ func UnmarshalJSON(jsonBytes []byte, data interface{}) error {
 	return err
 }
 
-func CalculateTotalCartCost(data []interface{}) float64 {
-	var total float64
-	for _, item := range data {
-		value := reflect.ValueOf(item)
-		//   productField := value.FieldByName("Product")
-		quantityField := value.FieldByName("Quantity")
-		//   product := productField.Interface().(Product)
-		quantity := quantityField.Interface().(uint32)
-		total += float64(quantity) * 10
-	}
-	return total
-}
+

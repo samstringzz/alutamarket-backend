@@ -32,6 +32,18 @@ func (s *service) CreateCategory(c context.Context, req *Category) (*Category, e
 	return r, nil
 }
 
+func (s *service) CreateProduct(c context.Context, req *NewProduct) (*Product, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	r, err := s.Repository.CreateProduct(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return r, nil
+}
+
 func (s *service) CreateSubCategory(c context.Context, req SubCategory) (*Category, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
@@ -83,10 +95,10 @@ func (s *service) GetProduct(c context.Context, id uint32) (*Product, error) {
 	return r, nil
 }
 
-func (s *service) GetProducts(c context.Context, store string) ([]*Product, error) {
+func (s *service) GetProducts(c context.Context, store string,limit int, offset int) ([]*Product, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
-	r, err := s.Repository.GetProducts(ctx, store)
+	r, err := s.Repository.GetProducts(ctx, store,limit,offset)
 	if err != nil {
 		return nil, err
 	}
