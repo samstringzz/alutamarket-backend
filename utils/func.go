@@ -1,7 +1,8 @@
 package utils
 
 import (
-	"encoding/json"
+	
+	"github.com/google/uuid"
 	"regexp"
 	"strings"
 )
@@ -20,18 +21,22 @@ func GenerateSlug(name string) string {
 	return name
 }
 
-func MarshalJSON(data interface{}) []byte {
-	jsonBytes, err := json.Marshal(data)
-	if err != nil {
-		return nil
-	}
+// func MarshalJSON(data interface{}) []byte {
+// 	jsonBytes, err := json.Marshal(data)
+// 	if err != nil {
+// 		return nil
+// 	}
 
-	return jsonBytes
+// 	return jsonBytes
+// }
+
+// func UnmarshalJSON(jsonBytes []byte, data interface{}) error {
+// 	err := json.Unmarshal(jsonBytes, data)
+// 	return err
+// }
+
+
+func GenerateUUID() string {
+	uuid := uuid.New()
+	return uuid.String()
 }
-
-func UnmarshalJSON(jsonBytes []byte, data interface{}) error {
-	err := json.Unmarshal(jsonBytes, data)
-	return err
-}
-
-

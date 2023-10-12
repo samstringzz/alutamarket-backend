@@ -10,6 +10,6 @@ type Resolver struct{
 	// cartMtx sync.Mutex
 }
 
-func auth(r *Resolver) {
+// func auth(r *Resolver) {
 	
-}
+// }

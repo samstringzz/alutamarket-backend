@@ -89,12 +89,12 @@ type Repository interface {
 	GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, error)
 	AddWishListedProduct(ctx context.Context, userId, productId uint32) (*WishListedProduct, error)
 	GetWishListedProducts(ctx context.Context, userId uint32) ([]*WishListedProduct, error)
+	GetRecommendedProducts(ctx context.Context, query string)([]*Product,error)
+	SearchProducts(ctx context.Context, query string)([]*Product,error)
 	RemoveWishListedProduct(ctx context.Context, userId uint32) error
 	// GetProductByFilter(ctx context.Context, filter string,filterOption string )(*Product,error)    //by slug,by store,by id,(by category||subcategory)
 	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
-	// DeleteProduct(ctx context.Context, id int)(error)
-	//Recommended Products
-	// Wishlisted Product
+	DeleteProduct(ctx context.Context, id uint32)(error)
 
 }
 
@@ -106,16 +106,16 @@ type Service interface {
 	CreateProduct(ctx context.Context, product *NewProduct) (*Product, error)
 	GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, error)
 	GetProduct(ctx context.Context, id uint32) (*Product, error)
+	GetRecommendedProducts(ctx context.Context, query string)([]*Product,error)
 	// GetProductByFilter(ctx context.Context, filter string,filterOption string)(*Product,error)    //by slug,by store,by id,(by category||subcategory)
+	SearchProducts(ctx context.Context, query string)([]*Product,error)
 	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
 	AddWishListedProduct(ctx context.Context, userId, productId uint32) (*WishListedProduct, error)
 	GetWishListedProducts(ctx context.Context, userId uint32) ([]*WishListedProduct, error)
 	RemoveWishListedProduct(ctx context.Context, userId uint32) error
-	// DeleteProduct(ctx context.Context, id int )(error)
+	DeleteProduct(ctx context.Context, id uint32 )(error)
 
 	// Left are
-	//Recommended Product
-	//Add to wishlist and get wishlisted product
 	// Add Review to Product/Store?? yet to be decided
 
 }

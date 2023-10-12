@@ -96,3 +96,20 @@ func (h *Handler) AddWishListedProduct(ctx context.Context, user, product uint32
 	}
 	return item, nil
 }
+
+func (h *Handler) GetRecommendedProducts(ctx context.Context, query string)([]*Product,error){
+	item, err := h.Service.GetRecommendedProducts(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+
+func (h *Handler) SearchProducts(ctx context.Context, query string)([]*Product,error){
+	item, err := h.Service.SearchProducts(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
