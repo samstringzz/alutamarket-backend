@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"gorm.io/driver/postgres"
@@ -76,9 +77,9 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 	for i, item := range category.SubCategories {
 		if i+1 == int(subcategory) {
 			subcategoryName = item.Name
-		} 
+		}
 	}
-	if req.Discount >req.Price{
+	if req.Discount > req.Price {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Discount cannot exceed Product Price")
 	}
 	newProduct := &Product{
@@ -92,7 +93,7 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 		Status:      req.Status,
 		Quantity:    req.Quantity,
 		Variant:     req.Variant,
-		Store:       req.Store,
+		// Store:       uint32(req.Store),
 		Category:    category.Name,
 		Subcategory: subcategoryName,
 	}
@@ -211,6 +212,7 @@ func (r *repository) GetProducts(ctx context.Context, store string, limit int, o
 
 	return products, nil
 }
+
 func (r *repository) GetCategories(ctx context.Context) ([]*Category, error) {
 	var categories []*Category
 	if err := r.db.Find(&categories).Error; err != nil {
@@ -218,6 +220,7 @@ func (r *repository) GetCategories(ctx context.Context) ([]*Category, error) {
 	}
 	return categories, nil
 }
+
 func (r *repository) GetCategory(ctx context.Context, id uint32) (*Category, error) {
 	p := Category{}
 	err := r.db.Where("id = ?", id).First(&p).Error
@@ -239,10 +242,19 @@ func (r *repository) AddRecommendedProducts(ctx context.Context, userId uint32, 
 
 func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
 	var products []*Product
-	if err := r.db.Where("name ILIKE ? OR category ILIKE ? OR subcategory ILIKE ? OR instances ILIKE ?",
+	if err := r.db.Where("name ILIKE ? OR category ILIKE ? OR subcategory ILIKE ? OR store ILIKE ?",
 		"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%").
 		Find(&products).Error; err != nil {
 		return nil, err
 	}
+	return products, nil
+}
+
+func (r *repository) GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error) {
+	var products []*Product
+	if err := r.db.Where("category ILIKE ?", "%"+query+"%").Find(&products).Error; err != nil {
+		return nil, err
+	}
+
 	return products, nil
 }

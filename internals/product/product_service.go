@@ -146,3 +146,29 @@ func (s *service) RemoveWishListedProduct(ctx context.Context, userId uint32) er
 	err := s.Repository.RemoveWishListedProduct(ctx, userId)
 	return err
 }
+func (s *service) DeleteProduct(ctx context.Context, id uint32) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	err := s.Repository.DeleteProduct(ctx, id)
+	return err
+}
+
+func (s *service) GetRecommendedProducts(ctx context.Context, query string)([]*Product,error){
+  ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	prd,err := s.Repository.GetRecommendedProducts(ctx, query)
+	if err !=nil{
+		return nil,err
+	}
+	return prd,nil
+}
+func (s *service) SearchProducts(ctx context.Context, query string)([]*Product,error){
+  ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	prd,err := s.Repository.SearchProducts(ctx, query)
+	if err !=nil{
+		return nil,err
+	}
+	return prd,nil
+}
+

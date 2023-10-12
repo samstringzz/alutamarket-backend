@@ -6,12 +6,6 @@ import (
 	"time"
 )
 
-type AddToCartItemInput struct {
-	ProductID string `json:"productId"`
-	Quantity  int    `json:"quantity"`
-	User      int    `json:"user"`
-}
-
 type Cart struct {
 	Items  []*CartItem `json:"items"`
 	Total  float64     `json:"total"`
@@ -48,6 +42,12 @@ type LoginRes struct {
 	ID           int    `json:"id"`
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type ModifyCartItemInput struct {
+	ProductID string `json:"productId"`
+	Quantity  int    `json:"quantity"`
+	User      int    `json:"user"`
 }
 
 type NewCategory struct {
@@ -101,6 +101,25 @@ type NewWishlist struct {
 	Product int `json:"product"`
 }
 
+type Order struct {
+	StoreID        []int    `json:"storeID,omitempty"`
+	CartID         int      `json:"cartID"`
+	Status         *string  `json:"status,omitempty"`
+	UserID         string   `json:"userID"`
+	Amount         *float64 `json:"amount,omitempty"`
+	UUID           *string  `json:"UUID,omitempty"`
+	PaymentGateway *string  `json:"paymentGateway,omitempty"`
+}
+
+type PaymentData struct {
+	StoreID        []int    `json:"storeID,omitempty"`
+	Status         *string  `json:"status,omitempty"`
+	UserID         string   `json:"userID"`
+	Amount         *float64 `json:"amount,omitempty"`
+	UUID           *string  `json:"UUID,omitempty"`
+	PaymentGateway *string  `json:"paymentGateway,omitempty"`
+}
+
 type Product struct {
 	ID          int      `json:"id"`
 	Name        string   `json:"name"`
@@ -116,6 +135,13 @@ type Product struct {
 	Store       string   `json:"store"`
 	Category    string   `json:"category"`
 	Subcategory string   `json:"subcategory"`
+}
+
+type ProductPaginationData struct {
+	Data        []*Product `json:"data"`
+	CurrentPage int        `json:"current_page"`
+	PerPage     int        `json:"per_page"`
+	Total       int        `json:"total"`
 }
 
 type Store struct {
@@ -143,6 +169,13 @@ type StoreInput struct {
 	Email              *string `json:"email,omitempty"`
 	Thumbnail          *string `json:"thumbnail,omitempty"`
 	Background         *string `json:"background,omitempty"`
+}
+
+type StorePaginationData struct {
+	Products    []*Store `json:"products"`
+	CurrentPage int      `json:"current_page"`
+	PerPage     int      `json:"per_page"`
+	Total       int      `json:"total"`
 }
 
 type SubCategory struct {

@@ -17,11 +17,11 @@ func NewService(repository Repository) Service {
 	}
 }
 
-func (s *service) AddToCart(c context.Context, req *CartItems, user uint32) (*Cart, error) {
+func (s *service) ModifyCart(c context.Context, req *CartItems, user uint32) (*Cart, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 
-	r, err := s.Repository.AddToCart(ctx, req, user)
+	r, err := s.Repository.ModifyCart(ctx, req, user)
 	if err != nil {
 		return nil, err
 	}
@@ -38,12 +38,22 @@ func (s *service) GetCart(c context.Context, user uint32) (*Cart, error) {
 	return r, nil
 }
 
-func (s *service) RemoveFromCart(c context.Context, id uint32) (*Cart, error) {
+func (s *service) RemoveAllCart(c context.Context, id uint32) (*Cart, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
-	r, err := s.Repository.RemoveFromCart(ctx, id)
+	r, err := s.Repository.RemoveAllCart(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	return r, nil
+}
+
+func (s *service) InitiatePayment(c context.Context, input Order) (string, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+	r, err := s.Repository.InitiatePayment(ctx, input)
+	if err != nil {
+		return "", err
 	}
 	return r, nil
 }

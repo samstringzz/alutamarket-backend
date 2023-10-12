@@ -46,7 +46,7 @@ type CreateUserReq struct {
 	StoreName          string    `json:"name" db:"name"`
 	StoreUser          uint32    `json:"user" db:"user_id"`
 	StoreLink          string    `json:"link" db:"link"`
-	StorePhone         string    `json:"phone" db:"phone"`
+	StorePhone         string    `json:"store_phone" db:"store_phone"`
 	Description        string    `json:"description" db:"description"`
 	StoreAddress       string    `json:"address" db:"store_address"`
 	HasPhysicalAddress bool      `json:"has_physical_address" db:"has_physical_address"`

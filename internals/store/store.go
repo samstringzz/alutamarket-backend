@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"gorm.io/gorm"
 )
@@ -47,15 +46,17 @@ type Store struct {
 
 type Order struct {
 	gorm.Model
-	StoreID        uint32  `json:"store" db:"store_id"`
-	CartID         uint32  `json:"cart_id" db:"cart_id"`
-	Fee            float64 `json:"fee" db:"fee"`
-	Status         string  `json:"status" db:"status"` //pending,completed,failed
-	UserID         string  `json:"user_id" db:"user_id"`
-	Amount         float64 `json:"amount" db:"amount"`
-	UUID           string  `json:"uuid" db:"uuid"`
-	PaymentGateway string  `json:"payment_gateway" db:"payment_gateway"`
+	StoresID       []string `gorm:"serializer:json" json:"store" db:"store_id"`
+	CartID         uint32   `json:"cart_id" db:"cart_id"`
+	Fee            float64  `json:"fee" db:"fee"`
+	Status         string   `json:"status" db:"status"` //pending,completed,failed
+	UserID         string   `json:"user_id" db:"user_id"`
+	Amount         float64  `json:"amount" db:"amount"`
+	UUID           string   `json:"uuid" db:"uuid"`
+	PaymentGateway string   `json:"payment_gateway" db:"payment_gateway"`
 }
+
+
 
 type Repository interface {
 	CreateStore(ctx context.Context, req *Store) (*Store, error)

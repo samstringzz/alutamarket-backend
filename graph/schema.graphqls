@@ -20,7 +20,7 @@ type Store {
   id: ID!
   link: String!
   name: String!
-  wallet:Float!
+  wallet: Float!
   user: Int!
   products: [Product!]
   description: String!
@@ -51,17 +51,17 @@ input StoreInput {
   address: String!
   wallet: Int!
   has_physical_address: Boolean!
-  phone:String!
-  email:String
-  thumbnail:String
-  background:String
+  phone: String!
+  email: String
+  thumbnail: String
+  background: String
 }
 type User {
   id: ID!
   fullname: String!
   email: String!
   campus: String!
-  avatar:String
+  avatar: String
   password: String!
   phone: String!
   usertype: String!
@@ -102,7 +102,7 @@ input NewVerifyOTP {
   email: String
 }
 
-input AddToCartItemInput {
+input ModifyCartItemInput {
   productId: ID!
   quantity: Int!
   user: Int!
@@ -161,7 +161,24 @@ input NewProduct {
   category: Int!
   subcategory: Int!
 }
+input PaymentData {
+  storeID: [Int!]
+  status: String
+  userID: String!
+  amount: Float
+  UUID: String
+  paymentGateway: String
+}
 
+type Order {
+  storeID: [Int!]
+  cartID: Int!
+  status: String
+  userID: String!
+  amount: Float
+  UUID: String
+  paymentGateway: String
+}
 type LoginRes {
   id: Int!
   access_token: String!
@@ -176,14 +193,6 @@ input NewVariant {
   title: String!
   item: String!
 }
-type ProductPaginationData{
-  products:[Product!]!
-  total: Int!
-}
-type StorePaginationData {
-  products: [Store!]!
-  total: Int!
-}
 type Query {
   Users(limit: Int, offset: Int): [User!]!
   User(id: ID!): User
@@ -192,11 +201,12 @@ type Query {
   SubCategory(id: ID!): SubCategory
   Products(store: String, limit: Int, offset: Int): ProductPaginationData!
   Product(id: Int!): Product
-  getWishListedProducts(user: Int!): [WishList!]!
+  WishListedProducts(user: Int!): [WishList!]!
+  RecommendedProducts(query:String!):[Product!]!
   Cart(user: Int!): Cart!
   searchProducts(query: String!): [Product]
-  Stores(user:Int,limit:Int,offset:Int):StorePaginationData!
-  Store(id:Int!):Store
+  Stores(user: Int, limit: Int, offset: Int): StorePaginationData!
+  Store(id: Int!): Store
 }
 
 type Mutation {
@@ -208,13 +218,29 @@ type Mutation {
   createCategory(input: NewCategory!): Category!
   createSubCategory(input: NewSubCategory!): SubCategory!
   createProduct(input: NewProduct!): Product!
-  addToCart(input: AddToCartItemInput!): Cart!
-  removeFromCart(productId: ID!): Cart!
-  createStore(input:StoreInput!):Store!
-  updateStore(storeId:Int!):Store!
-  deleteStore(storeId:Int!):Store!
+  updateProduct(input: NewProduct): Product!
+  deleteProduct(productId: Int!): Product!
+  modifyCart(input: ModifyCartItemInput!): Cart!
+  removeAllCart(cartID: Int!): Cart!
+  createStore(input: StoreInput!): Store!
+  updateStore(storeId: Int!): Store!
+  deleteStore(storeId: Int!): Store!
+  initializePayment(input: PaymentData!): String
 }
 
 type Subscription {
   productSearchResults(query: String!): [Product]
+}
+
+type ProductPaginationData {
+  data: [Product!]!
+  current_page: Int!
+  per_page: Int!
+  total: Int!
+}
+type StorePaginationData {
+  products: [Store!]!
+  current_page: Int!
+  per_page: Int!
+  total: Int!
 }
