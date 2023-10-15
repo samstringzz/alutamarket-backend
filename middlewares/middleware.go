@@ -4,50 +4,86 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"fmt"
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/dgrijalva/jwt-go"
 )
 
 // Middleware for stateless JWT authentication and authorization
-func AuthMiddleware( requiredRole string, next http.Handler) http.Handler {
+// func AuthMiddleware( requiredRole string, next http.Handler) http.Handler {
+
+// 	secretKey := os.Getenv("SECRET_KEY")
+//     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//         // Extract the JWT token from the request header
+//         tokenString := r.Header.Get("Authorization")
+//         if tokenString == "" {
+// 			errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "You can't access this resource")
+//             return
+//         }
+
+//         // Remove "Bearer " prefix from the token string
+//         tokenString = strings.Replace(tokenString, "Bearer ", "", 1)
+
+//         // Parse the JWT token
+//         token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+//             return []byte(secretKey), nil
+//         })
+//         if err != nil || !token.Valid {
+//             errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "You can't access this resource")
+//             return
+//         }
+
+//         // Check if the user has the required role
+//         claims, ok := token.Claims.(jwt.MapClaims)
+//         if !ok {
+//             errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "You can't access this resource")
+//             return
+//         }
+
+//         userRole := claims["role"].(string)
+//         if userRole != requiredRole {
+//              errors.NewAppError(http.StatusForbidden, "FORBIDDEN", "You do not have the permission to be here")
+//             return
+//         }
+
+//	        // If the token is valid and the user has the required role, proceed to the next handler
+//	        next.ServeHTTP(w, r)
+//	    })
+//	}
+func AuthMiddleware(requiredRole string, tokenString string) error {
 
 	secretKey := os.Getenv("SECRET_KEY")
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // Extract the JWT token from the request header
-        tokenString := r.Header.Get("Authorization")
-        if tokenString == "" {
-			errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "You can't access this resource")
-            return
-        }
+	if tokenString == "" {
+		return errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "No authorization token passed!")
+	}
+	// Remove "Bearer " prefix from the token string
+	tokenString = strings.Replace(tokenString, "Bearer ", "", 1)
+	
 
-        // Remove "Bearer " prefix from the token string
-        tokenString = strings.Replace(tokenString, "Bearer ", "", 1)
+	// Parse the JWT token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secretKey), nil
+	})
+	fmt.Println(token)
+	if err != nil || !token.Valid {
+		return errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "You can't access this resource")
 
-        // Parse the JWT token
-        token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-            return []byte(secretKey), nil
-        })
-        if err != nil || !token.Valid {
-            errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "You can't access this resource")
-            return
-        }
+	}
 
-        // Check if the user has the required role
-        claims, ok := token.Claims.(jwt.MapClaims)
-        if !ok {
-            errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "You can't access this resource")
-            return
-        }
+	// Check if the user has the required role
+	_, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "You can't access this resource")
 
-        userRole := claims["role"].(string)
-        if userRole != requiredRole {
-             errors.NewAppError(http.StatusForbidden, "FORBIDDEN", "You do not have the permission to be here")
-            return
-        }
+	}
 
-        // If the token is valid and the user has the required role, proceed to the next handler
-        next.ServeHTTP(w, r)
-    })
+	// userRole := claims["role"].(string)
+	// if userRole != requiredRole {
+	// 	return errors.NewAppError(http.StatusForbidden, "FORBIDDEN", "You do not have the permission to be here")
+
+	// }
+
+	return nil
 }
 
 // Middleware for stateful basic authentication

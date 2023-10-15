@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
+	"github.com/Chrisentech/aluta-market-api/middlewares"
 	"github.com/Chrisentech/aluta-market-api/utils"
 )
 
@@ -38,7 +38,6 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		Phone:    input.Phone,
 		Usertype: input.Usertype,
 		// Code:       input.Code,
-		// Codeexpiry: input.Codeexpiry,
 	}
 	if input.Usertype == "seller" {
 		userReq.StoreName = input.Stores.Name
@@ -226,7 +225,7 @@ func (r *mutationResolver) CreateSubCategory(ctx context.Context, input model.Ne
 // CreateProduct is the resolver for the createProduct field.
 func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewProduct) (*model.Product, error) {
 	productRep := app.InitializePackage(app.ProductPackage)
-
+	ProductVariant := &product.VariantType{Name: ""}
 	productRepository, ok := productRep.(product.Repository)
 	if !ok {
 		// Handle the case where the conversion failed
@@ -234,31 +233,44 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 	}
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
+	// Populate modelVariantValues
 
+	// Convert to product.VariantValue
+	var productVariantValues []*product.VariantValue
 	newProduct := &product.NewProduct{
 		Name:          input.Name,
 		Description:   input.Description,
-		Image:         input.Image,
+		Images:        input.Image,
 		Price:         input.Price,
 		Discount:      input.Discount,
 		Quantity:      input.Quantity,
 		Status:        true,
-		Variant:       "",
 		Thumbnail:     input.Thumbnail,
 		CategoryID:    uint8(input.Category),
 		SubCategoryID: uint8(input.Subcategory),
 		Store:         input.Store,
 	}
+	newProduct.Variant = append(newProduct.Variant, ProductVariant)
+	fmt.Printf("The Length of the variants are %d", len(input.Variant))
+	
 	if len(input.Variant) != 0 {
-		jsonData, err := json.Marshal(input.Variant)
-		if err != nil {
-			fmt.Println("Error:", err)
-			return nil, err
-		}
-		fmt.Println("Variant:", jsonData)
+		for _, item := range input.Variant {
+			productVariantValue := &product.VariantValue{}
+			ProductVariant.Name = item.Name
+			for _, val := range item.Value {
+				productVariantValue.Value = val.Value
+				productVariantValue.Price = *val.Price
+				productVariantValue.Images = val.Images
+				// Set the values for the productVariant
+				productVariantValues = append(productVariantValues, productVariantValue)
+			}
 
-		newProduct.Variant = string(jsonData)
+			
+			ProductVariant.Value = productVariantValues
+			newProduct.Variant = append(newProduct.Variant, ProductVariant)
+		}
 	}
+
 	resp, err := productHandler.CreateProduct(ctx, newProduct)
 	if err != nil {
 		return nil, err
@@ -266,17 +278,39 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 	schema := &model.Product{
 		Name:        resp.Name,
 		Description: resp.Description,
-		Image:       resp.Image,
+		Image:       resp.Images,
 		Price:       resp.Price,
 		Discount:    resp.Discount,
 		Status:      true,
 		Slug:        utils.GenerateSlug(resp.Name),
-		Variant:     resp.Variant,
 		Thumbnail:   resp.Thumbnail,
 		Category:    resp.Category,
 		Store:       resp.Store,
 		Subcategory: resp.Subcategory,
 	}
+	var modeVariantPrd []*model.VariantValue
+
+	productVariant := &model.Variant{}
+
+	modelVariantValue := &model.VariantValue{}
+	if len(resp.Variant) != 0 {
+		for _, item := range resp.Variant {
+			productVariant.Name = item.Name
+			for _, item := range item.Value {
+				modelVariantValue.Value = item.Value
+				modelVariantValue.Price = item.Price
+				modelVariantValue.Images = item.Images
+
+				// Set the values for the productVariant
+				modeVariantPrd = append(modeVariantPrd, modelVariantValue)
+			}
+
+		}
+
+		productVariant.Value = modeVariantPrd
+		schema.Variant = append(schema.Variant, productVariant)
+	}
+
 	return schema, nil
 }
 
@@ -394,7 +428,7 @@ func (r *mutationResolver) InitializePayment(ctx context.Context, input model.Pa
 	paymentOrder := &store.Order{
 		Fee:            10.56,
 		UserID:         input.UserID,
-		PaymentGateway: *input.PaymentGateway,
+		PaymentGateway: input.PaymentGateway,
 	}
 	resp, err := cartHandler.InitiatePayment(ctx, paymentOrder)
 	if err != nil {
@@ -586,15 +620,33 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 			// ID:       strconv.FormatInt(int64(item.ID), 10),
 			Name:        item.Name,
 			Description: item.Description,
-			Image:       item.Image,
+			Image:       item.Images,
 			Price:       item.Price,
 			Status:      item.Status,
 			Quantity:    item.Quantity,
 			Slug:        item.Slug,
-			Variant:     item.Variant,
 			Store:       item.Store,
 			Category:    item.Category,
 			Subcategory: item.Subcategory,
+		}
+		var modeVariantPrd []*model.VariantValue
+		productVariant := &model.Variant{}
+		if len(item.Variant) != 0 {
+			for _, item := range item.Variant {
+				productVariant.Name = item.Name
+				for _, item := range item.Value {
+					productVariantValue := &model.VariantValue{
+						Value:  item.Value,
+						Price:  item.Price,
+						Images: item.Images,
+					}
+
+					// Set the values for the productVariant
+					modeVariantPrd = append(modeVariantPrd, productVariantValue)
+				}
+			}
+			productVariant.Value = modeVariantPrd
+			product.Variant = append(product.Variant, productVariant)
 		}
 		products = append(products, product)
 	}
@@ -628,23 +680,67 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 		// ID:       strconv.FormatInt(int64(resp.ID), 10),
 		Name:        resp.Name,
 		Description: resp.Description,
-		Image:       resp.Image,
+		Image:       resp.Images,
 		Price:       resp.Price,
 		Status:      resp.Status,
 		Quantity:    resp.Quantity,
 		Slug:        resp.Slug,
-		Variant:     resp.Variant,
 		Store:       resp.Store,
 		Category:    resp.Category,
 		Subcategory: resp.Subcategory,
 	}
+	var modeVariantPrd []*model.VariantValue
+	productVariant := &model.Variant{}
+	if len(resp.Variant) != 0 {
+		for _, item := range resp.Variant {
+			productVariant.Name = item.Name
+			for _, item := range item.Value {
+				productVariantValue := &model.VariantValue{
+					Value:  item.Value,
+					Price:  item.Price,
+					Images: item.Images,
+				}
 
+				// Set the values for the productVariant
+				modeVariantPrd = append(modeVariantPrd, productVariantValue)
+			}
+		}
+		productVariant.Value = modeVariantPrd
+		product.Variant = append(product.Variant, productVariant)
+	}
 	return product, nil
 }
 
 // WishListedProducts is the resolver for the WishListedProducts field.
 func (r *queryResolver) WishListedProducts(ctx context.Context, user int) ([]*model.WishList, error) {
-	panic(fmt.Errorf("not implemented: WishListedProducts - WishListedProducts"))
+	productRep := app.InitializePackage(app.ProductPackage)
+
+	productRepository, ok := productRep.(product.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("productRep is not a product.Repository")
+	}
+	productSrvc := product.NewService(productRepository)
+	productHandler := product.NewHandler(productSrvc)
+	resp, err := productHandler.GetWishListedProducts(ctx, uint32(user))
+	if err != nil {
+		return nil, err
+	}
+	wishlists := []*model.WishList{}
+	for i, item := range resp {
+		wishlist := &model.WishList{
+			ProductID:        int(item.Product.ID),
+			ProductName:      &item.Product.Name,
+			ProductDiscount:  &item.Product.Discount,
+			ProductPrice:     &item.Product.Price,
+			ProductThumbnail: &item.Product.Thumbnail,
+			ProductQuantity:  &item.Product.Quantity,
+			ProductStatus:    &item.Product.Status,
+			UserID:           int(resp[i].UserID),
+		}
+		wishlists = append(wishlists, wishlist)
+	}
+	return wishlists, nil
 }
 
 // RecommendedProducts is the resolver for the RecommendedProducts field.
@@ -669,27 +765,48 @@ func (r *queryResolver) RecommendedProducts(ctx context.Context, query string) (
 			// ID:       strconv.FormatInt(int64(item.ID), 10),
 			Name:        item.Name,
 			Description: item.Description,
-			Image:       item.Image,
+			Image:       item.Images,
 			Price:       item.Price,
 			Status:      item.Status,
 			Quantity:    item.Quantity,
 			Slug:        item.Slug,
-			Variant:     item.Variant,
+			// Variant:     item.Variant,
 			Store:       item.Store,
 			Category:    item.Category,
 			Subcategory: item.Subcategory,
 		}
+		var modeVariantPrd []*model.VariantValue
+		productVariant := &model.Variant{}
+		if len(item.Variant) != 0 {
+			for _, item := range item.Variant {
+				productVariant.Name = item.Name
+				for _, item := range item.Value {
+					productVariantValue := &model.VariantValue{
+						Value:  item.Value,
+						Price:  item.Price,
+						Images: item.Images,
+					}
+
+					// Set the values for the productVariant
+					modeVariantPrd = append(modeVariantPrd, productVariantValue)
+				}
+			}
+			productVariant.Value = modeVariantPrd
+			product.Variant = append(product.Variant, productVariant)
+		}
 		products = append(products, product)
 	}
-	return products,nil
+	return products, nil
 }
 
 // Cart is the resolver for the Cart field.
 func (r *queryResolver) Cart(ctx context.Context, user int) (*model.Cart, error) {
-	//  authErr:= middlewares.AuthMiddleware("")
-	//  if authErr!=nil{
-	// 	return nil,authErr
-	//  }
+	// token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEiLCJmdWxsbmFtZSI6IkFsdWtvIEl5dW5hZGUiLCJjYW1wdXMiOiIiLCJwaG9uZSI6IjAwMCIsInVzZXJ0eXBlIjoic2VsbGVyIiwic3RvcmVzIjpudWxsLCJpc3MiOiIxIiwiZXhwIjoxNjk3MzA4MDUwfQ.7Q3jB-cekMiZZekcEIP_HO2itIymY8YqeQ4vk-4m1CY")
+	if authErr != nil {
+		return nil, authErr
+	}
 	cartRep := app.InitializePackage(app.CartPackage)
 	cartRepository, ok := cartRep.(cart.Repository)
 	if !ok {
@@ -703,6 +820,9 @@ func (r *queryResolver) Cart(ctx context.Context, user int) (*model.Cart, error)
 		return nil, err
 	}
 	var modelCartItems []*model.CartItem
+
+	var productVariantValues []*model.VariantValue
+	productVariant := &model.Variant{}
 	for _, item := range resp.Items {
 		modelProduct := &model.Product{
 			ID:          int(item.Product.ID),
@@ -711,14 +831,29 @@ func (r *queryResolver) Cart(ctx context.Context, user int) (*model.Cart, error)
 			Description: item.Product.Description,
 			Price:       item.Product.Price,
 			Thumbnail:   item.Product.Thumbnail,
-			Image:       item.Product.Image,
+			Image:       item.Product.Images,
 			Discount:    item.Product.Discount,
 			Category:    item.Product.Category,
-			Variant:     item.Product.Variant,
 			Status:      item.Product.Status,
 			Store:       item.Product.Store,
 		}
+		if len(item.Product.Variant) != 0 {
+			for _, item := range item.Product.Variant {
+				productVariant.Name = item.Name
+				for _, item := range item.Value {
+					productVariantValue := &model.VariantValue{
+						Value:  item.Value,
+						Price:  item.Price,
+						Images: item.Images,
+					}
 
+					// Set the values for the productVariant
+					productVariantValues = append(productVariantValues, productVariantValue)
+				}
+			}
+			productVariant.Value = productVariantValues
+			modelProduct.Variant = append(modelProduct.Variant, productVariant)
+		}
 		modelItem := &model.CartItem{
 			Product:  modelProduct,
 			Quantity: int(item.Quantity),
@@ -750,24 +885,42 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 	}
 	var products []*model.Product
 
+	var productVariantValues []*model.VariantValue
+	productVariant := &model.Variant{}
 	for _, item := range resp {
 		product := &model.Product{
 			// ID:       strconv.FormatInt(int64(item.ID), 10),
 			Name:        item.Name,
 			Description: item.Description,
-			Image:       item.Image,
+			Image:       item.Images,
 			Price:       item.Price,
 			Status:      item.Status,
 			Quantity:    item.Quantity,
 			Slug:        item.Slug,
-			Variant:     item.Variant,
 			Store:       item.Store,
 			Category:    item.Category,
 			Subcategory: item.Subcategory,
 		}
+		if len(item.Variant) != 0 {
+			for _, item := range item.Variant {
+				productVariant.Name = item.Name
+				for _, val := range item.Value {
+					productVariantValue := &model.VariantValue{
+						Value:  val.Value,
+						Price:  val.Price,
+						Images: val.Images,
+					}
+
+					// Set the values for the productVariant
+					productVariantValues = append(productVariantValues, productVariantValue)
+				}
+			}
+			productVariant.Value = productVariantValues
+			product.Variant = append(product.Variant, productVariant)
+		}
 		products = append(products, product)
 	}
-	return products,nil
+	return products, nil
 }
 
 // Stores is the resolver for the Stores field.
@@ -797,40 +950,3 @@ func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionRes
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *queryResolver) GetWishListedProducts(ctx context.Context, user int) ([]*model.WishList, error) {
-	productRep := app.InitializePackage(app.ProductPackage)
-
-	productRepository, ok := productRep.(product.Repository)
-	if !ok {
-		// Handle the case where the conversion failed
-		return nil, fmt.Errorf("productRep is not a product.Repository")
-	}
-	productSrvc := product.NewService(productRepository)
-	productHandler := product.NewHandler(productSrvc)
-	resp, err := productHandler.GetWishListedProducts(ctx, uint32(user))
-	if err != nil {
-		return nil, err
-	}
-	wishlists := []*model.WishList{}
-	for i, item := range resp {
-		wishlist := &model.WishList{
-			ProductID:        int(item.Product.ID),
-			ProductName:      &item.Product.Name,
-			ProductDiscount:  &item.Product.Discount,
-			ProductPrice:     &item.Product.Price,
-			ProductThumbnail: &item.Product.Thumbnail,
-			ProductQuantity:  &item.Product.Quantity,
-			ProductStatus:    &item.Product.Status,
-			UserID:           int(resp[i].UserID),
-		}
-		wishlists = append(wishlists, wishlist)
-	}
-	return wishlists, nil
-}

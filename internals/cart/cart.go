@@ -2,7 +2,7 @@ package cart
 
 import (
 	"context"
-
+	"net/http"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
@@ -22,7 +22,6 @@ type Cart struct {
 }
 
 type CartItems struct {
-	gorm.Model
 	Product  Product `gorm:"embedded"`
 	CartID   uint32  `json:"cart" db:"cart_id"`
 	Quantity int     `json:"quantity" db:"quantity"`
@@ -32,7 +31,7 @@ type Repository interface {
 	ModifyCart(ctx context.Context, req *CartItems, user uint32) (*Cart, error)
 	RemoveAllCart(ctx context.Context, id uint32) (*Cart, error)
 	GetCart(ctx context.Context, user uint32) (*Cart, error)
-	MakePayment(ctx context.Context, req Order) (*Order, error)
+	MakePayment(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	InitiatePayment(ctx context.Context, req Order) (string, error)
 }
 
@@ -40,6 +39,6 @@ type Service interface {
 	ModifyCart(ctx context.Context, req *CartItems, user uint32) (*Cart, error)
 	RemoveAllCart(ctx context.Context, id uint32) (*Cart, error)
 	GetCart(ctx context.Context, user uint32) (*Cart, error)
-	MakePayment(ctx context.Context, req Order) (*Order, error)
+	MakePayment(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	InitiatePayment(ctx context.Context, req Order) (string, error)
 }

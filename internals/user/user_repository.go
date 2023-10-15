@@ -80,7 +80,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 	// utils.SendOTPMessage(req.Phone,otpCode)
 
 	var count int64
-	codeExpiry := time.Now().Add(5 * time.Minute)
+	codeExpiry := time.Now().Add(5 * time.Minute) //An expiry time of 5min
 	tx.Model(&User{}).Where("email = ? OR phone = ?", req.Email, req.Phone).Count(&count)
 	if count > 0 {
 		tx.Rollback()
@@ -116,7 +116,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 			Address:            req.StoreAddress,
 			Wallet:             0,
 			Status:             true,
-			Phone: req.StorePhone,
+			Phone:              req.StorePhone,
 		}
 		// tx.Model(newUser).Update("stores", stores.ID)
 		if err := tx.Create(createdStore).Error; err != nil {
@@ -151,7 +151,9 @@ func (r *repository) VerifyOTP(ctx context.Context, req *User) (*User, error) {
 			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "New code has been sent")
 		}
 	}
-
+	if foundUser.Codeexpiry.Before(time.Now()) {
+		return nil, errors.NewAppError(http.StatusConflict, "BAD REQUEST", "OTP Expired!!")
+	}
 	// If the counter is less than or equal to 3 and the code is correct, verify the user.
 	if counter <= 3 && req.Code == "12345" {
 		if foundUser.ID == 0 {
@@ -187,6 +189,7 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 		ID:       strconv.Itoa(int(user.ID)),
 		Fullname: user.Fullname,
 		Usertype: user.Usertype,
+		Campus:   user.Campus,
 		Phone:    user.Phone,
 		Stores:   user.Stores,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -208,6 +211,7 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 	accessClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, MyJWTClaims{
 		ID:       strconv.Itoa(int(user.ID)),
 		Fullname: user.Fullname,
+		Campus:   user.Campus,
 		Usertype: user.Usertype,
 		Phone:    user.Phone,
 		Stores:   user.Stores,

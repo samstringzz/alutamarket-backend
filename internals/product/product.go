@@ -30,41 +30,50 @@ type Review struct {
 	Rating    uint8  `json:"rating" db:"rating"`
 	ProductID uint32 `json:"product" db:"product_id"`
 }
+type VariantValue struct {
+	Value string  `json:"value" db:"value"`
+	Price float64 `json:"price,omitempty" db:"price"`
+	Images []string `gorm:"serializer:json"  json:"images,omitempty" db:"images"`
+}
+type VariantType struct {
+	Name  string          `json:"variant_name" db:"varaint_name"`
+	Value []*VariantValue `gorm:"serializer:json" json:"variant_value" db:"variant_vaue"`
+}
 type NewProduct struct {
 	gorm.Model
-	ID            uint32   `json:"id" db:"id"`
-	Name          string   `json:"name" db:"name"`
-	Description   string   `json:"description" db:"description"`
-	Image         []string `gorm:"serializer:json" json:"image" db:"image"`
-	Thumbnail     string   `json:"thumbnail" db:"thumbnail"`
-	Price         float64  `json:"price" db:"price"`
-	Discount      float64  `json:"discount" db:"discount"`
-	Status        bool     `json:"status" db:"status"`
-	Quantity      int      `json:"quantity" db:"quantity"`
-	Slug          string   `json:"slug" db:"slug"`
-	Variant       string   `json:"variant,omitempty" db:"variant"`
-	Store         string   `json:"store" db:"store_id"`
-	CategoryID    uint8    `json:"category" db:"category_id"`
-	SubCategoryID uint8    `json:"subcategory" db:"sub_category_id"`
+	ID            uint32         `json:"id" db:"id"`
+	Name          string         `json:"name" db:"name"`
+	Description   string         `json:"description" db:"description"`
+	Images        []string       `gorm:"serializer:json" json:"image" db:"image"`
+	Thumbnail     string         `json:"thumbnail" db:"thumbnail"`
+	Price         float64        `json:"price" db:"price"`
+	Discount      float64        `json:"discount" db:"discount"`
+	Status        bool           `json:"status" db:"status"`
+	Quantity      int            `json:"quantity" db:"quantity"`
+	Slug          string         `json:"slug" db:"slug"`
+	Variant       []*VariantType `gorm:"serializer:json" json:"variant,omitempty" db:"variant"`
+	Store         string         `json:"store" db:"store"`
+	CategoryID    uint8          `json:"category" db:"category_id"`
+	SubCategoryID uint8          `json:"subcategory" db:"sub_category_id"`
 }
 type Product struct {
 	gorm.Model
-	ID          uint32    `json:"id" db:"id"`
-	Name        string    `json:"name" db:"name"`
-	Description string    `json:"description" db:"description"`
-	Image       []string  `gorm:"serializer:json" json:"image" db:"image"`
-	Thumbnail   string    `json:"thumbnail" db:"thumbnail"`
-	Price       float64   `json:"price" db:"price"`
-	Discount    float64   `json:"discount" db:"discount"`
-	Status      bool      `json:"status" db:"status"`
-	Quantity    int       `json:"quantity" db:"quantity"`
-	Slug        string    `json:"slug" db:"slug"`
-	Variant     string    `json:"variant,omitempty" db:"variant"`
-	Store       string    `json:"store" db:"store"`
-	Category    string    `json:"category" db:"category"`
-	Views       []uint32  `gorm:"serializer:json" jsinput.ProductIDon:"views" db:"views"`
-	Subcategory string    `json:"subcategory" db:"subcategory"`
-	Reviews     []*Review `gorm:"serializer:json"`
+	ID          uint32         `json:"id" db:"id"`
+	Name        string         `json:"name" db:"name"`
+	Description string         `json:"description" db:"description"`
+	Images      []string       `gorm:"serializer:json" json:"image" db:"image"`
+	Thumbnail   string         `json:"thumbnail" db:"thumbnail"`
+	Price       float64        `json:"price" db:"price"`
+	Discount    float64        `json:"discount" db:"discount"`
+	Status      bool           `json:"status" db:"status"`
+	Quantity    int            `json:"quantity" db:"quantity"`
+	Slug        string         `json:"slug" db:"slug"`
+	Variant     []*VariantType `gorm:"serializer:json" json:"variant,omitempty" db:"variant"`
+	Store       string         `json:"store" db:"store"`
+	Category    string         `json:"category" db:"category"`
+	Views       []uint32       `gorm:"serializer:json" jsinput.ProductIDon:"views" db:"views"`
+	Subcategory string         `json:"subcategory" db:"subcategory"`
+	Reviews     []*Review      `gorm:"serializer:json"`
 }
 
 type WishListedProduct struct {
@@ -89,13 +98,12 @@ type Repository interface {
 	GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, error)
 	AddWishListedProduct(ctx context.Context, userId, productId uint32) (*WishListedProduct, error)
 	GetWishListedProducts(ctx context.Context, userId uint32) ([]*WishListedProduct, error)
-	GetRecommendedProducts(ctx context.Context, query string)([]*Product,error)
-	SearchProducts(ctx context.Context, query string)([]*Product,error)
+	GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error)
+	SearchProducts(ctx context.Context, query string) ([]*Product, error)
 	RemoveWishListedProduct(ctx context.Context, userId uint32) error
 	// GetProductByFilter(ctx context.Context, filter string,filterOption string )(*Product,error)    //by slug,by store,by id,(by category||subcategory)
 	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
-	DeleteProduct(ctx context.Context, id uint32)(error)
-
+	DeleteProduct(ctx context.Context, id uint32) error
 }
 
 type Service interface {
@@ -106,14 +114,14 @@ type Service interface {
 	CreateProduct(ctx context.Context, product *NewProduct) (*Product, error)
 	GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, error)
 	GetProduct(ctx context.Context, id uint32) (*Product, error)
-	GetRecommendedProducts(ctx context.Context, query string)([]*Product,error)
+	GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error)
 	// GetProductByFilter(ctx context.Context, filter string,filterOption string)(*Product,error)    //by slug,by store,by id,(by category||subcategory)
-	SearchProducts(ctx context.Context, query string)([]*Product,error)
+	SearchProducts(ctx context.Context, query string) ([]*Product, error)
 	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
 	AddWishListedProduct(ctx context.Context, userId, productId uint32) (*WishListedProduct, error)
 	GetWishListedProducts(ctx context.Context, userId uint32) ([]*WishListedProduct, error)
 	RemoveWishListedProduct(ctx context.Context, userId uint32) error
-	DeleteProduct(ctx context.Context, id uint32 )(error)
+	DeleteProduct(ctx context.Context, id uint32) error
 
 	// Left are
 	// Add Review to Product/Store?? yet to be decided

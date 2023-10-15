@@ -21,22 +21,9 @@ func GenerateSlug(name string) string {
 	return name
 }
 
-// func MarshalJSON(data interface{}) []byte {
-// 	jsonBytes, err := json.Marshal(data)
-// 	if err != nil {
-// 		return nil
-// 	}
-
-// 	return jsonBytes
-// }
-
-// func UnmarshalJSON(jsonBytes []byte, data interface{}) error {
-// 	err := json.Unmarshal(jsonBytes, data)
-// 	return err
-// }
-
 
 func GenerateUUID() string {
 	uuid := uuid.New()
 	return uuid.String()
 }
+
