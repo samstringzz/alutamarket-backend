@@ -86,8 +86,14 @@ type NewUser struct {
 }
 
 type NewVariant struct {
-	Title string `json:"title"`
-	Item  string `json:"item"`
+	Name  string             `json:"name"`
+	Value []*NewVariantValue `json:"value"`
+}
+
+type NewVariantValue struct {
+	Value  string   `json:"value"`
+	Price  *float64 `json:"price,omitempty"`
+	Images []string `json:"images,omitempty"`
 }
 
 type NewVerifyOtp struct {
@@ -117,24 +123,24 @@ type PaymentData struct {
 	UserID         string   `json:"userID"`
 	Amount         *float64 `json:"amount,omitempty"`
 	UUID           *string  `json:"UUID,omitempty"`
-	PaymentGateway *string  `json:"paymentGateway,omitempty"`
+	PaymentGateway string   `json:"paymentGateway"`
 }
 
 type Product struct {
-	ID          int      `json:"id"`
-	Name        string   `json:"name"`
-	Slug        string   `json:"slug"`
-	Description string   `json:"description"`
-	Price       float64  `json:"price"`
-	Discount    float64  `json:"discount"`
-	Status      bool     `json:"status"`
-	Quantity    int      `json:"quantity"`
-	Thumbnail   string   `json:"thumbnail"`
-	Image       []string `json:"image"`
-	Variant     string   `json:"variant"`
-	Store       string   `json:"store"`
-	Category    string   `json:"category"`
-	Subcategory string   `json:"subcategory"`
+	ID          int        `json:"id"`
+	Name        string     `json:"name"`
+	Slug        string     `json:"slug"`
+	Description string     `json:"description"`
+	Price       float64    `json:"price"`
+	Discount    float64    `json:"discount"`
+	Status      bool       `json:"status"`
+	Quantity    int        `json:"quantity"`
+	Thumbnail   string     `json:"thumbnail"`
+	Image       []string   `json:"image"`
+	Variant     []*Variant `json:"variant,omitempty"`
+	Store       string     `json:"store"`
+	Category    string     `json:"category"`
+	Subcategory string     `json:"subcategory"`
 }
 
 type ProductPaginationData struct {
@@ -200,6 +206,17 @@ type User struct {
 	Twofa        bool     `json:"twofa"`
 	Code         string   `json:"code"`
 	Codeexpiry   string   `json:"codeexpiry"`
+}
+
+type Variant struct {
+	Name  string          `json:"name"`
+	Value []*VariantValue `json:"value"`
+}
+
+type VariantValue struct {
+	Value  string   `json:"value"`
+	Price  float64  `json:"price"`
+	Images []string `json:"images,omitempty"`
 }
 
 type VerifyOtp struct {

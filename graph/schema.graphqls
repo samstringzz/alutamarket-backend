@@ -5,6 +5,7 @@
 scalar Time
 scalar Data
 
+
 # type ApiResponse {
 #   message: String!
 #   status: Int!
@@ -131,7 +132,15 @@ type Cart {
   user: Int!
   id: ID
 }
-
+type VariantValue {
+  value: String!
+  price: Float!
+  images: [String!]
+}
+type Variant {
+  name: String!
+  value: [VariantValue!]!
+}
 type Product {
   id: Int!
   name: String!
@@ -143,7 +152,7 @@ type Product {
   quantity: Int!
   thumbnail: String!
   image: [String!]!
-  variant: String!
+  variant:[Variant]
   store: String!
   category: String!
   subcategory: String!
@@ -156,7 +165,7 @@ input NewProduct {
   thumbnail: String!
   image: [String!]!
   quantity: Int!
-  variant: [NewVariant]
+  variant: [NewVariant!]
   store: String!
   category: Int!
   subcategory: Int!
@@ -167,7 +176,7 @@ input PaymentData {
   userID: String!
   amount: Float
   UUID: String
-  paymentGateway: String
+  paymentGateway: String!
 }
 
 type Order {
@@ -189,9 +198,14 @@ input LoginReq {
   email: String!
   password: String!
 }
+input NewVariantValue {
+  value: String!
+  price: Float
+  images:[String!]
+}
 input NewVariant {
-  title: String!
-  item: String!
+  name: String!
+  value: [NewVariantValue!]!
 }
 type Query {
   Users(limit: Int, offset: Int): [User!]!

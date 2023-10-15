@@ -86,22 +86,22 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 		Name:        req.Name,
 		Slug:        utils.GenerateSlug(req.Name),
 		Description: req.Description,
-		Image:       req.Image,
+		Images:       req.Images,
 		Thumbnail:   req.Thumbnail,
 		Price:       req.Price,
 		Discount:    req.Discount,
 		Status:      req.Status,
 		Quantity:    req.Quantity,
 		Variant:     req.Variant,
-		// Store:       uint32(req.Store),
+		Store:       req.Store,
 		Category:    category.Name,
 		Subcategory: subcategoryName,
 	}
-	if err := r.db.Create(newProduct).Error; err != nil {
+	// if err := r.db.Create(newProduct).Error; err != nil {
 
-		log.Printf("Error creating product: %v", err)
-		return nil, err
-	}
+	// 	log.Printf("Error creating product: %v", err)
+	// 	return nil, err
+	// }
 	return newProduct, nil
 }
 
@@ -124,8 +124,8 @@ func (r *repository) UpdateProduct(ctx context.Context, req *Product) (*Product,
 	if req.Quantity != 0 {
 		existingProduct.Quantity = req.Quantity
 	}
-	if len(req.Image) != 0 {
-		existingProduct.Image = append(existingProduct.Image, req.Image...)
+	if len(req.Images) != 0 {
+		existingProduct.Images = append(existingProduct.Images, req.Images...)
 	}
 	if req.Discount != 0 {
 		existingProduct.Discount = req.Discount
@@ -140,8 +140,8 @@ func (r *repository) UpdateProduct(ctx context.Context, req *Product) (*Product,
 		existingProduct.Price = req.Price
 	}
 
-	if req.Variant != "" {
-		existingProduct.Variant = req.Variant
+	if len(req.Variant) != 0 {
+		existingProduct.Variant = append(existingProduct.Variant, req.Variant...)
 	}
 
 	// Update the product in the repository

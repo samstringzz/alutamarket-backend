@@ -8,7 +8,8 @@ import (
 
 	"encoding/json"
 	"log"
-	"net/http"
+    "net/http"
+    "io"
 	"os"
 
 	"github.com/Chrisentech/aluta-market-api/errors"
@@ -24,7 +25,10 @@ import (
 type repository struct {
 	db *gorm.DB
 }
-
+type WebhookPayload struct {
+    Event string `json:"event"`
+    Data  string `json:"data"`
+}
 func NewRepository() Repository {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
@@ -150,7 +154,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	cart := &Cart{}
 	userID, _ := strconv.ParseUint(input.UserID, 10, 32)
 
-	err := r.db.Model(cart).Where("user_id = ?", uint32(userID)).First(cart).Error
+	err := r.db.Model(cart).Where("user_id = ? AND active =?", uint32(userID),true).First(cart).Error
 	// fmt.Println("Na here we dey")
 	if err != nil {
 		return "", errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Cart not found")
@@ -240,27 +244,38 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	}
 	return paymentLink, nil
 }
-func (r *repository) MakePayment(ctx context.Context, req Order) (*Order, error) {
-	cart := &Cart{}
-	err := r.db.Model(cart).Where("id ?", req.CartID).First(cart).Error
-	if err != nil {
-		return nil, errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Cart not found")
-	}
-	newOrder := &store.Order{}
-	newOrder.Amount = cart.Total + req.Fee
-	newOrder.UserID = strconv.FormatUint(uint64(cart.UserID), 10)
-	newOrder.UUID = utils.GenerateUUID()
-	for _, items := range cart.Items {
-		newOrder.StoresID = append(newOrder.StoresID, items.Product.Store)
-	}
-	if req.PaymentGateway == "flutterwave" {
-		newOrder.PaymentGateway = "flutterwave"
-		newOrder.Status = ""
-		panic("flutter")
-	} else if req.PaymentGateway == "paystack" {
-		newOrder.PaymentGateway = "paystack"
-		panic("paystack")
-	}
 
-	panic("nil-not yet implemented")
+func (r *repository) MakePayment(ctx context.Context,w http.ResponseWriter, req *http.Request){
+	body, err :=io.ReadAll(req.Body)
+    if err != nil {
+        http.Error(w, "Failed to read request body", http.StatusBadRequest)
+        return
+    }
+    // Unmarshal the JSON data into a struct
+    var webhookPayload WebhookPayload
+    
+   if err := json.Unmarshal(body, &webhookPayload); err != nil {
+        http.Error(w, "Failed to parse JSON data", http.StatusBadRequest)
+        return
+    }
+
+    // Access the event field
+    event := webhookPayload.Event
+
+    if event =="charge.completed"{
+        return
+    }
+
+    // Close the request body to avoid resource leaks
+    defer req.Body.Close()
+
+    // Process the request body (e.g., decode JSON or parse form data)
+    
+    fmt.Fprint(w, "Webhook received successfully")
+    fmt.Println("Received Webhook Body:", string(body))
+
+	// Check if transaction is successful/failed,by rehitting the verify transaction api
+	// If Successful, credit a store wallet,their quota
+
+     w.WriteHeader(http.StatusOK)
 }
