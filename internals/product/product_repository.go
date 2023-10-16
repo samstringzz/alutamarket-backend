@@ -81,7 +81,6 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 	if req.Discount > req.Price {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Discount cannot exceed Product Price")
 	}
-	fmt.Println("Varaint are %v\n",req.Variant)
 	newProduct := &Product{
 		Name:        req.Name,
 		Slug:        utils.GenerateSlug(req.Name),
