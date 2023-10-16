@@ -225,7 +225,6 @@ func (r *mutationResolver) CreateSubCategory(ctx context.Context, input model.Ne
 // CreateProduct is the resolver for the createProduct field.
 func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewProduct) (*model.Product, error) {
 	productRep := app.InitializePackage(app.ProductPackage)
-	ProductVariant := &product.VariantType{Name: ""}
 	productRepository, ok := productRep.(product.Repository)
 	if !ok {
 		// Handle the case where the conversion failed
@@ -233,10 +232,8 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 	}
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
-	// Populate modelVariantValues
 
-	// Convert to product.VariantValue
-	var productVariantValues []*product.VariantValue
+	// Create a new product
 	newProduct := &product.NewProduct{
 		Name:          input.Name,
 		Description:   input.Description,
@@ -250,31 +247,32 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 		SubCategoryID: uint8(input.Subcategory),
 		Store:         input.Store,
 	}
-	newProduct.Variant = append(newProduct.Variant, ProductVariant)
-	fmt.Printf("The Length of the variants are %d", len(input.Variant))
-	
-	if len(input.Variant) != 0 {
-		for _, item := range input.Variant {
-			productVariantValue := &product.VariantValue{}
-			ProductVariant.Name = item.Name
-			for _, val := range item.Value {
-				productVariantValue.Value = val.Value
-				productVariantValue.Price = *val.Price
-				productVariantValue.Images = val.Images
-				// Set the values for the productVariant
-				productVariantValues = append(productVariantValues, productVariantValue)
-			}
 
-			
-			ProductVariant.Value = productVariantValues
-			newProduct.Variant = append(newProduct.Variant, ProductVariant)
+	// Create product variants and their values
+	for _, variantInput := range input.Variant {
+		productVariant := &product.VariantType{Name: variantInput.Name}
+		var variantValues []*product.VariantValue
+
+		for _, val := range variantInput.Value {
+			variantValue := &product.VariantValue{
+				Value:  val.Value,
+				Price:  *val.Price,
+				Images: val.Images,
+			}
+			variantValues = append(variantValues, variantValue)
 		}
+
+		productVariant.Value = variantValues
+		newProduct.Variant = append(newProduct.Variant, productVariant)
 	}
 
+	// Create the product using the handler
 	resp, err := productHandler.CreateProduct(ctx, newProduct)
 	if err != nil {
 		return nil, err
 	}
+
+	// Transform and return the response
 	schema := &model.Product{
 		Name:        resp.Name,
 		Description: resp.Description,
@@ -288,31 +286,29 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 		Store:       resp.Store,
 		Subcategory: resp.Subcategory,
 	}
-	var modeVariantPrd []*model.VariantValue
 
-	productVariant := &model.Variant{}
-
-	modelVariantValue := &model.VariantValue{}
 	if len(resp.Variant) != 0 {
-		for _, item := range resp.Variant {
-			productVariant.Name = item.Name
-			for _, item := range item.Value {
-				modelVariantValue.Value = item.Value
-				modelVariantValue.Price = item.Price
-				modelVariantValue.Images = item.Images
+		for _, outerItem := range resp.Variant {
+			productVariant := &model.Variant{}
+			productVariant.Name = outerItem.Name
+			variantValues := make([]*model.VariantValue, 0)
 
-				// Set the values for the productVariant
-				modeVariantPrd = append(modeVariantPrd, modelVariantValue)
+			for _, item := range outerItem.Value {
+				modelVariantValue := &model.VariantValue{
+					Value:  item.Value,
+					Price:  item.Price,
+					Images: item.Images,
+				}
+				variantValues = append(variantValues, modelVariantValue)
 			}
-
+			productVariant.Value = variantValues
+			schema.Variant = append(schema.Variant, productVariant)
 		}
-
-		productVariant.Value = modeVariantPrd
-		schema.Variant = append(schema.Variant, productVariant)
 	}
 
 	return schema, nil
 }
+
 
 // UpdateProduct is the resolver for the updateProduct field.
 func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.NewProduct) (*model.Product, error) {
@@ -629,24 +625,24 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 			Category:    item.Category,
 			Subcategory: item.Subcategory,
 		}
-		var modeVariantPrd []*model.VariantValue
-		productVariant := &model.Variant{}
 		if len(item.Variant) != 0 {
-			for _, item := range item.Variant {
-				productVariant.Name = item.Name
-				for _, item := range item.Value {
-					productVariantValue := &model.VariantValue{
-						Value:  item.Value,
-						Price:  item.Price,
-						Images: item.Images,
-					}
+			for _, outerItem := range item.Variant {
+			productVariant := &model.Variant{}
+			productVariant.Name = outerItem.Name
+			variantValues := make([]*model.VariantValue, 0)
 
-					// Set the values for the productVariant
-					modeVariantPrd = append(modeVariantPrd, productVariantValue)
+			for _, item := range outerItem.Value {
+				modelVariantValue := &model.VariantValue{
+					Value:  item.Value,
+					Price:  item.Price,
+					Images: item.Images,
 				}
+				variantValues = append(variantValues, modelVariantValue)
 			}
-			productVariant.Value = modeVariantPrd
+			productVariant.Value = variantValues
 			product.Variant = append(product.Variant, productVariant)
+		
+		}
 		}
 		products = append(products, product)
 	}
@@ -689,25 +685,25 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 		Category:    resp.Category,
 		Subcategory: resp.Subcategory,
 	}
-	var modeVariantPrd []*model.VariantValue
-	productVariant := &model.Variant{}
 	if len(resp.Variant) != 0 {
-		for _, item := range resp.Variant {
-			productVariant.Name = item.Name
-			for _, item := range item.Value {
-				productVariantValue := &model.VariantValue{
+			for _, outerItem := range resp.Variant {
+			productVariant := &model.Variant{}
+			productVariant.Name = outerItem.Name
+			variantValues := make([]*model.VariantValue, 0)
+
+			for _, item := range outerItem.Value {
+				modelVariantValue := &model.VariantValue{
 					Value:  item.Value,
 					Price:  item.Price,
 					Images: item.Images,
 				}
-
-				// Set the values for the productVariant
-				modeVariantPrd = append(modeVariantPrd, productVariantValue)
+				variantValues = append(variantValues, modelVariantValue)
 			}
+			productVariant.Value = variantValues
+			product.Variant = append(product.Variant, productVariant)
+		
 		}
-		productVariant.Value = modeVariantPrd
-		product.Variant = append(product.Variant, productVariant)
-	}
+		}
 	return product, nil
 }
 
@@ -775,24 +771,24 @@ func (r *queryResolver) RecommendedProducts(ctx context.Context, query string) (
 			Category:    item.Category,
 			Subcategory: item.Subcategory,
 		}
-		var modeVariantPrd []*model.VariantValue
-		productVariant := &model.Variant{}
 		if len(item.Variant) != 0 {
-			for _, item := range item.Variant {
-				productVariant.Name = item.Name
-				for _, item := range item.Value {
-					productVariantValue := &model.VariantValue{
-						Value:  item.Value,
-						Price:  item.Price,
-						Images: item.Images,
-					}
+			for _, outerItem := range item.Variant {
+			productVariant := &model.Variant{}
+			productVariant.Name = outerItem.Name
+			variantValues := make([]*model.VariantValue, 0)
 
-					// Set the values for the productVariant
-					modeVariantPrd = append(modeVariantPrd, productVariantValue)
+			for _, item := range outerItem.Value {
+				modelVariantValue := &model.VariantValue{
+					Value:  item.Value,
+					Price:  item.Price,
+					Images: item.Images,
 				}
+				variantValues = append(variantValues, modelVariantValue)
 			}
-			productVariant.Value = modeVariantPrd
+			productVariant.Value = variantValues
 			product.Variant = append(product.Variant, productVariant)
+		
+		}
 		}
 		products = append(products, product)
 	}
@@ -821,8 +817,6 @@ func (r *queryResolver) Cart(ctx context.Context, user int) (*model.Cart, error)
 	}
 	var modelCartItems []*model.CartItem
 
-	var productVariantValues []*model.VariantValue
-	productVariant := &model.Variant{}
 	for _, item := range resp.Items {
 		modelProduct := &model.Product{
 			ID:          int(item.Product.ID),
@@ -838,21 +832,23 @@ func (r *queryResolver) Cart(ctx context.Context, user int) (*model.Cart, error)
 			Store:       item.Product.Store,
 		}
 		if len(item.Product.Variant) != 0 {
-			for _, item := range item.Product.Variant {
-				productVariant.Name = item.Name
-				for _, item := range item.Value {
-					productVariantValue := &model.VariantValue{
-						Value:  item.Value,
-						Price:  item.Price,
-						Images: item.Images,
-					}
+			for _, outerItem := range item.Product.Variant {
+			productVariant := &model.Variant{}
+			productVariant.Name = outerItem.Name
+			variantValues := make([]*model.VariantValue, 0)
 
-					// Set the values for the productVariant
-					productVariantValues = append(productVariantValues, productVariantValue)
+			for _, item := range outerItem.Value {
+				modelVariantValue := &model.VariantValue{
+					Value:  item.Value,
+					Price:  item.Price,
+					Images: item.Images,
 				}
+				variantValues = append(variantValues, modelVariantValue)
 			}
-			productVariant.Value = productVariantValues
+			productVariant.Value = variantValues
 			modelProduct.Variant = append(modelProduct.Variant, productVariant)
+		
+		}
 		}
 		modelItem := &model.CartItem{
 			Product:  modelProduct,
@@ -885,8 +881,6 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 	}
 	var products []*model.Product
 
-	var productVariantValues []*model.VariantValue
-	productVariant := &model.Variant{}
 	for _, item := range resp {
 		product := &model.Product{
 			// ID:       strconv.FormatInt(int64(item.ID), 10),
@@ -902,21 +896,23 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 			Subcategory: item.Subcategory,
 		}
 		if len(item.Variant) != 0 {
-			for _, item := range item.Variant {
-				productVariant.Name = item.Name
-				for _, val := range item.Value {
-					productVariantValue := &model.VariantValue{
-						Value:  val.Value,
-						Price:  val.Price,
-						Images: val.Images,
-					}
+			for _, outerItem := range item.Variant {
+			productVariant := &model.Variant{}
+			productVariant.Name = outerItem.Name
+			variantValues := make([]*model.VariantValue, 0)
 
-					// Set the values for the productVariant
-					productVariantValues = append(productVariantValues, productVariantValue)
+			for _, item := range outerItem.Value {
+				modelVariantValue := &model.VariantValue{
+					Value:  item.Value,
+					Price:  item.Price,
+					Images: item.Images,
 				}
+				variantValues = append(variantValues, modelVariantValue)
 			}
-			productVariant.Value = productVariantValues
+			productVariant.Value = variantValues
 			product.Variant = append(product.Variant, productVariant)
+		
+		}
 		}
 		products = append(products, product)
 	}

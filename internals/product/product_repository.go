@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"gorm.io/driver/postgres"
@@ -82,6 +81,7 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 	if req.Discount > req.Price {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Discount cannot exceed Product Price")
 	}
+	fmt.Println("Varaint are %v\n",req.Variant)
 	newProduct := &Product{
 		Name:        req.Name,
 		Slug:        utils.GenerateSlug(req.Name),
@@ -97,11 +97,11 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 		Category:    category.Name,
 		Subcategory: subcategoryName,
 	}
-	// if err := r.db.Create(newProduct).Error; err != nil {
+	if err := r.db.Create(newProduct).Error; err != nil {
 
-	// 	log.Printf("Error creating product: %v", err)
-	// 	return nil, err
-	// }
+		log.Printf("Error creating product: %v", err)
+		return nil, err
+	}
 	return newProduct, nil
 }
 
