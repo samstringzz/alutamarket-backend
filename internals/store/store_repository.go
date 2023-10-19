@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -127,3 +126,4 @@ func (r *repository) UpdateStore(ctx context.Context, req *Store) (*Store, error
 
 	return existingStore, nil
 }
+

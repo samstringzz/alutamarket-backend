@@ -2,8 +2,6 @@ package store
 
 import (
 	"context"
-
-	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +12,6 @@ type Transactions struct {
 	StoreID uint32
 }
 
-type Product *product.Product
 type Follower struct {
 	gorm.Model
 	FollowerID    uint32 `json:"follower_id" db:"follower_id"`
@@ -28,7 +25,6 @@ type Store struct {
 	ID                 uint32    `gorm:"primaryKey;uniqueIndex;not null;autoIncrement"  json:"id" db:"id"`
 	Name               string    `json:"name" db:"name"`
 	UserID             uint32    `json:"user_id" db:"user_id"`
-	Products           []Product `gorm:"serializer:json"`
 	Link               string    `json:"link" db:"link"`
 	Description        string    `json:"description" db:"description"`
 	HasPhysicalAddress bool      `json:"hasphysical_address" db:"has_physical_address"`

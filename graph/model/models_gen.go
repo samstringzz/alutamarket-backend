@@ -54,20 +54,6 @@ type NewCategory struct {
 	Name string `json:"name"`
 }
 
-type NewProduct struct {
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Price       float64       `json:"price"`
-	Discount    float64       `json:"discount"`
-	Thumbnail   string        `json:"thumbnail"`
-	Image       []string      `json:"image"`
-	Quantity    int           `json:"quantity"`
-	Variant     []*NewVariant `json:"variant,omitempty"`
-	Store       string        `json:"store"`
-	Category    int           `json:"category"`
-	Subcategory int           `json:"subcategory"`
-}
-
 type NewSubCategory struct {
 	Name     string `json:"name"`
 	Category int    `json:"category"`
@@ -143,11 +129,41 @@ type Product struct {
 	Subcategory string     `json:"subcategory"`
 }
 
+type ProductInput struct {
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Price       float64       `json:"price"`
+	Discount    float64       `json:"discount"`
+	Thumbnail   string        `json:"thumbnail"`
+	Image       []string      `json:"image"`
+	Quantity    int           `json:"quantity"`
+	Variant     []*NewVariant `json:"variant,omitempty"`
+	Store       string        `json:"store"`
+	Category    int           `json:"category"`
+	Subcategory int           `json:"subcategory"`
+}
+
 type ProductPaginationData struct {
 	Data        []*Product `json:"data"`
 	CurrentPage int        `json:"current_page"`
 	PerPage     int        `json:"per_page"`
 	Total       int        `json:"total"`
+}
+
+type Review struct {
+	Username  string  `json:"username"`
+	Image     string  `json:"image"`
+	Message   string  `json:"message"`
+	Rating    float64 `json:"rating"`
+	ProductID int     `json:"productId"`
+}
+
+type ReviewInput struct {
+	Username  string  `json:"username"`
+	Image     string  `json:"image"`
+	Message   string  `json:"message"`
+	Rating    float64 `json:"rating"`
+	ProductID int     `json:"productId"`
 }
 
 type Store struct {
@@ -191,21 +207,23 @@ type SubCategory struct {
 }
 
 type User struct {
-	ID           string   `json:"id"`
-	Fullname     string   `json:"fullname"`
-	Email        string   `json:"email"`
-	Campus       string   `json:"campus"`
-	Avatar       *string  `json:"avatar,omitempty"`
-	Password     string   `json:"password"`
-	Phone        string   `json:"phone"`
-	Usertype     string   `json:"usertype"`
-	Stores       []*Store `json:"stores,omitempty"`
-	Active       bool     `json:"active"`
-	AccessToken  *string  `json:"access_token,omitempty"`
-	RefreshToken *string  `json:"refresh_token,omitempty"`
-	Twofa        bool     `json:"twofa"`
-	Code         string   `json:"code"`
-	Codeexpiry   string   `json:"codeexpiry"`
+	ID                     string     `json:"id"`
+	Fullname               string     `json:"fullname"`
+	Email                  string     `json:"email"`
+	Campus                 string     `json:"campus"`
+	Avatar                 *string    `json:"avatar,omitempty"`
+	Password               string     `json:"password"`
+	Phone                  string     `json:"phone"`
+	Usertype               string     `json:"usertype"`
+	Stores                 []*Store   `json:"stores,omitempty"`
+	Active                 bool       `json:"active"`
+	AccessToken            *string    `json:"access_token,omitempty"`
+	RefreshToken           *string    `json:"refresh_token,omitempty"`
+	Twofa                  bool       `json:"twofa"`
+	Code                   string     `json:"code"`
+	Codeexpiry             string     `json:"codeexpiry"`
+	RecentlyViewedProducts []*Product `json:"recently_viewed_products,omitempty"`
+	WishlistedProducts     []*Product `json:"wishlisted_products,omitempty"`
 }
 
 type Variant struct {

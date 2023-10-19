@@ -60,7 +60,7 @@ func (r *repository) GetUserByEmailOrPhone(ctx context.Context, identifier strin
 }
 
 func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User, error) {
-	// Start a new database transaction#
+	// Start a new database transaction
 
 	tx := r.db.Begin()
 	if tx.Error != nil {
@@ -86,9 +86,6 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		tx.Rollback()
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User already exists")
 	}
-	// createdStore := &store.Store{}
-
-	// stores := &store.Store{ID: 1}
 	newUser := &User{
 		Campus:     req.Campus,
 		Email:      req.Email,
@@ -118,7 +115,6 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 			Status:             true,
 			Phone:              req.StorePhone,
 		}
-		// tx.Model(newUser).Update("stores", stores.ID)
 		if err := tx.Create(createdStore).Error; err != nil {
 			tx.Rollback()
 			return nil, err
@@ -191,7 +187,6 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 		Usertype: user.Usertype,
 		Campus:   user.Campus,
 		Phone:    user.Phone,
-		Stores:   user.Stores,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    strconv.Itoa(int(user.ID)),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)), // Example: Refresh token expires in 7 days
@@ -214,7 +209,6 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 		Campus:   user.Campus,
 		Usertype: user.Usertype,
 		Phone:    user.Phone,
-		Stores:   user.Stores,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    strconv.Itoa(int(user.ID)),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
@@ -254,7 +248,7 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 
 func (r *repository) GetUsers(ctx context.Context) ([]*User, error) {
 	var users []*User
-	if err := r.db.Preload("stores").Find(&users).Error; err != nil {
+	if err := r.db.Find(&users).Error; err != nil {
 		return nil, err
 	}
 	return users, nil
@@ -278,4 +272,55 @@ func (r *repository) TwoFa(ctx context.Context, req *User) (bool, error) {
 	}
 	r.db.Model(&user).Update("two_fa", true)
 	return user.Twofa, nil
+}
+
+func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error {
+	// Retrieve the store with the given storeId
+	foundStore := &store.Store{}
+	if err := r.db.First(foundStore, storeId).Error; err != nil {
+		return err
+	}
+	// Convert userId to a string
+	userIdStr := strconv.FormatUint(uint64(userId), 10)
+	// Retrieve the user who wants to follow/unfollow the store
+
+	// Retrieve the user using the string representation of userId
+	foundUser, err := r.GetUser(ctx, userIdStr)
+	if err != nil {
+		return err
+	}
+
+	// Check if the user is already following the store
+	isFollowing := false
+	for _, follower := range foundStore.Followers {
+		if follower.FollowerID == userId {
+			isFollowing = true
+			break
+		}
+	}
+	// Toggle the follow status
+	if isFollowing {
+		// If already following, unfollow
+		newFollowers := make([]store.Follower, 0)
+		for _, follower := range foundStore.Followers {
+			if follower.FollowerID != userId {
+				newFollowers = append(newFollowers, follower)
+			}
+		}
+		foundStore.Followers = newFollowers
+	} else {
+		// If not following, follow
+		foundStore.Followers = append(foundStore.Followers, store.Follower{
+			FollowerID:    userId,
+			FollowerName:  foundUser.Fullname,
+			FollowerImage: foundUser.Avatar,
+		})
+	}
+
+	// Save the updated store with GORM
+	if err := r.db.Save(foundStore).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

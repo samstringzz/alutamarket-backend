@@ -3,33 +3,29 @@ package user
 import (
 	"context"
 	"time"
-
-	// "github.com/Chrisentech/aluta-market-api/internals/product"
-	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"gorm.io/gorm"
 )
 
-type Store *store.Store
 
 // type Product *product.Product
 type User struct {
 	gorm.Model
-	ID           uint32    `gorm:"primaryKey;uniqueIndex;not null;autoIncrement" json:"id" db:"id"` // Unique identifier for the user
-	Campus       string    `json:"campus" db:"campus"`                                              // Campus of the user
-	Email        string    `json:"email" db:"email"`                                                // Email address of the user
-	Password     string    `json:"password" db:"password"`                                          // Password of the user
-	Fullname     string    `json:"fullname" db:"fullname"`                                          // Full name of the user
-	Phone        string    `json:"phone" db:"phone"`                                                // Phone number of the user
-	Usertype     string    `json:"usertype" db:"usertype"`                                          // Type of user (e.g., seller,buyer,admin)
-	Active       bool      `json:"active" db:"active"`                                              // For accesibility of user,
-	Stores       []Store   `gorm:"serializer:json;foreignKey:UserID" json:"stores"`
-	Twofa        bool      `json:"twofa" db:"twofa"`                           // Two factor authentication
-	AccessToken  string    `json:"access_token,omitempty" db:"access_token"`   // Balance of the user's wallet (only for seller)
-	RefreshToken string    `json:"refresh_token,omitempty" db:"refresh_token"` // Balance of the user's wallet (only for seller)
-	Code         string    `json:"code,omitempty" db:"code"`                   // otp code for verifications
-	Codeexpiry   time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"`       // Expiry time for otpCode
-	CreatedAt    time.Time // Set to current time if it is zero on creating
-
+	ID             uint32    `gorm:"primaryKey;uniqueIndex;not null;autoIncrement" json:"id" db:"id"` // Unique identifier for the user
+	Campus         string    `json:"campus" db:"campus"`                                              // Campus of the user
+	Email          string    `json:"email" db:"email"`                                                // Email address of the user
+	Password       string    `json:"password" db:"password"`                                          // Password of the user
+	Fullname       string    `json:"fullname" db:"fullname"`                                          // Full name of the user
+	Phone          string    `json:"phone" db:"phone"`                                                // Phone number of the user
+	Avatar         string    `json:"avatar" db:"avatar"`                                              // Phone number of the user
+	Usertype       string    `json:"usertype" db:"usertype"`                                          // Type of user (e.g., seller,buyer,admin)
+	RecentlyViewed []uint32  `gorm:"serializer:json" json:"recently_viewed" db:"recently_viewed"`
+	Active         bool      `json:"active" db:"active"`
+	Twofa          bool      `json:"twofa" db:"twofa"`                           // Two factor authentication
+	AccessToken    string    `json:"access_token,omitempty" db:"access_token"`   // Balance of the user's wallet (only for seller)
+	RefreshToken   string    `json:"refresh_token,omitempty" db:"refresh_token"` // Balance of the user's wallet (only for seller)
+	Code           string    `json:"code,omitempty" db:"code"`                   // otp code for verifications
+	Codeexpiry     time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"`       // Expiry time for otpCode
+	CreatedAt      time.Time // Set to current time if it is zero on creating
 }
 
 type CreateUserReq struct {
@@ -81,6 +77,7 @@ type Repository interface {
 	GetUserByEmailOrPhone(ctx context.Context, email string) (*User, error) // Get user information by email
 	Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error)      // Perform user login
 	VerifyOTP(ctx context.Context, req *User) (*User, error)
+	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error
 }
 
 type Service interface {
@@ -89,5 +86,6 @@ type Service interface {
 	GetUser(ctx context.Context, filter string) (*User, error) // Create a new user
 	VerifyOTP(ctx context.Context, req *User) (*User, error)
 	Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error) // Perform user login
+	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error
 
 }

@@ -45,7 +45,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		userReq.StoreAddress = input.Stores.Address
 		userReq.Description = input.Stores.Description
 		userReq.HasPhysicalAddress = input.Stores.HasPhysicalAddress
-		// userReq.Phone = input.Stores.Phone
+		userReq.Phone = input.Stores.Phone
 	}
 	_, err := userHandler.CreateUser(ctx, userReq)
 
@@ -149,8 +149,72 @@ func (r *mutationResolver) AddWishListedProduct(ctx context.Context, userID int,
 	return schema, nil
 }
 
+// AddReview is the resolver for the addReview field.
+func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInput) (*model.Review, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
+	productRep := app.InitializePackage(app.ProductPackage)
+
+	productRepository, ok := productRep.(product.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("productRep is not a product.Repository")
+	}
+	productSrvc := product.NewService(productRepository)
+	productHandler := product.NewHandler(productSrvc)
+	newReview := &product.Review{
+		Username:  input.Username,
+		Image:     input.Image,
+		Message:   input.Message,
+		Rating:    input.Rating,
+		ProductID: uint32(input.ProductID),
+	}
+	resp, err := productHandler.AddReview(ctx, newReview)
+	if err != nil {
+		return nil, err
+	}
+	NewReview := &model.Review{
+		Username: resp.Username,
+		Image:    resp.Image,
+		Message:  resp.Message,
+		Rating:   resp.Rating,
+		ProductID: int(resp.ProductID),
+	}
+
+	return NewReview, nil
+}
+
+// AddRecentlyViewed is the resolver for the addRecentlyViewed field.
+func (r *mutationResolver) AddRecentlyViewed(ctx context.Context, user int, productID int) (string, error) {
+	productRep := app.InitializePackage(app.ProductPackage)
+
+	productRepository, ok := productRep.(product.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return "", fmt.Errorf("productRep is not a product.Repository")
+	}
+	productSrvc := product.NewService(productRepository)
+	productHandler := product.NewHandler(productSrvc)
+	err := productHandler.AddRecentlyViewedProducts(ctx, uint32(user), uint32(productID))
+	if err != nil {
+		return "", err
+	}
+
+	return "Product added to viewed list", nil
+}
+
 // RemoveWishListedProduct is the resolver for the removeWishListedProduct field.
 func (r *mutationResolver) RemoveWishListedProduct(ctx context.Context, user int) (*model.WishList, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	productRep := app.InitializePackage(app.ProductPackage)
 
 	productRepository, ok := productRep.(product.Repository)
@@ -172,6 +236,12 @@ func (r *mutationResolver) RemoveWishListedProduct(ctx context.Context, user int
 
 // CreateCategory is the resolver for the createCategory field.
 func (r *mutationResolver) CreateCategory(ctx context.Context, input model.NewCategory) (*model.Category, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("admin",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	productRep := app.InitializePackage(app.ProductPackage)
 
 	productRepository, ok := productRep.(product.Repository)
@@ -197,6 +267,12 @@ func (r *mutationResolver) CreateCategory(ctx context.Context, input model.NewCa
 
 // CreateSubCategory is the resolver for the createSubCategory field.
 func (r *mutationResolver) CreateSubCategory(ctx context.Context, input model.NewSubCategory) (*model.SubCategory, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("admin",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	productRep := app.InitializePackage(app.ProductPackage)
 
 	productRepository, ok := productRep.(product.Repository)
@@ -223,7 +299,13 @@ func (r *mutationResolver) CreateSubCategory(ctx context.Context, input model.Ne
 }
 
 // CreateProduct is the resolver for the createProduct field.
-func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewProduct) (*model.Product, error) {
+func (r *mutationResolver) CreateProduct(ctx context.Context, input model.ProductInput) (*model.Product, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	productRep := app.InitializePackage(app.ProductPackage)
 	productRepository, ok := productRep.(product.Repository)
 	if !ok {
@@ -309,14 +391,36 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 	return schema, nil
 }
 
-
 // UpdateProduct is the resolver for the updateProduct field.
-func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.NewProduct) (*model.Product, error) {
+func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.ProductInput) (*model.Product, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	panic(fmt.Errorf("not implemented: UpdateProduct - updateProduct"))
+}
+
+// ToggleStoreFollowStatus is the resolver for the toggleStoreFollowStatus field.
+func (r *mutationResolver) ToggleStoreFollowStatus(ctx context.Context, user int, store int) (*string, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
+	panic(fmt.Errorf("not implemented: ToggleStoreFollowStatus - toggleStoreFollowStatus"))
 }
 
 // DeleteProduct is the resolver for the deleteProduct field.
 func (r *mutationResolver) DeleteProduct(ctx context.Context, productID int) (*model.Product, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	panic(fmt.Errorf("not implemented: DeleteProduct - deleteProduct"))
 }
 
@@ -397,21 +501,45 @@ func (r *mutationResolver) RemoveAllCart(ctx context.Context, cartID int) (*mode
 
 // CreateStore is the resolver for the createStore field.
 func (r *mutationResolver) CreateStore(ctx context.Context, input model.StoreInput) (*model.Store, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	panic(fmt.Errorf("not implemented: CreateStore - createStore"))
 }
 
 // UpdateStore is the resolver for the updateStore field.
 func (r *mutationResolver) UpdateStore(ctx context.Context, storeID int) (*model.Store, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	panic(fmt.Errorf("not implemented: UpdateStore - updateStore"))
 }
 
 // DeleteStore is the resolver for the deleteStore field.
 func (r *mutationResolver) DeleteStore(ctx context.Context, storeID int) (*model.Store, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	panic(fmt.Errorf("not implemented: DeleteStore - deleteStore"))
 }
 
 // InitializePayment is the resolver for the initializePayment field.
 func (r *mutationResolver) InitializePayment(ctx context.Context, input model.PaymentData) (*string, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	cartRep := app.InitializePackage(app.CartPackage)
 
 	cartRepository, ok := cartRep.(cart.Repository)
@@ -471,19 +599,6 @@ func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*
 			Password: "lol......what do y'need it for?",
 		}
 
-		for _, store := range item.Stores {
-			stores := &model.Store{
-				ID:          strconv.FormatInt(int64(store.ID), 10),
-				Name:        store.Name,
-				Description: store.Description,
-				Link:        store.Link,
-				User:        int(store.UserID),
-				// Products: store.Products,
-				// Followers: store.Followers,
-				HasPhysicalAddress: store.HasPhysicalAddress,
-			}
-			user.Stores = append(user.Stores, stores)
-		}
 		users = append(users, user)
 	}
 
@@ -523,19 +638,7 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 		// Codeexpiry: resp.Codeexpiry.Format(time.RFC3339),
 		Password: "lol......what do y'need it for?",
 	}
-	for _, store := range resp.Stores {
-		stores := &model.Store{
-			ID:          strconv.FormatInt(int64(store.ID), 10),
-			Name:        store.Name,
-			Description: store.Name,
-			Link:        store.Link,
-			User:        int(store.UserID),
-			// Products: store.Products,
-			// Followers: store.Followers,
-			HasPhysicalAddress: store.HasPhysicalAddress,
-		}
-		user.Stores = append(user.Stores, stores)
-	}
+
 	return user, nil
 }
 
@@ -627,22 +730,22 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 		}
 		if len(item.Variant) != 0 {
 			for _, outerItem := range item.Variant {
-			productVariant := &model.Variant{}
-			productVariant.Name = outerItem.Name
-			variantValues := make([]*model.VariantValue, 0)
+				productVariant := &model.Variant{}
+				productVariant.Name = outerItem.Name
+				variantValues := make([]*model.VariantValue, 0)
 
-			for _, item := range outerItem.Value {
-				modelVariantValue := &model.VariantValue{
-					Value:  item.Value,
-					Price:  item.Price,
-					Images: item.Images,
+				for _, item := range outerItem.Value {
+					modelVariantValue := &model.VariantValue{
+						Value:  item.Value,
+						Price:  item.Price,
+						Images: item.Images,
+					}
+					variantValues = append(variantValues, modelVariantValue)
 				}
-				variantValues = append(variantValues, modelVariantValue)
+				productVariant.Value = variantValues
+				product.Variant = append(product.Variant, productVariant)
+
 			}
-			productVariant.Value = variantValues
-			product.Variant = append(product.Variant, productVariant)
-		
-		}
 		}
 		products = append(products, product)
 	}
@@ -667,7 +770,7 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 	}
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
-	resp, err := productHandler.GetProduct(ctx, uint32(id))
+	resp, err := productHandler.GetProduct(ctx, uint32(id), 0)
 	if err != nil {
 		return nil, err
 	}
@@ -686,7 +789,7 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 		Subcategory: resp.Subcategory,
 	}
 	if len(resp.Variant) != 0 {
-			for _, outerItem := range resp.Variant {
+		for _, outerItem := range resp.Variant {
 			productVariant := &model.Variant{}
 			productVariant.Name = outerItem.Name
 			variantValues := make([]*model.VariantValue, 0)
@@ -701,9 +804,9 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 			}
 			productVariant.Value = variantValues
 			product.Variant = append(product.Variant, productVariant)
-		
+
 		}
-		}
+	}
 	return product, nil
 }
 
@@ -773,26 +876,42 @@ func (r *queryResolver) RecommendedProducts(ctx context.Context, query string) (
 		}
 		if len(item.Variant) != 0 {
 			for _, outerItem := range item.Variant {
-			productVariant := &model.Variant{}
-			productVariant.Name = outerItem.Name
-			variantValues := make([]*model.VariantValue, 0)
+				productVariant := &model.Variant{}
+				productVariant.Name = outerItem.Name
+				variantValues := make([]*model.VariantValue, 0)
 
-			for _, item := range outerItem.Value {
-				modelVariantValue := &model.VariantValue{
-					Value:  item.Value,
-					Price:  item.Price,
-					Images: item.Images,
+				for _, item := range outerItem.Value {
+					modelVariantValue := &model.VariantValue{
+						Value:  item.Value,
+						Price:  item.Price,
+						Images: item.Images,
+					}
+					variantValues = append(variantValues, modelVariantValue)
 				}
-				variantValues = append(variantValues, modelVariantValue)
+				productVariant.Value = variantValues
+				product.Variant = append(product.Variant, productVariant)
+
 			}
-			productVariant.Value = variantValues
-			product.Variant = append(product.Variant, productVariant)
-		
-		}
 		}
 		products = append(products, product)
 	}
 	return products, nil
+}
+
+// RecentlyAddedProducts is the resolver for the RecentlyAddedProducts field.
+func (r *queryResolver) RecentlyAddedProducts(ctx context.Context, user int) ([]*model.Product, error) {
+	panic(fmt.Errorf("not implemented: RecentlyAddedProducts - RecentlyAddedProducts"))
+}
+
+// ProductReviews is the resolver for the ProductReviews field.
+func (r *queryResolver) ProductReviews(ctx context.Context, id int) ([]*model.Review, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
+	panic(fmt.Errorf("not implemented: ProductReviews - ProductReviews"))
 }
 
 // Cart is the resolver for the Cart field.
@@ -833,22 +952,22 @@ func (r *queryResolver) Cart(ctx context.Context, user int) (*model.Cart, error)
 		}
 		if len(item.Product.Variant) != 0 {
 			for _, outerItem := range item.Product.Variant {
-			productVariant := &model.Variant{}
-			productVariant.Name = outerItem.Name
-			variantValues := make([]*model.VariantValue, 0)
+				productVariant := &model.Variant{}
+				productVariant.Name = outerItem.Name
+				variantValues := make([]*model.VariantValue, 0)
 
-			for _, item := range outerItem.Value {
-				modelVariantValue := &model.VariantValue{
-					Value:  item.Value,
-					Price:  item.Price,
-					Images: item.Images,
+				for _, item := range outerItem.Value {
+					modelVariantValue := &model.VariantValue{
+						Value:  item.Value,
+						Price:  item.Price,
+						Images: item.Images,
+					}
+					variantValues = append(variantValues, modelVariantValue)
 				}
-				variantValues = append(variantValues, modelVariantValue)
+				productVariant.Value = variantValues
+				modelProduct.Variant = append(modelProduct.Variant, productVariant)
+
 			}
-			productVariant.Value = variantValues
-			modelProduct.Variant = append(modelProduct.Variant, productVariant)
-		
-		}
 		}
 		modelItem := &model.CartItem{
 			Product:  modelProduct,
@@ -897,22 +1016,22 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 		}
 		if len(item.Variant) != 0 {
 			for _, outerItem := range item.Variant {
-			productVariant := &model.Variant{}
-			productVariant.Name = outerItem.Name
-			variantValues := make([]*model.VariantValue, 0)
+				productVariant := &model.Variant{}
+				productVariant.Name = outerItem.Name
+				variantValues := make([]*model.VariantValue, 0)
 
-			for _, item := range outerItem.Value {
-				modelVariantValue := &model.VariantValue{
-					Value:  item.Value,
-					Price:  item.Price,
-					Images: item.Images,
+				for _, item := range outerItem.Value {
+					modelVariantValue := &model.VariantValue{
+						Value:  item.Value,
+						Price:  item.Price,
+						Images: item.Images,
+					}
+					variantValues = append(variantValues, modelVariantValue)
 				}
-				variantValues = append(variantValues, modelVariantValue)
+				productVariant.Value = variantValues
+				product.Variant = append(product.Variant, productVariant)
+
 			}
-			productVariant.Value = variantValues
-			product.Variant = append(product.Variant, productVariant)
-		
-		}
 		}
 		products = append(products, product)
 	}
@@ -921,11 +1040,23 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 
 // Stores is the resolver for the Stores field.
 func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offset *int) (*model.StorePaginationData, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	panic(fmt.Errorf("not implemented: Stores - Stores"))
 }
 
 // Store is the resolver for the Store field.
 func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error) {
+	token:= ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("",token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	panic(fmt.Errorf("not implemented: Store - Store"))
 }
 

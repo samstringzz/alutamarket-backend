@@ -43,6 +43,19 @@ type WishList {
   productStatus: Boolean
   productQuantity: Int
 }
+input ProductInput {
+  name: String!
+  description: String!
+  price: Float!
+  discount: Float!
+  thumbnail: String!
+  image: [String!]!
+  quantity: Int!
+  variant: [NewVariant!]
+  store: String!
+  category: Int!
+  subcategory: Int!
+}
 input StoreInput {
   id: ID
   link: String!
@@ -73,6 +86,8 @@ type User {
   twofa: Boolean!
   code: String!
   codeexpiry: String!
+  recently_viewed_products:[Product!]
+  wishlisted_products:[Product]
 }
 
 input NewUser {
@@ -157,19 +172,7 @@ type Product {
   category: String!
   subcategory: String!
 }
-input NewProduct {
-  name: String!
-  description: String!
-  price: Float!
-  discount: Float!
-  thumbnail: String!
-  image: [String!]!
-  quantity: Int!
-  variant: [NewVariant!]
-  store: String!
-  category: Int!
-  subcategory: Int!
-}
+
 input PaymentData {
   storeID: [Int!]
   status: String
@@ -193,7 +196,20 @@ type LoginRes {
   access_token: String!
   refresh_token: String!
 }
-
+type Review {
+  username: String!
+  image: String!
+  message:String!
+  rating: Float!
+  productId: Int!
+}
+input ReviewInput {
+  username: String!
+  image: String!
+  message: String!
+  rating: Float!
+  productId: Int!
+}
 input LoginReq {
   email: String!
   password: String!
@@ -217,8 +233,10 @@ type Query {
   Product(id: Int!): Product
   WishListedProducts(user: Int!): [WishList!]!
   RecommendedProducts(query:String!):[Product!]!
+  RecentlyAddedProducts(user: Int!) : [Product!]!
+  ProductReviews(id:Int!):[Review!]!
   Cart(user: Int!): Cart!
-  searchProducts(query: String!): [Product]
+  searchProducts(query: String!): [Product!]
   Stores(user: Int, limit: Int, offset: Int): StorePaginationData!
   Store(id: Int!): Store
 }
@@ -228,11 +246,14 @@ type Mutation {
   createVerifyOTP(input: NewVerifyOTP!): User!
   loginUser(input: LoginReq!): LoginRes!
   addWishListedProduct(userId: Int!, productId: Int!): WishList!
+  addReview(input:ReviewInput!): Review!
+  addRecentlyViewed(user: Int!,productId: Int!) : String!
   removeWishListedProduct(user: Int!): WishList
   createCategory(input: NewCategory!): Category!
   createSubCategory(input: NewSubCategory!): SubCategory!
-  createProduct(input: NewProduct!): Product!
-  updateProduct(input: NewProduct): Product!
+  createProduct(input: ProductInput!): Product!
+  updateProduct(input: ProductInput): Product!
+  toggleStoreFollowStatus(user:Int!,store:Int!): String
   deleteProduct(productId: Int!): Product!
   modifyCart(input: ModifyCartItemInput!): Cart!
   removeAllCart(cartID: Int!): Cart!
