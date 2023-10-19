@@ -2,11 +2,16 @@ package product
 
 import (
 	"context"
-
+	"time"
 	"gorm.io/gorm"
-	// "github.com/Chrisentech/aluta-market-api/internals/store"
 )
 
+type AdsGen struct {
+	gorm.Model
+	ID       uint32    `json:"id" db:"id"`
+	Units    uint8     `json:"units" db:"units"`
+	Validity time.Time `json:"validity" db:"validity"`
+}
 type Category struct {
 	gorm.Model
 	ID            int           `json:"id" db:"id"`
@@ -15,7 +20,6 @@ type Category struct {
 	SubCategories []SubCategory `gorm:"serializer:json"`
 }
 type SubCategory struct {
-	gorm.Model
 	Name       string `json:"name"`
 	Slug       string `json:"slug"`
 	CategoryID uint32 `json:"category"`
@@ -27,12 +31,12 @@ type Review struct {
 	Username  string `json:"username" db:"username"`
 	Image     string `json:"image" db:"image"`
 	Message   string `json:"message" db:"message"`
-	Rating    uint8  `json:"rating" db:"rating"`
+	Rating    float64  `json:"rating" db:"rating"`
 	ProductID uint32 `json:"product" db:"product_id"`
 }
 type VariantValue struct {
-	Value string  `json:"value" db:"value"`
-	Price float64 `json:"price,omitempty" db:"price"`
+	Value  string   `json:"value" db:"value"`
+	Price  float64  `json:"price,omitempty" db:"price"`
 	Images []string `gorm:"serializer:json"  json:"images,omitempty" db:"images"`
 }
 type VariantType struct {
@@ -74,9 +78,16 @@ type Product struct {
 	Views       []uint32       `gorm:"serializer:json" jsinput.ProductIDon:"views" db:"views"`
 	Subcategory string         `json:"subcategory" db:"subcategory"`
 	Reviews     []*Review      `gorm:"serializer:json"`
+	Ads         *AdsGen        `gorm:"serializer:json" json:"ads,omitempty" db:"ads"`
 }
 
 type WishListedProduct struct {
+	gorm.Model
+	UserID  uint32   `json:"user_id" db:"user_id"`
+	Product *Product `gorm:"embedded"`
+}
+
+type RecentlyViewedProduct struct {
 	gorm.Model
 	UserID  uint32   `json:"user_id" db:"user_id"`
 	Product *Product `gorm:"embedded"`
@@ -94,7 +105,7 @@ type Repository interface {
 	GetCategories(ctx context.Context) ([]*Category, error)
 	GetCategory(ctx context.Context, id uint32) (*Category, error)
 	CreateProduct(ctx context.Context, product *NewProduct) (*Product, error)
-	GetProduct(ctx context.Context, id uint32) (*Product, error)
+	GetProduct(ctx context.Context, productId, userId uint32) (*Product, error)
 	GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, error)
 	AddWishListedProduct(ctx context.Context, userId, productId uint32) (*WishListedProduct, error)
 	GetWishListedProducts(ctx context.Context, userId uint32) ([]*WishListedProduct, error)
@@ -104,6 +115,10 @@ type Repository interface {
 	// GetProductByFilter(ctx context.Context, filter string,filterOption string )(*Product,error)    //by slug,by store,by id,(by category||subcategory)
 	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
 	DeleteProduct(ctx context.Context, id uint32) error
+	GetRecentlyViewedProducts(ctx context.Context, userId uint32) ([]*Product, error)
+	AddRecentlyViewedProducts(ctx context.Context, userId,productId uint32) error
+	AddReview(ctx context.Context, input *Review) (*Review,error)
+	GetReviews(ctx context.Context, productId uint32) ([]*Review,error)
 }
 
 type Service interface {
@@ -113,7 +128,7 @@ type Service interface {
 	GetCategory(ctx context.Context, id uint32) (*Category, error)
 	CreateProduct(ctx context.Context, product *NewProduct) (*Product, error)
 	GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, error)
-	GetProduct(ctx context.Context, id uint32) (*Product, error)
+	GetProduct(ctx context.Context, productId, userId uint32) (*Product, error)
 	GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error)
 	// GetProductByFilter(ctx context.Context, filter string,filterOption string)(*Product,error)    //by slug,by store,by id,(by category||subcategory)
 	SearchProducts(ctx context.Context, query string) ([]*Product, error)
@@ -121,9 +136,14 @@ type Service interface {
 	AddWishListedProduct(ctx context.Context, userId, productId uint32) (*WishListedProduct, error)
 	GetWishListedProducts(ctx context.Context, userId uint32) ([]*WishListedProduct, error)
 	RemoveWishListedProduct(ctx context.Context, userId uint32) error
+	AddRecentlyViewedProducts(ctx context.Context, userId,productId uint32) error
+	GetRecentlyViewedProducts(ctx context.Context, userId uint32) ([]*Product, error)
+	AddReview(ctx context.Context, input *Review) (*Review,error)
+	GetReviews(ctx context.Context, productId uint32) ([]*Review,error)
 	DeleteProduct(ctx context.Context, id uint32) error
 
 	// Left are
-	// Add Review to Product/Store?? yet to be decided
+	// Add Review to Product??
+	//
 
 }

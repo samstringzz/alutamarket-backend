@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -28,7 +27,6 @@ type MyJWTClaims struct {
 	Campus   string   `json:"campus"`
 	Phone    string   `json:"phone"`
 	Usertype string   `json:"usertype"`
-	Stores   []Store `json:"stores"`
 	jwt.RegisteredClaims
 }
 
@@ -107,4 +105,16 @@ func (s *service) Login(c context.Context, req *LoginUserReq) (*LoginUserRes, er
 		return &LoginUserRes{}, err
 	}
 	return u, nil
+}
+
+func (s *service) ToggleStoreFollowStatus(c context.Context,userId, storeId uint32) error {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	 err := s.Repository.ToggleStoreFollowStatus(ctx, userId, storeId )
+	if err != nil {
+		// return &LoginUserRes{}, err
+		return err
+	}
+	return  nil
 }

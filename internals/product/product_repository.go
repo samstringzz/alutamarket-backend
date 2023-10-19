@@ -6,7 +6,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+
 	"github.com/Chrisentech/aluta-market-api/errors"
+	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -60,10 +63,14 @@ func (r *repository) CreateSubCategory(ctx context.Context, req SubCategory) (*C
 	return category, nil
 }
 
-func (r *repository) GetProduct(ctx context.Context, id uint32) (*Product, error) {
+func (r *repository) GetProduct(ctx context.Context, id, user uint32) (*Product, error) {
 	p := Product{}
 	err := r.db.Where("id = ?", id).First(&p).Error
 	if err != nil {
+		return nil, err
+	}
+	if user != 0 {
+		err = r.AddRecentlyViewedProducts(ctx, user, id)
 		return nil, err
 	}
 	return &p, nil
@@ -85,7 +92,7 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 		Name:        req.Name,
 		Slug:        utils.GenerateSlug(req.Name),
 		Description: req.Description,
-		Images:       req.Images,
+		Images:      req.Images,
 		Thumbnail:   req.Thumbnail,
 		Price:       req.Price,
 		Discount:    req.Discount,
@@ -107,7 +114,7 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 func (r *repository) UpdateProduct(ctx context.Context, req *Product) (*Product, error) {
 
 	// First, check if the product exists by its ID or another unique identifier
-	existingProduct, err := r.GetProduct(ctx, req.ID)
+	existingProduct, err := r.GetProduct(ctx, req.ID, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +160,7 @@ func (r *repository) UpdateProduct(ctx context.Context, req *Product) (*Product,
 }
 
 func (r *repository) DeleteProduct(ctx context.Context, id uint32) error {
-	existingProduct, err := r.GetProduct(ctx, id)
+	existingProduct, err := r.GetProduct(ctx, id, 0)
 	if err != nil {
 		return err
 	}
@@ -163,7 +170,7 @@ func (r *repository) DeleteProduct(ctx context.Context, id uint32) error {
 }
 func (r *repository) AddWishListedProduct(ctx context.Context, userId, productId uint32) (*WishListedProduct, error) {
 	wishlist := &WishListedProduct{}
-	foundProduct, err := r.GetProduct(ctx, productId)
+	foundProduct, err := r.GetProduct(ctx, productId, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -228,25 +235,93 @@ func (r *repository) GetCategory(ctx context.Context, id uint32) (*Category, err
 	}
 	return &p, nil
 }
+func (r *repository) AddRecentlyViewedProducts(ctx context.Context, userId, productId uint32) error {
+	product, err := r.GetProduct(ctx, productId, userId)
 
-func (r *repository) AddRecommendedProducts(ctx context.Context, userId uint32, productId uint32) error {
-	_, err := r.GetProduct(ctx, productId)
 	if err != nil {
 		return err
 	}
-	// existingProduct.Views = append(existingProduct.Views, userId)
-	// err = r.db.Model(existingProduct).Update("views", existingProduct.Views).Error
-	return err
+
+	foundView := false
+
+	// Update the Views of the product clicked
+	for _, view := range product.Views {
+		if view == userId {
+			foundView = true
+			break
+		}
+	}
+
+	if !foundView {
+		product.Views = append(product.Views, userId)
+		err = r.db.Save(product).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	// Update the user's recentlyViewed
+	foundUser, err := user.NewRepository().GetUser(ctx, strconv.FormatUint(uint64(userId), 10)) // Replace with your GetUser implementation
+
+	if err != nil {
+		return err
+	}
+
+	// Check if the product already exists in the RecentlyViewed
+	var productIndex uint32 = 0
+	for i, viewedProduct := range foundUser.RecentlyViewed {
+		if viewedProduct == productId {
+			productIndex = uint32(i)
+			break
+		}
+	}
+
+	if productIndex >= 0 {
+		// Move the product to the first item in the array
+		viewedProduct := foundUser.RecentlyViewed[productIndex]
+		foundUser.RecentlyViewed = append(foundUser.RecentlyViewed[:productIndex], foundUser.RecentlyViewed[productIndex+1:]...)
+		foundUser.RecentlyViewed = append(foundUser.RecentlyViewed, viewedProduct)
+	} else {
+		// If the product is not already in RecentlyViewed, add it
+		recentlyViewedProduct := productId
+		foundUser.RecentlyViewed = append(foundUser.RecentlyViewed, recentlyViewedProduct)
+	}
+
+	// Ensure the RecentlyViewed list is not more than 8 items
+	if len(foundUser.RecentlyViewed) > 8 {
+		foundUser.RecentlyViewed = foundUser.RecentlyViewed[:8]
+	}
+
+	// Update the user in the database (assuming a SaveUser function)
+	err = r.db.Save(foundUser).Error // Replace with your SaveUser implementation
+
+	return nil
+}
+
+func (r *repository) GetRecentlyViewedProducts(ctx context.Context, userId uint32) ([]*Product, error) {
+	// Update the user's recentlyViewed
+	foundUser, err := user.NewRepository().GetUser(ctx, strconv.FormatUint(uint64(userId), 10)) // Replace with your GetUser implementation
+	if err != nil {
+		return nil, err
+	}
+	viewedProducts := foundUser.RecentlyViewed
+	var products []*Product
+
+	for _, item := range viewedProducts {
+		product, _ := r.GetProduct(ctx, item, 0)
+		products = append(products, product)
+	}
+	return products, nil
 }
 
 func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
-	var products []*Product
+	var result []*Product
 	if err := r.db.Where("name ILIKE ? OR category ILIKE ? OR subcategory ILIKE ? OR store ILIKE ?",
 		"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%").
-		Find(&products).Error; err != nil {
+		Find(&result).Error; err != nil {
 		return nil, err
 	}
-	return products, nil
+	return result, nil
 }
 
 func (r *repository) GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error) {
@@ -257,3 +332,25 @@ func (r *repository) GetRecommendedProducts(ctx context.Context, query string) (
 
 	return products, nil
 }
+
+func (r *repository) AddReview(ctx context.Context, input *Review) (*Review, error) {
+	product, err := r.GetProduct(ctx, input.ProductID, 0)
+	if err != nil {
+		return nil, err
+	}
+	product.Reviews = append(product.Reviews, input)
+	err = r.db.Save(product).Error
+	if err != nil {
+		return nil, err
+	}
+	return input, nil
+}
+
+func (r *repository) GetReviews(ctx context.Context, productId uint32) ([]*Review, error) {
+	product, err := r.GetProduct(ctx, productId, 0)
+	if err != nil {
+		return nil, err
+	}
+	return product.Reviews, nil
+}
+

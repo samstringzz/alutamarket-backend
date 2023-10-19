@@ -44,8 +44,8 @@ func (h *Handler) CreateSubCategory(ctx context.Context, input SubCategory) (*Ca
 	return item, nil
 }
 
-func (h *Handler) GetProduct(ctx context.Context, id uint32) (*Product, error) {
-	item, err := h.Service.GetProduct(ctx, id)
+func (h *Handler) GetProduct(ctx context.Context, productId,userId uint32) (*Product, error) {
+	item, err := h.Service.GetProduct(ctx, productId,userId)
 	if err != nil {
 		return nil, err
 	}
@@ -112,4 +112,36 @@ func (h *Handler) SearchProducts(ctx context.Context, query string)([]*Product,e
 		return nil, err
 	}
 	return item, nil
+}
+
+func (h *Handler) GetReviews(ctx context.Context, productId uint32)([]*Review,error){
+	item, err := h.Service.GetReviews(ctx, productId)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+func (h *Handler) GetRecentlyViewedProducts(ctx context.Context, user uint32)([]*Product,error){
+	item, err := h.Service.GetRecentlyViewedProducts(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+func (h *Handler) AddReview(ctx context.Context, input *Review)(*Review,error){
+	item, err := h.Service.AddReview(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+func (h *Handler) AddRecentlyViewedProducts(ctx context.Context, userId,productId uint32)error{
+	err := h.Service.AddRecentlyViewedProducts(ctx, userId,productId)
+	if err != nil {
+		return  err
+	}
+	return nil
 }
