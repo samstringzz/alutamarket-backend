@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"strconv"
 
 	"encoding/json"
 	"log"
-    "net/http"
-    "io"
+	"net/http"
 	"os"
+	"strings"
 
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
@@ -26,9 +27,23 @@ type repository struct {
 	db *gorm.DB
 }
 type WebhookPayload struct {
-    Event string `json:"event"`
-    Data  string `json:"data"`
+	Event string `json:"event"`
+	Data  struct {
+		TransactionID  string  `json:"transaction_id"`
+		Amount         float64 `json:"amount"`
+		Currency       string  `json:"currency"`
+		TransactionRef string  `json:"tx_ref"`
+	} `json:"data"`
 }
+
+type VerifyResponse struct {
+	Data struct {
+		Status   string  `json:"status"`
+		Amount   float64 `json:"amount"`
+		Currency string  `json:"currency"`
+	} `json:"data"`
+}
+
 func NewRepository() Repository {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
@@ -120,17 +135,19 @@ func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32
 	return cart, nil
 }
 
-func (r *repository) GetCart(ctx context.Context, user uint32) (*Cart, error) {
+func (r *repository) GetCart(ctx context.Context, filter uint32) (*Cart, error) {
 	var cart *Cart
-	query := r.db.Where("active = true").Where("user_id = ?", user)
+	query := r.db.Where("active = true").Where("user_id = ?", filter)
 	if err := query.First(&cart).Error; err != nil {
-		return &Cart{}, nil
+		err = r.db.Where("active = true").Where("id = ?", filter).First(&cart).Error
+		if err != nil {
+			return &Cart{}, nil
+		}
 	}
 
 	return cart, nil
 }
 
-// This is not needed
 func (r *repository) RemoveAllCart(ctx context.Context, id uint32) (*Cart, error) {
 	// Find the cart with the specified ID that is active
 	var cart Cart
@@ -154,7 +171,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	cart := &Cart{}
 	userID, _ := strconv.ParseUint(input.UserID, 10, 32)
 
-	err := r.db.Model(cart).Where("user_id = ? AND active =?", uint32(userID),true).First(cart).Error
+	err := r.db.Model(cart).Where("user_id = ? AND active =?", uint32(userID), true).First(cart).Error
 	// fmt.Println("Na here we dey")
 	if err != nil {
 		return "", errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Cart not found")
@@ -176,7 +193,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		},
 		"customizations": map[string]interface{}{
 			"title": "Aluta Market Checkout",
-			"logo":  "http://www.piedpiper.com/app/themes/joystick-v27/images/logo.png",
+			"logo":  "https://res.cloudinary.com/folajimidev/image/upload/v1697737213/logo_xesoiu.png",
 		},
 	}
 	// fmt.Println("And not here")
@@ -245,37 +262,96 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	return paymentLink, nil
 }
 
-func (r *repository) MakePayment(ctx context.Context,w http.ResponseWriter, req *http.Request){
-	body, err :=io.ReadAll(req.Body)
-    if err != nil {
-        http.Error(w, "Failed to read request body", http.StatusBadRequest)
-        return
-    }
-    // Unmarshal the JSON data into a struct
-    var webhookPayload WebhookPayload
-    
-   if err := json.Unmarshal(body, &webhookPayload); err != nil {
-        http.Error(w, "Failed to parse JSON data", http.StatusBadRequest)
-        return
-    }
+func (r *repository) MakePayment(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
-    // Access the event field
-    event := webhookPayload.Event
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+	// Unmarshal the JSON data into a struct
+	var webhookPayload WebhookPayload
 
-    if event =="charge.completed"{
-        return
-    }
+	if err := json.Unmarshal(body, &webhookPayload); err != nil {
+		http.Error(w, "Failed to parse JSON data", http.StatusBadRequest)
+		return
+	}
+	var (
+		flwSecretKey     = os.Getenv("FLW_SECRET_KEY")
+		transactionID    = webhookPayload.Data.TransactionID
+		expectedAmount   = webhookPayload.Data.Amount // Replace with your expected amount
+		expectedCurrency = "NGN"                      // Replace with your expected currency
+	)
 
-    // Close the request body to avoid resource leaks
-    defer req.Body.Close()
+	// Access the event field
+	event := webhookPayload.Event
+	//For Flutterwave Charge payment
+	if event == "charge.completed" {
+		// Check if transaction is successful/failed,by rehitting the verify transaction api
+		client := &http.Client{}
+		url := "https://api.flutterwave.com/v3/transactions/" + transactionID + "/verify"
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			fmt.Println("Error creating HTTP request:", err)
+			return
+		}
 
-    // Process the request body (e.g., decode JSON or parse form data)
-    
-    fmt.Fprint(w, "Webhook received successfully")
-    fmt.Println("Received Webhook Body:", string(body))
+		req.Header.Add("Authorization", "Bearer "+flwSecretKey)
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Error sending HTTP request:", err)
+			return
+		}
+		defer resp.Body.Close()
 
-	// Check if transaction is successful/failed,by rehitting the verify transaction api
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading HTTP response:", err)
+			return
+		}
+
+		var verifyResponse VerifyResponse
+		err = json.NewDecoder(strings.NewReader(string(body))).Decode(&verifyResponse)
+		if err != nil {
+			fmt.Println("Error decoding JSON response:", err)
+			return
+		}
+
+		if verifyResponse.Data.Status == "successful" && verifyResponse.Data.Amount == expectedAmount && verifyResponse.Data.Currency == expectedCurrency {
+			// Success! Confirm the customer's payment
+			order := &store.Order{}
+			err = r.db.Where("uuid = ?", webhookPayload.Data.TransactionRef).First(order).Error
+			if err != nil {
+				fmt.Println("Error Getting order: ", err)
+				return
+			}
+			cart, _ := r.GetCart(ctx, order.CartID)
+			for _, item := range cart.Items {
+				priceDifference := item.Product.Price - order.Fee
+				result, _ := store.NewRepository().GetStoreByName(ctx, item.Product.Store)
+				//Credit individual Store from the particular transaction
+
+				result.Wallet += priceDifference
+
+				r.db.Save(result)
+			}
+			fmt.Println("Payment was successful!")
+		} else {
+			// Inform the customer their payment was unsuccessful by mail
+			fmt.Println("Payment was unsuccessful.")
+		}
+	}
+
+	// For Flutterwave Transfer Event
+	// Close the request body to avoid resource leaks
+	defer req.Body.Close()
+
+	// Process the request body (e.g., decode JSON or parse form data)
+
+	fmt.Fprint(w, "Webhook received successfully")
+	fmt.Println("Received Webhook Body:", string(body))
+
 	// If Successful, credit a store wallet,their quota
 
-     w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusOK)
 }

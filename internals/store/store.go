@@ -58,6 +58,7 @@ type Repository interface {
 	DeleteStore(ctx context.Context, id uint32) error
 	UpdateStore(ctx context.Context, req *Store) (*Store, error)
 	GetStore(ctx context.Context, id uint32) (*Store, error)
+	GetStoreByName(ctx context.Context, name string) (*Store, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
 }
 

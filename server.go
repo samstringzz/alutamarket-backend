@@ -29,6 +29,7 @@ func ExtractTokenMiddleware(next http.Handler) http.Handler {
         tokenString := r.Header.Get("Authorization")
         ctx := r.Context()
         ctx = context.WithValue(ctx, "token", tokenString)
+      // Use the updated context when calling the next handler.
     
         next.ServeHTTP(w, r.WithContext(ctx))
     })
