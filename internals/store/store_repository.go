@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -25,6 +26,19 @@ func NewRepository() Repository {
 	return &repository{
 		db: db,
 	}
+}
+
+func (r *repository) CheckStoreName(ctx context.Context, query string)error{
+	var stores []*Store
+	if err := r.db.Where("name ILIKE ?","%"+query+"%").Find(&stores).Error; err != nil {
+		return err
+	}
+	for _,item := range stores{
+		if item.Name == query{
+			return errors.NewAppError(http.StatusConflict, "CONFLICT", "Store Name already choosen")
+		}
+	}
+	return nil
 }
 
 func (r *repository) CreateStore(ctx context.Context, req *Store) (*Store, error) {
@@ -58,6 +72,15 @@ func (r *repository) GetStore(ctx context.Context, id uint32) (*Store, error) {
 	}
 	return store, nil
 }
+func (r *repository) GetStoreByName(ctx context.Context, name string) (*Store, error) {
+	var store *Store
+	err := r.db.Where("name = ?", name).First(&store).Error
+	if err != nil {
+		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Store does not exist")
+	}
+	return store, nil
+}
+
 
 func (r *repository) GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error) {
 	var stores []*Store

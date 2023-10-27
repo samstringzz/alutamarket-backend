@@ -19,7 +19,8 @@ import (
 )
 
 type repository struct {
-	db *gorm.DB
+	db         *gorm.DB
+	otpCounter uint8
 }
 type accessTokenCookieKey struct{}
 
@@ -132,17 +133,16 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 
 func (r *repository) VerifyOTP(ctx context.Context, req *User) (*User, error) {
 	foundUser := &User{}
-	counter := 0
 	err := r.db.Where("phone = ?", req.Phone).First(foundUser).Error
-	counter++
 
 	if err != nil {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
 	}
 
-	// If the code is incorrect, increment the counter and send a new code if the counter is greater than 3.
+	// If the code is incorrect, increment the r.otpCounter and send a new code if the r.otpCounter is greater than 3.
 	if req.Code != "12345" {
-		if counter > 3 {
+		r.otpCounter++
+		if r.otpCounter > 3 {
 			// Send a new code here.
 			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "New code has been sent")
 		}
@@ -150,8 +150,8 @@ func (r *repository) VerifyOTP(ctx context.Context, req *User) (*User, error) {
 	if foundUser.Codeexpiry.Before(time.Now()) {
 		return nil, errors.NewAppError(http.StatusConflict, "BAD REQUEST", "OTP Expired!!")
 	}
-	// If the counter is less than or equal to 3 and the code is correct, verify the user.
-	if counter <= 3 && req.Code == "12345" {
+	// If the r.otpCounter is less than or equal to 3 and the code is correct, verify the user.
+	if r.otpCounter <= 3 && req.Code == "12345" {
 		if foundUser.ID == 0 {
 			return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist in the database")
 		}

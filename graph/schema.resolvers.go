@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
 	"github.com/Chrisentech/aluta-market-api/app"
 	"github.com/Chrisentech/aluta-market-api/graph/model"
 	"github.com/Chrisentech/aluta-market-api/internals/cart"
