@@ -98,6 +98,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		Twofa:      false,
 		Code:       "12345",
 		Codeexpiry: codeExpiry,
+		Avatar:    "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
 	}
 
 	if err := tx.Create(newUser).Error; err != nil {
