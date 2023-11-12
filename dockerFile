@@ -1,0 +1,18 @@
+# Use the official PostgreSQL image as the base image
+FROM postgres:15-alpine
+
+# Set environment variables
+ENV POSTGRES_USER=myuser
+ENV POSTGRES_PASSWORD=mypassword
+ENV POSTGRES_DB=mydatabase
+
+# Copy the .env file into the container
+COPY .env /app/.env
+
+# Expose the PostgreSQL port
+EXPOSE 5432
+
+# Start the PostgreSQL service
+CMD ["postgres"]
+
+# Additional Dockerfile instructions for building and running your application could be added here

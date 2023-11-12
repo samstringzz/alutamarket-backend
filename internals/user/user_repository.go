@@ -98,7 +98,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		Twofa:      false,
 		Code:       "12345",
 		Codeexpiry: codeExpiry,
-		Avatar:    "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
+		Avatar:    "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
 	}
 
 	if err := tx.Create(newUser).Error; err != nil {
@@ -157,7 +157,7 @@ func (r *repository) VerifyOTP(ctx context.Context, req *User) (*User, error) {
 			return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist in the database")
 		}
 		if foundUser.Active {
-			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User account is verified!")
+			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User account is already verified!")
 		}
 		if err := r.db.Model(foundUser).Update("active", true).Error; err != nil {
 			return nil, err

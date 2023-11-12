@@ -685,7 +685,37 @@ func (r *queryResolver) Categories(ctx context.Context) ([]*model.Category, erro
 
 // Category is the resolver for the Category field.
 func (r *queryResolver) Category(ctx context.Context, id int) (*model.Category, error) {
-	panic(fmt.Errorf("not implemented: Category - Category"))
+	productRep := app.InitializePackage(app.ProductPackage)
+
+	productRepository, ok := productRep.(product.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("productRep is not a product.Repository")
+	}
+	productSrvc := product.NewService(productRepository)
+	productHandler := product.NewHandler(productSrvc)
+	resp, err := productHandler.GetCategory(ctx,uint32(id))
+	if err != nil {
+		return nil, err
+	}
+
+	var category *model.Category
+	var subCategories []*model.SubCategory
+	for _, subItem := range resp.SubCategories {
+			subCategory := &model.SubCategory{
+				Name:     subItem.Name,
+				Slug:     subItem.Slug,
+				Category: int(subItem.CategoryID),
+			}
+			subCategories = append(subCategories, subCategory)
+		}
+		category = &model.Category{
+			Name:          resp.Name,
+			Slug:          resp.Slug,
+			Subcategories: subCategories,
+			ID:            strconv.Itoa(resp.ID),
+		}
+	return category,nil
 }
 
 // SubCategory is the resolver for the SubCategory field.
