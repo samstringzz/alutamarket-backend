@@ -16,3 +16,4 @@ EXPOSE 5432
 CMD ["postgres"]
 
 # Additional Dockerfile instructions for building and running your application could be added here
+
