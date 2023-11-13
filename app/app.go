@@ -4,6 +4,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/cart"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
+	"github.com/Chrisentech/aluta-market-api/internals/store"
 )
 
 type PackageType int
@@ -12,6 +13,7 @@ const (
     UserPackage PackageType = iota
     ProductPackage
     CartPackage
+    StorePackage
 )
 
 func CreateRepository(pkgType PackageType,) interface{} {
@@ -24,6 +26,8 @@ func CreateRepository(pkgType PackageType,) interface{} {
         return product.NewRepository()
     case CartPackage:
         return cart.NewRepository()
+    case StorePackage:
+        return store.NewRepository()
     // Add more cases for other packages as needed
     default:
         return  nil// Handle unknown package types gracefully

@@ -123,5 +123,5 @@ func main() {
     // defer dbConnection.Close()
 }
 
-// go run github.com/99designs/gqlgen init
+// go get github.com/99designs/gqlgen init
 // go run github.com/99designs/gqlgen generate
