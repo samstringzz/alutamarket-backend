@@ -75,22 +75,22 @@ func (h *Handler) GetCategories(ctx context.Context) ([]*Category, error) {
 	return item, nil
 }
 
-func (h *Handler) GetWishListedProducts(ctx context.Context, user uint32) ([]*WishListedProduct, error) {
-	item, err := h.Service.GetWishListedProducts(ctx, user)
+func (h *Handler) GetHandledProducts(ctx context.Context, user uint32,eventType string) ([]*HandledProduct, error) {
+	item, err := h.Service.GetHandledProducts(ctx, user,eventType)
 	if err != nil {
 		return nil, err
 	}
 	return item, nil
 }
 
-func (h *Handler) RemoveWishListedProduct(ctx context.Context, user uint32) error {
-	err := h.Service.RemoveWishListedProduct(ctx, user)
+func (h *Handler) RemoveHandledProduct(ctx context.Context, user uint32,eventType string) error {
+	err := h.Service.RemoveHandledProduct(ctx, user,eventType)
 	return err
 }
 
 
-func (h *Handler) AddWishListedProduct(ctx context.Context, user, product uint32) (*WishListedProduct, error) {
-	item, err := h.Service.AddWishListedProduct(ctx, user, product)
+func (h *Handler) AddHandledProduct(ctx context.Context, user, product uint32,eventType string) (*HandledProduct, error) {
+	item, err := h.Service.AddHandledProduct(ctx, user, product,eventType)
 	if err != nil {
 		return nil, err
 	}
@@ -122,13 +122,13 @@ func (h *Handler) GetReviews(ctx context.Context, productId uint32)([]*Review,er
 	return item, nil
 }
 
-func (h *Handler) GetRecentlyViewedProducts(ctx context.Context, user uint32)([]*Product,error){
-	item, err := h.Service.GetRecentlyViewedProducts(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-	return item, nil
-}
+// func (h *Handler) GetRecentlyViewedProducts(ctx context.Context, user uint32)([]*Product,error){
+// 	item, err := h.Service.GetRecentlyViewedProducts(ctx, user)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return item, nil
+// }
 
 func (h *Handler) AddReview(ctx context.Context, input *Review)(*Review,error){
 	item, err := h.Service.AddReview(ctx, input)
@@ -138,10 +138,10 @@ func (h *Handler) AddReview(ctx context.Context, input *Review)(*Review,error){
 	return item, nil
 }
 
-func (h *Handler) AddRecentlyViewedProducts(ctx context.Context, userId,productId uint32)error{
-	err := h.Service.AddRecentlyViewedProducts(ctx, userId,productId)
-	if err != nil {
-		return  err
-	}
-	return nil
-}
+// func (h *Handler) AddRecentlyViewedProducts(ctx context.Context, userId,productId uint3,eventType string2)error{
+// 	err := h.Service.AddHandledProduct(ctx, userId,productId,eventType)
+// 	if err != nil {
+// 		return  err
+// 	}
+// 	return nil
+// }

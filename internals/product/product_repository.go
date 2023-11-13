@@ -6,10 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
-
 	"github.com/Chrisentech/aluta-market-api/errors"
-	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -69,10 +66,10 @@ func (r *repository) GetProduct(ctx context.Context, id, user uint32) (*Product,
 	if err != nil {
 		return nil, err
 	}
-	if user != 0 {
-		err = r.AddRecentlyViewedProducts(ctx, user, id)
-		return nil, err
-	}
+	// if user != 0 {
+	// 	err = r.AddRecentlyViewedProducts(ctx, user, id)
+	// 	return nil, err
+	// }
 	return &p, nil
 }
 
@@ -168,38 +165,74 @@ func (r *repository) DeleteProduct(ctx context.Context, id uint32) error {
 	return err
 
 }
-func (r *repository) AddWishListedProduct(ctx context.Context, userId, productId uint32) (*WishListedProduct, error) {
-	wishlist := &WishListedProduct{}
+// func (r *repository) AddWishListedProduct(ctx context.Context, userId, productId uint32) (*HandledProduct, error) {
+// 	wishlist := &HandledProduct{}
+// 	foundProduct, err := r.GetProduct(ctx, productId, 0)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	var count int64
+// 	r.db.Model(wishlist).Where("user_id =?", userId).Count(&count)
+// 	if count > 0 {
+// 		fmt.Printf("The Total no of User wishlist is%v\n", count)
+// 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Product already in wishlist")
+// 	}
+// 	wishlist.Product = foundProduct
+// 	wishlist.UserID = userId
+// 	wishlist.Type   = "wishlist"
+// 	err = r.db.Create(wishlist).Error
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return wishlist, nil
+// }
+
+func (r *repository) AddHandledProduct(ctx context.Context, userId, productId uint32,eventType string) (*HandledProduct, error) {
+	prd := &HandledProduct{}
 	foundProduct, err := r.GetProduct(ctx, productId, 0)
 	if err != nil {
 		return nil, err
 	}
 	var count int64
-	r.db.Model(wishlist).Where("user_id =?", userId).Count(&count)
+	r.db.Model(prd).Where("user_id =?", userId).Count(&count)
 	if count > 0 {
-		fmt.Printf("The Total no of User wishlist is%v\n", count)
+		fmt.Printf("The Total no of User %v\n is%v\n", eventType,count)
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Product already in wishlist")
 	}
-	wishlist.Product = foundProduct
-	wishlist.UserID = userId
-	err = r.db.Create(wishlist).Error
+	prd.Product = foundProduct
+	prd.UserID = userId
+	prd.Type   = eventType
+	err = r.db.Create(prd).Error
 	if err != nil {
 		return nil, err
 	}
-	return wishlist, nil
+	return prd, nil
 }
 
-func (r *repository) GetWishListedProducts(ctx context.Context, userId uint32) ([]*WishListedProduct, error) {
-	var wishlist []*WishListedProduct
-	if err := r.db.Where("user_id", userId).Find(&wishlist).Error; err != nil {
+func (r *repository) GetHandledProducts(ctx context.Context, userId uint32,eventType string) ([]*HandledProduct, error) {
+	var prds []*HandledProduct
+	if err := r.db.Where("user_id = ? AND type = ? ", userId,eventType).Find(&prds).Error; err != nil {
 		return nil, err
 	}
-	return wishlist, nil
+	return prds, nil
+}
+// func (r *repository) GetWishListedProducts(ctx context.Context, userId uint32) ([]*HandledProduct, error) {
+// 	var wishlist []*HandledProduct
+// 	if err := r.db.Where("user_id = ? AND type = ? ", userId,"wishlist").Find(&wishlist).Error; err != nil {
+// 		return nil, err
+// 	}
+// 	return wishlist, nil
+// }
+
+func (r *repository) RemoveHandledProduct(ctx context.Context, id uint32,eventType string) error {
+	existingWishlist := &HandledProduct{}
+	err := r.db.Where("id=? AND type=?", id,eventType).Delete(existingWishlist).Error
+	return err
 }
 
 func (r *repository) RemoveWishListedProduct(ctx context.Context, id uint32) error {
-	existingWishlist := &WishListedProduct{}
-	err := r.db.Where("id", id).Delete(existingWishlist).Error
+	existingWishlist := &HandledProduct{}
+	err := r.db.Where("id=? ", id).Delete(existingWishlist).Error
 	return err
 }
 
@@ -235,84 +268,86 @@ func (r *repository) GetCategory(ctx context.Context, id uint32) (*Category, err
 	}
 	return &p, nil
 }
-func (r *repository) AddRecentlyViewedProducts(ctx context.Context, userId, productId uint32) error {
-	product, err := r.GetProduct(ctx, productId, userId)
+// func (r *repository) AddRecentlyViewedProducts(ctx context.Context, userId, productId uint32) error {
+// 	product, err := r.GetProduct(ctx, productId, userId)
 
-	if err != nil {
-		return err
-	}
+// 	if err != nil {
+// 		return err
+// 	}
 
-	foundView := false
+// 	foundView := false
 
-	// Update the Views of the product clicked
-	for _, view := range product.Views {
-		if view == userId {
-			foundView = true
-			break
-		}
-	}
+// 	// Update the Views of the product clicked
+// 	for _, view := range product.Views {
+// 		if view == userId {
+// 			foundView = true
+// 			break
+// 		}
+// 	}
 
-	if !foundView {
-		product.Views = append(product.Views, userId)
-		err = r.db.Save(product).Error
-		if err != nil {
-			return err
-		}
-	}
+// 	if !foundView {
+// 		product.Views = append(product.Views, userId)
+// 		err = r.db.Save(product).Error
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
 
-	// Update the user's recentlyViewed
-	foundUser, err := user.NewRepository().GetUser(ctx, strconv.FormatUint(uint64(userId), 10)) // Replace with your GetUser implementation
+// 	// Update the user's recentlyViewed
+// 	foundUser, err := user.NewRepository().GetUser(ctx, strconv.FormatUint(uint64(userId), 10)) // Replace with your GetUser implementation
 
-	if err != nil {
-		return err
-	}
+// 	if err != nil {
+// 		return err
+// 	}
 
-	// Check if the product already exists in the RecentlyViewed
-	var productIndex uint32 = 0
-	for i, viewedProduct := range foundUser.RecentlyViewed {
-		if viewedProduct == productId {
-			productIndex = uint32(i)
-			break
-		}
-	}
+// 	// Check if the product already exists in the RecentlyViewed
+// 	var productIndex uint32 = 0
+// 		for i, viewedProduct := range foundUser.RecentlyViewed {
+// 		if viewedProduct.ID == productId {
+// 			productIndex = uint32(i)
+// 			break
+// 		}
+// 	}
+	
 
-	if productIndex >= 0 {
-		// Move the product to the first item in the array
-		viewedProduct := foundUser.RecentlyViewed[productIndex]
-		foundUser.RecentlyViewed = append(foundUser.RecentlyViewed[:productIndex], foundUser.RecentlyViewed[productIndex+1:]...)
-		foundUser.RecentlyViewed = append(foundUser.RecentlyViewed, viewedProduct)
-	} else {
-		// If the product is not already in RecentlyViewed, add it
-		recentlyViewedProduct := productId
-		foundUser.RecentlyViewed = append(foundUser.RecentlyViewed, recentlyViewedProduct)
-	}
+// 	if productIndex >0 {
+// 		// Move the product to the first item in the array
+// 		viewedProduct := foundUser.RecentlyViewed[productIndex]
+// 		foundUser.RecentlyViewed = append(foundUser.RecentlyViewed[:productIndex], foundUser.RecentlyViewed[productIndex+1:]...)
+// 		foundUser.RecentlyViewed = append(foundUser.RecentlyViewed, viewedProduct)
+// 	} else {
+// 	fmt.Println("The length of the recently viewed product is: ", len(foundUser.RecentlyViewed))
 
-	// Ensure the RecentlyViewed list is not more than 8 items
-	if len(foundUser.RecentlyViewed) > 8 {
-		foundUser.RecentlyViewed = foundUser.RecentlyViewed[:8]
-	}
+// 		// If the product is not already in RecentlyViewed, add it
+// 		recentlyViewedProduct := product
+// 		foundUser.RecentlyViewed = append(foundUser.RecentlyViewed, recentlyViewedProduct)
+// 	}
+// 	// Ensure the RecentlyViewed list is not more than 8 items
+// 	if len(foundUser.RecentlyViewed) > 8 {
+// 		foundUser.RecentlyViewed = foundUser.RecentlyViewed[:8]
+// 	}
 
-	// Update the user in the database (assuming a SaveUser function)
-	err = r.db.Save(foundUser).Error // Replace with your SaveUser implementation
+// 	// Update the user in the database (assuming a SaveUser function)
+// 	err = r.db.Save(foundUser).Error // Replace with your SaveUser implementation
 
-	return nil
-}
+// 	return nil
+// }
 
-func (r *repository) GetRecentlyViewedProducts(ctx context.Context, userId uint32) ([]*Product, error) {
-	// Update the user's recentlyViewed
-	foundUser, err := user.NewRepository().GetUser(ctx, strconv.FormatUint(uint64(userId), 10)) // Replace with your GetUser implementation
-	if err != nil {
-		return nil, err
-	}
-	viewedProducts := foundUser.RecentlyViewed
-	var products []*Product
+// func (r *repository) GetRecentlyViewedProducts(ctx context.Context, userId uint32) ([]*Product, error) {
+// 	// Update the user's recentlyViewed
+// 	foundUser, err := user.NewRepository().GetUser(ctx, strconv.FormatUint(uint64(userId), 10)) // Replace with your GetUser implementation
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	viewedProducts := foundUser.RecentlyViewed
+// 	var products []*Product
 
-	for _, item := range viewedProducts {
-		product, _ := r.GetProduct(ctx, item, 0)
-		products = append(products, product)
-	}
-	return products, nil
-}
+// 	for _, item := range viewedProducts {
+// 		product, _ := r.GetProduct(ctx, item.ID, 0)
+// 		products = append(products, product)
+// 	}
+// 	return products, nil
+// }
 
 func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
 	var result []*Product
@@ -354,3 +389,32 @@ func (r *repository) GetReviews(ctx context.Context, productId uint32) ([]*Revie
 	return product.Reviews, nil
 }
 
+func (r *repository) AddSavedForLater(ctx context.Context, userId,productId uint32)(*HandledProduct,error){
+savedForLater := &HandledProduct{}
+	foundProduct, err := r.GetProduct(ctx, productId, 0)
+	if err != nil {
+		return nil, err
+	}
+	var count int64
+	r.db.Model(savedForLater).Where("user_id =?", userId).Count(&count)
+	if count > 0 {
+		fmt.Printf("The Total no of User savedForLater is%v\n", count)
+		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Product already in savedForLater")
+	}
+	savedForLater.Product = foundProduct
+	savedForLater.UserID = userId
+	savedForLater.Type   = "savedForLater"
+	err = r.db.Create(savedForLater).Error
+	if err != nil {
+		return nil, err
+	}
+	return savedForLater, nil
+}
+
+func (r *repository) GetSavedForLaterProducts(ctx context.Context, userId uint32) ([]*HandledProduct, error) {
+	var savedForLater []*HandledProduct
+	if err := r.db.Where("user_id = ? AND type = ? ", userId,"savedForLater").Find(&savedForLater).Error; err != nil {
+		return nil, err
+	}
+	return savedForLater, nil
+}

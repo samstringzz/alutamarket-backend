@@ -32,8 +32,8 @@ ENV PAYSTACK_SECRET_HASH=
 ENV AWS_SECRET_KEY=gT39zemlHTdHj9vC4DKmQ0STMdw7q0MN/5B6kCks
 ENV AWS_ACCESS_KEY=AKIA5VKPDOR5GWYLFZIJ
 
-# Build the Go application
-RUN go build -o server .
+# Run the Go application
+RUN go run server.go
 
 # Run the server when the container starts
-CMD ["./server"]
+# CMD ["./server"]

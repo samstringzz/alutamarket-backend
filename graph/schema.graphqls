@@ -33,7 +33,7 @@ type VerifyOTP {
   code: String!
   email: String
 }
-type WishList {
+type HandledProducts {
   userId: Int!
   productId: Int!
   productName: String
@@ -86,8 +86,6 @@ type User {
   twofa: Boolean!
   code: String!
   codeexpiry: String!
-  recently_viewed_products:[Product!]
-  wishlisted_products:[Product]
 }
 
 input NewUser {
@@ -101,7 +99,7 @@ input NewUser {
   code: String
   codeexpiry: Time
 }
-input NewWishlist {
+input NewHandleProductInput {
   user: Int!
   product: Int!
 }
@@ -231,7 +229,7 @@ type Query {
   SubCategory(id: ID!): SubCategory
   Products(store: String, limit: Int, offset: Int): ProductPaginationData!
   Product(id: Int!): Product
-  WishListedProducts(user: Int!): [WishList!]!
+  HandledProducts(user: Int!,type:String!): [HandledProducts!]!
   RecommendedProducts(query:String!):[Product!]!
   RecentlyAddedProducts(user: Int!) : [Product!]!
   ProductReviews(id:Int!):[Review!]!
@@ -245,10 +243,10 @@ type Mutation {
   createUser(input: NewUser!): User!
   createVerifyOTP(input: NewVerifyOTP!): User!
   loginUser(input: LoginReq!): LoginRes!
-  addWishListedProduct(userId: Int!, productId: Int!): WishList!
+  addHandledProduct(userId: Int!, productId: Int!,type:String!): HandledProducts!
   addReview(input:ReviewInput!): Review!
   addRecentlyViewed(user: Int!,productId: Int!) : String!
-  removeWishListedProduct(user: Int!): WishList
+  removeHandledProduct(user: Int!,type:String): HandledProducts
   createCategory(input: NewCategory!): Category!
   createSubCategory(input: NewSubCategory!): SubCategory!
   createProduct(input: ProductInput!): Product!

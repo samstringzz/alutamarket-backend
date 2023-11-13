@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -72,6 +71,7 @@ func (r *repository) GetStore(ctx context.Context, id uint32) (*Store, error) {
 	}
 	return store, nil
 }
+
 func (r *repository) GetStoreByName(ctx context.Context, name string) (*Store, error) {
 	var store *Store
 	err := r.db.Where("name = ?", name).First(&store).Error
@@ -80,7 +80,6 @@ func (r *repository) GetStoreByName(ctx context.Context, name string) (*Store, e
 	}
 	return store, nil
 }
-
 
 func (r *repository) GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error) {
 	var stores []*Store
@@ -118,9 +117,9 @@ func (r *repository) UpdateStore(ctx context.Context, req *Store) (*Store, error
 	if req.Description != "" {
 		existingStore.Description = req.Description
 	}
-	if req.Link != "" {
-		existingStore.Link = req.Link
-	}
+	// if req.Link != "" {
+	// 	existingStore.Link = req.Link
+	// }
 	if req.HasPhysicalAddress != existingStore.HasPhysicalAddress {
 		existingStore.HasPhysicalAddress = req.HasPhysicalAddress
 	}
