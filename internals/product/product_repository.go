@@ -199,6 +199,7 @@ func (r *repository) AddHandledProduct(ctx context.Context, userId, productId ui
 		fmt.Printf("The Total no of User %v\n is%v\n", eventType,count)
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Product already in wishlist")
 	}
+	
 	prd.Product = foundProduct
 	prd.UserID = userId
 	prd.Type   = eventType
