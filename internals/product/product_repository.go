@@ -194,10 +194,10 @@ func (r *repository) AddHandledProduct(ctx context.Context, userId, productId ui
 		return nil, err
 	}
 	var count int64
-	r.db.Model(prd).Where("user_id =?", userId).Count(&count)
+	r.db.Model(prd).Where("user_id =? AND type?=", userId,eventType).Count(&count)
 	if count > 0 {
 		fmt.Printf("The Total no of User %v\n is%v\n", eventType,count)
-		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Product already in wishlist")
+		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Product already in ",eventType)
 	}
 	
 	prd.Product = foundProduct
