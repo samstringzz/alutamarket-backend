@@ -4,7 +4,14 @@ FROM golang:1.16-alpine
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the local package files to the container's workspace
+# Copy only the necessary files for dependency resolution (go.mod and go.sum)
+COPY go.mod .
+COPY go.sum .
+
+# Download and install dependencies
+RUN go mod download
+
+# Copy the rest of the application code to the container's workspace
 COPY . .
 
 # Set environment variables
@@ -32,8 +39,11 @@ ENV PAYSTACK_SECRET_HASH=
 ENV AWS_SECRET_KEY=gT39zemlHTdHj9vC4DKmQ0STMdw7q0MN/5B6kCks
 ENV AWS_ACCESS_KEY=AKIA5VKPDOR5GWYLFZIJ
 
-# Run the Go application
-RUN go run server.go
+# Build the Go application
+RUN go build -o server .
 
-# Run the server when the container starts
-# CMD ["./server"]
+# Expose the port the app runs on
+EXPOSE 8082
+
+# Run the Go application
+CMD ["./server"]
