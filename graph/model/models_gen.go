@@ -33,6 +33,17 @@ type Follower struct {
 	FollowerImage int    `json:"follower_image"`
 }
 
+type HandledProducts struct {
+	UserID           int      `json:"userId"`
+	ProductID        int      `json:"productId"`
+	ProductName      *string  `json:"productName,omitempty"`
+	ProductThumbnail *string  `json:"productThumbnail,omitempty"`
+	ProductPrice     *float64 `json:"productPrice,omitempty"`
+	ProductDiscount  *float64 `json:"productDiscount,omitempty"`
+	ProductStatus    *bool    `json:"productStatus,omitempty"`
+	ProductQuantity  *int     `json:"productQuantity,omitempty"`
+}
+
 type LoginReq struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -52,6 +63,11 @@ type ModifyCartItemInput struct {
 
 type NewCategory struct {
 	Name string `json:"name"`
+}
+
+type NewHandleProductInput struct {
+	User    int `json:"user"`
+	Product int `json:"product"`
 }
 
 type NewSubCategory struct {
@@ -86,11 +102,6 @@ type NewVerifyOtp struct {
 	Phone string  `json:"phone"`
 	Code  string  `json:"code"`
 	Email *string `json:"email,omitempty"`
-}
-
-type NewWishlist struct {
-	User    int `json:"user"`
-	Product int `json:"product"`
 }
 
 type Order struct {
@@ -207,23 +218,21 @@ type SubCategory struct {
 }
 
 type User struct {
-	ID                     string     `json:"id"`
-	Fullname               string     `json:"fullname"`
-	Email                  string     `json:"email"`
-	Campus                 string     `json:"campus"`
-	Avatar                 *string    `json:"avatar,omitempty"`
-	Password               string     `json:"password"`
-	Phone                  string     `json:"phone"`
-	Usertype               string     `json:"usertype"`
-	Stores                 []*Store   `json:"stores,omitempty"`
-	Active                 bool       `json:"active"`
-	AccessToken            *string    `json:"access_token,omitempty"`
-	RefreshToken           *string    `json:"refresh_token,omitempty"`
-	Twofa                  bool       `json:"twofa"`
-	Code                   string     `json:"code"`
-	Codeexpiry             string     `json:"codeexpiry"`
-	RecentlyViewedProducts []*Product `json:"recently_viewed_products,omitempty"`
-	WishlistedProducts     []*Product `json:"wishlisted_products,omitempty"`
+	ID           string   `json:"id"`
+	Fullname     string   `json:"fullname"`
+	Email        string   `json:"email"`
+	Campus       string   `json:"campus"`
+	Avatar       *string  `json:"avatar,omitempty"`
+	Password     string   `json:"password"`
+	Phone        string   `json:"phone"`
+	Usertype     string   `json:"usertype"`
+	Stores       []*Store `json:"stores,omitempty"`
+	Active       bool     `json:"active"`
+	AccessToken  *string  `json:"access_token,omitempty"`
+	RefreshToken *string  `json:"refresh_token,omitempty"`
+	Twofa        bool     `json:"twofa"`
+	Code         string   `json:"code"`
+	Codeexpiry   string   `json:"codeexpiry"`
 }
 
 type Variant struct {
@@ -241,15 +250,4 @@ type VerifyOtp struct {
 	Phone string  `json:"phone"`
 	Code  string  `json:"code"`
 	Email *string `json:"email,omitempty"`
-}
-
-type WishList struct {
-	UserID           int      `json:"userId"`
-	ProductID        int      `json:"productId"`
-	ProductName      *string  `json:"productName,omitempty"`
-	ProductThumbnail *string  `json:"productThumbnail,omitempty"`
-	ProductPrice     *float64 `json:"productPrice,omitempty"`
-	ProductDiscount  *float64 `json:"productDiscount,omitempty"`
-	ProductStatus    *bool    `json:"productStatus,omitempty"`
-	ProductQuantity  *int     `json:"productQuantity,omitempty"`
 }

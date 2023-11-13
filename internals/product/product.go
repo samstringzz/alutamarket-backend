@@ -98,7 +98,7 @@ type RecentlyViewedProduct struct {
 type HandledProduct struct {
 	gorm.Model
 	UserID  uint32   `json:"user_id" db:"user_id"`
-	Product *Product `gorm:"embedded,type:products"`
+	Product *Product `gorm:"embedded"`
     Type    string   `db:"type"`
 }
 
