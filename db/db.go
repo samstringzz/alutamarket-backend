@@ -3,7 +3,6 @@ package db
 import (
 	"log"
 	"os" // Import the "os" package
-
 	"github.com/Chrisentech/aluta-market-api/internals/cart"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/store"

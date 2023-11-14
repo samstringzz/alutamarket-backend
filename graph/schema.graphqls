@@ -245,7 +245,7 @@ type Mutation {
   loginUser(input: LoginReq!): LoginRes!
   addHandledProduct(userId: Int!, productId: Int!,type:String!): HandledProducts!
   addReview(input:ReviewInput!): Review!
-  addRecentlyViewed(user: Int!,productId: Int!) : String!
+  # addRecentlyViewed(user: Int!,productId: Int!) : String!
   removeHandledProduct(user: Int!,type:String): HandledProducts
   createCategory(input: NewCategory!): Category!
   createSubCategory(input: NewSubCategory!): SubCategory!
