@@ -757,6 +757,7 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 			Quantity:    item.Quantity,
 			Slug:        item.Slug,
 			Store:       item.Store,
+			Thumbnail:       item.Thumbnail,
 			Category:    item.Category,
 			Subcategory: item.Subcategory,
 		}
@@ -785,7 +786,7 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 		Data:        products,
 		CurrentPage: *offset + 1,
 		PerPage:     *limit,
-		Total:       100,
+		Total:       len(resp),
 	}
 
 	return payload, nil
