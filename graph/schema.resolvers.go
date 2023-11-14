@@ -302,12 +302,12 @@ func (r *mutationResolver) CreateSubCategory(ctx context.Context, input model.Ne
 
 // CreateProduct is the resolver for the createProduct field.
 func (r *mutationResolver) CreateProduct(ctx context.Context, input model.ProductInput) (*model.Product, error) {
-	token := ctx.Value("token").(string)
+	// token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", token)
-	if authErr != nil {
-		return nil, authErr
-	}
+	// authErr := middlewares.AuthMiddleware("", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
 	productRep := app.InitializePackage(app.ProductPackage)
 	productRepository, ok := productRep.(product.Repository)
 	if !ok {
@@ -747,8 +747,9 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 
 	// Assuming resp is a slice of products
 	for _, item := range resp {
+		id,_ :=strconv.Atoi(strconv.FormatInt(int64(item.ID), 10))
 		product := &model.Product{
-			// ID:       strconv.FormatInt(int64(item.ID), 10),
+		ID: id,
 			Name:        item.Name,
 			Description: item.Description,
 			Image:       item.Images,
