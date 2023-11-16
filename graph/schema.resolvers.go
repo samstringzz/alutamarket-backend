@@ -137,7 +137,7 @@ func (r *mutationResolver) AddHandledProduct(ctx context.Context, userID int, pr
 	}
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
-	prod, err := productHandler.AddHandledProduct(ctx, uint32(userID), uint32(productID),typeArg)
+	prod, err := productHandler.AddHandledProduct(ctx, uint32(userID), uint32(productID), typeArg)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,6 @@ func (r *mutationResolver) AddHandledProduct(ctx context.Context, userID int, pr
 		ProductName: &prod.Product.Name,
 	}
 	return schema, nil
-
 }
 
 // AddReview is the resolver for the addReview field.
@@ -189,26 +188,6 @@ func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInpu
 	return NewReview, nil
 }
 
-// AddRecentlyViewed is the resolver for the addRecentlyViewed field.
-func (r *mutationResolver) AddRecentlyViewed(ctx context.Context, user int, productID int) (string, error) {
-	// productRep := app.InitializePackage(app.ProductPackage)
-
-	// productRepository, ok := productRep.(product.Repository)
-	// if !ok {
-	// 	// Handle the case where the conversion failed
-	// 	return "", fmt.Errorf("productRep is not a product.Repository")
-	// }
-	// productSrvc := product.NewService(productRepository)
-	// productHandler := product.NewHandler(productSrvc)
-	// err := productHandler.AddRecentlyViewedProducts(ctx, uint32(user), uint32(productID))
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// return "Product added to viewed list", nil
-	panic("Method not implemented")
-}
-
 // RemoveHandledProduct is the resolver for the removeHandledProduct field.
 func (r *mutationResolver) RemoveHandledProduct(ctx context.Context, user int, typeArg *string) (*model.HandledProducts, error) {
 	token := ctx.Value("token").(string)
@@ -226,7 +205,7 @@ func (r *mutationResolver) RemoveHandledProduct(ctx context.Context, user int, t
 	}
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
-	err := productHandler.RemoveHandledProduct(ctx, uint32(user),*typeArg)
+	err := productHandler.RemoveHandledProduct(ctx, uint32(user), *typeArg)
 	if err != nil {
 		return nil, err
 	}
@@ -747,9 +726,9 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 
 	// Assuming resp is a slice of products
 	for _, item := range resp {
-		id,_ :=strconv.Atoi(strconv.FormatInt(int64(item.ID), 10))
+		id, _ := strconv.Atoi(strconv.FormatInt(int64(item.ID), 10))
 		product := &model.Product{
-		ID: id,
+			ID:          id,
 			Name:        item.Name,
 			Description: item.Description,
 			Image:       item.Images,
@@ -758,7 +737,7 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 			Quantity:    item.Quantity,
 			Slug:        item.Slug,
 			Store:       item.Store,
-			Thumbnail:       item.Thumbnail,
+			Thumbnail:   item.Thumbnail,
 			Category:    item.Category,
 			Subcategory: item.Subcategory,
 		}
@@ -855,7 +834,7 @@ func (r *queryResolver) HandledProducts(ctx context.Context, user int, typeArg s
 	}
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
-	resp, err := productHandler.GetHandledProducts(ctx, uint32(user),typeArg)
+	resp, err := productHandler.GetHandledProducts(ctx, uint32(user), typeArg)
 	if err != nil {
 		return nil, err
 	}
@@ -1076,22 +1055,102 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offset *int) (*model.StorePaginationData, error) {
 	token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", token)
+	authErr := middlewares.AuthMiddleware("seller", token)
 	if authErr != nil {
 		return nil, authErr
 	}
-	panic(fmt.Errorf("not implemented: Stores - Stores"))
+	storeRep := app.InitializePackage(app.StorePackage)
+
+	storeRepository, ok := storeRep.(store.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("productRep is not a product.Repository")
+	}
+	storeSrvc := store.NewService(storeRepository)
+	storeHandler := store.NewHandler(storeSrvc)
+	resp, err := storeHandler.GetStores(ctx, uint32(*user), *limit, *offset)
+	var stores []*model.Store
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range resp {
+		id, _ := strconv.Atoi(strconv.FormatInt(int64(item.ID), 10))
+
+		store := &model.Store{
+			ID:                 strconv.Itoa(id),
+			Name:               item.Name,
+			HasPhysicalAddress: item.HasPhysicalAddress,
+			Link:               item.Link,
+			Wallet:             item.Wallet,
+			User:               int(item.UserID),
+			Description:        item.Description,
+			Thumbnail:          item.Thumbnail,
+		}
+		if len(item.Followers) > 0 {
+			for _, follower := range item.Followers {
+				storeFollower := &model.Follower{}
+				storeFollower.FollowerID = int(follower.ID)
+				storeFollower.FollowerName = follower.FollowerName
+				store.Followers = append(store.Followers, storeFollower)
+			}
+		}
+
+		stores = append(stores, store)
+
+	}
+	payload := &model.StorePaginationData{
+		Data:        stores,
+		CurrentPage: *offset + 1,
+		PerPage:     *limit,
+		Total:       len(resp),
+	}
+	return payload, nil
 }
 
 // Store is the resolver for the Store field.
 func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error) {
-	token := ctx.Value("token").(string)
+	// token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", token)
-	if authErr != nil {
-		return nil, authErr
+	// authErr := middlewares.AuthMiddleware("seller", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
+
+	storeRep := app.InitializePackage(app.StorePackage)
+
+	storeRepository, ok := storeRep.(store.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("productRep is not a product.Repository")
 	}
-	panic(fmt.Errorf("not implemented: Store - Store"))
+	storeSrvc := store.NewService(storeRepository)
+	storeHandler := store.NewHandler(storeSrvc)
+
+	resp, err := storeHandler.GetStore(ctx, uint32(id))
+
+	if err != nil {
+		return nil, err
+	}
+	storeId, _ := strconv.Atoi(strconv.FormatInt(int64(resp.ID), 10))
+
+	store := &model.Store{
+		ID:                 strconv.Itoa(storeId),
+		Name:               resp.Name,
+		HasPhysicalAddress: resp.HasPhysicalAddress,
+		Link:               resp.Link,
+		Wallet:             resp.Wallet,
+		User:               int(resp.UserID),
+		Description:        resp.Description,
+		Thumbnail:          resp.Thumbnail,
+	}
+		for _, follower := range resp.Followers {
+			storeFollower := &model.Follower{}
+			storeFollower.FollowerID = int(follower.ID)
+			storeFollower.FollowerName = follower.FollowerName
+			store.Followers = append(store.Followers, storeFollower)
+		}
+	
+	return store, nil
 }
 
 // ProductSearchResults is the resolver for the productSearchResults field.
@@ -1111,4 +1170,3 @@ func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionRes
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-

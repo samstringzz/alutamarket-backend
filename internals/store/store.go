@@ -2,15 +2,25 @@ package store
 
 import (
 	"context"
+
+	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"gorm.io/gorm"
 )
 
 type Transactions struct {
 	gorm.Model
-	Name string `json:"name" db:"name"`
-	// Details interface{}
-	StoreID uint32
+	StoresID       []string `gorm:"serializer:json" json:"store" db:"store_id"`
+	CartID         uint32   `json:"cart_id" db:"cart_id"`
+	Coupon         string   `json:"coupon,omitempty" db:"coupon"`
+	Fee            float64  `json:"fee" db:"fee"`
+	Status         string   `json:"status" db:"status"` //pending,completed,failed
+	UserID         string   `json:"user_id" db:"user_id"`
+	Amount         float64  `json:"amount" db:"amount"`
+	UUID           string   `json:"uuid" db:"uuid"`
+	PaymentGateway string   `json:"payment_gateway" db:"payment_gateway"`
 }
+
+type Product *product.Product
 
 type Follower struct {
 	gorm.Model
@@ -29,20 +39,21 @@ type Store struct {
 	Description        string    `json:"description" db:"description"`
 	HasPhysicalAddress bool      `json:"hasphysical_address" db:"has_physical_address"`
 	Address            string    `json:"address" db:"address"`
-	Transactions       Transactions
+	Transactions       Transactions `gorm:"serializer:json"`
 	Followers          []Follower `gorm:"serializer:json"`
 	Orders             []Order    `gorm:"serializer:json"`
+	Products 			[]Product `gorm:"serializer:json"`
 	Wallet             float64    `json:"wallet" db:"wallet"`
 	Status             bool       `json:"status" db:"status"`
 	Thumbnail          string     `json:"thumbnail" db:"thumbnail"`
 	Phone              string     `json:"phone" db:"phone"`
-	Email              string     `json:"email" db:"email"`
+	// Email              string     `json:"email" db:"email"`
 	Background         string     `json:"background" db:"background"`
 }
 
 type Order struct {
 	gorm.Model
-	StoresID       []string `gorm:"serializer:json" json:"store" db:"store_id"`
+	StoresID       string `gorm:"serializer:json" json:"store" db:"store_id"`
 	CartID         uint32   `json:"cart_id" db:"cart_id"`
 	Coupon         string   `json:"coupon,omitempty" db:"coupon"`
 	Fee            float64  `json:"fee" db:"fee"`
