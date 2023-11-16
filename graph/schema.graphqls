@@ -5,275 +5,293 @@
 scalar Time
 scalar Data
 
-
 # type ApiResponse {
 #   message: String!
 #   status: Int!
 #   data: Data
 # }
 type Follower {
-  follower_id: Int!
-  follower_name: String!
-  store_id: Int!
-  follower_image: Int!
+	follower_id: Int!
+	follower_name: String!
+	store_id: Int!
+	follower_image: String!
+}
+type Order {
+	id: Int!
+	customer: String!
+	customer_email: String!
+	price: Float!
+	status: String!
+	date: String!
+  store_id: String!
 }
 type Store {
-  id: ID!
-  link: String!
-  name: String!
-  wallet: Float!
-  user: Int!
-  products: [Product!]
-  description: String!
-  followers: [Follower!]
-  has_physical_address: Boolean!
+	id: ID!
+	link: String!
+	name: String!
+	wallet: Float!
+	user: Int!
+	description: String!
+	followers: [Follower!]
+	product: [Product!]
+  order:[Order!]
+	address: String!
+	status: Boolean!
+	thumbnail: String!
+	phone: String!
+	background: String!
+	has_physical_address: Boolean!
 }
 type VerifyOTP {
-  phone: String!
-  code: String!
-  email: String
+	phone: String!
+	code: String!
+	email: String
 }
 type HandledProducts {
-  userId: Int!
-  productId: Int!
-  productName: String
-  productThumbnail: String
-  productPrice: Float
-  productDiscount: Float
-  productStatus: Boolean
-  productQuantity: Int
+	userId: Int!
+	productId: Int!
+	productName: String
+	productThumbnail: String
+	productPrice: Float
+	productDiscount: Float
+	productStatus: Boolean
+	productQuantity: Int
 }
 input ProductInput {
-  name: String!
-  description: String!
-  price: Float!
-  discount: Float!
-  thumbnail: String!
-  image: [String!]!
-  quantity: Int!
-  variant: [NewVariant!]
-  store: String!
-  category: Int!
-  subcategory: Int!
+	name: String!
+	description: String!
+	price: Float!
+	discount: Float!
+	thumbnail: String!
+	image: [String!]!
+	quantity: Int!
+	variant: [NewVariant!]
+	store: String!
+	category: Int!
+	subcategory: Int!
 }
 input StoreInput {
-  id: ID
-  link: String!
-  name: String!
-  user: Int!
-  description: String!
-  address: String!
-  wallet: Int!
-  has_physical_address: Boolean!
-  phone: String!
-  email: String
-  thumbnail: String
-  background: String
+	id: ID
+	link: String!
+	name: String!
+	user: Int!
+	description: String!
+	address: String!
+	wallet: Int!
+	has_physical_address: Boolean!
+	phone: String!
+	email: String
+	thumbnail: String
+	background: String
 }
 type User {
-  id: ID!
-  fullname: String!
-  email: String!
-  campus: String!
-  avatar: String
-  password: String!
-  phone: String!
-  usertype: String!
-  stores: [Store!]
-  active: Boolean!
-  access_token: String
-  refresh_token: String
-  twofa: Boolean!
-  code: String!
-  codeexpiry: String!
+	id: ID!
+	fullname: String!
+	email: String!
+	campus: String!
+	avatar: String
+	password: String!
+	phone: String!
+	usertype: String!
+	stores: [Store!]
+	active: Boolean!
+	access_token: String
+	refresh_token: String
+	twofa: Boolean!
+	code: String!
+	codeexpiry: String!
 }
 
 input NewUser {
-  fullname: String!
-  email: String!
-  campus: String!
-  password: String!
-  stores: StoreInput
-  phone: String!
-  usertype: String!
-  code: String
-  codeexpiry: Time
+	fullname: String!
+	email: String!
+	campus: String!
+	password: String!
+	stores: StoreInput
+	phone: String!
+	usertype: String!
+	code: String
+	codeexpiry: Time
 }
 input NewHandleProductInput {
-  user: Int!
-  product: Int!
+	user: Int!
+	product: Int!
 }
 input NewCategory {
-  name: String!
+	name: String!
 }
 input NewSubCategory {
-  name: String!
-  category: Int!
+	name: String!
+	category: Int!
 }
 input NewVerifyOTP {
-  phone: String!
-  code: String!
-  email: String
+	phone: String!
+	code: String!
+	email: String
 }
 
 input ModifyCartItemInput {
-  productId: ID!
-  quantity: Int!
-  user: Int!
+	productId: ID!
+	quantity: Int!
+	user: Int!
 }
 type Category {
-  id: ID!
-  name: String!
-  slug: String!
-  subcategories: [SubCategory!]
+	id: ID!
+	name: String!
+	slug: String!
+	subcategories: [SubCategory!]
 }
 
 type SubCategory {
-  name: String!
-  slug: String!
-  category: Int!
+	name: String!
+	slug: String!
+	category: Int!
 }
 type CartItem {
-  product: Product!
-  quantity: Int!
+	product: Product!
+	quantity: Int!
 }
 
 type Cart {
-  items: [CartItem!]!
-  total: Float!
-  active: Boolean!
-  user: Int!
-  id: ID
+	items: [CartItem!]!
+	total: Float!
+	active: Boolean!
+	user: Int!
+	id: ID
 }
 type VariantValue {
-  value: String!
-  price: Float!
-  images: [String!]
+	value: String!
+	price: Float!
+	images: [String!]
 }
 type Variant {
-  name: String!
-  value: [VariantValue!]!
+	name: String!
+	value: [VariantValue!]!
 }
 type Product {
-  id: Int!
-  name: String!
-  slug: String!
-  description: String!
-  price: Float!
-  discount: Float!
-  status: Boolean!
-  quantity: Int!
-  thumbnail: String!
-  image: [String!]!
-  variant:[Variant]
-  store: String!
-  category: String!
-  subcategory: String!
+	id: Int!
+	name: String!
+	slug: String!
+	description: String!
+	price: Float!
+	discount: Float!
+	status: Boolean!
+	quantity: Int!
+	thumbnail: String!
+	image: [String!]!
+	variant: [Variant]
+	store: String!
+	category: String!
+	subcategory: String!
 }
 
 input PaymentData {
-  storeID: [Int!]
-  status: String
-  userID: String!
-  amount: Float
-  UUID: String
-  paymentGateway: String!
+	storeID: [Int!]
+	status: String
+	userID: String!
+	amount: Float
+	UUID: String
+	paymentGateway: String!
 }
 
-type Order {
-  storeID: [Int!]
-  cartID: Int!
-  status: String
-  userID: String!
-  amount: Float
-  UUID: String
-  paymentGateway: String
+type Transaction {
+	storeID: [Int!]
+	cartID: Int!
+	status: String
+	userID: String!
+	amount: Float
+	UUID: String
+	paymentGateway: String
 }
 type LoginRes {
-  id: Int!
-  access_token: String!
-  refresh_token: String!
+	id: Int!
+	access_token: String!
+	refresh_token: String!
 }
 type Review {
-  username: String!
-  image: String!
-  message:String!
-  rating: Float!
-  productId: Int!
+	username: String!
+	image: String!
+	message: String!
+	rating: Float!
+	productId: Int!
 }
 input ReviewInput {
-  username: String!
-  image: String!
-  message: String!
-  rating: Float!
-  productId: Int!
+	username: String!
+	image: String!
+	message: String!
+	rating: Float!
+	productId: Int!
 }
 input LoginReq {
-  email: String!
-  password: String!
+	email: String!
+	password: String!
 }
 input NewVariantValue {
-  value: String!
-  price: Float
-  images:[String!]
+	value: String!
+	price: Float
+	images: [String!]
 }
 input NewVariant {
-  name: String!
-  value: [NewVariantValue!]!
+	name: String!
+	value: [NewVariantValue!]!
 }
 type Query {
-  Users(limit: Int, offset: Int): [User!]!
-  User(id: ID!): User
-  Categories: [Category!]!
-  Category(id: Int!): Category
-  SubCategory(id: ID!): SubCategory
-  Products(store: String, limit: Int, offset: Int): ProductPaginationData!
-  Product(id: Int!): Product
-  HandledProducts(user: Int!,type:String!): [HandledProducts!]!
-  RecommendedProducts(query:String!):[Product!]!
-  RecentlyAddedProducts(user: Int!) : [Product!]!
-  ProductReviews(id:Int!):[Review!]!
-  Cart(user: Int!): Cart!
-  searchProducts(query: String!): [Product!]
-  Stores(user: Int, limit: Int, offset: Int): StorePaginationData!
-  Store(id: Int!): Store
+	Users(limit: Int, offset: Int): [User!]!
+	User(id: ID!): User
+	Categories: [Category!]!
+	Category(id: Int!): Category
+	SubCategory(id: ID!): SubCategory
+	Products(store: String, limit: Int, offset: Int): ProductPaginationData!
+	Product(id: Int!): Product
+	HandledProducts(user: Int!, type: String!): [HandledProducts!]!
+	RecommendedProducts(query: String!): [Product!]!
+	RecentlyAddedProducts(user: Int!): [Product!]!
+	ProductReviews(id: Int!): [Review!]!
+	Cart(user: Int!): Cart!
+	searchProducts(query: String!): [Product!]
+	Stores(user: Int, limit: Int, offset: Int): StorePaginationData!
+	Store(id: Int!): Store
 }
 
 type Mutation {
-  createUser(input: NewUser!): User!
-  createVerifyOTP(input: NewVerifyOTP!): User!
-  loginUser(input: LoginReq!): LoginRes!
-  addHandledProduct(userId: Int!, productId: Int!,type:String!): HandledProducts!
-  addReview(input:ReviewInput!): Review!
-  # addRecentlyViewed(user: Int!,productId: Int!) : String!
-  removeHandledProduct(user: Int!,type:String): HandledProducts
-  createCategory(input: NewCategory!): Category!
-  createSubCategory(input: NewSubCategory!): SubCategory!
-  createProduct(input: ProductInput!): Product!
-  updateProduct(input: ProductInput): Product!
-  toggleStoreFollowStatus(user:Int!,store:Int!): String
-  deleteProduct(productId: Int!): Product!
-  modifyCart(input: ModifyCartItemInput!): Cart!
-  removeAllCart(cartID: Int!): Cart!
-  createStore(input: StoreInput!): Store!
-  updateStore(storeId: Int!): Store!
-  deleteStore(storeId: Int!): Store!
-  initializePayment(input: PaymentData!): String
+	createUser(input: NewUser!): User!
+	createVerifyOTP(input: NewVerifyOTP!): User!
+	loginUser(input: LoginReq!): LoginRes!
+	addHandledProduct(
+		userId: Int!
+		productId: Int!
+		type: String!
+	): HandledProducts!
+	addReview(input: ReviewInput!): Review!
+	# addRecentlyViewed(user: Int!,productId: Int!) : String!
+	removeHandledProduct(user: Int!, type: String): HandledProducts
+	createCategory(input: NewCategory!): Category!
+	createSubCategory(input: NewSubCategory!): SubCategory!
+	createProduct(input: ProductInput!): Product!
+	updateProduct(input: ProductInput): Product!
+	toggleStoreFollowStatus(user: Int!, store: Int!): String
+	deleteProduct(productId: Int!): Product!
+	modifyCart(input: ModifyCartItemInput!): Cart!
+	removeAllCart(cartID: Int!): Cart!
+	createStore(input: StoreInput!): Store!
+	updateStore(storeId: Int!): Store!
+	deleteStore(storeId: Int!): Store!
+	initializePayment(input: PaymentData!): String
 }
 
 type Subscription {
-  productSearchResults(query: String!): [Product]
+	productSearchResults(query: String!): [Product]
 }
 
 type ProductPaginationData {
-  data: [Product!]!
-  current_page: Int!
-  per_page: Int!
-  total: Int!
+	data: [Product!]!
+	current_page: Int!
+	per_page: Int!
+	total: Int!
 }
 type StorePaginationData {
-  products: [Store!]!
-  current_page: Int!
-  per_page: Int!
-  total: Int!
+	data: [Store!]!
+	current_page: Int!
+	per_page: Int!
+	total: Int!
 }

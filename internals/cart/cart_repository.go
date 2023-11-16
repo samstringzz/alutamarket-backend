@@ -238,7 +238,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 			paymentLink = linkValue
 		}
 	}
-	newOrder := &store.Order{}
+	newOrder := &store.Transactions{}
 	newOrder.Amount = cart.Total + input.Fee
 	newOrder.UserID = strconv.FormatUint(uint64(cart.UserID), 10)
 	newOrder.UUID = UUID

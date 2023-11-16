@@ -30,7 +30,7 @@ type Follower struct {
 	FollowerID    int    `json:"follower_id"`
 	FollowerName  string `json:"follower_name"`
 	StoreID       int    `json:"store_id"`
-	FollowerImage int    `json:"follower_image"`
+	FollowerImage string `json:"follower_image"`
 }
 
 type HandledProducts struct {
@@ -105,13 +105,13 @@ type NewVerifyOtp struct {
 }
 
 type Order struct {
-	StoreID        []int    `json:"storeID,omitempty"`
-	CartID         int      `json:"cartID"`
-	Status         *string  `json:"status,omitempty"`
-	UserID         string   `json:"userID"`
-	Amount         *float64 `json:"amount,omitempty"`
-	UUID           *string  `json:"UUID,omitempty"`
-	PaymentGateway *string  `json:"paymentGateway,omitempty"`
+	ID            int     `json:"id"`
+	Customer      string  `json:"customer"`
+	CustomerEmail string  `json:"customer_email"`
+	Price         float64 `json:"price"`
+	Status        string  `json:"status"`
+	Date          string  `json:"date"`
+	StoreID       string  `json:"store_id"`
 }
 
 type PaymentData struct {
@@ -183,9 +183,15 @@ type Store struct {
 	Name               string      `json:"name"`
 	Wallet             float64     `json:"wallet"`
 	User               int         `json:"user"`
-	Products           []*Product  `json:"products,omitempty"`
 	Description        string      `json:"description"`
 	Followers          []*Follower `json:"followers,omitempty"`
+	Product            []*Product  `json:"product,omitempty"`
+	Order              []*Order    `json:"order,omitempty"`
+	Address            string      `json:"address"`
+	Status             bool        `json:"status"`
+	Thumbnail          string      `json:"thumbnail"`
+	Phone              string      `json:"phone"`
+	Background         string      `json:"background"`
 	HasPhysicalAddress bool        `json:"has_physical_address"`
 }
 
@@ -205,7 +211,7 @@ type StoreInput struct {
 }
 
 type StorePaginationData struct {
-	Products    []*Store `json:"products"`
+	Data        []*Store `json:"data"`
 	CurrentPage int      `json:"current_page"`
 	PerPage     int      `json:"per_page"`
 	Total       int      `json:"total"`
@@ -215,6 +221,16 @@ type SubCategory struct {
 	Name     string `json:"name"`
 	Slug     string `json:"slug"`
 	Category int    `json:"category"`
+}
+
+type Transaction struct {
+	StoreID        []int    `json:"storeID,omitempty"`
+	CartID         int      `json:"cartID"`
+	Status         *string  `json:"status,omitempty"`
+	UserID         string   `json:"userID"`
+	Amount         *float64 `json:"amount,omitempty"`
+	UUID           *string  `json:"UUID,omitempty"`
+	PaymentGateway *string  `json:"paymentGateway,omitempty"`
 }
 
 type User struct {

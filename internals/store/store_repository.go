@@ -129,9 +129,6 @@ func (r *repository) UpdateStore(ctx context.Context, req *Store) (*Store, error
 	if req.Address != "" {
 		existingStore.Address = req.Address
 	}
-	if req.Email != "" {
-		existingStore.Email = req.Email
-	}
 	if req.Phone != "" {
 		existingStore.Phone = req.Phone
 	}
