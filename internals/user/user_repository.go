@@ -1,13 +1,17 @@
 package user
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
+
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/utils"
@@ -58,7 +62,9 @@ func (r *repository) GetUserByEmailOrPhone(ctx context.Context, identifier strin
 	}
 	return &u, nil
 }
-
+func boolPtr(b bool) *bool {
+	return &b
+}
 func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User, error) {
 	// Start a new database transaction
 
@@ -86,6 +92,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		tx.Rollback()
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User already exists")
 	}
+
 	newUser := &User{
 		Campus:     req.Campus,
 		Email:      req.Email,
@@ -93,11 +100,11 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		Fullname:   req.Fullname,
 		Phone:      req.Phone,
 		Usertype:   req.Usertype,
-		Active:     false,
-		Twofa:      false,
+		Active:     boolPtr(false),
+		Twofa:      boolPtr(false),
 		Code:       "12345",
 		Codeexpiry: codeExpiry,
-		Avatar:    "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
+		Avatar:     "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
 	}
 
 	if err := tx.Create(newUser).Error; err != nil {
@@ -116,6 +123,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 			Status:             true,
 			Phone:              req.StorePhone,
 		}
+
 		if err := tx.Create(createdStore).Error; err != nil {
 			tx.Rollback()
 			return nil, err
@@ -129,6 +137,91 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 	}
 
 	return newUser, nil
+}
+
+func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error) {
+	user, _ := r.GetUser(ctx, req.UserID)
+
+	//create a user for paystack account
+	paystackCustomerURL := "https://api.paystack.co/customer"
+	method := "POST"
+	names := strings.Split(user.Fullname, " ")
+	if len(names) <= 0 {
+		return "", errors.NewAppError(505, "Internal Server Error", "There was an error creating paystack account")
+	}
+	payload := map[string]interface{}{
+		"email":      user.Email,
+		"first_name": names[0],
+		"last_name":  req.StoreName,
+		"phone":      user.Phone,
+	}
+	jsonPayload, _ := json.Marshal(payload)
+
+	client := &http.Client{}
+	newReq, err := http.NewRequest(method, paystackCustomerURL, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		fmt.Println(err)
+		// return
+	}
+	newReq.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
+	newReq.Header.Add("Content-Type", "application/json")
+
+	res, err := client.Do(newReq)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	defer res.Body.Close()
+
+	var customerResp map[string]interface{}
+	json.NewDecoder(res.Body).Decode(&customerResp)
+	fmt.Println(customerResp)
+
+	//We should get a customerResp.data.code f
+
+	// verify the customer before creating his DVA account
+	// Accessing nested fields within customerResp
+	customerCode, ok := customerResp["data"].(map[string]interface{})["customer_code"].(string)
+	if !ok {
+		fmt.Println("Error: unable to extract customer code")
+
+	}
+
+	// verify the customer before creating his DVA account
+	paystackCustomerValidationURL := "https://api.paystack.co/customer/" + customerCode + "/identification"
+	method = "POST"
+	payload = map[string]interface{}{
+		"country":        "NG",
+		"type":           "bank_account",
+		"account_number": req.AccountNumber,
+		"bvn":            req.BVN,
+		"bank_code":      "007",
+		"first_name":     "Asta",
+		"last_name":      "Lavista",
+	}
+	jsonPayload, _ = json.Marshal(payload)
+
+	client = &http.Client{}
+
+	newReq2, err := http.NewRequest(method, paystackCustomerValidationURL, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		fmt.Println(err)
+		// return
+	}
+	newReq2.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
+	newReq2.Header.Add("Content-Type", "application/json")
+
+	res2, err := client.Do(newReq2)
+	if err != nil {
+		fmt.Println(err)
+		// return
+	}
+	defer res2.Body.Close()
+
+	var result map[string]interface{}
+	json.NewDecoder(res.Body).Decode(&result)
+	fmt.Println(result)
+	return "Successfully Created an account", nil
 }
 
 func (r *repository) VerifyOTP(ctx context.Context, req *User) (*User, error) {
@@ -155,7 +248,7 @@ func (r *repository) VerifyOTP(ctx context.Context, req *User) (*User, error) {
 		if foundUser.ID == 0 {
 			return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist in the database")
 		}
-		if foundUser.Active {
+		if *foundUser.Active {
 			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User account is already verified!")
 		}
 		if err := r.db.Model(foundUser).Update("active", true).Error; err != nil {
@@ -219,16 +312,16 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 		return nil, err
 	}
 	r.db.Model(&user).Updates(User{RefreshToken: refreshSS, AccessToken: accessSS})
-	if user.Twofa {
+	if *user.Twofa {
 		//send otp
 		otpCode := utils.GenerateOTP()
 		r.db.Model(&user).Update("code", otpCode)
 		return nil, errors.NewAppError(http.StatusCreated, "ACTION REQUIRED", "This account is 2-FA protected,enter Otp to continue")
 	}
 
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// Set a cookie for the access token with an expiration time matching the token's expiration
 	accessCookie := http.Cookie{
@@ -271,7 +364,7 @@ func (r *repository) TwoFa(ctx context.Context, req *User) (bool, error) {
 		return false, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
 	}
 	r.db.Model(&user).Update("two_fa", true)
-	return user.Twofa, nil
+	return *user.Twofa, nil
 }
 
 func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error {
@@ -323,4 +416,51 @@ func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeI
 	}
 
 	return nil
+}
+
+func (r *repository) UpdateUser(ctx context.Context, req *User) (*User, error) {
+
+	// First, check if the Store exists by its ID or another unique identifier
+	existingUser, err := r.GetUser(ctx, strconv.FormatUint(uint64(req.ID), 10))
+	if err != nil {
+		return nil, err
+	}
+
+	// Update only the fields that are present in the req
+	if req.Fullname != "" {
+		existingUser.Fullname = req.Fullname
+	}
+	if req.Email != "" {
+		existingUser.Email = req.Email
+	}
+	if req.Avatar != "" {
+		existingUser.Avatar = req.Avatar
+	}
+	if req.Phone != "" {
+		existingUser.Phone = req.Phone
+	}
+	if req.Usertype != "" {
+		existingUser.Usertype = req.Usertype
+	}
+	if req.AccessToken != "" {
+		existingUser.AccessToken = req.AccessToken
+	}
+	if req.RefreshToken != "" {
+		existingUser.RefreshToken = req.RefreshToken
+	}
+	if req.Active != existingUser.Active && req.Active != nil {
+		existingUser.Active = req.Active
+	}
+
+	if req.Twofa != existingUser.Twofa && req.Twofa != nil {
+		existingUser.Twofa = req.Twofa
+	}
+
+	// Update the Store in the repository
+	err = r.db.Save(existingUser).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return existingUser, nil
 }

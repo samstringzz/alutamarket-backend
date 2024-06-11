@@ -5,6 +5,7 @@ package product
 import (
 	"context"
 	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -30,11 +31,11 @@ type Order struct{}
 
 type Review struct {
 	gorm.Model
-	Username  string `json:"username" db:"username"`
-	Image     string `json:"image" db:"image"`
-	Message   string `json:"message" db:"message"`
-	Rating    float64  `json:"rating" db:"rating"`
-	ProductID uint32 `json:"product" db:"product_id"`
+	Username  string  `json:"username" db:"username"`
+	Image     string  `json:"image" db:"image"`
+	Message   string  `json:"message" db:"message"`
+	Rating    float64 `json:"rating" db:"rating"`
+	ProductID uint32  `json:"product" db:"product_id"`
 }
 type VariantValue struct {
 	Value  string   `json:"value" db:"value"`
@@ -80,6 +81,8 @@ type Product struct {
 	Views       []uint32       `gorm:"serializer:json" jsinput.ProductIDon:"views" db:"views"`
 	Subcategory string         `json:"subcategory" db:"subcategory"`
 	Reviews     []*Review      `gorm:"serializer:json"`
+	Ratings     uint32         `json:"ratings" db:"ratings"`
+	Recommended uint8          `json:"recommended" db:"recommended"`
 	Ads         *AdsGen        `gorm:"serializer:json" json:"ads,omitempty" db:"ads"`
 }
 
@@ -99,7 +102,7 @@ type HandledProduct struct {
 	gorm.Model
 	UserID  uint32   `json:"user_id" db:"user_id"`
 	Product *Product `gorm:"embedded"`
-    Type    string   `db:"type"`
+	Type    string   `db:"type"`
 }
 
 type Repository interface {
@@ -110,19 +113,19 @@ type Repository interface {
 	CreateProduct(ctx context.Context, product *NewProduct) (*Product, error)
 	GetProduct(ctx context.Context, productId, userId uint32) (*Product, error)
 	GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, error)
-	AddHandledProduct(ctx context.Context, userId, productId uint32,eventType string) (*HandledProduct, error)
+	AddHandledProduct(ctx context.Context, userId, productId uint32, eventType string) (*HandledProduct, error)
 	AddSavedForLater(ctx context.Context, userId, productId uint32) (*HandledProduct, error)
-	GetHandledProducts(ctx context.Context, userId uint32,eventType string) ([]*HandledProduct, error)
+	GetHandledProducts(ctx context.Context, userId uint32, eventType string) ([]*HandledProduct, error)
 	GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error)
 	SearchProducts(ctx context.Context, query string) ([]*Product, error)
-	RemoveHandledProduct(ctx context.Context, userId uint32,eventType string) error
+	RemoveHandledProduct(ctx context.Context, userId uint32, eventType string) error
 	// GetProductByFilter(ctx context.Context, filter string,filterOption string )(*Product,error)    //by slug,by store,by id,(by category||subcategory)
 	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
 	DeleteProduct(ctx context.Context, id uint32) error
 	// GetRecentlyViewedProducts(ctx context.Context, userId uint32) ([]*Product, error)
 	// AddRecentlyViewedProducts(ctx context.Context, userId,productId uint32) error
-	AddReview(ctx context.Context, input *Review) (*Review,error)
-	GetReviews(ctx context.Context, productId uint32) ([]*Review,error)
+	AddReview(ctx context.Context, input *Review) (*Review, error)
+	GetReviews(ctx context.Context, productId uint32) ([]*Review, error)
 }
 
 type Service interface {
@@ -131,22 +134,22 @@ type Service interface {
 	GetCategories(ctx context.Context) ([]*Category, error)
 	GetCategory(ctx context.Context, id uint32) (*Category, error)
 	CreateProduct(ctx context.Context, product *NewProduct) (*Product, error)
-	AddHandledProduct(ctx context.Context, userId, productId uint32,eventType string) (*HandledProduct, error)
+	AddHandledProduct(ctx context.Context, userId, productId uint32, eventType string) (*HandledProduct, error)
 	GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, error)
 	GetProduct(ctx context.Context, productId, userId uint32) (*Product, error)
 	GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error)
 	// GetProductByFilter(ctx context.Context, filter string,filterOption string)(*Product,error)    //by slug,by store,by id,(by category||subcategory)
-	GetHandledProducts(ctx context.Context, userId uint32,eventType string) ([]*HandledProduct, error)	
+	GetHandledProducts(ctx context.Context, userId uint32, eventType string) ([]*HandledProduct, error)
 	SearchProducts(ctx context.Context, query string) ([]*Product, error)
 	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
 	// AddWishListedProduct(ctx context.Context, userId, productId uint32) (*HandledProduct, error)
 	// GetWishListedProducts(ctx context.Context, userId uint32) ([]*HandledProduct, error)
-	RemoveHandledProduct(ctx context.Context, userId uint32,eventType string) error
+	RemoveHandledProduct(ctx context.Context, userId uint32, eventType string) error
 	// RemoveWishListedProduct(ctx context.Context, userId uint32) error
 	// AddRecentlyViewedProducts(ctx context.Context, userId,productId uint32) error
 	// GetRecentlyViewedProducts(ctx context.Context, userId uint32) ([]*Product, error)
-	AddReview(ctx context.Context, input *Review) (*Review,error)
-	GetReviews(ctx context.Context, productId uint32) ([]*Review,error)
+	AddReview(ctx context.Context, input *Review) (*Review, error)
+	GetReviews(ctx context.Context, productId uint32) ([]*Review, error)
 	DeleteProduct(ctx context.Context, id uint32) error
 
 	// Left are

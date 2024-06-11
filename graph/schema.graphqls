@@ -23,7 +23,7 @@ type Order {
 	price: Float!
 	status: String!
 	date: String!
-  store_id: String!
+	store_id: String!
 }
 type Store {
 	id: ID!
@@ -31,10 +31,11 @@ type Store {
 	name: String!
 	wallet: Float!
 	user: Int!
+	email: String!
 	description: String!
 	followers: [Follower!]
 	product: [Product!]
-  order:[Order!]
+	order: [Order!]
 	address: String!
 	status: Boolean!
 	thumbnail: String!
@@ -84,6 +85,21 @@ input StoreInput {
 	thumbnail: String
 	background: String
 }
+input UpdateStoreInput {
+	id: ID
+	link: String
+	name: String
+	user: Int
+	description: String
+	address: String
+	wallet: Int
+	has_physical_address: Boolean
+	status: Boolean
+	phone: String
+	email: String
+	thumbnail: String
+	background: String
+}
 type User {
 	id: ID!
 	fullname: String!
@@ -112,6 +128,19 @@ input NewUser {
 	usertype: String!
 	code: String
 	codeexpiry: Time
+}
+input UpdateUserInput {
+	id: ID
+	fullname: String
+	email: String
+	campus: String
+	password: String
+	stores: StoreInput
+	phone: String
+	active: Boolean
+	usertype: String
+	code: String
+	avatar: String
 }
 input NewHandleProductInput {
 	user: Int!
@@ -251,10 +280,12 @@ type Query {
 	searchProducts(query: String!): [Product!]
 	Stores(user: Int, limit: Int, offset: Int): StorePaginationData!
 	Store(id: Int!): Store
+	StoreByName(name: String!): Store
 }
 
 type Mutation {
 	createUser(input: NewUser!): User!
+	updateUser(input: UpdateUserInput): User!
 	createVerifyOTP(input: NewVerifyOTP!): User!
 	loginUser(input: LoginReq!): LoginRes!
 	addHandledProduct(
@@ -274,7 +305,7 @@ type Mutation {
 	modifyCart(input: ModifyCartItemInput!): Cart!
 	removeAllCart(cartID: Int!): Cart!
 	createStore(input: StoreInput!): Store!
-	updateStore(storeId: Int!): Store!
+	updateStore(input: UpdateStoreInput): Store!
 	deleteStore(storeId: Int!): Store!
 	initializePayment(input: PaymentData!): String
 }

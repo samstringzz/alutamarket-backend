@@ -41,6 +41,18 @@ func (s *service) GetStore(c context.Context, id uint32) (*Store, error) {
 	return r, nil
 }
 
+func (s *service) GetStoreByName(c context.Context, name string) (*Store, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	r, err := s.Repository.GetStoreByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return r, nil
+}
+
 func (s *service) GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
@@ -65,11 +77,10 @@ func (s *service) UpdateStore(c context.Context, req *Store) (*Store, error) {
 	return r, nil
 }
 
-
 func (s *service) DeleteStore(c context.Context, id uint32) error {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 
-	 err := s.Repository.DeleteStore(ctx, id)
+	err := s.Repository.DeleteStore(ctx, id)
 	return err
 }

@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -27,13 +28,13 @@ func NewRepository() Repository {
 	}
 }
 
-func (r *repository) CheckStoreName(ctx context.Context, query string)error{
+func (r *repository) CheckStoreName(ctx context.Context, query string) error {
 	var stores []*Store
-	if err := r.db.Where("name ILIKE ?","%"+query+"%").Find(&stores).Error; err != nil {
+	if err := r.db.Where("name ILIKE ?", "%"+query+"%").Find(&stores).Error; err != nil {
 		return err
 	}
-	for _,item := range stores{
-		if item.Name == query{
+	for _, item := range stores {
+		if item.Name == query {
 			return errors.NewAppError(http.StatusConflict, "CONFLICT", "Store Name already choosen")
 		}
 	}
@@ -46,6 +47,7 @@ func (r *repository) CreateStore(ctx context.Context, req *Store) (*Store, error
 	if count > 0 {
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Store already exist")
 	}
+
 	newStore := &Store{
 		Name:               req.Name,
 		Link:               req.Link,
@@ -135,6 +137,9 @@ func (r *repository) UpdateStore(ctx context.Context, req *Store) (*Store, error
 	if req.Background != "" {
 		existingStore.Background = req.Background
 	}
+	if req.Thumbnail != "" {
+		existingStore.Thumbnail = req.Thumbnail
+	}
 	existingStore.Wallet += req.Wallet
 
 	// Update the Store in the repository
@@ -145,4 +150,3 @@ func (r *repository) UpdateStore(ctx context.Context, req *Store) (*Store, error
 
 	return existingStore, nil
 }
-
