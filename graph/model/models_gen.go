@@ -61,6 +61,9 @@ type ModifyCartItemInput struct {
 	User      int    `json:"user"`
 }
 
+type Mutation struct {
+}
+
 type NewCategory struct {
 	Name string `json:"name"`
 }
@@ -161,6 +164,9 @@ type ProductPaginationData struct {
 	Total       int        `json:"total"`
 }
 
+type Query struct {
+}
+
 type Review struct {
 	Username  string  `json:"username"`
 	Image     string  `json:"image"`
@@ -183,6 +189,7 @@ type Store struct {
 	Name               string      `json:"name"`
 	Wallet             float64     `json:"wallet"`
 	User               int         `json:"user"`
+	Email              string      `json:"email"`
 	Description        string      `json:"description"`
 	Followers          []*Follower `json:"followers,omitempty"`
 	Product            []*Product  `json:"product,omitempty"`
@@ -223,6 +230,9 @@ type SubCategory struct {
 	Category int    `json:"category"`
 }
 
+type Subscription struct {
+}
+
 type Transaction struct {
 	StoreID        []int    `json:"storeID,omitempty"`
 	CartID         int      `json:"cartID"`
@@ -231,6 +241,36 @@ type Transaction struct {
 	Amount         *float64 `json:"amount,omitempty"`
 	UUID           *string  `json:"UUID,omitempty"`
 	PaymentGateway *string  `json:"paymentGateway,omitempty"`
+}
+
+type UpdateStoreInput struct {
+	ID                 *string `json:"id,omitempty"`
+	Link               *string `json:"link,omitempty"`
+	Name               *string `json:"name,omitempty"`
+	User               *int    `json:"user,omitempty"`
+	Description        *string `json:"description,omitempty"`
+	Address            *string `json:"address,omitempty"`
+	Wallet             *int    `json:"wallet,omitempty"`
+	HasPhysicalAddress *bool   `json:"has_physical_address,omitempty"`
+	Status             *bool   `json:"status,omitempty"`
+	Phone              *string `json:"phone,omitempty"`
+	Email              *string `json:"email,omitempty"`
+	Thumbnail          *string `json:"thumbnail,omitempty"`
+	Background         *string `json:"background,omitempty"`
+}
+
+type UpdateUserInput struct {
+	ID       *string     `json:"id,omitempty"`
+	Fullname *string     `json:"fullname,omitempty"`
+	Email    *string     `json:"email,omitempty"`
+	Campus   *string     `json:"campus,omitempty"`
+	Password *string     `json:"password,omitempty"`
+	Stores   *StoreInput `json:"stores,omitempty"`
+	Phone    *string     `json:"phone,omitempty"`
+	Active   *bool       `json:"active,omitempty"`
+	Usertype *string     `json:"usertype,omitempty"`
+	Code     *string     `json:"code,omitempty"`
+	Avatar   *string     `json:"avatar,omitempty"`
 }
 
 type User struct {

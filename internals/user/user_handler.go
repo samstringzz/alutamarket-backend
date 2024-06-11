@@ -14,7 +14,6 @@ func NewHandler(s Service) *Handler {
 	}
 }
 
-
 func (h *Handler) CreateUser(ctx context.Context, input *CreateUserReq) (*CreateUserRes, error) {
 	user, err := h.Service.CreateUser(ctx, input)
 	if err != nil {
@@ -46,10 +45,18 @@ func (h *Handler) GetUsers(ctx context.Context) ([]*User, error) {
 	return user, nil
 }
 
-func (h *Handler) ToggleStoreFollowStatus(ctx context.Context,userId, storeId uint32) error {
-	 err := h.Service.ToggleStoreFollowStatus(ctx,userId, storeId )
+func (h *Handler) ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error {
+	err := h.Service.ToggleStoreFollowStatus(ctx, userId, storeId)
 	if err != nil {
 		return err
 	}
-	return  nil
+	return nil
+}
+
+func (h *Handler) UpdateUser(ctx context.Context, user *User) (*User, error) {
+	usr, err := h.Service.UpdateUser(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	return usr, nil
 }

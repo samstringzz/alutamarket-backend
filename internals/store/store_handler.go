@@ -26,6 +26,14 @@ func (h *Handler) GetStore(ctx context.Context, input uint32) (*Store, error) {
 	}
 	return r, nil
 }
+
+func (h *Handler) GetStoreByName(ctx context.Context, name string) (*Store, error) {
+	r, err := h.Service.GetStoreByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
 func (h *Handler) GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error) {
 	r, err := h.Service.GetStores(ctx, user, limit, offset)
 	if err != nil {

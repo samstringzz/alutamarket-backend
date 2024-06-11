@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -22,11 +23,11 @@ func NewService(repository Repository) Service {
 }
 
 type MyJWTClaims struct {
-	ID       string   `json:"id"`
-	Fullname string   `json:"fullname"`
-	Campus   string   `json:"campus"`
-	Phone    string   `json:"phone"`
-	Usertype string   `json:"usertype"`
+	ID       string `json:"id"`
+	Fullname string `json:"fullname"`
+	Campus   string `json:"campus"`
+	Phone    string `json:"phone"`
+	Usertype string `json:"usertype"`
 	jwt.RegisteredClaims
 }
 
@@ -39,17 +40,17 @@ func (s *service) CreateUser(c context.Context, req *CreateUserReq) (*CreateUser
 		return nil, err
 	}
 	u := &CreateUserReq{
-		Email:    req.Email,
-		Password: hashedPassword,
-		Campus:   req.Campus,
-		Fullname: req.Fullname,
-		Phone:    req.Phone,
-		Usertype: req.Usertype,
-		StoreName: req.StoreName,
-		StoreAddress: req.StoreAddress,
-		StoreLink: req.StoreLink,
-		Description:req.Description,
-		HasPhysicalAddress:req.HasPhysicalAddress,
+		Email:              req.Email,
+		Password:           hashedPassword,
+		Campus:             req.Campus,
+		Fullname:           req.Fullname,
+		Phone:              req.Phone,
+		Usertype:           req.Usertype,
+		StoreName:          req.StoreName,
+		StoreAddress:       req.StoreAddress,
+		StoreLink:          req.StoreLink,
+		Description:        req.Description,
+		HasPhysicalAddress: req.HasPhysicalAddress,
 	}
 	r, err := s.Repository.CreateUser(ctx, u)
 	if err != nil {
@@ -107,14 +108,24 @@ func (s *service) Login(c context.Context, req *LoginUserReq) (*LoginUserRes, er
 	return u, nil
 }
 
-func (s *service) ToggleStoreFollowStatus(c context.Context,userId, storeId uint32) error {
+func (s *service) ToggleStoreFollowStatus(c context.Context, userId, storeId uint32) error {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 
-	 err := s.Repository.ToggleStoreFollowStatus(ctx, userId, storeId )
+	err := s.Repository.ToggleStoreFollowStatus(ctx, userId, storeId)
 	if err != nil {
 		// return &LoginUserRes{}, err
 		return err
 	}
-	return  nil
+	return nil
+}
+func (s *service) UpdateUser(ctx context.Context, user *User) (*User, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	usr, err := s.Repository.UpdateUser(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	return usr, nil
 }
