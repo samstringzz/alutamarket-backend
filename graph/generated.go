@@ -230,8 +230,10 @@ type ComplexityRoot struct {
 		Campus       func(childComplexity int) int
 		Code         func(childComplexity int) int
 		Codeexpiry   func(childComplexity int) int
+		Dob          func(childComplexity int) int
 		Email        func(childComplexity int) int
 		Fullname     func(childComplexity int) int
+		Gender       func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Password     func(childComplexity int) int
 		Phone        func(childComplexity int) int
@@ -1392,6 +1394,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Codeexpiry(childComplexity), true
 
+	case "User.dob":
+		if e.complexity.User.Dob == nil {
+			break
+		}
+
+		return e.complexity.User.Dob(childComplexity), true
+
 	case "User.email":
 		if e.complexity.User.Email == nil {
 			break
@@ -1405,6 +1414,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Fullname(childComplexity), true
+
+	case "User.gender":
+		if e.complexity.User.Gender == nil {
+			break
+		}
+
+		return e.complexity.User.Gender(childComplexity), true
 
 	case "User.id":
 		if e.complexity.User.ID == nil {
@@ -3548,6 +3564,10 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 				return ec.fieldContext_User_campus(ctx, field)
 			case "avatar":
 				return ec.fieldContext_User_avatar(ctx, field)
+			case "dob":
+				return ec.fieldContext_User_dob(ctx, field)
+			case "gender":
+				return ec.fieldContext_User_gender(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
 			case "phone":
@@ -3635,6 +3655,10 @@ func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context
 				return ec.fieldContext_User_campus(ctx, field)
 			case "avatar":
 				return ec.fieldContext_User_avatar(ctx, field)
+			case "dob":
+				return ec.fieldContext_User_dob(ctx, field)
+			case "gender":
+				return ec.fieldContext_User_gender(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
 			case "phone":
@@ -3722,6 +3746,10 @@ func (ec *executionContext) fieldContext_Mutation_createVerifyOTP(ctx context.Co
 				return ec.fieldContext_User_campus(ctx, field)
 			case "avatar":
 				return ec.fieldContext_User_avatar(ctx, field)
+			case "dob":
+				return ec.fieldContext_User_dob(ctx, field)
+			case "gender":
+				return ec.fieldContext_User_gender(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
 			case "phone":
@@ -6103,6 +6131,10 @@ func (ec *executionContext) fieldContext_Query_Users(ctx context.Context, field 
 				return ec.fieldContext_User_campus(ctx, field)
 			case "avatar":
 				return ec.fieldContext_User_avatar(ctx, field)
+			case "dob":
+				return ec.fieldContext_User_dob(ctx, field)
+			case "gender":
+				return ec.fieldContext_User_gender(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
 			case "phone":
@@ -6187,6 +6219,10 @@ func (ec *executionContext) fieldContext_Query_User(ctx context.Context, field g
 				return ec.fieldContext_User_campus(ctx, field)
 			case "avatar":
 				return ec.fieldContext_User_avatar(ctx, field)
+			case "dob":
+				return ec.fieldContext_User_dob(ctx, field)
+			case "gender":
+				return ec.fieldContext_User_gender(ctx, field)
 			case "password":
 				return ec.fieldContext_User_password(ctx, field)
 			case "phone":
@@ -9280,6 +9316,88 @@ func (ec *executionContext) _User_avatar(ctx context.Context, field graphql.Coll
 }
 
 func (ec *executionContext) fieldContext_User_avatar(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_dob(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_dob(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Dob, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_dob(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_gender(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_gender(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Gender, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_gender(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -12474,7 +12592,7 @@ func (ec *executionContext) unmarshalInputStoreInput(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "link", "name", "user", "description", "address", "wallet", "has_physical_address", "phone", "email", "thumbnail", "background"}
+	fieldsInOrder := [...]string{"id", "link", "name", "user", "description", "address", "wallet", "has_physical_address", "phone", "status", "email", "thumbnail", "background"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12544,6 +12662,13 @@ func (ec *executionContext) unmarshalInputStoreInput(ctx context.Context, obj in
 				return it, err
 			}
 			it.Phone = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -14242,6 +14367,10 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "avatar":
 			out.Values[i] = ec._User_avatar(ctx, field, obj)
+		case "dob":
+			out.Values[i] = ec._User_dob(ctx, field, obj)
+		case "gender":
+			out.Values[i] = ec._User_gender(ctx, field, obj)
 		case "password":
 			out.Values[i] = ec._User_password(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

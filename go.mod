@@ -3,7 +3,7 @@ module github.com/Chrisentech/aluta-market-api
 go 1.20
 
 require (
-	github.com/99designs/gqlgen v0.17.48
+	github.com/99designs/gqlgen v0.17.49
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
@@ -13,8 +13,8 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/rs/cors v1.10.0
 	github.com/sendgrid/sendgrid-go v3.12.0+incompatible
-	github.com/vektah/gqlparser/v2 v2.5.12
-	golang.org/x/crypto v0.23.0
+	github.com/vektah/gqlparser/v2 v2.5.16
+	golang.org/x/crypto v0.24.0
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.4
 )
@@ -51,9 +51,9 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.4.0 // indirect
-	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
+	golang.org/x/net v0.26.0 // indirect
+	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -43,9 +43,9 @@ func (r *repository) CheckStoreName(ctx context.Context, query string) error {
 
 func (r *repository) CreateStore(ctx context.Context, req *Store) (*Store, error) {
 	var count int64
-	r.db.Model(&Store{}).Where("name =?", req.Name).Count(&count)
+	r.db.Model(&Store{}).Where("name = ? AND user_id = ?", req.Name, req.UserID).Count(&count)
 	if count > 0 {
-		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Store already exist")
+		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Store already exists")
 	}
 
 	newStore := &Store{

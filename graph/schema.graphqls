@@ -81,6 +81,7 @@ input StoreInput {
 	wallet: Int!
 	has_physical_address: Boolean!
 	phone: String!
+	status: Boolean!
 	email: String
 	thumbnail: String
 	background: String
@@ -106,6 +107,8 @@ type User {
 	email: String!
 	campus: String!
 	avatar: String
+	dob: String
+	gender: String
 	password: String!
 	phone: String!
 	usertype: String!
