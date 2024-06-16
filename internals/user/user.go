@@ -18,6 +18,8 @@ type User struct {
 	Phone        string    `json:"phone" db:"phone"`                                                // Phone number of the user
 	Avatar       string    `json:"avatar" db:"avatar"`                                              // Phone number of the user
 	Usertype     string    `json:"usertype" db:"usertype"`                                          // Type of user (e.g., seller,buyer,admin)
+	Dob          string    `json:"dob" db:"dob"`                                                    // Type of user (e.g., seller,buyer,admin)
+	Gender       string    `json:"gender" db:"gender"`                                              // Type of user (e.g., seller,buyer,admin)
 	Active       *bool     `json:"active" db:"active"`
 	Twofa        *bool     `json:"twofa" db:"twofa"`                           // Two factor authentication
 	AccessToken  string    `json:"access_token,omitempty" db:"access_token"`   // Balance of the user's wallet (only for seller)

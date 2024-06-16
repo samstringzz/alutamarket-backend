@@ -212,6 +212,7 @@ type StoreInput struct {
 	Wallet             int     `json:"wallet"`
 	HasPhysicalAddress bool    `json:"has_physical_address"`
 	Phone              string  `json:"phone"`
+	Status             bool    `json:"status"`
 	Email              *string `json:"email,omitempty"`
 	Thumbnail          *string `json:"thumbnail,omitempty"`
 	Background         *string `json:"background,omitempty"`
@@ -279,6 +280,8 @@ type User struct {
 	Email        string   `json:"email"`
 	Campus       string   `json:"campus"`
 	Avatar       *string  `json:"avatar,omitempty"`
+	Dob          *string  `json:"dob,omitempty"`
+	Gender       *string  `json:"gender,omitempty"`
 	Password     string   `json:"password"`
 	Phone        string   `json:"phone"`
 	Usertype     string   `json:"usertype"`
