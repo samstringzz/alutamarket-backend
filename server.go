@@ -75,7 +75,7 @@ func PSWebhookHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// Create a new CORS middleware with the desired options
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "https://aluta-main-app-23a383fcd701.herokuapp.com"}, // Specify the allowed origins
+		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "https://www.thealutamarket.com","https:/thealutamarket.com"}, // Specify the allowed origins
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},                                                                              // Specify allowed HTTP methods
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},                                                                       // Specify allowed headers
 		AllowCredentials: true,                                                                                                            // Allow credentials like cookies
