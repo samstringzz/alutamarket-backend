@@ -1091,13 +1091,38 @@ func (r *queryResolver) RecentlyAddedProducts(ctx context.Context, user int) ([]
 
 // ProductReviews is the resolver for the ProductReviews field.
 func (r *queryResolver) ProductReviews(ctx context.Context, id int) ([]*model.Review, error) {
-	token := ctx.Value("token").(string)
+	// token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", token)
-	if authErr != nil {
-		return nil, authErr
+	// authErr := middlewares.AuthMiddleware("", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
+	productRep := app.InitializePackage(app.ProductPackage)
+
+	productRepository, ok := productRep.(product.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("productRep is not a product.Repository")
 	}
-	panic(fmt.Errorf("not implemented: ProductReviews - ProductReviews"))
+	productSrvc := product.NewService(productRepository)
+	productHandler := product.NewHandler(productSrvc)
+	resp, err := productHandler.GetReviews(ctx, uint32(id))
+	if err != nil {
+		return nil, err
+	}
+	var reviews []*model.Review
+	for _, item := range resp {
+		review := &model.Review{
+			Username:  item.Username,
+			Image:     item.Image,
+			Message:   item.Message,
+			Rating:    item.Rating,
+			ProductID: int(item.ProductID),
+		}
+		reviews = append(reviews, review)
+	}
+	return reviews, nil
+
 }
 
 // Cart is the resolver for the Cart field.
