@@ -30,7 +30,7 @@ type SubCategory struct {
 type Order struct{}
 
 type Review struct {
-	gorm.Model
+	ID        string  `json:"id" db:"id"`
 	Username  string  `json:"username" db:"username"`
 	Image     string  `json:"image" db:"image"`
 	Message   string  `json:"message" db:"message"`
