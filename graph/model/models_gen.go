@@ -267,7 +267,9 @@ type UpdateUserInput struct {
 	Campus   *string     `json:"campus,omitempty"`
 	Password *string     `json:"password,omitempty"`
 	Stores   *StoreInput `json:"stores,omitempty"`
+	Dob      *string     `json:"dob,omitempty"`
 	Phone    *string     `json:"phone,omitempty"`
+	Gender   *string     `json:"gender,omitempty"`
 	Active   *bool       `json:"active,omitempty"`
 	Usertype *string     `json:"usertype,omitempty"`
 	Code     *string     `json:"code,omitempty"`
