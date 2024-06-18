@@ -616,7 +616,7 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 	mod := &store.Store{}
 
 	if input.Name != nil {
-		return nil, errors.ErrUnsupported
+		return nil, errors.New("Store name cannot be changed after being created")
 	}
 	if input.Link != nil {
 		mod.Link = *input.Link
