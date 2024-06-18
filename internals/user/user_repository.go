@@ -442,6 +442,12 @@ func (r *repository) UpdateUser(ctx context.Context, req *User) (*User, error) {
 	if req.Usertype != "" {
 		existingUser.Usertype = req.Usertype
 	}
+	if req.Gender != "" {
+		existingUser.Gender = req.Gender
+	}
+	if req.Dob != "" {
+		existingUser.Dob = req.Dob
+	}
 	if req.AccessToken != "" {
 		existingUser.AccessToken = req.AccessToken
 	}

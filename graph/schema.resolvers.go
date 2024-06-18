@@ -6,11 +6,9 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
-
-	"github.com/Chrisentech/aluta-market-api/errors"
 
 	"github.com/Chrisentech/aluta-market-api/app"
 	"github.com/Chrisentech/aluta-market-api/graph/model"
@@ -92,6 +90,12 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUs
 	}
 	if input.Phone != nil {
 		usr.Phone = *input.Phone
+	}
+	if input.Gender != nil {
+		usr.Phone = *input.Gender
+	}
+	if input.Dob != nil {
+		usr.Phone = *input.Dob
 	}
 	if input.Usertype != nil {
 		usr.Usertype = *input.Usertype
@@ -612,7 +616,7 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 	mod := &store.Store{}
 
 	if input.Name != nil {
-		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Store name cannot be changed after being created")
+		return nil, errors.ErrUnsupported
 	}
 	if input.Link != nil {
 		mod.Link = *input.Link

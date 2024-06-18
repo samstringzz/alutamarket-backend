@@ -139,7 +139,9 @@ input UpdateUserInput {
 	campus: String
 	password: String
 	stores: StoreInput
+	dob: String
 	phone: String
+	gender: String
 	active: Boolean
 	usertype: String
 	code: String
