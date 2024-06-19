@@ -67,6 +67,7 @@ input ProductInput {
 	image: [String!]!
 	quantity: Int!
 	variant: [NewVariant!]
+	review: [NewReview!]
 	store: String!
 	category: Int!
 	subcategory: Int!
@@ -202,6 +203,14 @@ type Variant {
 	name: String!
 	value: [VariantValue!]!
 }
+type Review {
+	rating: Float!
+	message: String!
+	image: String!
+	product_id: Int!
+	username: String!
+	id: ID
+}
 type Product {
 	id: Int!
 	name: String!
@@ -214,6 +223,7 @@ type Product {
 	thumbnail: String!
 	image: [String!]!
 	variant: [Variant]
+	review: [Review]
 	store: String!
 	category: String!
 	subcategory: String!
@@ -242,13 +252,7 @@ type LoginRes {
 	access_token: String!
 	refresh_token: String!
 }
-type Review {
-	username: String!
-	image: String!
-	message: String!
-	rating: Float!
-	productId: Int!
-}
+
 input ReviewInput {
 	username: String!
 	image: String!
@@ -268,6 +272,13 @@ input NewVariantValue {
 input NewVariant {
 	name: String!
 	value: [NewVariantValue!]!
+}
+input NewReview {
+	message: String!
+	rating: Float!
+	product_id: String!
+	image: String!
+	username: String!
 }
 type Query {
 	Users(limit: Int, offset: Int): [User!]!

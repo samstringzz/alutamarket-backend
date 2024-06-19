@@ -73,6 +73,14 @@ type NewHandleProductInput struct {
 	Product int `json:"product"`
 }
 
+type NewReview struct {
+	Message   string  `json:"message"`
+	Rating    float64 `json:"rating"`
+	ProductID string  `json:"product_id"`
+	Image     string  `json:"image"`
+	Username  string  `json:"username"`
+}
+
 type NewSubCategory struct {
 	Name     string `json:"name"`
 	Category int    `json:"category"`
@@ -138,6 +146,7 @@ type Product struct {
 	Thumbnail   string     `json:"thumbnail"`
 	Image       []string   `json:"image"`
 	Variant     []*Variant `json:"variant,omitempty"`
+	Review      []*Review  `json:"review,omitempty"`
 	Store       string     `json:"store"`
 	Category    string     `json:"category"`
 	Subcategory string     `json:"subcategory"`
@@ -152,6 +161,7 @@ type ProductInput struct {
 	Image       []string      `json:"image"`
 	Quantity    int           `json:"quantity"`
 	Variant     []*NewVariant `json:"variant,omitempty"`
+	Review      []*NewReview  `json:"review,omitempty"`
 	Store       string        `json:"store"`
 	Category    int           `json:"category"`
 	Subcategory int           `json:"subcategory"`
@@ -168,11 +178,12 @@ type Query struct {
 }
 
 type Review struct {
-	Username  string  `json:"username"`
-	Image     string  `json:"image"`
-	Message   string  `json:"message"`
 	Rating    float64 `json:"rating"`
-	ProductID int     `json:"productId"`
+	Message   string  `json:"message"`
+	Image     string  `json:"image"`
+	ProductID int     `json:"product_id"`
+	Username  string  `json:"username"`
+	ID        *string `json:"id,omitempty"`
 }
 
 type ReviewInput struct {
