@@ -383,6 +383,7 @@ func (r *repository) AddReview(ctx context.Context, input *Review) (*Review, err
 	if err != nil {
 		return nil, err
 	}
+
 	input.ID = utils.GenerateUUID()
 	product.Reviews = append(product.Reviews, input)
 	err = r.db.Save(product).Error

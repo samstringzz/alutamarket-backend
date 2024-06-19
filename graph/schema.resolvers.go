@@ -930,11 +930,25 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 				}
 				productVariant.Value = variantValues
 				product.Variant = append(product.Variant, productVariant)
+			}
+		}
 
+		if len(item.Reviews) != 0 {
+			for _, review := range item.Reviews {
+				modelReview := &model.Review{
+					Rating:    review.Rating,
+					Message:   review.Message,
+					Image:     review.Image,
+					ProductID: int(review.ProductID), //to be reviewed later
+					// ID: review.ID,
+					Username: review.Username,
+				}
+				product.Review = append(product.Review, modelReview)
 			}
 		}
 		products = append(products, product)
 	}
+
 	payload := &model.ProductPaginationData{
 		Data:        products,
 		CurrentPage: *offset + 1,
@@ -973,6 +987,7 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 		Store:       resp.Store,
 		Category:    resp.Category,
 		Subcategory: resp.Subcategory,
+		Thumbnail:   resp.Thumbnail,
 	}
 	if len(resp.Variant) != 0 {
 		for _, outerItem := range resp.Variant {
@@ -990,9 +1005,23 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 			}
 			productVariant.Value = variantValues
 			product.Variant = append(product.Variant, productVariant)
-
 		}
 	}
+
+	if len(resp.Reviews) != 0 {
+		for _, review := range resp.Reviews {
+			modelReview := &model.Review{
+				Rating:    review.Rating,
+				Message:   review.Message,
+				Image:     review.Image,
+				ProductID: int(review.ProductID), //to be reviewed later
+				ID:        &review.ID,
+				Username:  review.Username,
+			}
+			product.Review = append(product.Review, modelReview)
+		}
+	}
+
 	return product, nil
 }
 
@@ -1122,7 +1151,6 @@ func (r *queryResolver) ProductReviews(ctx context.Context, id int) ([]*model.Re
 		reviews = append(reviews, review)
 	}
 	return reviews, nil
-
 }
 
 // Cart is the resolver for the Cart field.
