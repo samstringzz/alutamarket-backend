@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -34,13 +35,13 @@ func AuthMiddleware(requiredRole string, tokenString string) *errors.AppError {
 		return errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid claims in the token")
 	}
 
-	userRole, _ := claims["usertype"].(string)
-	// if !ok {
-	// 	return errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid user role claim in the token")
-	// }
-	
+	userRole, ok := claims["usertype"].(string)
+	if !ok {
+		return errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid user role claim in the token")
+	}
+
 	//configure role for both seller and buyer endpoints
-	if userRole != requiredRole && userRole != "admin"{
+	if userRole != requiredRole && userRole != "admin" && requiredRole != "entry" {
 		return errors.NewAppError(http.StatusForbidden, "FORBIDDEN", "You do not have the permission to access this resource")
 	}
 
