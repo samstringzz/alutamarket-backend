@@ -490,11 +490,14 @@ func (r *mutationResolver) ModifyCart(ctx context.Context, input model.ModifyCar
 	var modelCartItems []*model.CartItem
 	for _, item := range resp.Items {
 		modelProduct := &model.Product{
-			ID:       int(item.Product.ID),
-			Quantity: item.Product.Quantity,
-			Price:    item.Product.Price,
-			Discount: item.Product.Discount,
-			Name:     item.Product.Name,
+			ID:        int(item.Product.ID),
+			Quantity:  item.Product.Quantity,
+			Price:     item.Product.Price,
+			Discount:  item.Product.Discount,
+			Name:      item.Product.Name,
+			Thumbnail: item.Product.Thumbnail,
+			Image:     item.Product.Images,
+			Store:     item.Product.Store,
 		}
 
 		modelItem := &model.CartItem{
@@ -940,8 +943,8 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 					Message:   review.Message,
 					Image:     review.Image,
 					ProductID: int(review.ProductID), //to be reviewed later
-					// ID: review.ID,
-					Username: review.Username,
+					ID:        &review.ID,
+					Username:  review.Username,
 				}
 				product.Review = append(product.Review, modelReview)
 			}
@@ -1155,9 +1158,9 @@ func (r *queryResolver) ProductReviews(ctx context.Context, id int) ([]*model.Re
 
 // Cart is the resolver for the Cart field.
 func (r *queryResolver) Cart(ctx context.Context, user int) (*model.Cart, error) {
-	// token:= ctx.Value("token").(string)
+	token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEiLCJmdWxsbmFtZSI6IkFsdWtvIEl5dW5hZGUiLCJjYW1wdXMiOiIiLCJwaG9uZSI6IjAwMCIsInVzZXJ0eXBlIjoic2VsbGVyIiwic3RvcmVzIjpudWxsLCJpc3MiOiIxIiwiZXhwIjoxNjk3MzA4MDUwfQ.7Q3jB-cekMiZZekcEIP_HO2itIymY8YqeQ4vk-4m1CY")
+	authErr := middlewares.AuthMiddleware("entry", token)
 	if authErr != nil {
 		return nil, authErr
 	}
@@ -1270,6 +1273,19 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 				productVariant.Value = variantValues
 				product.Variant = append(product.Variant, productVariant)
 
+			}
+		}
+		if len(item.Reviews) != 0 {
+			for _, review := range item.Reviews {
+				modelReview := &model.Review{
+					Rating:    review.Rating,
+					Message:   review.Message,
+					Image:     review.Image,
+					ProductID: int(review.ProductID), //to be reviewed later
+					ID:        &review.ID,
+					Username:  review.Username,
+				}
+				product.Review = append(product.Review, modelReview)
 			}
 		}
 		products = append(products, product)
