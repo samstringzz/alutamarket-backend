@@ -157,6 +157,10 @@ func (r *mutationResolver) CreateVerifyOtp(ctx context.Context, input model.NewV
 	}
 	return schema, nil
 }
+func uint32ToStringPtr(value uint32) *string {
+	strValue := strconv.FormatUint(uint64(value), 10)
+	return &strValue
+}
 
 // LoginUser is the resolver for the loginUser field.
 func (r *mutationResolver) LoginUser(ctx context.Context, input model.LoginReq) (*model.LoginRes, error) {
@@ -514,6 +518,7 @@ func (r *mutationResolver) ModifyCart(ctx context.Context, input model.ModifyCar
 		User:   int(resp.UserID), // Replace with the actual user ID
 		Active: true,             // Replace with the actual active status
 		Items:  modelCartItems,
+		ID:     uint32ToStringPtr(resp.ID),
 	}
 
 	return newCart, nil
@@ -530,15 +535,11 @@ func (r *mutationResolver) RemoveAllCart(ctx context.Context, cartID int) (*mode
 	}
 	cartSrvc := cart.NewService(cartRepository)
 	cartHandler := cart.NewHandler(cartSrvc)
-	resp, err := cartHandler.RemoveAllCart(ctx, uint32(cartID))
+	err := cartHandler.RemoveAllCart(ctx, uint32(cartID))
 	if err != nil {
 		return nil, err
 	}
-	idString := strconv.FormatUint(uint64(resp.ID), 10)
-	deletedCart := &model.Cart{
-		ID:     &idString,
-		Active: resp.Active,
-	}
+	deletedCart := &model.Cart{}
 	return deletedCart, nil
 }
 
@@ -1217,10 +1218,14 @@ func (r *queryResolver) Cart(ctx context.Context, user int) (*model.Cart, error)
 		}
 		modelCartItems = append(modelCartItems, modelItem)
 	}
+
 	// var items []*model.CartItem
 	cart := &model.Cart{
-		Total: resp.Total,
-		Items: modelCartItems,
+		Total:  resp.Total,
+		Items:  modelCartItems,
+		Active: resp.Active,
+		ID:     uint32ToStringPtr(resp.ID),
+		User:   int(resp.UserID),
 	}
 	return cart, nil
 }

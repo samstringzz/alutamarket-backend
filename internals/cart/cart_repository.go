@@ -148,21 +148,21 @@ func (r *repository) GetCart(ctx context.Context, filter uint32) (*Cart, error) 
 	return cart, nil
 }
 
-func (r *repository) RemoveAllCart(ctx context.Context, id uint32) (*Cart, error) {
+func (r *repository) RemoveAllCart(ctx context.Context, id uint32) error {
 	// Find the cart with the specified ID that is active
 	var cart Cart
 	query := r.db.Where("active = true").Where("id = ?", id)
 	if err := query.First(&cart).Error; err != nil {
-		return nil, err
+		return err
 	}
 
 	// Set the 'active' field to false and update the cart
 	cart.Active = false
 	if err := r.db.Save(&cart).Error; err != nil {
-		return nil, err
+		return err
 	}
 
-	return &cart, nil
+	return nil
 }
 
 func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, error) {

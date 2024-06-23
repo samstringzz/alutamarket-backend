@@ -3,6 +3,7 @@ package cart
 import (
 	"context"
 	"net/http"
+
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
@@ -29,16 +30,16 @@ type CartItems struct {
 
 type Repository interface {
 	ModifyCart(ctx context.Context, req *CartItems, user uint32) (*Cart, error)
-	RemoveAllCart(ctx context.Context, id uint32) (*Cart, error)
+	RemoveAllCart(ctx context.Context, id uint32) error
 	GetCart(ctx context.Context, user uint32) (*Cart, error)
-	MakePayment(ctx context.Context, w http.ResponseWriter, r *http.Request) 
+	MakePayment(ctx context.Context, w http.ResponseWriter, r *http.Request)
 	InitiatePayment(ctx context.Context, req Order) (string, error)
 }
 
 type Service interface {
 	ModifyCart(ctx context.Context, req *CartItems, user uint32) (*Cart, error)
-	RemoveAllCart(ctx context.Context, id uint32) (*Cart, error)
+	RemoveAllCart(ctx context.Context, id uint32) error
 	GetCart(ctx context.Context, user uint32) (*Cart, error)
-	MakePayment(ctx context.Context, w http.ResponseWriter, r *http.Request) 
+	MakePayment(ctx context.Context, w http.ResponseWriter, r *http.Request)
 	InitiatePayment(ctx context.Context, req Order) (string, error)
 }
