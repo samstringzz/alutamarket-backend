@@ -30,12 +30,12 @@ func (h *Handler) GetCart(ctx context.Context, user uint32) (*Cart, error) {
 	return item, nil
 }
 
-func (h *Handler) RemoveAllCart(ctx context.Context, id uint32) (*Cart, error) {
-	item, err := h.Service.RemoveAllCart(ctx, id)
+func (h *Handler) RemoveAllCart(ctx context.Context, id uint32) error {
+	err := h.Service.RemoveAllCart(ctx, id)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return item, nil
+	return nil
 }
 
 func (h *Handler) IntitiatePayment(ctx context.Context, input Order) (string, error) {

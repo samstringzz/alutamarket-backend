@@ -38,14 +38,14 @@ func (s *service) GetCart(c context.Context, user uint32) (*Cart, error) {
 	return r, nil
 }
 
-func (s *service) RemoveAllCart(c context.Context, id uint32) (*Cart, error) {
+func (s *service) RemoveAllCart(c context.Context, id uint32) error {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
-	r, err := s.Repository.RemoveAllCart(ctx, id)
+	err := s.Repository.RemoveAllCart(ctx, id)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return r, nil
+	return nil
 }
 
 func (s *service) InitiatePayment(c context.Context, input Order) (string, error) {
