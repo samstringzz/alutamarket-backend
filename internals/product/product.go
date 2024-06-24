@@ -82,24 +82,10 @@ type Product struct {
 	Views       []uint32       `gorm:"serializer:json" jsinput.ProductIDon:"views" db:"views"`
 	Subcategory string         `json:"subcategory" db:"subcategory"`
 	Reviews     []*Review      `gorm:"serializer:json"`
-	Ratings     uint32         `json:"ratings" db:"ratings"`
-	Recommended uint8          `json:"recommended" db:"recommended"`
 	Ads         *AdsGen        `gorm:"serializer:json" json:"ads,omitempty" db:"ads"`
 }
 
-type WishListedProduct struct {
-	gorm.Model
-	UserID  uint32   `json:"user_id" db:"user_id"`
-	Product *Product `gorm:"embedded"`
-}
-
-type RecentlyViewedProduct struct {
-	gorm.Model
-	UserID  uint32   `json:"user_id" db:"user_id"`
-	Product *Product `gorm:"embedded"`
-}
-
-type HandledProduct struct {
+type HandledProduct struct { //wisihlist,recently_added,recommended,saved_for_later
 	gorm.Model
 	UserID  uint32   `json:"user_id" db:"user_id"`
 	Product *Product `gorm:"embedded"`
@@ -123,8 +109,6 @@ type Repository interface {
 	// GetProductByFilter(ctx context.Context, filter string,filterOption string )(*Product,error)    //by slug,by store,by id,(by category||subcategory)
 	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
 	DeleteProduct(ctx context.Context, id uint32) error
-	// GetRecentlyViewedProducts(ctx context.Context, userId uint32) ([]*Product, error)
-	// AddRecentlyViewedProducts(ctx context.Context, userId,productId uint32) error
 	AddReview(ctx context.Context, input *Review) (*Review, error)
 	GetReviews(ctx context.Context, productId uint32) ([]*Review, error)
 }
@@ -143,18 +127,8 @@ type Service interface {
 	GetHandledProducts(ctx context.Context, userId uint32, eventType string) ([]*HandledProduct, error)
 	SearchProducts(ctx context.Context, query string) ([]*Product, error)
 	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
-	// AddWishListedProduct(ctx context.Context, userId, productId uint32) (*HandledProduct, error)
-	// GetWishListedProducts(ctx context.Context, userId uint32) ([]*HandledProduct, error)
 	RemoveHandledProduct(ctx context.Context, userId uint32, eventType string) error
-	// RemoveWishListedProduct(ctx context.Context, userId uint32) error
-	// AddRecentlyViewedProducts(ctx context.Context, userId,productId uint32) error
-	// GetRecentlyViewedProducts(ctx context.Context, userId uint32) ([]*Product, error)
 	AddReview(ctx context.Context, input *Review) (*Review, error)
 	GetReviews(ctx context.Context, productId uint32) ([]*Review, error)
 	DeleteProduct(ctx context.Context, id uint32) error
-
-	// Left are
-	// Add Review to Product??
-	//
-
 }

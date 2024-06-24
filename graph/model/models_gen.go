@@ -68,11 +68,6 @@ type NewCategory struct {
 	Name string `json:"name"`
 }
 
-type NewHandleProductInput struct {
-	User    int `json:"user"`
-	Product int `json:"product"`
-}
-
 type NewReview struct {
 	Message   string  `json:"message"`
 	Rating    float64 `json:"rating"`
@@ -154,6 +149,7 @@ type Product struct {
 
 type ProductInput struct {
 	Name        string        `json:"name"`
+	ID          *string       `json:"id,omitempty"`
 	Description string        `json:"description"`
 	Price       float64       `json:"price"`
 	Discount    float64       `json:"discount"`

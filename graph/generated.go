@@ -1554,7 +1554,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputLoginReq,
 		ec.unmarshalInputModifyCartItemInput,
 		ec.unmarshalInputNewCategory,
-		ec.unmarshalInputNewHandleProductInput,
 		ec.unmarshalInputNewReview,
 		ec.unmarshalInputNewSubCategory,
 		ec.unmarshalInputNewUser,
@@ -12243,40 +12242,6 @@ func (ec *executionContext) unmarshalInputNewCategory(ctx context.Context, obj i
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputNewHandleProductInput(ctx context.Context, obj interface{}) (model.NewHandleProductInput, error) {
-	var it model.NewHandleProductInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"user", "product"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "user":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.User = data
-		case "product":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("product"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Product = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputNewReview(ctx context.Context, obj interface{}) (model.NewReview, error) {
 	var it model.NewReview
 	asMap := map[string]interface{}{}
@@ -12634,7 +12599,7 @@ func (ec *executionContext) unmarshalInputProductInput(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "price", "discount", "thumbnail", "image", "quantity", "variant", "review", "store", "category", "subcategory"}
+	fieldsInOrder := [...]string{"name", "id", "description", "price", "discount", "thumbnail", "image", "quantity", "variant", "review", "store", "category", "subcategory"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12648,6 +12613,13 @@ func (ec *executionContext) unmarshalInputProductInput(ctx context.Context, obj 
 				return it, err
 			}
 			it.Name = data
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
 		case "description":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
 			data, err := ec.unmarshalNString2string(ctx, v)
