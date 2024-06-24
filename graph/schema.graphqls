@@ -60,6 +60,7 @@ type HandledProducts {
 }
 input ProductInput {
 	name: String!
+	id: String
 	description: String!
 	price: Float!
 	discount: Float!
@@ -148,10 +149,7 @@ input UpdateUserInput {
 	code: String
 	avatar: String
 }
-input NewHandleProductInput {
-	user: Int!
-	product: Int!
-}
+
 input NewCategory {
 	name: String!
 }
