@@ -35,7 +35,7 @@ type Electricity struct {
 
 type TVSubscription struct {
 	Amount           int64  `json:"amount" db:"amount"`
-	UserID           string `json:"user_id" db:"user_id"`
+	UserID           uint32 `json:"user_id" db:"user_id"`
 	RequestID        string `json:"request_id" db:"request_id"`
 	BillersCode      string `json:"biller_code" db:"biller_code"` //The Person number the sub should go to
 	VariationCode    string `json:"variation_code" db:"variation_code"`
@@ -52,6 +52,7 @@ type EducationPayment struct {
 	VariationCode string `json:"variation_code" db:"variation_code"`
 	ServiceID     string `json:"serviceID" db:"serviceID"`
 	Phone         string `json:"phone" db:"phone"`
+	Quantity      int64  `json:"quantity" db:"quantity"`
 }
 
 type Skynet struct {
@@ -99,7 +100,7 @@ type Repository interface {
 	GetSubscriptionsBundles(ctx context.Context, serviceId string) (*DataBundle, error)
 	VerifySmartCard(ctx context.Context, serviceId, billersCode string) (*SmartcardVerificationResponse, error)
 	// BuyElectricity(ctx context.Context, electricity *Electricity) (*string, error)
-	// SubscribeToTV(ctx context.Context, subscription *TVSubscription) (*string, error)
+	BuyTVSubscription(ctx context.Context, subscription *TVSubscription) (*string, error)
 	// PayForEducation(ctx context.Context, payment *EducationPayment) (*string, error)
 	// GetBalance(ctx context.Context, filter string) (*Data, error)
 }
@@ -110,7 +111,7 @@ type Service interface {
 	GetSubscriptionsBundles(ctx context.Context, serviceId string) (*DataBundle, error)
 	VerifySmartCard(ctx context.Context, serviceId, billersCode string) (*SmartcardVerificationResponse, error)
 	// BuyElectricity(ctx context.Context, electricity *Electricity) (*string, error)
-	// SubscribeToTV(ctx context.Context, subscription *TVSubscription) (*string, error)
+	BuyTVSubscription(ctx context.Context, subscription *TVSubscription) (*string, error)
 	// PayForEducation(ctx context.Context, payment *EducationPayment) (*string, error)
 	// GetBalance(ctx context.Context, filter string) (*Data, error)
 }

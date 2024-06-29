@@ -14551,7 +14551,7 @@ func (ec *executionContext) unmarshalInputSkynetInput(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"amount", "user_id", "request_id", "billers_code", "variant_code", "service_id", "phone_number", "subscription_type", "type"}
+	fieldsInOrder := [...]string{"amount", "user_id", "request_id", "billers_code", "variant_code", "service_id", "phone_number", "quantity", "subscription_type", "type"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14607,6 +14607,13 @@ func (ec *executionContext) unmarshalInputSkynetInput(ctx context.Context, obj i
 				return it, err
 			}
 			it.PhoneNumber = data
+		case "quantity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantity"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Quantity = data
 		case "subscription_type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subscription_type"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)

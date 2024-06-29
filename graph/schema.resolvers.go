@@ -267,6 +267,7 @@ func (r *mutationResolver) CreateSkynet(ctx context.Context, input *model.Skynet
 	skynetHandler := skynet.NewHandler(skynetSrvc)
 	skynetAirtimeInput := &skynet.Airtime{}
 	skynetDataInput := &skynet.Data{}
+	skynetTVSubInput := &skynet.TVSubscription{}
 
 	if input.Type == "airtime" {
 		skynetAirtimeInput.Amount = int64(input.Amount)
@@ -289,6 +290,22 @@ func (r *mutationResolver) CreateSkynet(ctx context.Context, input *model.Skynet
 		skynetDataInput.VariationCode = *input.VariantCode
 
 		resp, err := skynetHandler.BuyData(ctx, skynetDataInput)
+		if err != nil {
+			return "", err
+		}
+		return *resp, nil
+	}
+
+	if input.Type == "tv_sub" {
+		skynetTVSubInput.Amount = int64(input.Amount)
+		skynetTVSubInput.UserID = uint32(input.UserID)
+		skynetTVSubInput.ServiceID = input.ServiceID
+		skynetTVSubInput.Phone = *input.PhoneNumber
+		skynetTVSubInput.BillersCode = *input.BillersCode
+		skynetTVSubInput.VariationCode = *input.VariantCode
+		skynetTVSubInput.SubscriptionType = *input.SubscriptionType
+
+		resp, err := skynetHandler.BuyTVSubscription(ctx, skynetTVSubInput)
 		if err != nil {
 			return "", err
 		}
@@ -1590,6 +1607,12 @@ type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
 func uint32ToStringPtr(value uint32) *string {
 	strValue := strconv.FormatUint(uint64(value), 10)
 	return &strValue
