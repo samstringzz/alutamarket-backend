@@ -1411,6 +1411,7 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 			Store:       item.Store,
 			Category:    item.Category,
 			Subcategory: item.Subcategory,
+			Thumbnail:   item.Thumbnail,
 		}
 		if len(item.Variant) != 0 {
 			for _, outerItem := range item.Variant {
