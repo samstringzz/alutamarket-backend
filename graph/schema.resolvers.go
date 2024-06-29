@@ -9,11 +9,13 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/Chrisentech/aluta-market-api/app"
 	"github.com/Chrisentech/aluta-market-api/graph/model"
 	"github.com/Chrisentech/aluta-market-api/internals/cart"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
+	"github.com/Chrisentech/aluta-market-api/internals/skynet"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/Chrisentech/aluta-market-api/middlewares"
@@ -245,6 +247,55 @@ func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInpu
 	}
 
 	return NewReview, nil
+}
+
+// CreateSkynet is the resolver for the createSkynet field.
+func (r *mutationResolver) CreateSkynet(ctx context.Context, input *model.SkynetInput) (string, error) {
+	// token := ctx.Value("token").(string)
+
+	// authErr := middlewares.AuthMiddleware("", token)
+	// if authErr != nil {
+	// 	return "", authErr
+	// }
+	skynetRep := app.InitializePackage(app.SkynetPackage)
+
+	skynetRepository, ok := skynetRep.(skynet.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return "", fmt.Errorf("skynetRep is not a skynet.Repository")
+	}
+	skynetSrvc := skynet.NewService(skynetRepository)
+	skynetHandler := skynet.NewHandler(skynetSrvc)
+	skynetAirtimeInput := &skynet.Airtime{}
+	skynetDataInput := &skynet.Data{}
+
+	if input.Type == "airtime" {
+		skynetAirtimeInput.Amount = int64(input.Amount)
+		skynetAirtimeInput.UserID = uint32(input.UserID)
+		skynetAirtimeInput.ServiceID = input.ServiceID
+		skynetAirtimeInput.Phone = *input.PhoneNumber
+
+		resp, err := skynetHandler.BuyAirtime(ctx, skynetAirtimeInput)
+		if err != nil {
+			return "", err
+		}
+		return *resp, nil
+	}
+	if input.Type == "data" {
+		skynetDataInput.Amount = int64(input.Amount)
+		skynetDataInput.UserID = uint32(input.UserID)
+		skynetDataInput.ServiceID = input.ServiceID
+		skynetDataInput.Phone = *input.PhoneNumber
+		skynetDataInput.BillersCode = *input.BillersCode
+		skynetDataInput.VariationCode = *input.VariantCode
+
+		resp, err := skynetHandler.BuyData(ctx, skynetDataInput)
+		if err != nil {
+			return "", err
+		}
+		return *resp, nil
+	}
+	return "", errors.New("Type is required")
 }
 
 // RemoveHandledProduct is the resolver for the removeHandledProduct field.
@@ -712,6 +763,41 @@ func (r *mutationResolver) InitializePayment(ctx context.Context, input model.Pa
 		return nil, err
 	}
 	return &resp, err
+}
+
+// VerifySmartCard is the resolver for the verifySmartCard field.
+func (r *mutationResolver) VerifySmartCard(ctx context.Context, input model.SmartCardInput) (*model.SmartcardVerificationResponse, error) {
+	skynetRep := app.InitializePackage(app.SkynetPackage)
+
+	skynetRepository, ok := skynetRep.(skynet.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("skynetRep is not a skynet.Repository")
+	}
+	skynetSrvc := skynet.NewService(skynetRepository)
+	skynetHandler := skynet.NewHandler(skynetSrvc)
+	resp, err := skynetHandler.VerifySmartCard(ctx, input.ServiceID, input.BillersCode)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Map the response to the GraphQL model
+	verificationResponse := &model.SmartcardVerificationResponse{
+		Code: resp.Code,
+		Content: &model.SmartcardContent{
+			CustomerName:       resp.Content.CustomerName,
+			Status:             resp.Content.Status,
+			DueDate:            resp.Content.DueDate.Format(time.RFC3339),
+			CustomerNumber:     resp.Content.CustomerNumber,
+			CustomerType:       resp.Content.CustomerType,
+			CurrentBouquet:     resp.Content.CurrentBouquet,
+			CurrentBouquetCode: resp.Content.CurrentBouquetCode,
+			RenewalAmount:      resp.Content.RenewalAmount,
+		},
+	}
+
+	return verificationResponse, nil
 }
 
 // Users is the resolver for the Users field.
@@ -1226,6 +1312,42 @@ func (r *queryResolver) Cart(ctx context.Context, user int) (*model.Cart, error)
 	return cart, nil
 }
 
+// DataBundle is the resolver for the DataBundle field.
+func (r *queryResolver) DataBundle(ctx context.Context, serviceID string) (*model.DataBundle, error) {
+	skynetRep := app.InitializePackage(app.SkynetPackage)
+
+	skynetRepository, ok := skynetRep.(skynet.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("skynetRep is not a skynet.Repository")
+	}
+	skynetSrvc := skynet.NewService(skynetRepository)
+	skynetHandler := skynet.NewHandler(skynetSrvc)
+	resp, err := skynetHandler.GetSubscriptionsBundles(ctx, serviceID)
+	if err != nil {
+		return nil, err
+	}
+	var variations []*model.BundleVariation
+	for _, v := range resp.Variations {
+		variation := &model.BundleVariation{
+			VariationCode:   v.VariationCode,
+			Name:            v.Name,
+			VariationAmount: v.VariationAmount,
+			FixedPrice:      v.FixedPrice,
+		}
+		variations = append(variations, variation)
+	}
+
+	response := &model.DataBundle{
+		ServiceName:    resp.ServiceName,
+		ServiceID:      resp.ServiceID,
+		ConvinienceFee: resp.ConvinienceFee,
+		Variations:     variations,
+	}
+
+	return response, nil
+}
+
 // SearchProducts is the resolver for the searchProducts field.
 func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*model.Product, error) {
 	productRep := app.InitializePackage(app.ProductPackage)
@@ -1439,6 +1561,16 @@ func (r *queryResolver) StoreByName(ctx context.Context, name string) (*model.St
 	}
 
 	return store, nil
+}
+
+// Skynets is the resolver for the Skynets field.
+func (r *queryResolver) Skynets(ctx context.Context, id string) ([]*model.Skynet, error) {
+	panic(fmt.Errorf("not implemented: Skynets - Skynets"))
+}
+
+// Skynet is the resolver for the Skynet field.
+func (r *queryResolver) Skynet(ctx context.Context, id string) (*model.Skynet, error) {
+	panic(fmt.Errorf("not implemented: Skynet - Skynet"))
 }
 
 // ProductSearchResults is the resolver for the productSearchResults field.
