@@ -77,13 +77,6 @@ type ComplexityRoot struct {
 		Subcategories func(childComplexity int) int
 	}
 
-	DataBundle struct {
-		ConvinienceFee func(childComplexity int) int
-		ServiceID      func(childComplexity int) int
-		ServiceName    func(childComplexity int) int
-		Variations     func(childComplexity int) int
-	}
-
 	Follower struct {
 		FollowerID    func(childComplexity int) int
 		FollowerImage func(childComplexity int) int
@@ -171,7 +164,6 @@ type ComplexityRoot struct {
 		Cart                  func(childComplexity int, user int) int
 		Categories            func(childComplexity int) int
 		Category              func(childComplexity int, id int) int
-		DataBundle            func(childComplexity int, serviceID string) int
 		HandledProducts       func(childComplexity int, user int, typeArg string) int
 		Product               func(childComplexity int, id int) int
 		ProductReviews        func(childComplexity int, id int) int
@@ -185,6 +177,7 @@ type ComplexityRoot struct {
 		StoreByName           func(childComplexity int, name string) int
 		Stores                func(childComplexity int, user *int, limit *int, offset *int) int
 		SubCategory           func(childComplexity int, id string) int
+		SubscriptionBundle    func(childComplexity int, serviceID string) int
 		User                  func(childComplexity int, id string) int
 		Users                 func(childComplexity int, limit *int, offset *int) int
 	}
@@ -258,6 +251,13 @@ type ComplexityRoot struct {
 
 	Subscription struct {
 		ProductSearchResults func(childComplexity int, query string) int
+	}
+
+	SubscriptionBundle struct {
+		ConvinienceFee func(childComplexity int) int
+		ServiceID      func(childComplexity int) int
+		ServiceName    func(childComplexity int) int
+		Variations     func(childComplexity int) int
 	}
 
 	Transaction struct {
@@ -344,7 +344,7 @@ type QueryResolver interface {
 	RecentlyAddedProducts(ctx context.Context, user int) ([]*model.Product, error)
 	ProductReviews(ctx context.Context, id int) ([]*model.Review, error)
 	Cart(ctx context.Context, user int) (*model.Cart, error)
-	DataBundle(ctx context.Context, serviceID string) (*model.DataBundle, error)
+	SubscriptionBundle(ctx context.Context, serviceID string) (*model.SubscriptionBundle, error)
 	SearchProducts(ctx context.Context, query string) ([]*model.Product, error)
 	Stores(ctx context.Context, user *int, limit *int, offset *int) (*model.StorePaginationData, error)
 	Store(ctx context.Context, id int) (*model.Store, error)
@@ -479,34 +479,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Category.Subcategories(childComplexity), true
-
-	case "DataBundle.convinienceFee":
-		if e.complexity.DataBundle.ConvinienceFee == nil {
-			break
-		}
-
-		return e.complexity.DataBundle.ConvinienceFee(childComplexity), true
-
-	case "DataBundle.serviceID":
-		if e.complexity.DataBundle.ServiceID == nil {
-			break
-		}
-
-		return e.complexity.DataBundle.ServiceID(childComplexity), true
-
-	case "DataBundle.serviceName":
-		if e.complexity.DataBundle.ServiceName == nil {
-			break
-		}
-
-		return e.complexity.DataBundle.ServiceName(childComplexity), true
-
-	case "DataBundle.variations":
-		if e.complexity.DataBundle.Variations == nil {
-			break
-		}
-
-		return e.complexity.DataBundle.Variations(childComplexity), true
 
 	case "Follower.follower_id":
 		if e.complexity.Follower.FollowerID == nil {
@@ -1078,18 +1050,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Category(childComplexity, args["id"].(int)), true
 
-	case "Query.DataBundle":
-		if e.complexity.Query.DataBundle == nil {
-			break
-		}
-
-		args, err := ec.field_Query_DataBundle_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.DataBundle(childComplexity, args["serviceID"].(string)), true
-
 	case "Query.HandledProducts":
 		if e.complexity.Query.HandledProducts == nil {
 			break
@@ -1245,6 +1205,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.SubCategory(childComplexity, args["id"].(string)), true
+
+	case "Query.SubscriptionBundle":
+		if e.complexity.Query.SubscriptionBundle == nil {
+			break
+		}
+
+		args, err := ec.field_Query_SubscriptionBundle_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SubscriptionBundle(childComplexity, args["serviceID"].(string)), true
 
 	case "Query.User":
 		if e.complexity.Query.User == nil {
@@ -1603,6 +1575,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Subscription.ProductSearchResults(childComplexity, args["query"].(string)), true
+
+	case "SubscriptionBundle.convinienceFee":
+		if e.complexity.SubscriptionBundle.ConvinienceFee == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionBundle.ConvinienceFee(childComplexity), true
+
+	case "SubscriptionBundle.serviceID":
+		if e.complexity.SubscriptionBundle.ServiceID == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionBundle.ServiceID(childComplexity), true
+
+	case "SubscriptionBundle.serviceName":
+		if e.complexity.SubscriptionBundle.ServiceName == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionBundle.ServiceName(childComplexity), true
+
+	case "SubscriptionBundle.variations":
+		if e.complexity.SubscriptionBundle.Variations == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionBundle.Variations(childComplexity), true
 
 	case "Transaction.amount":
 		if e.complexity.Transaction.Amount == nil {
@@ -2367,21 +2367,6 @@ func (ec *executionContext) field_Query_Category_args(ctx context.Context, rawAr
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_DataBundle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["serviceID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceID"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["serviceID"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_HandledProducts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2604,6 +2589,21 @@ func (ec *executionContext) field_Query_SubCategory_args(ctx context.Context, ra
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_SubscriptionBundle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["serviceID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceID"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["serviceID"] = arg0
 	return args, nil
 }
 
@@ -3424,192 +3424,6 @@ func (ec *executionContext) fieldContext_Category_subcategories(_ context.Contex
 				return ec.fieldContext_SubCategory_category(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubCategory", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DataBundle_serviceName(ctx context.Context, field graphql.CollectedField, obj *model.DataBundle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DataBundle_serviceName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ServiceName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DataBundle_serviceName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DataBundle",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DataBundle_serviceID(ctx context.Context, field graphql.CollectedField, obj *model.DataBundle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DataBundle_serviceID(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ServiceID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DataBundle_serviceID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DataBundle",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DataBundle_convinienceFee(ctx context.Context, field graphql.CollectedField, obj *model.DataBundle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DataBundle_convinienceFee(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ConvinienceFee, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DataBundle_convinienceFee(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DataBundle",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DataBundle_variations(ctx context.Context, field graphql.CollectedField, obj *model.DataBundle) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DataBundle_variations(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Variations, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.BundleVariation)
-	fc.Result = res
-	return ec.marshalNBundleVariation2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBundleVariationᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DataBundle_variations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DataBundle",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "variationCode":
-				return ec.fieldContext_BundleVariation_variationCode(ctx, field)
-			case "name":
-				return ec.fieldContext_BundleVariation_name(ctx, field)
-			case "variationAmount":
-				return ec.fieldContext_BundleVariation_variationAmount(ctx, field)
-			case "fixedPrice":
-				return ec.fieldContext_BundleVariation_fixedPrice(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type BundleVariation", field.Name)
 		},
 	}
 	return fc, nil
@@ -7889,8 +7703,8 @@ func (ec *executionContext) fieldContext_Query_Cart(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_DataBundle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_DataBundle(ctx, field)
+func (ec *executionContext) _Query_SubscriptionBundle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_SubscriptionBundle(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7903,7 +7717,7 @@ func (ec *executionContext) _Query_DataBundle(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().DataBundle(rctx, fc.Args["serviceID"].(string))
+		return ec.resolvers.Query().SubscriptionBundle(rctx, fc.Args["serviceID"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7912,12 +7726,12 @@ func (ec *executionContext) _Query_DataBundle(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.DataBundle)
+	res := resTmp.(*model.SubscriptionBundle)
 	fc.Result = res
-	return ec.marshalODataBundle2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDataBundle(ctx, field.Selections, res)
+	return ec.marshalOSubscriptionBundle2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriptionBundle(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_DataBundle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_SubscriptionBundle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -7926,15 +7740,15 @@ func (ec *executionContext) fieldContext_Query_DataBundle(ctx context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "serviceName":
-				return ec.fieldContext_DataBundle_serviceName(ctx, field)
+				return ec.fieldContext_SubscriptionBundle_serviceName(ctx, field)
 			case "serviceID":
-				return ec.fieldContext_DataBundle_serviceID(ctx, field)
+				return ec.fieldContext_SubscriptionBundle_serviceID(ctx, field)
 			case "convinienceFee":
-				return ec.fieldContext_DataBundle_convinienceFee(ctx, field)
+				return ec.fieldContext_SubscriptionBundle_convinienceFee(ctx, field)
 			case "variations":
-				return ec.fieldContext_DataBundle_variations(ctx, field)
+				return ec.fieldContext_SubscriptionBundle_variations(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DataBundle", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SubscriptionBundle", field.Name)
 		},
 	}
 	defer func() {
@@ -7944,7 +7758,7 @@ func (ec *executionContext) fieldContext_Query_DataBundle(ctx context.Context, f
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_DataBundle_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_SubscriptionBundle_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -10738,6 +10552,192 @@ func (ec *executionContext) fieldContext_Subscription_productSearchResults(ctx c
 	if fc.Args, err = ec.field_Subscription_productSearchResults_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscriptionBundle_serviceName(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionBundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionBundle_serviceName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServiceName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionBundle_serviceName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionBundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscriptionBundle_serviceID(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionBundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionBundle_serviceID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServiceID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionBundle_serviceID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionBundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscriptionBundle_convinienceFee(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionBundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionBundle_convinienceFee(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ConvinienceFee, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionBundle_convinienceFee(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionBundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscriptionBundle_variations(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionBundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionBundle_variations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Variations, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.BundleVariation)
+	fc.Result = res
+	return ec.marshalNBundleVariation2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBundleVariationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionBundle_variations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionBundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "variationCode":
+				return ec.fieldContext_BundleVariation_variationCode(ctx, field)
+			case "name":
+				return ec.fieldContext_BundleVariation_name(ctx, field)
+			case "variationAmount":
+				return ec.fieldContext_BundleVariation_variationAmount(ctx, field)
+			case "fixedPrice":
+				return ec.fieldContext_BundleVariation_fixedPrice(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BundleVariation", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -15207,60 +15207,6 @@ func (ec *executionContext) _Category(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
-var dataBundleImplementors = []string{"DataBundle"}
-
-func (ec *executionContext) _DataBundle(ctx context.Context, sel ast.SelectionSet, obj *model.DataBundle) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, dataBundleImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DataBundle")
-		case "serviceName":
-			out.Values[i] = ec._DataBundle_serviceName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "serviceID":
-			out.Values[i] = ec._DataBundle_serviceID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "convinienceFee":
-			out.Values[i] = ec._DataBundle_convinienceFee(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "variations":
-			out.Values[i] = ec._DataBundle_variations(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var followerImplementors = []string{"Follower"}
 
 func (ec *executionContext) _Follower(ctx context.Context, sel ast.SelectionSet, obj *model.Follower) graphql.Marshaler {
@@ -16094,7 +16040,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "DataBundle":
+		case "SubscriptionBundle":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -16103,7 +16049,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_DataBundle(ctx, field)
+				res = ec._Query_SubscriptionBundle(ctx, field)
 				return res
 			}
 
@@ -16720,6 +16666,60 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
+}
+
+var subscriptionBundleImplementors = []string{"SubscriptionBundle"}
+
+func (ec *executionContext) _SubscriptionBundle(ctx context.Context, sel ast.SelectionSet, obj *model.SubscriptionBundle) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionBundleImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SubscriptionBundle")
+		case "serviceName":
+			out.Values[i] = ec._SubscriptionBundle_serviceName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "serviceID":
+			out.Values[i] = ec._SubscriptionBundle_serviceID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "convinienceFee":
+			out.Values[i] = ec._SubscriptionBundle_convinienceFee(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "variations":
+			out.Values[i] = ec._SubscriptionBundle_variations(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
 }
 
 var transactionImplementors = []string{"Transaction"}
@@ -18439,13 +18439,6 @@ func (ec *executionContext) marshalOCategory2ᚖgithubᚗcomᚋChrisentechᚋalu
 	return ec._Category(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalODataBundle2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDataBundle(ctx context.Context, sel ast.SelectionSet, v *model.DataBundle) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._DataBundle(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v interface{}) (*float64, error) {
 	if v == nil {
 		return nil, nil
@@ -19061,6 +19054,13 @@ func (ec *executionContext) marshalOSubCategory2ᚖgithubᚗcomᚋChrisentechᚋ
 		return graphql.Null
 	}
 	return ec._SubCategory(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSubscriptionBundle2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriptionBundle(ctx context.Context, sel ast.SelectionSet, v *model.SubscriptionBundle) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SubscriptionBundle(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {

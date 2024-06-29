@@ -2,7 +2,6 @@ package skynet
 
 import (
 	"context"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -85,14 +84,14 @@ type SmartcardVerificationResponse struct {
 }
 
 type Content struct {
-	CustomerName       string    `json:"Customer_Name"`
-	Status             string    `json:"Status"`
-	DueDate            time.Time `json:"DUE_DATE"`
-	CustomerNumber     int       `json:"Customer_Number"`
-	CustomerType       string    `json:"Customer_Type"`
-	CurrentBouquet     string    `json:"Current_Bouquet"`
-	CurrentBouquetCode string    `json:"Current_Bouquet_Code"`
-	RenewalAmount      float64   `json:"Renewal_Amount"`
+	CustomerName       string  `json:"Customer_Name"`
+	Status             string  `json:"Status"`
+	DueDate            string  `json:"DUE_DATE"`
+	CustomerNumber     int     `json:"Customer_Number"`
+	CustomerType       string  `json:"Customer_Type"`
+	CurrentBouquet     string  `json:"Current_Bouquet"`
+	CurrentBouquetCode string  `json:"Current_Bouquet_Code"`
+	RenewalAmount      float64 `json:"Renewal_Amount"`
 }
 type Repository interface {
 	BuyAirtime(ctx context.Context, airtime *Airtime) (*string, error)
