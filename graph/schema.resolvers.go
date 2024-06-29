@@ -1400,7 +1400,7 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 
 	for _, item := range resp {
 		product := &model.Product{
-			// ID:       strconv.FormatInt(int64(item.ID), 10),
+			ID:          int(int64(item.ID)),
 			Name:        item.Name,
 			Description: item.Description,
 			Image:       item.Images,

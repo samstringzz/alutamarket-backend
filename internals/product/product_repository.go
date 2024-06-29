@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/utils"
@@ -279,11 +281,27 @@ func (r *repository) GetCategory(ctx context.Context, id uint32) (*Category, err
 	return &p, nil
 }
 
+// isValidQuery validates the query string for allowed characters
+func isValidQuery(query string) bool {
+	match, _ := regexp.MatchString("^[a-zA-Z0-9- ]+$", query)
+	return match
+}
+
 func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
+	if len(query) < 3 {
+		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "query string too short")
+	}
+	if len(query) > 100 {
+		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "query string too long")
+	}
+	if !isValidQuery(query) {
+		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "query string contains invalid characters")
+	}
+
 	var result []*Product
-	if err := r.db.Where("name ILIKE ? OR category ILIKE ? OR subcategory ILIKE ? OR store ILIKE ?",
-		"%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%").
-		Find(&result).Error; err != nil {
+	query = "%" + strings.ToLower(query) + "%"
+	if err := r.db.WithContext(ctx).Where("LOWER(slug) LIKE ? OR LOWER(name) LIKE ? OR LOWER(category) LIKE ? OR LOWER(subcategory) LIKE ? OR LOWER(store) LIKE ?",
+		query, query, query, query, query).Find(&result).Error; err != nil {
 		return nil, err
 	}
 	return result, nil
