@@ -306,7 +306,7 @@ type BundleVariation {
 	fixedPrice: String!
 }
 
-type DataBundle {
+type SubscriptionBundle {
 	serviceName: String!
 	serviceID: String!
 	convinienceFee: String!
@@ -344,7 +344,7 @@ type Query {
 	RecentlyAddedProducts(user: Int!): [Product!]!
 	ProductReviews(id: Int!): [Review!]!
 	Cart(user: Int!): Cart!
-	DataBundle(serviceID: String!): DataBundle
+	SubscriptionBundle(serviceID: String!): SubscriptionBundle
 	searchProducts(query: String!): [Product!]
 	Stores(user: Int, limit: Int, offset: Int): StorePaginationData!
 	Store(id: Int!): Store

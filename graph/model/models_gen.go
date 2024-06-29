@@ -33,13 +33,6 @@ type Category struct {
 	Subcategories []*SubCategory `json:"subcategories,omitempty"`
 }
 
-type DataBundle struct {
-	ServiceName    string             `json:"serviceName"`
-	ServiceID      string             `json:"serviceID"`
-	ConvinienceFee string             `json:"convinienceFee"`
-	Variations     []*BundleVariation `json:"variations"`
-}
-
 type Follower struct {
 	FollowerID    int    `json:"follower_id"`
 	FollowerName  string `json:"follower_name"`
@@ -296,6 +289,13 @@ type SubCategory struct {
 }
 
 type Subscription struct {
+}
+
+type SubscriptionBundle struct {
+	ServiceName    string             `json:"serviceName"`
+	ServiceID      string             `json:"serviceID"`
+	ConvinienceFee string             `json:"convinienceFee"`
+	Variations     []*BundleVariation `json:"variations"`
 }
 
 type Transaction struct {

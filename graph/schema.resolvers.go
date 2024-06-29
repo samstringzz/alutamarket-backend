@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/Chrisentech/aluta-market-api/app"
 	"github.com/Chrisentech/aluta-market-api/graph/model"
@@ -295,7 +294,7 @@ func (r *mutationResolver) CreateSkynet(ctx context.Context, input *model.Skynet
 		}
 		return *resp, nil
 	}
-	return "", errors.New("Type is required")
+	return "", errors.New("type is required")
 }
 
 // RemoveHandledProduct is the resolver for the removeHandledProduct field.
@@ -788,7 +787,7 @@ func (r *mutationResolver) VerifySmartCard(ctx context.Context, input model.Smar
 		Content: &model.SmartcardContent{
 			CustomerName:       resp.Content.CustomerName,
 			Status:             resp.Content.Status,
-			DueDate:            resp.Content.DueDate.Format(time.RFC3339),
+			DueDate:            resp.Content.DueDate,
 			CustomerNumber:     resp.Content.CustomerNumber,
 			CustomerType:       resp.Content.CustomerType,
 			CurrentBouquet:     resp.Content.CurrentBouquet,
@@ -1312,8 +1311,8 @@ func (r *queryResolver) Cart(ctx context.Context, user int) (*model.Cart, error)
 	return cart, nil
 }
 
-// DataBundle is the resolver for the DataBundle field.
-func (r *queryResolver) DataBundle(ctx context.Context, serviceID string) (*model.DataBundle, error) {
+// SubscriptionBundle is the resolver for the SubscriptionBundle field.
+func (r *queryResolver) SubscriptionBundle(ctx context.Context, serviceID string) (*model.SubscriptionBundle, error) {
 	skynetRep := app.InitializePackage(app.SkynetPackage)
 
 	skynetRepository, ok := skynetRep.(skynet.Repository)
@@ -1338,7 +1337,7 @@ func (r *queryResolver) DataBundle(ctx context.Context, serviceID string) (*mode
 		variations = append(variations, variation)
 	}
 
-	response := &model.DataBundle{
+	response := &model.SubscriptionBundle{
 		ServiceName:    resp.ServiceName,
 		ServiceID:      resp.ServiceID,
 		ConvinienceFee: resp.ConvinienceFee,
@@ -1591,12 +1590,6 @@ type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
 func uint32ToStringPtr(value uint32) *string {
 	strValue := strconv.FormatUint(uint64(value), 10)
 	return &strValue
