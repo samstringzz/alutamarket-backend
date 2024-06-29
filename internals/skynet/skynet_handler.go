@@ -28,6 +28,14 @@ func (h *Handler) BuyData(ctx context.Context, input *Data) (*string, error) {
 	return item, nil
 }
 
+func (h *Handler) BuyTVSubscription(ctx context.Context, input *TVSubscription) (*string, error) {
+	item, err := h.Service.BuyTVSubscription(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
 func (h *Handler) VerifySmartCard(ctx context.Context, serviceID, billersCode string) (*SmartcardVerificationResponse, error) {
 	item, err := h.Service.VerifySmartCard(ctx, serviceID, billersCode)
 	if err != nil {

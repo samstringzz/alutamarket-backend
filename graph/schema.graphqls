@@ -91,6 +91,7 @@ input SkynetInput {
 	variant_code: String
 	service_id: String!
 	phone_number: String
+	quantity: String
 	subscription_type: String
 	type: String!
 }

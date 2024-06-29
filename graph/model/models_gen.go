@@ -215,6 +215,7 @@ type SkynetInput struct {
 	VariantCode      *string `json:"variant_code,omitempty"`
 	ServiceID        string  `json:"service_id"`
 	PhoneNumber      *string `json:"phone_number,omitempty"`
+	Quantity         *string `json:"quantity,omitempty"`
 	SubscriptionType *string `json:"subscription_type,omitempty"`
 	Type             string  `json:"type"`
 }
