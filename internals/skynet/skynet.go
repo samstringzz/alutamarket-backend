@@ -52,7 +52,7 @@ type EducationPayment struct {
 	VariationCode string `json:"variation_code" db:"variation_code"`
 	ServiceID     string `json:"serviceID" db:"serviceID"`
 	Phone         string `json:"phone" db:"phone"`
-	Quantity      int64  `json:"quantity" db:"quantity"`
+	Quantity      string `json:"quantity" db:"quantity"`
 }
 
 type Skynet struct {
@@ -101,7 +101,7 @@ type Repository interface {
 	VerifySmartCard(ctx context.Context, serviceId, billersCode string) (*SmartcardVerificationResponse, error)
 	// BuyElectricity(ctx context.Context, electricity *Electricity) (*string, error)
 	BuyTVSubscription(ctx context.Context, subscription *TVSubscription) (*string, error)
-	// PayForEducation(ctx context.Context, payment *EducationPayment) (*string, error)
+	BuyEducational(ctx context.Context, payment *EducationPayment) (*string, error)
 	// GetBalance(ctx context.Context, filter string) (*Data, error)
 }
 
@@ -112,6 +112,6 @@ type Service interface {
 	VerifySmartCard(ctx context.Context, serviceId, billersCode string) (*SmartcardVerificationResponse, error)
 	// BuyElectricity(ctx context.Context, electricity *Electricity) (*string, error)
 	BuyTVSubscription(ctx context.Context, subscription *TVSubscription) (*string, error)
-	// PayForEducation(ctx context.Context, payment *EducationPayment) (*string, error)
+	BuyEducational(ctx context.Context, payment *EducationPayment) (*string, error)
 	// GetBalance(ctx context.Context, filter string) (*Data, error)
 }

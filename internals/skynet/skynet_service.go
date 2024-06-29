@@ -53,6 +53,18 @@ func (s *service) BuyTVSubscription(c context.Context, req *TVSubscription) (*st
 	return r, nil
 }
 
+func (s *service) BuyEducational(c context.Context, req *EducationPayment) (*string, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	r, err := s.Repository.BuyEducational(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return r, nil
+}
+
 func (s *service) VerifySmartCard(c context.Context, serviceId, billersCode string) (*SmartcardVerificationResponse, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()

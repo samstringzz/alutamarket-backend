@@ -357,6 +357,112 @@ func (r *repository) BuyTVSubscription(ctx context.Context, input *TVSubscriptio
 	return &successMsg, nil
 }
 
+func (r *repository) BuyEducational(ctx context.Context, input *EducationPayment) (*string, error) {
+
+	requestID := utils.GenerateRequestID()
+	requestData := map[string]interface{}{
+		"amount":         input.Amount,
+		"request_id":     requestID,
+		"serviceID":      input.ServiceID,
+		"phone":          input.Phone,
+		"billersCode":    input.BillersCode,
+		"variation_code": input.VariationCode,
+		"quantity":       input.Quantity,
+	}
+
+	// Serialize the request data to JSON
+	requestDataBytes, err := json.Marshal(requestData)
+	if err != nil {
+		return nil, err
+	}
+
+	var requestURL, secretKey, apiKey string
+
+	if os.Getenv("ENVIRONMENT") == "development" {
+		requestURL = os.Getenv("VTU_DEV_URL")
+		secretKey = os.Getenv("VTU_SANDBOX_SK")
+		apiKey = os.Getenv("VTU_SANDBOX_API_KEY")
+	} else {
+		requestURL = os.Getenv("VTU_LIVE_URL")
+		secretKey = os.Getenv("VTU_LIVE_SK")
+		apiKey = os.Getenv("VTU_LIVE_API_KEY")
+	}
+	// fmt.Println(requestURL, secretKey, apiKey)
+
+	// Create an HTTP client
+	client := &http.Client{}
+
+	// Create the HTTP request
+	req, err := http.NewRequest("POST", requestURL+"/api/pay", bytes.NewBuffer(requestDataBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the request headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("api-key", apiKey)
+	req.Header.Set("secret-key", secretKey)
+
+	// Make the HTTP request
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	var transactionId, transactionStatus string
+
+	// Check if the response status is not a success
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		// Parse the error response
+		var errorResponse map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
+			return nil, err
+		}
+
+		// Print the entire error response to the console
+		fmt.Printf("Error Response: %+v\n", errorResponse)
+
+		// Return the error from the response if available
+		if errMsg, ok := errorResponse["message"].(string); ok {
+			return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", errMsg)
+		}
+
+		// If no specific error message is found, return a generic error
+		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "unknown error occurred")
+	}
+
+	// Parse the response
+	var response map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+	// Extract transactionId and status from the successful response
+	if content, ok := response["content"].(map[string]interface{}); ok {
+		if transactions, ok := content["transactions"].(map[string]interface{}); ok {
+			transactionId, _ = transactions["transactionId"].(string)
+			transactionStatus, _ = transactions["status"].(string)
+		}
+	}
+
+	newService := &Skynet{
+		UserID:        input.UserID,
+		ID:            utils.GenerateUUID(),
+		Status:        transactionStatus,
+		RequestID:     requestID,
+		Type:          "tv_subscription_purchase",
+		Receiver:      input.Phone,
+		TransactionID: transactionId,
+	}
+
+	err = r.db.Create(newService).Error
+	if err != nil {
+		return nil, err
+	}
+
+	successMsg := "Top up successful"
+	return &successMsg, nil
+}
+
 func (r *repository) GetSubscriptionsBundles(ctx context.Context, serviceID string) (*DataBundle, error) {
 	var requestURL, publicKey, apiKey string
 
