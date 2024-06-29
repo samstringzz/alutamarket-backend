@@ -14551,7 +14551,7 @@ func (ec *executionContext) unmarshalInputSkynetInput(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"amount", "user_id", "request_id", "billers_code", "variant_code", "service_id", "phone_number", "quantity", "subscription_type", "type"}
+	fieldsInOrder := [...]string{"amount", "user_id", "billers_code", "variant_code", "service_id", "phone_number", "quantity", "subscription_type", "type"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14572,13 +14572,6 @@ func (ec *executionContext) unmarshalInputSkynetInput(ctx context.Context, obj i
 				return it, err
 			}
 			it.UserID = data
-		case "request_id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("request_id"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RequestID = data
 		case "billers_code":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billers_code"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -14641,7 +14634,7 @@ func (ec *executionContext) unmarshalInputSmartCardInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"service_id", "billers_code"}
+	fieldsInOrder := [...]string{"service_id", "billers_code", "card_type"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14662,6 +14655,13 @@ func (ec *executionContext) unmarshalInputSmartCardInput(ctx context.Context, ob
 				return it, err
 			}
 			it.BillersCode = data
+		case "card_type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("card_type"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CardType = data
 		}
 	}
 

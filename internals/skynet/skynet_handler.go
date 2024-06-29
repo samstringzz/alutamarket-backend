@@ -44,8 +44,8 @@ func (h *Handler) BuyEducational(ctx context.Context, input *EducationPayment) (
 	return item, nil
 }
 
-func (h *Handler) VerifySmartCard(ctx context.Context, serviceID, billersCode string) (*SmartcardVerificationResponse, error) {
-	item, err := h.Service.VerifySmartCard(ctx, serviceID, billersCode)
+func (h *Handler) VerifySmartCard(ctx context.Context, serviceID, billersCode, cardType string) (*SmartcardVerificationResponse, error) {
+	item, err := h.Service.VerifySmartCard(ctx, serviceID, billersCode, cardType)
 	if err != nil {
 		return nil, err
 	}

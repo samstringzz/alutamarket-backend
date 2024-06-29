@@ -210,7 +210,6 @@ type Skynet struct {
 type SkynetInput struct {
 	Amount           int     `json:"amount"`
 	UserID           int     `json:"user_id"`
-	RequestID        string  `json:"request_id"`
 	BillersCode      *string `json:"billers_code,omitempty"`
 	VariantCode      *string `json:"variant_code,omitempty"`
 	ServiceID        string  `json:"service_id"`
@@ -221,8 +220,9 @@ type SkynetInput struct {
 }
 
 type SmartCardInput struct {
-	ServiceID   string `json:"service_id"`
-	BillersCode string `json:"billers_code"`
+	ServiceID   string  `json:"service_id"`
+	BillersCode string  `json:"billers_code"`
+	CardType    *string `json:"card_type,omitempty"`
 }
 
 type SmartcardContent struct {

@@ -563,10 +563,11 @@ func (r *repository) GetSubscriptionsBundles(ctx context.Context, serviceID stri
 	return responseData, nil
 }
 
-func (r *repository) VerifySmartCard(ctx context.Context, serviceId, billersCode string) (*SmartcardVerificationResponse, error) {
+func (r *repository) VerifySmartCard(ctx context.Context, serviceId, billersCode, cardType string) (*SmartcardVerificationResponse, error) {
 	requestData := map[string]interface{}{
 		"serviceID":   serviceId,
 		"billersCode": billersCode,
+		"type":        cardType,
 	}
 
 	// Serialize the request data to JSON
