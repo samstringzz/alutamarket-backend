@@ -809,7 +809,7 @@ func (r *mutationResolver) VerifySmartCard(ctx context.Context, input model.Smar
 	}
 	skynetSrvc := skynet.NewService(skynetRepository)
 	skynetHandler := skynet.NewHandler(skynetSrvc)
-	resp, err := skynetHandler.VerifySmartCard(ctx, input.ServiceID, input.BillersCode)
+	resp, err := skynetHandler.VerifySmartCard(ctx, input.ServiceID, input.BillersCode, *input.CardType)
 
 	if err != nil {
 		return nil, err

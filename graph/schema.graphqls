@@ -86,7 +86,6 @@ input ProductInput {
 input SkynetInput {
 	amount: Int!
 	user_id: Int!
-	request_id: String!
 	billers_code: String
 	variant_code: String
 	service_id: String!
@@ -331,6 +330,7 @@ type SmartcardContent {
 input SmartCardInput {
 	service_id: String!
 	billers_code: String!
+	card_type: String
 }
 type Query {
 	Users(limit: Int, offset: Int): [User!]!

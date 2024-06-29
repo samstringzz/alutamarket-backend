@@ -65,11 +65,11 @@ func (s *service) BuyEducational(c context.Context, req *EducationPayment) (*str
 	return r, nil
 }
 
-func (s *service) VerifySmartCard(c context.Context, serviceId, billersCode string) (*SmartcardVerificationResponse, error) {
+func (s *service) VerifySmartCard(c context.Context, serviceId, billersCode, cardType string) (*SmartcardVerificationResponse, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 
-	r, err := s.Repository.VerifySmartCard(ctx, serviceId, billersCode)
+	r, err := s.Repository.VerifySmartCard(ctx, serviceId, billersCode, cardType)
 	if err != nil {
 		return nil, err
 	}
