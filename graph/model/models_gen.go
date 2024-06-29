@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+type BundleVariation struct {
+	VariationCode   string `json:"variationCode"`
+	Name            string `json:"name"`
+	VariationAmount string `json:"variationAmount"`
+	FixedPrice      string `json:"fixedPrice"`
+}
+
 type Cart struct {
 	Items  []*CartItem `json:"items"`
 	Total  float64     `json:"total"`
@@ -24,6 +31,13 @@ type Category struct {
 	Name          string         `json:"name"`
 	Slug          string         `json:"slug"`
 	Subcategories []*SubCategory `json:"subcategories,omitempty"`
+}
+
+type DataBundle struct {
+	ServiceName    string             `json:"serviceName"`
+	ServiceID      string             `json:"serviceID"`
+	ConvinienceFee string             `json:"convinienceFee"`
+	Variations     []*BundleVariation `json:"variations"`
 }
 
 type Follower struct {
@@ -188,6 +202,49 @@ type ReviewInput struct {
 	Message   string  `json:"message"`
 	Rating    float64 `json:"rating"`
 	ProductID int     `json:"productId"`
+}
+
+type Skynet struct {
+	ID            string  `json:"id"`
+	UserID        *string `json:"user_id,omitempty"`
+	Status        *string `json:"status,omitempty"`
+	RequestID     string  `json:"request_id"`
+	TransactionID *string `json:"transaction_id,omitempty"`
+	Type          *string `json:"type,omitempty"`
+	Receiever     *string `json:"receiever,omitempty"`
+}
+
+type SkynetInput struct {
+	Amount           int     `json:"amount"`
+	UserID           int     `json:"user_id"`
+	RequestID        string  `json:"request_id"`
+	BillersCode      *string `json:"billers_code,omitempty"`
+	VariantCode      *string `json:"variant_code,omitempty"`
+	ServiceID        string  `json:"service_id"`
+	PhoneNumber      *string `json:"phone_number,omitempty"`
+	SubscriptionType *string `json:"subscription_type,omitempty"`
+	Type             string  `json:"type"`
+}
+
+type SmartCardInput struct {
+	ServiceID   string `json:"service_id"`
+	BillersCode string `json:"billers_code"`
+}
+
+type SmartcardContent struct {
+	CustomerName       string  `json:"customerName"`
+	Status             string  `json:"status"`
+	DueDate            string  `json:"dueDate"`
+	CustomerNumber     int     `json:"customerNumber"`
+	CustomerType       string  `json:"customerType"`
+	CurrentBouquet     string  `json:"currentBouquet"`
+	CurrentBouquetCode string  `json:"currentBouquetCode"`
+	RenewalAmount      float64 `json:"renewalAmount"`
+}
+
+type SmartcardVerificationResponse struct {
+	Code    string            `json:"code"`
+	Content *SmartcardContent `json:"content"`
 }
 
 type Store struct {

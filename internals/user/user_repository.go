@@ -92,6 +92,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		tx.Rollback()
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User already exists")
 	}
+	// emails.SendVerificationMail(req.Fullname, otpCode)
 
 	newUser := &User{
 		Campus:     req.Campus,
@@ -102,7 +103,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		Usertype:   req.Usertype,
 		Active:     boolPtr(false),
 		Twofa:      boolPtr(false),
-		Code:       "12345",
+		Code:       otpCode,
 		Codeexpiry: codeExpiry,
 		Avatar:     "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
 	}
@@ -272,7 +273,6 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 	if err := utils.CheckPassword(req.Password, user.Password); err != nil {
 		return nil, errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid Credentials")
 	}
-
 	// Generate a new refresh token
 	refreshClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, MyJWTClaims{
 		ID:       strconv.Itoa(int(user.ID)),

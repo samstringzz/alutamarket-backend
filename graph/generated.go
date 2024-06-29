@@ -50,6 +50,13 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	BundleVariation struct {
+		FixedPrice      func(childComplexity int) int
+		Name            func(childComplexity int) int
+		VariationAmount func(childComplexity int) int
+		VariationCode   func(childComplexity int) int
+	}
+
 	Cart struct {
 		Active func(childComplexity int) int
 		ID     func(childComplexity int) int
@@ -68,6 +75,13 @@ type ComplexityRoot struct {
 		Name          func(childComplexity int) int
 		Slug          func(childComplexity int) int
 		Subcategories func(childComplexity int) int
+	}
+
+	DataBundle struct {
+		ConvinienceFee func(childComplexity int) int
+		ServiceID      func(childComplexity int) int
+		ServiceName    func(childComplexity int) int
+		Variations     func(childComplexity int) int
 	}
 
 	Follower struct {
@@ -99,6 +113,7 @@ type ComplexityRoot struct {
 		AddReview               func(childComplexity int, input model.ReviewInput) int
 		CreateCategory          func(childComplexity int, input model.NewCategory) int
 		CreateProduct           func(childComplexity int, input model.ProductInput) int
+		CreateSkynet            func(childComplexity int, input *model.SkynetInput) int
 		CreateStore             func(childComplexity int, input model.StoreInput) int
 		CreateSubCategory       func(childComplexity int, input model.NewSubCategory) int
 		CreateUser              func(childComplexity int, input model.NewUser) int
@@ -114,6 +129,7 @@ type ComplexityRoot struct {
 		UpdateProduct           func(childComplexity int, input *model.ProductInput) int
 		UpdateStore             func(childComplexity int, input *model.UpdateStoreInput) int
 		UpdateUser              func(childComplexity int, input *model.UpdateUserInput) int
+		VerifySmartCard         func(childComplexity int, input model.SmartCardInput) int
 	}
 
 	Order struct {
@@ -155,6 +171,7 @@ type ComplexityRoot struct {
 		Cart                  func(childComplexity int, user int) int
 		Categories            func(childComplexity int) int
 		Category              func(childComplexity int, id int) int
+		DataBundle            func(childComplexity int, serviceID string) int
 		HandledProducts       func(childComplexity int, user int, typeArg string) int
 		Product               func(childComplexity int, id int) int
 		ProductReviews        func(childComplexity int, id int) int
@@ -162,6 +179,8 @@ type ComplexityRoot struct {
 		RecentlyAddedProducts func(childComplexity int, user int) int
 		RecommendedProducts   func(childComplexity int, query string) int
 		SearchProducts        func(childComplexity int, query string) int
+		Skynet                func(childComplexity int, id string) int
+		Skynets               func(childComplexity int, id string) int
 		Store                 func(childComplexity int, id int) int
 		StoreByName           func(childComplexity int, name string) int
 		Stores                func(childComplexity int, user *int, limit *int, offset *int) int
@@ -177,6 +196,32 @@ type ComplexityRoot struct {
 		ProductID func(childComplexity int) int
 		Rating    func(childComplexity int) int
 		Username  func(childComplexity int) int
+	}
+
+	Skynet struct {
+		ID            func(childComplexity int) int
+		Receiever     func(childComplexity int) int
+		RequestID     func(childComplexity int) int
+		Status        func(childComplexity int) int
+		TransactionID func(childComplexity int) int
+		Type          func(childComplexity int) int
+		UserID        func(childComplexity int) int
+	}
+
+	SmartcardContent struct {
+		CurrentBouquet     func(childComplexity int) int
+		CurrentBouquetCode func(childComplexity int) int
+		CustomerName       func(childComplexity int) int
+		CustomerNumber     func(childComplexity int) int
+		CustomerType       func(childComplexity int) int
+		DueDate            func(childComplexity int) int
+		RenewalAmount      func(childComplexity int) int
+		Status             func(childComplexity int) int
+	}
+
+	SmartcardVerificationResponse struct {
+		Code    func(childComplexity int) int
+		Content func(childComplexity int) int
 	}
 
 	Store struct {
@@ -270,6 +315,7 @@ type MutationResolver interface {
 	LoginUser(ctx context.Context, input model.LoginReq) (*model.LoginRes, error)
 	AddHandledProduct(ctx context.Context, userID int, productID int, typeArg string) (*model.HandledProducts, error)
 	AddReview(ctx context.Context, input model.ReviewInput) (*model.Review, error)
+	CreateSkynet(ctx context.Context, input *model.SkynetInput) (string, error)
 	RemoveHandledProduct(ctx context.Context, user int, typeArg *string) (*model.HandledProducts, error)
 	CreateCategory(ctx context.Context, input model.NewCategory) (*model.Category, error)
 	CreateSubCategory(ctx context.Context, input model.NewSubCategory) (*model.SubCategory, error)
@@ -283,6 +329,7 @@ type MutationResolver interface {
 	UpdateStore(ctx context.Context, input *model.UpdateStoreInput) (*model.Store, error)
 	DeleteStore(ctx context.Context, storeID int) (*model.Store, error)
 	InitializePayment(ctx context.Context, input model.PaymentData) (*string, error)
+	VerifySmartCard(ctx context.Context, input model.SmartCardInput) (*model.SmartcardVerificationResponse, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error)
@@ -297,10 +344,13 @@ type QueryResolver interface {
 	RecentlyAddedProducts(ctx context.Context, user int) ([]*model.Product, error)
 	ProductReviews(ctx context.Context, id int) ([]*model.Review, error)
 	Cart(ctx context.Context, user int) (*model.Cart, error)
+	DataBundle(ctx context.Context, serviceID string) (*model.DataBundle, error)
 	SearchProducts(ctx context.Context, query string) ([]*model.Product, error)
 	Stores(ctx context.Context, user *int, limit *int, offset *int) (*model.StorePaginationData, error)
 	Store(ctx context.Context, id int) (*model.Store, error)
 	StoreByName(ctx context.Context, name string) (*model.Store, error)
+	Skynets(ctx context.Context, id string) ([]*model.Skynet, error)
+	Skynet(ctx context.Context, id string) (*model.Skynet, error)
 }
 type SubscriptionResolver interface {
 	ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error)
@@ -324,6 +374,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "BundleVariation.fixedPrice":
+		if e.complexity.BundleVariation.FixedPrice == nil {
+			break
+		}
+
+		return e.complexity.BundleVariation.FixedPrice(childComplexity), true
+
+	case "BundleVariation.name":
+		if e.complexity.BundleVariation.Name == nil {
+			break
+		}
+
+		return e.complexity.BundleVariation.Name(childComplexity), true
+
+	case "BundleVariation.variationAmount":
+		if e.complexity.BundleVariation.VariationAmount == nil {
+			break
+		}
+
+		return e.complexity.BundleVariation.VariationAmount(childComplexity), true
+
+	case "BundleVariation.variationCode":
+		if e.complexity.BundleVariation.VariationCode == nil {
+			break
+		}
+
+		return e.complexity.BundleVariation.VariationCode(childComplexity), true
 
 	case "Cart.active":
 		if e.complexity.Cart.Active == nil {
@@ -401,6 +479,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Category.Subcategories(childComplexity), true
+
+	case "DataBundle.convinienceFee":
+		if e.complexity.DataBundle.ConvinienceFee == nil {
+			break
+		}
+
+		return e.complexity.DataBundle.ConvinienceFee(childComplexity), true
+
+	case "DataBundle.serviceID":
+		if e.complexity.DataBundle.ServiceID == nil {
+			break
+		}
+
+		return e.complexity.DataBundle.ServiceID(childComplexity), true
+
+	case "DataBundle.serviceName":
+		if e.complexity.DataBundle.ServiceName == nil {
+			break
+		}
+
+		return e.complexity.DataBundle.ServiceName(childComplexity), true
+
+	case "DataBundle.variations":
+		if e.complexity.DataBundle.Variations == nil {
+			break
+		}
+
+		return e.complexity.DataBundle.Variations(childComplexity), true
 
 	case "Follower.follower_id":
 		if e.complexity.Follower.FollowerID == nil {
@@ -554,6 +660,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateProduct(childComplexity, args["input"].(model.ProductInput)), true
+
+	case "Mutation.createSkynet":
+		if e.complexity.Mutation.CreateSkynet == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createSkynet_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateSkynet(childComplexity, args["input"].(*model.SkynetInput)), true
 
 	case "Mutation.createStore":
 		if e.complexity.Mutation.CreateStore == nil {
@@ -734,6 +852,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateUser(childComplexity, args["input"].(*model.UpdateUserInput)), true
+
+	case "Mutation.verifySmartCard":
+		if e.complexity.Mutation.VerifySmartCard == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_verifySmartCard_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.VerifySmartCard(childComplexity, args["input"].(model.SmartCardInput)), true
 
 	case "Order.customer":
 		if e.complexity.Order.Customer == nil {
@@ -948,6 +1078,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Category(childComplexity, args["id"].(int)), true
 
+	case "Query.DataBundle":
+		if e.complexity.Query.DataBundle == nil {
+			break
+		}
+
+		args, err := ec.field_Query_DataBundle_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.DataBundle(childComplexity, args["serviceID"].(string)), true
+
 	case "Query.HandledProducts":
 		if e.complexity.Query.HandledProducts == nil {
 			break
@@ -1031,6 +1173,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.SearchProducts(childComplexity, args["query"].(string)), true
+
+	case "Query.Skynet":
+		if e.complexity.Query.Skynet == nil {
+			break
+		}
+
+		args, err := ec.field_Query_Skynet_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Skynet(childComplexity, args["id"].(string)), true
+
+	case "Query.Skynets":
+		if e.complexity.Query.Skynets == nil {
+			break
+		}
+
+		args, err := ec.field_Query_Skynets_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Skynets(childComplexity, args["id"].(string)), true
 
 	case "Query.Store":
 		if e.complexity.Query.Store == nil {
@@ -1145,6 +1311,125 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Review.Username(childComplexity), true
+
+	case "Skynet.id":
+		if e.complexity.Skynet.ID == nil {
+			break
+		}
+
+		return e.complexity.Skynet.ID(childComplexity), true
+
+	case "Skynet.receiever":
+		if e.complexity.Skynet.Receiever == nil {
+			break
+		}
+
+		return e.complexity.Skynet.Receiever(childComplexity), true
+
+	case "Skynet.request_id":
+		if e.complexity.Skynet.RequestID == nil {
+			break
+		}
+
+		return e.complexity.Skynet.RequestID(childComplexity), true
+
+	case "Skynet.status":
+		if e.complexity.Skynet.Status == nil {
+			break
+		}
+
+		return e.complexity.Skynet.Status(childComplexity), true
+
+	case "Skynet.transaction_id":
+		if e.complexity.Skynet.TransactionID == nil {
+			break
+		}
+
+		return e.complexity.Skynet.TransactionID(childComplexity), true
+
+	case "Skynet.type":
+		if e.complexity.Skynet.Type == nil {
+			break
+		}
+
+		return e.complexity.Skynet.Type(childComplexity), true
+
+	case "Skynet.user_id":
+		if e.complexity.Skynet.UserID == nil {
+			break
+		}
+
+		return e.complexity.Skynet.UserID(childComplexity), true
+
+	case "SmartcardContent.currentBouquet":
+		if e.complexity.SmartcardContent.CurrentBouquet == nil {
+			break
+		}
+
+		return e.complexity.SmartcardContent.CurrentBouquet(childComplexity), true
+
+	case "SmartcardContent.currentBouquetCode":
+		if e.complexity.SmartcardContent.CurrentBouquetCode == nil {
+			break
+		}
+
+		return e.complexity.SmartcardContent.CurrentBouquetCode(childComplexity), true
+
+	case "SmartcardContent.customerName":
+		if e.complexity.SmartcardContent.CustomerName == nil {
+			break
+		}
+
+		return e.complexity.SmartcardContent.CustomerName(childComplexity), true
+
+	case "SmartcardContent.customerNumber":
+		if e.complexity.SmartcardContent.CustomerNumber == nil {
+			break
+		}
+
+		return e.complexity.SmartcardContent.CustomerNumber(childComplexity), true
+
+	case "SmartcardContent.customerType":
+		if e.complexity.SmartcardContent.CustomerType == nil {
+			break
+		}
+
+		return e.complexity.SmartcardContent.CustomerType(childComplexity), true
+
+	case "SmartcardContent.dueDate":
+		if e.complexity.SmartcardContent.DueDate == nil {
+			break
+		}
+
+		return e.complexity.SmartcardContent.DueDate(childComplexity), true
+
+	case "SmartcardContent.renewalAmount":
+		if e.complexity.SmartcardContent.RenewalAmount == nil {
+			break
+		}
+
+		return e.complexity.SmartcardContent.RenewalAmount(childComplexity), true
+
+	case "SmartcardContent.status":
+		if e.complexity.SmartcardContent.Status == nil {
+			break
+		}
+
+		return e.complexity.SmartcardContent.Status(childComplexity), true
+
+	case "SmartcardVerificationResponse.code":
+		if e.complexity.SmartcardVerificationResponse.Code == nil {
+			break
+		}
+
+		return e.complexity.SmartcardVerificationResponse.Code(childComplexity), true
+
+	case "SmartcardVerificationResponse.content":
+		if e.complexity.SmartcardVerificationResponse.Content == nil {
+			break
+		}
+
+		return e.complexity.SmartcardVerificationResponse.Content(childComplexity), true
 
 	case "Store.address":
 		if e.complexity.Store.Address == nil {
@@ -1563,6 +1848,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPaymentData,
 		ec.unmarshalInputProductInput,
 		ec.unmarshalInputReviewInput,
+		ec.unmarshalInputSkynetInput,
+		ec.unmarshalInputSmartCardInput,
 		ec.unmarshalInputStoreInput,
 		ec.unmarshalInputUpdateStoreInput,
 		ec.unmarshalInputUpdateUserInput,
@@ -1769,6 +2056,21 @@ func (ec *executionContext) field_Mutation_createProduct_args(ctx context.Contex
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNProductInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createSkynet_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.SkynetInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOSkynetInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynetInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2020,6 +2322,21 @@ func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_verifySmartCard_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.SmartCardInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNSmartCardInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartCardInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_Cart_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2047,6 +2364,21 @@ func (ec *executionContext) field_Query_Category_args(ctx context.Context, rawAr
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_DataBundle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["serviceID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceID"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["serviceID"] = arg0
 	return args, nil
 }
 
@@ -2164,6 +2496,36 @@ func (ec *executionContext) field_Query_RecommendedProducts_args(ctx context.Con
 		}
 	}
 	args["query"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_Skynet_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_Skynets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -2366,6 +2728,182 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _BundleVariation_variationCode(ctx context.Context, field graphql.CollectedField, obj *model.BundleVariation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BundleVariation_variationCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VariationCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BundleVariation_variationCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BundleVariation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BundleVariation_name(ctx context.Context, field graphql.CollectedField, obj *model.BundleVariation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BundleVariation_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BundleVariation_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BundleVariation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BundleVariation_variationAmount(ctx context.Context, field graphql.CollectedField, obj *model.BundleVariation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BundleVariation_variationAmount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VariationAmount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BundleVariation_variationAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BundleVariation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BundleVariation_fixedPrice(ctx context.Context, field graphql.CollectedField, obj *model.BundleVariation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BundleVariation_fixedPrice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FixedPrice, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BundleVariation_fixedPrice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BundleVariation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Cart_items(ctx context.Context, field graphql.CollectedField, obj *model.Cart) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Cart_items(ctx, field)
@@ -2886,6 +3424,192 @@ func (ec *executionContext) fieldContext_Category_subcategories(_ context.Contex
 				return ec.fieldContext_SubCategory_category(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubCategory", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataBundle_serviceName(ctx context.Context, field graphql.CollectedField, obj *model.DataBundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataBundle_serviceName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServiceName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataBundle_serviceName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataBundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataBundle_serviceID(ctx context.Context, field graphql.CollectedField, obj *model.DataBundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataBundle_serviceID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServiceID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataBundle_serviceID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataBundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataBundle_convinienceFee(ctx context.Context, field graphql.CollectedField, obj *model.DataBundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataBundle_convinienceFee(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ConvinienceFee, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataBundle_convinienceFee(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataBundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataBundle_variations(ctx context.Context, field graphql.CollectedField, obj *model.DataBundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DataBundle_variations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Variations, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.BundleVariation)
+	fc.Result = res
+	return ec.marshalNBundleVariation2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBundleVariationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DataBundle_variations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataBundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "variationCode":
+				return ec.fieldContext_BundleVariation_variationCode(ctx, field)
+			case "name":
+				return ec.fieldContext_BundleVariation_name(ctx, field)
+			case "variationAmount":
+				return ec.fieldContext_BundleVariation_variationAmount(ctx, field)
+			case "fixedPrice":
+				return ec.fieldContext_BundleVariation_fixedPrice(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BundleVariation", field.Name)
 		},
 	}
 	return fc, nil
@@ -4011,6 +4735,61 @@ func (ec *executionContext) fieldContext_Mutation_addReview(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createSkynet(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createSkynet(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateSkynet(rctx, fc.Args["input"].(*model.SkynetInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createSkynet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createSkynet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_removeHandledProduct(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_removeHandledProduct(ctx, field)
 	if err != nil {
@@ -4969,6 +5748,64 @@ func (ec *executionContext) fieldContext_Mutation_initializePayment(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_initializePayment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_verifySmartCard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_verifySmartCard(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().VerifySmartCard(rctx, fc.Args["input"].(model.SmartCardInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.SmartcardVerificationResponse)
+	fc.Result = res
+	return ec.marshalOSmartcardVerificationResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartcardVerificationResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_verifySmartCard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "code":
+				return ec.fieldContext_SmartcardVerificationResponse_code(ctx, field)
+			case "content":
+				return ec.fieldContext_SmartcardVerificationResponse_content(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SmartcardVerificationResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_verifySmartCard_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7052,6 +7889,68 @@ func (ec *executionContext) fieldContext_Query_Cart(ctx context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_DataBundle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_DataBundle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().DataBundle(rctx, fc.Args["serviceID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.DataBundle)
+	fc.Result = res
+	return ec.marshalODataBundle2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDataBundle(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_DataBundle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "serviceName":
+				return ec.fieldContext_DataBundle_serviceName(ctx, field)
+			case "serviceID":
+				return ec.fieldContext_DataBundle_serviceID(ctx, field)
+			case "convinienceFee":
+				return ec.fieldContext_DataBundle_convinienceFee(ctx, field)
+			case "variations":
+				return ec.fieldContext_DataBundle_variations(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DataBundle", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_DataBundle_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_searchProducts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_searchProducts(ctx, field)
 	if err != nil {
@@ -7367,6 +8266,142 @@ func (ec *executionContext) fieldContext_Query_StoreByName(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_StoreByName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_Skynets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_Skynets(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Skynets(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Skynet)
+	fc.Result = res
+	return ec.marshalOSkynet2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynetᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_Skynets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Skynet_id(ctx, field)
+			case "user_id":
+				return ec.fieldContext_Skynet_user_id(ctx, field)
+			case "status":
+				return ec.fieldContext_Skynet_status(ctx, field)
+			case "request_id":
+				return ec.fieldContext_Skynet_request_id(ctx, field)
+			case "transaction_id":
+				return ec.fieldContext_Skynet_transaction_id(ctx, field)
+			case "type":
+				return ec.fieldContext_Skynet_type(ctx, field)
+			case "receiever":
+				return ec.fieldContext_Skynet_receiever(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Skynet", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_Skynets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_Skynet(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_Skynet(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Skynet(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Skynet)
+	fc.Result = res
+	return ec.marshalOSkynet2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynet(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_Skynet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Skynet_id(ctx, field)
+			case "user_id":
+				return ec.fieldContext_Skynet_user_id(ctx, field)
+			case "status":
+				return ec.fieldContext_Skynet_status(ctx, field)
+			case "request_id":
+				return ec.fieldContext_Skynet_request_id(ctx, field)
+			case "transaction_id":
+				return ec.fieldContext_Skynet_transaction_id(ctx, field)
+			case "type":
+				return ec.fieldContext_Skynet_type(ctx, field)
+			case "receiever":
+				return ec.fieldContext_Skynet_receiever(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Skynet", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_Skynet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7758,6 +8793,757 @@ func (ec *executionContext) fieldContext_Review_id(_ context.Context, field grap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Skynet_id(ctx context.Context, field graphql.CollectedField, obj *model.Skynet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Skynet_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Skynet_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Skynet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Skynet_user_id(ctx context.Context, field graphql.CollectedField, obj *model.Skynet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Skynet_user_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Skynet_user_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Skynet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Skynet_status(ctx context.Context, field graphql.CollectedField, obj *model.Skynet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Skynet_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Skynet_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Skynet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Skynet_request_id(ctx context.Context, field graphql.CollectedField, obj *model.Skynet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Skynet_request_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RequestID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Skynet_request_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Skynet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Skynet_transaction_id(ctx context.Context, field graphql.CollectedField, obj *model.Skynet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Skynet_transaction_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TransactionID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Skynet_transaction_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Skynet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Skynet_type(ctx context.Context, field graphql.CollectedField, obj *model.Skynet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Skynet_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Skynet_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Skynet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Skynet_receiever(ctx context.Context, field graphql.CollectedField, obj *model.Skynet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Skynet_receiever(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Receiever, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Skynet_receiever(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Skynet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SmartcardContent_customerName(ctx context.Context, field graphql.CollectedField, obj *model.SmartcardContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SmartcardContent_customerName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CustomerName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SmartcardContent_customerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SmartcardContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SmartcardContent_status(ctx context.Context, field graphql.CollectedField, obj *model.SmartcardContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SmartcardContent_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SmartcardContent_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SmartcardContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SmartcardContent_dueDate(ctx context.Context, field graphql.CollectedField, obj *model.SmartcardContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SmartcardContent_dueDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DueDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SmartcardContent_dueDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SmartcardContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SmartcardContent_customerNumber(ctx context.Context, field graphql.CollectedField, obj *model.SmartcardContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SmartcardContent_customerNumber(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CustomerNumber, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SmartcardContent_customerNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SmartcardContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SmartcardContent_customerType(ctx context.Context, field graphql.CollectedField, obj *model.SmartcardContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SmartcardContent_customerType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CustomerType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SmartcardContent_customerType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SmartcardContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SmartcardContent_currentBouquet(ctx context.Context, field graphql.CollectedField, obj *model.SmartcardContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SmartcardContent_currentBouquet(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CurrentBouquet, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SmartcardContent_currentBouquet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SmartcardContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SmartcardContent_currentBouquetCode(ctx context.Context, field graphql.CollectedField, obj *model.SmartcardContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SmartcardContent_currentBouquetCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CurrentBouquetCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SmartcardContent_currentBouquetCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SmartcardContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SmartcardContent_renewalAmount(ctx context.Context, field graphql.CollectedField, obj *model.SmartcardContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SmartcardContent_renewalAmount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RenewalAmount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SmartcardContent_renewalAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SmartcardContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SmartcardVerificationResponse_code(ctx context.Context, field graphql.CollectedField, obj *model.SmartcardVerificationResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SmartcardVerificationResponse_code(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Code, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SmartcardVerificationResponse_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SmartcardVerificationResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SmartcardVerificationResponse_content(ctx context.Context, field graphql.CollectedField, obj *model.SmartcardVerificationResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SmartcardVerificationResponse_content(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Content, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.SmartcardContent)
+	fc.Result = res
+	return ec.marshalNSmartcardContent2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartcardContent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SmartcardVerificationResponse_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SmartcardVerificationResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "customerName":
+				return ec.fieldContext_SmartcardContent_customerName(ctx, field)
+			case "status":
+				return ec.fieldContext_SmartcardContent_status(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_SmartcardContent_dueDate(ctx, field)
+			case "customerNumber":
+				return ec.fieldContext_SmartcardContent_customerNumber(ctx, field)
+			case "customerType":
+				return ec.fieldContext_SmartcardContent_customerType(ctx, field)
+			case "currentBouquet":
+				return ec.fieldContext_SmartcardContent_currentBouquet(ctx, field)
+			case "currentBouquetCode":
+				return ec.fieldContext_SmartcardContent_currentBouquetCode(ctx, field)
+			case "renewalAmount":
+				return ec.fieldContext_SmartcardContent_renewalAmount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SmartcardContent", field.Name)
 		},
 	}
 	return fc, nil
@@ -12758,6 +14544,123 @@ func (ec *executionContext) unmarshalInputReviewInput(ctx context.Context, obj i
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSkynetInput(ctx context.Context, obj interface{}) (model.SkynetInput, error) {
+	var it model.SkynetInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"amount", "user_id", "request_id", "billers_code", "variant_code", "service_id", "phone_number", "subscription_type", "type"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "amount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amount"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Amount = data
+		case "user_id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user_id"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserID = data
+		case "request_id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("request_id"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequestID = data
+		case "billers_code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billers_code"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillersCode = data
+		case "variant_code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("variant_code"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VariantCode = data
+		case "service_id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service_id"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceID = data
+		case "phone_number":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phone_number"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PhoneNumber = data
+		case "subscription_type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subscription_type"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubscriptionType = data
+		case "type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSmartCardInput(ctx context.Context, obj interface{}) (model.SmartCardInput, error) {
+	var it model.SmartCardInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"service_id", "billers_code"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "service_id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service_id"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceID = data
+		case "billers_code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billers_code"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillersCode = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputStoreInput(ctx context.Context, obj interface{}) (model.StoreInput, error) {
 	var it model.StoreInput
 	asMap := map[string]interface{}{}
@@ -13099,6 +15002,60 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 
 // region    **************************** object.gotpl ****************************
 
+var bundleVariationImplementors = []string{"BundleVariation"}
+
+func (ec *executionContext) _BundleVariation(ctx context.Context, sel ast.SelectionSet, obj *model.BundleVariation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bundleVariationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BundleVariation")
+		case "variationCode":
+			out.Values[i] = ec._BundleVariation_variationCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._BundleVariation_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "variationAmount":
+			out.Values[i] = ec._BundleVariation_variationAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fixedPrice":
+			out.Values[i] = ec._BundleVariation_fixedPrice(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var cartImplementors = []string{"Cart"}
 
 func (ec *executionContext) _Cart(ctx context.Context, sel ast.SelectionSet, obj *model.Cart) graphql.Marshaler {
@@ -13227,6 +15184,60 @@ func (ec *executionContext) _Category(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "subcategories":
 			out.Values[i] = ec._Category_subcategories(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var dataBundleImplementors = []string{"DataBundle"}
+
+func (ec *executionContext) _DataBundle(ctx context.Context, sel ast.SelectionSet, obj *model.DataBundle) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dataBundleImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DataBundle")
+		case "serviceName":
+			out.Values[i] = ec._DataBundle_serviceName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "serviceID":
+			out.Values[i] = ec._DataBundle_serviceID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "convinienceFee":
+			out.Values[i] = ec._DataBundle_convinienceFee(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "variations":
+			out.Values[i] = ec._DataBundle_variations(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13470,6 +15481,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createSkynet":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createSkynet(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "removeHandledProduct":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_removeHandledProduct(ctx, field)
@@ -13551,6 +15569,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "initializePayment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_initializePayment(ctx, field)
+			})
+		case "verifySmartCard":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_verifySmartCard(ctx, field)
 			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -14072,6 +16094,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "DataBundle":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_DataBundle(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "searchProducts":
 			field := field
 
@@ -14151,6 +16192,44 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "Skynets":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_Skynets(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "Skynet":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_Skynet(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -14220,6 +16299,178 @@ func (ec *executionContext) _Review(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "id":
 			out.Values[i] = ec._Review_id(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var skynetImplementors = []string{"Skynet"}
+
+func (ec *executionContext) _Skynet(ctx context.Context, sel ast.SelectionSet, obj *model.Skynet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, skynetImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Skynet")
+		case "id":
+			out.Values[i] = ec._Skynet_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "user_id":
+			out.Values[i] = ec._Skynet_user_id(ctx, field, obj)
+		case "status":
+			out.Values[i] = ec._Skynet_status(ctx, field, obj)
+		case "request_id":
+			out.Values[i] = ec._Skynet_request_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "transaction_id":
+			out.Values[i] = ec._Skynet_transaction_id(ctx, field, obj)
+		case "type":
+			out.Values[i] = ec._Skynet_type(ctx, field, obj)
+		case "receiever":
+			out.Values[i] = ec._Skynet_receiever(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var smartcardContentImplementors = []string{"SmartcardContent"}
+
+func (ec *executionContext) _SmartcardContent(ctx context.Context, sel ast.SelectionSet, obj *model.SmartcardContent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, smartcardContentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SmartcardContent")
+		case "customerName":
+			out.Values[i] = ec._SmartcardContent_customerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._SmartcardContent_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dueDate":
+			out.Values[i] = ec._SmartcardContent_dueDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "customerNumber":
+			out.Values[i] = ec._SmartcardContent_customerNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "customerType":
+			out.Values[i] = ec._SmartcardContent_customerType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currentBouquet":
+			out.Values[i] = ec._SmartcardContent_currentBouquet(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currentBouquetCode":
+			out.Values[i] = ec._SmartcardContent_currentBouquetCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "renewalAmount":
+			out.Values[i] = ec._SmartcardContent_renewalAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var smartcardVerificationResponseImplementors = []string{"SmartcardVerificationResponse"}
+
+func (ec *executionContext) _SmartcardVerificationResponse(ctx context.Context, sel ast.SelectionSet, obj *model.SmartcardVerificationResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, smartcardVerificationResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SmartcardVerificationResponse")
+		case "code":
+			out.Values[i] = ec._SmartcardVerificationResponse_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "content":
+			out.Values[i] = ec._SmartcardVerificationResponse_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15103,6 +17354,60 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNBundleVariation2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBundleVariationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.BundleVariation) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNBundleVariation2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBundleVariation(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNBundleVariation2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBundleVariation(ctx context.Context, sel ast.SelectionSet, v *model.BundleVariation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BundleVariation(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNCart2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCart(ctx context.Context, sel ast.SelectionSet, v model.Cart) graphql.Marshaler {
 	return ec._Cart(ctx, sel, &v)
 }
@@ -15571,6 +17876,31 @@ func (ec *executionContext) marshalNReview2ᚖgithubᚗcomᚋChrisentechᚋaluta
 func (ec *executionContext) unmarshalNReviewInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewInput(ctx context.Context, v interface{}) (model.ReviewInput, error) {
 	res, err := ec.unmarshalInputReviewInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSkynet2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynet(ctx context.Context, sel ast.SelectionSet, v *model.Skynet) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Skynet(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSmartCardInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartCardInput(ctx context.Context, v interface{}) (model.SmartCardInput, error) {
+	res, err := ec.unmarshalInputSmartCardInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSmartcardContent2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartcardContent(ctx context.Context, sel ast.SelectionSet, v *model.SmartcardContent) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SmartcardContent(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNStore2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx context.Context, sel ast.SelectionSet, v model.Store) graphql.Marshaler {
@@ -16109,6 +18439,13 @@ func (ec *executionContext) marshalOCategory2ᚖgithubᚗcomᚋChrisentechᚋalu
 	return ec._Category(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalODataBundle2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDataBundle(ctx context.Context, sel ast.SelectionSet, v *model.DataBundle) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DataBundle(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v interface{}) (*float64, error) {
 	if v == nil {
 		return nil, nil
@@ -16485,6 +18822,75 @@ func (ec *executionContext) marshalOReview2ᚖgithubᚗcomᚋChrisentechᚋaluta
 		return graphql.Null
 	}
 	return ec._Review(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSkynet2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Skynet) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSkynet2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynet(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOSkynet2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynet(ctx context.Context, sel ast.SelectionSet, v *model.Skynet) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Skynet(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSkynetInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynetInput(ctx context.Context, v interface{}) (*model.SkynetInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSkynetInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSmartcardVerificationResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartcardVerificationResponse(ctx context.Context, sel ast.SelectionSet, v *model.SmartcardVerificationResponse) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SmartcardVerificationResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOStore2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Store) graphql.Marshaler {
