@@ -268,6 +268,7 @@ func (r *mutationResolver) CreateSkynet(ctx context.Context, input *model.Skynet
 	skynetAirtimeInput := &skynet.Airtime{}
 	skynetDataInput := &skynet.Data{}
 	skynetTVSubInput := &skynet.TVSubscription{}
+	skynetEducationInput := &skynet.EducationPayment{}
 
 	if input.Type == "airtime" {
 		skynetAirtimeInput.Amount = int64(input.Amount)
@@ -304,6 +305,22 @@ func (r *mutationResolver) CreateSkynet(ctx context.Context, input *model.Skynet
 		skynetTVSubInput.BillersCode = *input.BillersCode
 		skynetTVSubInput.VariationCode = *input.VariantCode
 		skynetTVSubInput.SubscriptionType = *input.SubscriptionType
+
+		resp, err := skynetHandler.BuyTVSubscription(ctx, skynetTVSubInput)
+		if err != nil {
+			return "", err
+		}
+		return *resp, nil
+	}
+
+	if input.Type == "education" {
+		skynetEducationInput.Amount = int64(input.Amount)
+		skynetEducationInput.UserID = uint32(input.UserID)
+		skynetEducationInput.ServiceID = input.ServiceID
+		skynetEducationInput.Phone = *input.PhoneNumber
+		skynetEducationInput.BillersCode = *input.BillersCode
+		skynetEducationInput.VariationCode = *input.VariantCode
+		skynetEducationInput.Quantity = *input.Quantity
 
 		resp, err := skynetHandler.BuyTVSubscription(ctx, skynetTVSubInput)
 		if err != nil {
