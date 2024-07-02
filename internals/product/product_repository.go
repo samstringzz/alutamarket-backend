@@ -299,9 +299,36 @@ func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Produ
 	}
 
 	var result []*Product
-	query = "%" + strings.ToLower(query) + "%"
-	if err := r.db.WithContext(ctx).Where("LOWER(slug) LIKE ? OR LOWER(name) LIKE ? OR LOWER(category) LIKE ? OR LOWER(subcategory) LIKE ? OR LOWER(store) LIKE ?",
-		query, query, query, query, query).Find(&result).Error; err != nil {
+	queryParts := strings.Split(strings.ToLower(query), "-")
+	commonWords := map[string]bool{
+		"and": true, "the": true, "is": true, "in": true, "on": true, "at": true, "to": true, "a": true, "of": true, "for": true, "with": true, "by": true, "about": true,
+	}
+
+	var queryConditions []string
+	var queryValues []interface{}
+
+	for _, part := range queryParts {
+		if _, exists := commonWords[part]; exists {
+			continue
+		}
+
+		part = "%" + part + "%"
+		queryConditions = append(queryConditions, "LOWER(slug) LIKE ?")
+		queryConditions = append(queryConditions, "LOWER(name) LIKE ?")
+		queryConditions = append(queryConditions, "LOWER(category) LIKE ?")
+		queryConditions = append(queryConditions, "LOWER(subcategory) LIKE ?")
+		queryConditions = append(queryConditions, "LOWER(store) LIKE ?")
+		for i := 0; i < 5; i++ {
+			queryValues = append(queryValues, part)
+		}
+	}
+
+	if len(queryConditions) == 0 {
+		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "no valid search terms")
+	}
+
+	conditionString := strings.Join(queryConditions, " OR ")
+	if err := r.db.WithContext(ctx).Where(conditionString, queryValues...).Find(&result).Error; err != nil {
 		return nil, err
 	}
 	return result, nil

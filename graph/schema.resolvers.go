@@ -773,7 +773,7 @@ func (r *mutationResolver) DeleteStore(ctx context.Context, storeID int) (*model
 func (r *mutationResolver) InitializePayment(ctx context.Context, input model.PaymentData) (*string, error) {
 	token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", token)
+	authErr := middlewares.AuthMiddleware("entry", token)
 	if authErr != nil {
 		return nil, authErr
 	}

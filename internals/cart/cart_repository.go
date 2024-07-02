@@ -255,10 +255,10 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	}
 	cart.Active = false
 	r.db.Save(&cart)
-	err = r.db.Model(&store.Order{}).Save(newOrder).Error
-	if err != nil {
-		return "", err
-	}
+	// err = r.db.Model(&store.Order{}).Save(newOrder).Error
+	// if err != nil {
+	// 	return "", err
+	// }
 	return paymentLink, nil
 }
 
@@ -279,8 +279,8 @@ func (r *repository) MakePayment(ctx context.Context, w http.ResponseWriter, req
 	var (
 		flwSecretKey     = os.Getenv("FLW_SECRET_KEY")
 		transactionID    = webhookPayload.Data.TransactionID
-		expectedAmount   = webhookPayload.Data.Amount // Replace with your expected amount
-		expectedCurrency = "NGN"                      // Replace with your expected currency
+		expectedAmount   = webhookPayload.Data.Amount
+		expectedCurrency = "NGN"
 	)
 
 	// Access the event field
