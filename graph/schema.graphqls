@@ -25,6 +25,19 @@ type Order {
 	date: String!
 	store_id: String!
 }
+
+type DVADetails {
+	surname: String!
+	othername: String!
+	bvn: String!
+	country: String!
+	bank_code: String!
+	account_number: String!
+	user_id: String!
+	email: String!
+	store_name: String!
+}
+
 type Skynet {
 	id: ID!
 	user_id: String
@@ -82,6 +95,18 @@ input ProductInput {
 	store: String!
 	category: Int!
 	subcategory: Int!
+}
+
+input DVAAccountInput {
+	surname: String!
+	email: String!
+	othername: String!
+	bvn: String!
+	country: String!
+	bank_code: String!
+	account_number: String!
+	user_id: String!
+	store_name: String!
 }
 input SkynetInput {
 	amount: Int!
@@ -378,6 +403,7 @@ type Mutation {
 	createStore(input: StoreInput!): Store!
 	updateStore(input: UpdateStoreInput): Store!
 	deleteStore(storeId: Int!): Store!
+	createDVAAccount(input: DVAAccountInput!): String!
 	initializePayment(input: PaymentData!): String
 	verifySmartCard(input: SmartCardInput!): SmartcardVerificationResponse
 }

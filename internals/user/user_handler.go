@@ -60,3 +60,11 @@ func (h *Handler) UpdateUser(ctx context.Context, user *User) (*User, error) {
 	}
 	return usr, nil
 }
+
+func (h *Handler) CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error) {
+	resp, err := h.Service.CreateDVAAccount(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	return resp, nil
+}

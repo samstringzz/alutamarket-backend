@@ -33,6 +33,30 @@ type Category struct {
 	Subcategories []*SubCategory `json:"subcategories,omitempty"`
 }
 
+type DVAAccountInput struct {
+	Surname       string `json:"surname"`
+	Email         string `json:"email"`
+	Othername     string `json:"othername"`
+	Bvn           string `json:"bvn"`
+	Country       string `json:"country"`
+	BankCode      string `json:"bank_code"`
+	AccountNumber string `json:"account_number"`
+	UserID        string `json:"user_id"`
+	StoreName     string `json:"store_name"`
+}
+
+type DVADetails struct {
+	Surname       string `json:"surname"`
+	Othername     string `json:"othername"`
+	Bvn           string `json:"bvn"`
+	Country       string `json:"country"`
+	BankCode      string `json:"bank_code"`
+	AccountNumber string `json:"account_number"`
+	UserID        string `json:"user_id"`
+	Email         string `json:"email"`
+	StoreName     string `json:"store_name"`
+}
+
 type Follower struct {
 	FollowerID    int    `json:"follower_id"`
 	FollowerName  string `json:"follower_name"`

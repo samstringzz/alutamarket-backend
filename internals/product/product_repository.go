@@ -64,16 +64,18 @@ func (r *repository) CreateSubCategory(ctx context.Context, req SubCategory) (*C
 }
 
 func (r *repository) GetProduct(ctx context.Context, id, user uint32) (*Product, error) {
-	p := Product{}
+	p := &Product{}
 	err := r.db.Where("id = ?", id).First(&p).Error
 	if err != nil {
 		return nil, err
 	}
-	// if user != 0 {
-	// 	err = r.AddRecentlyViewedProducts(ctx, user, id)
-	// 	return nil, err
-	// }
-	return &p, nil
+	if user != 0 {
+		_, err = r.AddHandledProduct(ctx, user, id, "recently_viewed")
+		return nil, err
+	} else {
+		return p, nil
+	}
+
 }
 
 func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Product, error) {
@@ -162,34 +164,16 @@ func (r *repository) UpdateProduct(ctx context.Context, req *Product) (*Product,
 func (r *repository) DeleteProduct(ctx context.Context, id uint32) error {
 	existingProduct, err := r.GetProduct(ctx, id, 0)
 	if err != nil {
-		return err
+		fmt.Println("Error retrieving product:", err)
+		return fmt.Errorf("error retrieving product: %v", err)
 	}
-	err = r.db.Delete(existingProduct).Error
-	return err
+	if existingProduct == nil {
+		return fmt.Errorf("product not found")
+	}
+	r.db.Unscoped().Delete(&existingProduct)
 
+	return nil
 }
-
-// func (r *repository) AddWishListedProduct(ctx context.Context, userId, productId uint32) (*HandledProduct, error) {
-// 	wishlist := &HandledProduct{}
-// 	foundProduct, err := r.GetProduct(ctx, productId, 0)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var count int64
-// 	r.db.Model(wishlist).Where("user_id =?", userId).Count(&count)
-// 	if count > 0 {
-// 		fmt.Printf("The Total no of User wishlist is%v\n", count)
-// 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Product already in wishlist")
-// 	}
-// 	wishlist.Product = foundProduct
-// 	wishlist.UserID = userId
-// 	wishlist.Type   = "wishlist"
-// 	err = r.db.Create(wishlist).Error
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return wishlist, nil
-// }
 
 func (r *repository) AddHandledProduct(ctx context.Context, userId, productId uint32, eventType string) (*HandledProduct, error) {
 	prd := &HandledProduct{}
@@ -197,16 +181,26 @@ func (r *repository) AddHandledProduct(ctx context.Context, userId, productId ui
 	if err != nil {
 		return nil, err
 	}
+
+	// Validate the eventType
 	if eventType != "recently_viewed" && eventType != "wishlists" && eventType != "savedItems" {
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Type allowed are recently_viewed, wishlists, and savedItems only")
 	}
+
 	var count int64
-	r.db.Model(prd).Where("name = ? AND type = ? AND user_id = ?", foundProduct.Name, eventType, userId).Count(&count)
+	r.db.Model(prd).Where("product_id = ? AND type = ? AND user_id = ?", productId, eventType, userId).Count(&count)
+
+	// If the product exists and the eventType is recently_viewed, return the existing product
 	if count > 0 {
-		fmt.Printf("The Total no of User %v\n is%v\n", eventType, count)
-		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Product already exist for this type ")
+		if eventType == "recently_viewed" {
+			r.db.Where("product_id = ? AND type = ? AND user_id = ?", productId, eventType, userId).First(prd)
+			return prd, nil
+		} else {
+			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Product already exists for this type")
+		}
 	}
 
+	// If the product doesn't exist, create a new one
 	prd.Product = foundProduct
 	prd.UserID = userId
 	prd.Type = eventType
