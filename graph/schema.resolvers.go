@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 
 	"github.com/Chrisentech/aluta-market-api/app"
@@ -1118,7 +1119,7 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
 
-	resp, err := productHandler.GetProducts(ctx, *store, *limit, *offset)
+	resp, count, err := productHandler.GetProducts(ctx, *store, *limit, *offset)
 	if err != nil {
 		return nil, err
 	}
@@ -1176,12 +1177,24 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 		}
 		products = append(products, product)
 	}
+	currentPage := *offset + 1
+	totalPages := int(math.Ceil(float64(count) / float64(*limit)))
+	nextPage := 0
+	if currentPage < totalPages {
+		nextPage = currentPage + 1
+	}
+	prevPage := 0
+	if currentPage > 1 {
+		prevPage = currentPage - 1
+	}
 
 	payload := &model.ProductPaginationData{
 		Data:        products,
-		CurrentPage: *offset + 1,
+		CurrentPage: currentPage,
 		PerPage:     *limit,
-		Total:       len(resp),
+		Total:       count,
+		NextPage:    nextPage,
+		PrevPage:    prevPage,
 	}
 
 	return payload, nil

@@ -417,6 +417,8 @@ type ProductPaginationData {
 	current_page: Int!
 	per_page: Int!
 	total: Int!
+	next_page: Int!
+	prev_page: Int!
 }
 type StorePaginationData {
 	data: [Store!]!

@@ -199,6 +199,8 @@ type ProductPaginationData struct {
 	CurrentPage int        `json:"current_page"`
 	PerPage     int        `json:"per_page"`
 	Total       int        `json:"total"`
+	NextPage    int        `json:"next_page"`
+	PrevPage    int        `json:"prev_page"`
 }
 
 type Query struct {

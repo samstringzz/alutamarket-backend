@@ -83,11 +83,11 @@ func (s *service) GetCategory(c context.Context, id uint32) (*Category, error) {
 	return r, nil
 }
 
-func (s *service) GetProduct(c context.Context, productId,userId uint32) (*Product, error) {
+func (s *service) GetProduct(c context.Context, productId, userId uint32) (*Product, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 
-	r, err := s.Repository.GetProduct(ctx, productId,userId)
+	r, err := s.Repository.GetProduct(ctx, productId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -95,15 +95,15 @@ func (s *service) GetProduct(c context.Context, productId,userId uint32) (*Produ
 	return r, nil
 }
 
-func (s *service) GetProducts(c context.Context, store string,limit int, offset int) ([]*Product, error) {
+func (s *service) GetProducts(c context.Context, store string, limit int, offset int) ([]*Product, int, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
-	r, err := s.Repository.GetProducts(ctx, store,limit,offset)
+	r, count, err := s.Repository.GetProducts(ctx, store, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return r, nil
+	return r, count, nil
 }
 
 func (s *service) UpdateProduct(c context.Context, req *Product) (*Product, error) {
@@ -118,32 +118,32 @@ func (s *service) UpdateProduct(c context.Context, req *Product) (*Product, erro
 	return updatedProduct, nil
 }
 
-func (s *service) AddHandledProduct(ctx context.Context, userId, productId uint32,eventType string) (*HandledProduct, error) {
+func (s *service) AddHandledProduct(ctx context.Context, userId, productId uint32, eventType string) (*HandledProduct, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	addedWishlists, err := s.Repository.AddHandledProduct(ctx, userId, productId,eventType)
+	addedWishlists, err := s.Repository.AddHandledProduct(ctx, userId, productId, eventType)
 	if err != nil {
 		return nil, err
 	}
 	return addedWishlists, nil
 }
 
-func (s *service) GetHandledProducts(ctx context.Context, userId uint32,eventType string) ([]*HandledProduct, error) {
+func (s *service) GetHandledProducts(ctx context.Context, userId uint32, eventType string) ([]*HandledProduct, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	getWishlists, err := s.Repository.GetHandledProducts(ctx, userId,eventType)
+	getWishlists, err := s.Repository.GetHandledProducts(ctx, userId, eventType)
 	if err != nil {
 		return nil, err
 	}
 	return getWishlists, nil
 }
 
-func (s *service) RemoveHandledProduct(ctx context.Context, userId uint32,eventType string) error {
+func (s *service) RemoveHandledProduct(ctx context.Context, userId uint32, eventType string) error {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
-	err := s.Repository.RemoveHandledProduct(ctx, userId,eventType)
+	err := s.Repository.RemoveHandledProduct(ctx, userId, eventType)
 	return err
 }
 func (s *service) DeleteProduct(ctx context.Context, id uint32) error {
@@ -153,23 +153,23 @@ func (s *service) DeleteProduct(ctx context.Context, id uint32) error {
 	return err
 }
 
-func (s *service) GetRecommendedProducts(ctx context.Context, query string)([]*Product,error){
-  ctx, cancel := context.WithTimeout(ctx, s.timeout)
+func (s *service) GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
-	prd,err := s.Repository.GetRecommendedProducts(ctx, query)
-	if err !=nil{
-		return nil,err
+	prd, err := s.Repository.GetRecommendedProducts(ctx, query)
+	if err != nil {
+		return nil, err
 	}
-	return prd,nil
+	return prd, nil
 }
-func (s *service) SearchProducts(ctx context.Context, query string)([]*Product,error){
-  ctx, cancel := context.WithTimeout(ctx, s.timeout)
+func (s *service) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
-	prd,err := s.Repository.SearchProducts(ctx, query)
-	if err !=nil{
-		return nil,err
+	prd, err := s.Repository.SearchProducts(ctx, query)
+	if err != nil {
+		return nil, err
 	}
-	return prd,nil
+	return prd, nil
 }
 
 // func (s *service) AddRecentlyViewedProducts(ctx context.Context, userId,productId uint32)error{
@@ -192,22 +192,22 @@ func (s *service) SearchProducts(ctx context.Context, query string)([]*Product,e
 // 	return prd,nil
 // }
 
-func (s *service) AddReview(ctx context.Context, input *Review)(*Review,error){
-  ctx, cancel := context.WithTimeout(ctx, s.timeout)
+func (s *service) AddReview(ctx context.Context, input *Review) (*Review, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
-	review,err := s.Repository.AddReview(ctx, input)
-	if err !=nil{
-		return nil,err
+	review, err := s.Repository.AddReview(ctx, input)
+	if err != nil {
+		return nil, err
 	}
-	return review,nil
+	return review, nil
 }
 
-func (s *service) GetReviews(ctx context.Context, productId uint32)([]*Review,error){
-  ctx, cancel := context.WithTimeout(ctx, s.timeout)
+func (s *service) GetReviews(ctx context.Context, productId uint32) ([]*Review, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
-	reviews,err := s.Repository.GetReviews(ctx, productId)
-	if err !=nil{
-		return nil,err
+	reviews, err := s.Repository.GetReviews(ctx, productId)
+	if err != nil {
+		return nil, err
 	}
-	return reviews,nil
+	return reviews, nil
 }
