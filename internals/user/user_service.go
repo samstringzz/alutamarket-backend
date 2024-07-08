@@ -129,3 +129,14 @@ func (s *service) UpdateUser(ctx context.Context, user *User) (*User, error) {
 	}
 	return usr, nil
 }
+
+func (s *service) CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	resp, err := s.Repository.CreateDVAAccount(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	return resp, nil
+}

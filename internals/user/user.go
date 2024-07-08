@@ -72,8 +72,6 @@ type LoginUserRes struct {
 }
 
 type DVADetails struct {
-	Surname       string `json:"surname" db:"surname"`
-	Othernames    string `json:"othernames" db:"othernames"`
 	BVN           string `json:"bvn" db:"bvn"`
 	Country       string `json:"country"`
 	BankCode      string `json:"bank_code" db:"bank_code"`

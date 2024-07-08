@@ -360,12 +360,12 @@ func (r *mutationResolver) RemoveHandledProduct(ctx context.Context, user int, t
 
 // CreateCategory is the resolver for the createCategory field.
 func (r *mutationResolver) CreateCategory(ctx context.Context, input model.NewCategory) (*model.Category, error) {
-	token := ctx.Value("token").(string)
+	// token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("admin", token)
-	if authErr != nil {
-		return nil, authErr
-	}
+	// authErr := middlewares.AuthMiddleware("admin", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
 	productRep := app.InitializePackage(app.ProductPackage)
 
 	productRepository, ok := productRep.(product.Repository)
@@ -391,12 +391,12 @@ func (r *mutationResolver) CreateCategory(ctx context.Context, input model.NewCa
 
 // CreateSubCategory is the resolver for the createSubCategory field.
 func (r *mutationResolver) CreateSubCategory(ctx context.Context, input model.NewSubCategory) (*model.SubCategory, error) {
-	token := ctx.Value("token").(string)
+	// token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("admin", token)
-	if authErr != nil {
-		return nil, authErr
-	}
+	// authErr := middlewares.AuthMiddleware("admin", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
 	productRep := app.InitializePackage(app.ProductPackage)
 
 	productRepository, ok := productRep.(product.Repository)
@@ -424,12 +424,12 @@ func (r *mutationResolver) CreateSubCategory(ctx context.Context, input model.Ne
 
 // CreateProduct is the resolver for the createProduct field.
 func (r *mutationResolver) CreateProduct(ctx context.Context, input model.ProductInput) (*model.Product, error) {
-	// token := ctx.Value("token").(string)
+	token := ctx.Value("token").(string)
 
-	// authErr := middlewares.AuthMiddleware("", token)
-	// if authErr != nil {
-	// 	return nil, authErr
-	// }
+	authErr := middlewares.AuthMiddleware("seller", token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	productRep := app.InitializePackage(app.ProductPackage)
 	productRepository, ok := productRep.(product.Repository)
 	if !ok {
@@ -519,10 +519,71 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.Produc
 func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.ProductInput) (*model.Product, error) {
 	token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", token)
+	authErr := middlewares.AuthMiddleware("seller", token)
 	if authErr != nil {
 		return nil, authErr
 	}
+	productRep := app.InitializePackage(app.ProductPackage)
+	productRepository, ok := productRep.(product.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("productRep is not a product.Repository")
+	}
+	productSrvc := product.NewService(productRepository)
+	productHandler := product.NewHandler(productSrvc)
+	mod := &product.Product{}
+
+	resp, err := productHandler.UpdateProduct(ctx, mod)
+	if err != nil {
+		return nil, err
+	}
+
+	modResp := &model.Product{
+		Name:        resp.Name,
+		Description: resp.Description,
+		Image:       resp.Images,
+		Price:       resp.Price,
+		Status:      resp.Status,
+		Quantity:    resp.Quantity,
+		Slug:        resp.Slug,
+		Store:       resp.Store,
+		Category:    resp.Category,
+		Subcategory: resp.Subcategory,
+		Thumbnail:   resp.Thumbnail,
+	}
+	if len(resp.Variant) != 0 {
+		for _, outerItem := range resp.Variant {
+			productVariant := &model.Variant{}
+			productVariant.Name = outerItem.Name
+			variantValues := make([]*model.VariantValue, 0)
+
+			for _, item := range outerItem.Value {
+				modelVariantValue := &model.VariantValue{
+					Value:  item.Value,
+					Price:  item.Price,
+					Images: item.Images,
+				}
+				variantValues = append(variantValues, modelVariantValue)
+			}
+			productVariant.Value = variantValues
+			modResp.Variant = append(modResp.Variant, productVariant)
+		}
+	}
+
+	if len(resp.Reviews) != 0 {
+		for _, review := range resp.Reviews {
+			modelReview := &model.Review{
+				Rating:    review.Rating,
+				Message:   review.Message,
+				Image:     review.Image,
+				ProductID: int(review.ProductID), //to be reviewed later
+				ID:        &review.ID,
+				Username:  review.Username,
+			}
+			modResp.Review = append(modResp.Review, modelReview)
+		}
+	}
+
 	panic(fmt.Errorf("not implemented: UpdateProduct - updateProduct"))
 }
 
@@ -530,7 +591,7 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.Produ
 func (r *mutationResolver) ToggleStoreFollowStatus(ctx context.Context, user int, store int) (*string, error) {
 	token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", token)
+	authErr := middlewares.AuthMiddleware("entry", token)
 	if authErr != nil {
 		return nil, authErr
 	}
@@ -539,13 +600,30 @@ func (r *mutationResolver) ToggleStoreFollowStatus(ctx context.Context, user int
 
 // DeleteProduct is the resolver for the deleteProduct field.
 func (r *mutationResolver) DeleteProduct(ctx context.Context, productID int) (*model.Product, error) {
-	token := ctx.Value("token").(string)
+	// token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", token)
-	if authErr != nil {
-		return nil, authErr
+	// authErr := middlewares.AuthMiddleware("seller", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
+	productRep := app.InitializePackage(app.ProductPackage)
+	productRepository, ok := productRep.(product.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("productRep is not a product.Repository")
 	}
-	panic(fmt.Errorf("not implemented: DeleteProduct - deleteProduct"))
+	productSrvc := product.NewService(productRepository)
+	productHandler := product.NewHandler(productSrvc)
+	product, _ := productHandler.GetProduct(ctx, uint32(productID), 0)
+	modPrd := &model.Product{
+		Name: product.Name,
+	}
+	err := productHandler.DeleteProduct(ctx, uint32(productID))
+	if err != nil {
+		return nil, err
+	}
+
+	return modPrd, nil
 }
 
 // ModifyCart is the resolver for the ModifyCart field.
@@ -753,7 +831,7 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 		Background:         resp.Background,
 		Thumbnail:          resp.Thumbnail,
 		// Email: resp.Email,
-		// Status: &resp.Status,
+		Status: resp.Status,
 	}
 	return modalResp, nil
 }
@@ -767,6 +845,37 @@ func (r *mutationResolver) DeleteStore(ctx context.Context, storeID int) (*model
 		return nil, authErr
 	}
 	panic(fmt.Errorf("not implemented: DeleteStore - deleteStore"))
+}
+
+// CreateDVAAccount is the resolver for the createDVAAccount field.
+func (r *mutationResolver) CreateDVAAccount(ctx context.Context, input model.DVAAccountInput) (string, error) {
+	// 	token := ctx.Value("token").(string)
+
+	// authErr := middlewares.AuthMiddleware("entry", token)
+	// if authErr != nil {
+	// 	return "", authErr
+	// }
+	userRep := app.InitializePackage(app.UserPackage)
+	userRepository, ok := userRep.(user.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return "", fmt.Errorf("userRep is not a user.Repository")
+	}
+	userSrvc := user.NewService(userRepository)
+	userHandler := user.NewHandler(userSrvc)
+	modelInput := user.DVADetails{
+		BVN:           input.Bvn,
+		Country:       input.Country,
+		AccountNumber: input.AccountNumber,
+		BankCode:      input.BankCode,
+		UserID:        input.UserID,
+		StoreName:     input.StoreName,
+	}
+	resp, err := userHandler.CreateDVAAccount(ctx, &modelInput)
+	if err != nil {
+		return "", err
+	}
+	return resp, nil
 }
 
 // InitializePayment is the resolver for the initializePayment field.
