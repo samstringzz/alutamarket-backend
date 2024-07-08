@@ -44,8 +44,8 @@ func (h *Handler) CreateSubCategory(ctx context.Context, input SubCategory) (*Ca
 	return item, nil
 }
 
-func (h *Handler) GetProduct(ctx context.Context, productId,userId uint32) (*Product, error) {
-	item, err := h.Service.GetProduct(ctx, productId,userId)
+func (h *Handler) GetProduct(ctx context.Context, productId, userId uint32) (*Product, error) {
+	item, err := h.Service.GetProduct(ctx, productId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +60,12 @@ func (h *Handler) GetCategory(ctx context.Context, id uint32) (*Category, error)
 	return item, nil
 }
 
-func (h *Handler) GetProducts(ctx context.Context, store string,limit int, offset int) ([]*Product, error) {
-	item, err := h.Service.GetProducts(ctx, store,limit,offset)
+func (h *Handler) GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, int, error) {
+	item, count, err := h.Service.GetProducts(ctx, store, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return item, nil
+	return item, count, nil
 }
 func (h *Handler) GetCategories(ctx context.Context) ([]*Category, error) {
 	item, err := h.Service.GetCategories(ctx)
@@ -75,29 +75,28 @@ func (h *Handler) GetCategories(ctx context.Context) ([]*Category, error) {
 	return item, nil
 }
 
-func (h *Handler) GetHandledProducts(ctx context.Context, user uint32,eventType string) ([]*HandledProduct, error) {
-	item, err := h.Service.GetHandledProducts(ctx, user,eventType)
+func (h *Handler) GetHandledProducts(ctx context.Context, user uint32, eventType string) ([]*HandledProduct, error) {
+	item, err := h.Service.GetHandledProducts(ctx, user, eventType)
 	if err != nil {
 		return nil, err
 	}
 	return item, nil
 }
 
-func (h *Handler) RemoveHandledProduct(ctx context.Context, user uint32,eventType string) error {
-	err := h.Service.RemoveHandledProduct(ctx, user,eventType)
+func (h *Handler) RemoveHandledProduct(ctx context.Context, user uint32, eventType string) error {
+	err := h.Service.RemoveHandledProduct(ctx, user, eventType)
 	return err
 }
 
-
-func (h *Handler) AddHandledProduct(ctx context.Context, user, product uint32,eventType string) (*HandledProduct, error) {
-	item, err := h.Service.AddHandledProduct(ctx, user, product,eventType)
+func (h *Handler) AddHandledProduct(ctx context.Context, user, product uint32, eventType string) (*HandledProduct, error) {
+	item, err := h.Service.AddHandledProduct(ctx, user, product, eventType)
 	if err != nil {
 		return nil, err
 	}
 	return item, nil
 }
 
-func (h *Handler) GetRecommendedProducts(ctx context.Context, query string)([]*Product,error){
+func (h *Handler) GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error) {
 	item, err := h.Service.GetRecommendedProducts(ctx, query)
 	if err != nil {
 		return nil, err
@@ -105,8 +104,7 @@ func (h *Handler) GetRecommendedProducts(ctx context.Context, query string)([]*P
 	return item, nil
 }
 
-
-func (h *Handler) SearchProducts(ctx context.Context, query string)([]*Product,error){
+func (h *Handler) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
 	item, err := h.Service.SearchProducts(ctx, query)
 	if err != nil {
 		return nil, err
@@ -114,7 +112,7 @@ func (h *Handler) SearchProducts(ctx context.Context, query string)([]*Product,e
 	return item, nil
 }
 
-func (h *Handler) GetReviews(ctx context.Context, productId uint32)([]*Review,error){
+func (h *Handler) GetReviews(ctx context.Context, productId uint32) ([]*Review, error) {
 	item, err := h.Service.GetReviews(ctx, productId)
 	if err != nil {
 		return nil, err
@@ -130,7 +128,7 @@ func (h *Handler) GetReviews(ctx context.Context, productId uint32)([]*Review,er
 // 	return item, nil
 // }
 
-func (h *Handler) AddReview(ctx context.Context, input *Review)(*Review,error){
+func (h *Handler) AddReview(ctx context.Context, input *Review) (*Review, error) {
 	item, err := h.Service.AddReview(ctx, input)
 	if err != nil {
 		return nil, err

@@ -239,8 +239,10 @@ func (r *repository) RemoveWishListedProduct(ctx context.Context, id uint32) err
 	return err
 }
 
-func (r *repository) GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, error) {
+func (r *repository) GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, int, error) {
 	var products []*Product
+	var totalCount int64
+
 	query := r.db
 	if store != "" {
 		query = query.Where("store = ?", store)
@@ -251,18 +253,28 @@ func (r *repository) GetProducts(ctx context.Context, store string, limit int, o
 		query = query.Order("RANDOM()")
 	}
 
-	if err := query.Limit(limit).Offset(offset).Find(&products).Error; err != nil {
-		return nil, err
+	// Count the total number of records that match the query
+	if err := query.Model(&Product{}).Count(&totalCount).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return products, nil
+	// Fetch the paginated products
+	if err := query.Limit(limit).Offset(offset * limit).Find(&products).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return products, int(totalCount), nil
 }
 
 func (r *repository) GetCategories(ctx context.Context) ([]*Category, error) {
 	var categories []*Category
-	if err := r.db.Find(&categories).Error; err != nil {
-		return nil, err
-	}
+	res := r.db.Find(&categories)
+	fmt.Print(res)
+	// if err != nil {
+	// 	fmt.Println("Error retrieving categories:", err)
+	// 	return nil, err
+	// }
+	// fmt.Println("Retrieved categories:", categories)
 	return categories, nil
 }
 

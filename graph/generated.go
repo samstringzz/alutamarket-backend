@@ -169,7 +169,9 @@ type ComplexityRoot struct {
 	ProductPaginationData struct {
 		CurrentPage func(childComplexity int) int
 		Data        func(childComplexity int) int
+		NextPage    func(childComplexity int) int
 		PerPage     func(childComplexity int) int
+		PrevPage    func(childComplexity int) int
 		Total       func(childComplexity int) int
 	}
 
@@ -1094,12 +1096,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ProductPaginationData.Data(childComplexity), true
 
+	case "ProductPaginationData.next_page":
+		if e.complexity.ProductPaginationData.NextPage == nil {
+			break
+		}
+
+		return e.complexity.ProductPaginationData.NextPage(childComplexity), true
+
 	case "ProductPaginationData.per_page":
 		if e.complexity.ProductPaginationData.PerPage == nil {
 			break
 		}
 
 		return e.complexity.ProductPaginationData.PerPage(childComplexity), true
+
+	case "ProductPaginationData.prev_page":
+		if e.complexity.ProductPaginationData.PrevPage == nil {
+			break
+		}
+
+		return e.complexity.ProductPaginationData.PrevPage(childComplexity), true
 
 	case "ProductPaginationData.total":
 		if e.complexity.ProductPaginationData.Total == nil {
@@ -7372,6 +7388,94 @@ func (ec *executionContext) fieldContext_ProductPaginationData_total(_ context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _ProductPaginationData_next_page(ctx context.Context, field graphql.CollectedField, obj *model.ProductPaginationData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProductPaginationData_next_page(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NextPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProductPaginationData_next_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProductPaginationData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProductPaginationData_prev_page(ctx context.Context, field graphql.CollectedField, obj *model.ProductPaginationData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProductPaginationData_prev_page(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrevPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProductPaginationData_prev_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProductPaginationData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_Users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_Users(ctx, field)
 	if err != nil {
@@ -7774,6 +7878,10 @@ func (ec *executionContext) fieldContext_Query_Products(ctx context.Context, fie
 				return ec.fieldContext_ProductPaginationData_per_page(ctx, field)
 			case "total":
 				return ec.fieldContext_ProductPaginationData_total(ctx, field)
+			case "next_page":
+				return ec.fieldContext_ProductPaginationData_next_page(ctx, field)
+			case "prev_page":
+				return ec.fieldContext_ProductPaginationData_prev_page(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProductPaginationData", field.Name)
 		},
@@ -16475,6 +16583,16 @@ func (ec *executionContext) _ProductPaginationData(ctx context.Context, sel ast.
 			}
 		case "total":
 			out.Values[i] = ec._ProductPaginationData_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "next_page":
+			out.Values[i] = ec._ProductPaginationData_next_page(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "prev_page":
+			out.Values[i] = ec._ProductPaginationData_prev_page(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
