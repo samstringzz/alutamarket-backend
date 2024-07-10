@@ -34,15 +34,8 @@ type Category struct {
 }
 
 type DVAAccountInput struct {
-	Surname       string `json:"surname"`
-	Email         string `json:"email"`
-	Othername     string `json:"othername"`
-	Bvn           string `json:"bvn"`
-	Country       string `json:"country"`
-	BankCode      string `json:"bank_code"`
-	AccountNumber string `json:"account_number"`
-	UserID        string `json:"user_id"`
-	StoreName     string `json:"store_name"`
+	UserID    string `json:"user_id"`
+	StoreName string `json:"store_name"`
 }
 
 type DVADetails struct {

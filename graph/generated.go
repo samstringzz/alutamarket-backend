@@ -14597,62 +14597,13 @@ func (ec *executionContext) unmarshalInputDVAAccountInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"surname", "email", "othername", "bvn", "country", "bank_code", "account_number", "user_id", "store_name"}
+	fieldsInOrder := [...]string{"user_id", "store_name"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "surname":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("surname"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Surname = data
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Email = data
-		case "othername":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("othername"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Othername = data
-		case "bvn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bvn"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Bvn = data
-		case "country":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("country"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Country = data
-		case "bank_code":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bank_code"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.BankCode = data
-		case "account_number":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account_number"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AccountNumber = data
 		case "user_id":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user_id"))
 			data, err := ec.unmarshalNString2string(ctx, v)

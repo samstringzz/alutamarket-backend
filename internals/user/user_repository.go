@@ -235,18 +235,22 @@ func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (str
 		return "", err
 	}
 
-	// create a user for paystack account
-	paystackCustomerURL := "https://api.paystack.co/customer"
+	// Create dedicated account
+	dedicatedAccountURL := "https://api.paystack.co/dedicated_account/assign"
 	method := "POST"
 	names := strings.Split(user.Fullname, " ")
-	if len(names) <= 0 {
-		return "", nil
+	if len(names) < 2 {
+		return "", fmt.Errorf("invalid user name")
 	}
+
 	payload := map[string]interface{}{
-		"email":      user.Email,
-		"first_name": names[0],
-		"last_name":  req.StoreName,
-		"phone":      user.Phone,
+		"email":          user.Email,
+		"first_name":     names[0],
+		"middle_name":    names[1],
+		"last_name":      req.StoreName,
+		"phone":          user.Phone,
+		"preferred_bank": "test-bank",
+		"country":        "NG",
 	}
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -254,9 +258,8 @@ func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (str
 	}
 
 	client := &http.Client{}
-	newReq, err := http.NewRequest(method, paystackCustomerURL, bytes.NewBuffer(jsonPayload))
+	newReq, err := http.NewRequest(method, dedicatedAccountURL, bytes.NewBuffer(jsonPayload))
 	if err != nil {
-		fmt.Println(err)
 		return "", err
 	}
 	newReq.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
@@ -264,93 +267,25 @@ func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (str
 
 	res, err := client.Do(newReq)
 	if err != nil {
-		fmt.Println(err)
 		return "", err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		fmt.Println("Error: paystack customer creation failed with status", res.StatusCode)
 		bodyBytes, _ := ioutil.ReadAll(res.Body)
-		fmt.Println("Response Body:", string(bodyBytes))
-		return "", nil
+		return "", fmt.Errorf("error: paystack dedicated account creation failed with status %d, response: %s", res.StatusCode, string(bodyBytes))
 	}
 
-	var customerResp map[string]interface{}
-	err = json.NewDecoder(res.Body).Decode(&customerResp)
+	var dedicatedAccountResp map[string]interface{}
+	err = json.NewDecoder(res.Body).Decode(&dedicatedAccountResp)
 	if err != nil {
-		fmt.Println("Error decoding paystack customer response:", err)
-		return "", err
-	}
-	fmt.Println("Paystack Customer Response:", customerResp)
-
-	// Accessing nested fields within customerResp
-	data, ok := customerResp["data"].(map[string]interface{})
-	if !ok {
-		fmt.Println("Error: unable to extract data from customer response")
-		return "", nil
-	}
-	customerCode, ok := data["customer_code"].(string)
-	if !ok {
-		fmt.Println("Error: unable to extract customer code")
-		return "", nil
+		return "", fmt.Errorf("error decoding paystack dedicated account response: %w", err)
 	}
 
-	// verify the customer before creating his DVA account
-	paystackCustomerValidationURL := "https://api.paystack.co/customer/" + customerCode + "/identification"
-	payload = map[string]interface{}{
-		"country":        "NG",
-		"type":           "bank_account",
-		"account_number": req.AccountNumber,
-		"bvn":            req.BVN,
-		"bank_code":      "007",
-		"first_name":     "Asta",
-		"last_name":      "Lavista",
-	}
-	jsonPayload, err = json.Marshal(payload)
-	if err != nil {
-		return "", err
-	}
+	fmt.Println("Paystack Dedicated Account Response:", dedicatedAccountResp)
 
-	newReq2, err := http.NewRequest(method, paystackCustomerValidationURL, bytes.NewBuffer(jsonPayload))
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
-	newReq2.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
-	newReq2.Header.Add("Content-Type", "application/json")
-
-	// Polling for the customer validation status
-	var result map[string]interface{}
-	for {
-		res2, err := client.Do(newReq2)
-		if err != nil {
-			fmt.Println(err)
-			return "", err
-		}
-		defer res2.Body.Close()
-
-		if res2.StatusCode == http.StatusOK {
-			break
-		} else if res2.StatusCode == http.StatusAccepted {
-			fmt.Println("Customer Identification in progress, retrying...")
-			time.Sleep(5 * time.Second) // Wait for 5 seconds before retrying
-		} else {
-			fmt.Println("Error: paystack customer validation failed with status", res2.StatusCode)
-			bodyBytes, _ := ioutil.ReadAll(res2.Body)
-			fmt.Println("Response Body:", string(bodyBytes))
-			return "", err
-		}
-		err = json.NewDecoder(res2.Body).Decode(&result)
-		if err != nil {
-			fmt.Println("Error decoding paystack validation response:", err)
-			return "", err
-		}
-		fmt.Println("Paystack Validation Response:", result)
-
-	}
-
-	jsonString, err := json.Marshal(result)
+	// Return the response as a JSON string
+	jsonString, err := json.Marshal(dedicatedAccountResp)
 	if err != nil {
 		return "", err
 	}
