@@ -98,13 +98,6 @@ input ProductInput {
 }
 
 input DVAAccountInput {
-	surname: String!
-	email: String!
-	othername: String!
-	bvn: String!
-	country: String!
-	bank_code: String!
-	account_number: String!
 	user_id: String!
 	store_name: String!
 }
@@ -420,6 +413,7 @@ type ProductPaginationData {
 	next_page: Int!
 	prev_page: Int!
 }
+
 type StorePaginationData {
 	data: [Store!]!
 	current_page: Int!

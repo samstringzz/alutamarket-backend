@@ -865,12 +865,8 @@ func (r *mutationResolver) CreateDVAAccount(ctx context.Context, input model.DVA
 	userSrvc := user.NewService(userRepository)
 	userHandler := user.NewHandler(userSrvc)
 	modelInput := user.DVADetails{
-		BVN:           input.Bvn,
-		Country:       input.Country,
-		AccountNumber: input.AccountNumber,
-		BankCode:      input.BankCode,
-		UserID:        input.UserID,
-		StoreName:     input.StoreName,
+		UserID:    input.UserID,
+		StoreName: input.StoreName,
 	}
 	resp, err := userHandler.CreateDVAAccount(ctx, &modelInput)
 	if err != nil {
@@ -1179,6 +1175,7 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 	}
 	currentPage := *offset + 1
 	totalPages := int(math.Ceil(float64(count) / float64(*limit)))
+
 	nextPage := 0
 	if currentPage < totalPages {
 		nextPage = currentPage + 1

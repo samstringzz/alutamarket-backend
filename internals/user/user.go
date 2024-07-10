@@ -72,12 +72,8 @@ type LoginUserRes struct {
 }
 
 type DVADetails struct {
-	BVN           string `json:"bvn" db:"bvn"`
-	Country       string `json:"country"`
-	BankCode      string `json:"bank_code" db:"bank_code"`
-	AccountNumber string `json:"account_number" db:"account_number"`
-	UserID        string `json:"user_id" db:"user_id"`
-	StoreName     string `json:"store_name" db:"store_name"`
+	UserID    string `json:"user_id" db:"user_id"`
+	StoreName string `json:"store_name" db:"store_name"`
 }
 
 type Repository interface {
