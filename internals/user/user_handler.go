@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+
+	"github.com/Chrisentech/aluta-market-api/internals/store"
 )
 
 type Handler struct {
@@ -55,6 +57,13 @@ func (h *Handler) ToggleStoreFollowStatus(ctx context.Context, userId, storeId u
 
 func (h *Handler) UpdateUser(ctx context.Context, user *User) (*User, error) {
 	usr, err := h.Service.UpdateUser(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	return usr, nil
+}
+func (h *Handler) CreateStore(ctx context.Context, user *store.Store) (*store.Store, error) {
+	usr, err := h.Service.CreateStore(ctx, user)
 	if err != nil {
 		return nil, err
 	}

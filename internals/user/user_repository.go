@@ -63,6 +63,31 @@ func (r *repository) GetUserByEmailOrPhone(ctx context.Context, identifier strin
 	}
 	return &u, nil
 }
+func (r *repository) CreateStore(ctx context.Context, req *store.Store) (*store.Store, error) {
+
+	resp := &store.Store{
+		Name:               req.Name,
+		Link:               req.Link,
+		UserID:             req.UserID,
+		Description:        req.Description,
+		HasPhysicalAddress: req.HasPhysicalAddress,
+		Address:            req.Address,
+		Wallet:             0,
+		Status:             true,
+		Phone:              req.Phone,
+	}
+	if err := r.db.Create(resp).Error; err != nil {
+		r.db.Rollback()
+		return nil, err
+	}
+	//Create DVA for seller link for user
+	_, err := r.CreateDVAAccount(ctx, &DVADetails{UserID: strconv.FormatUint(uint64(req.UserID), 10), StoreName: req.Name})
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func boolPtr(b bool) *bool {
 	return &b
 }
@@ -114,6 +139,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		return nil, err
 	}
 	if req.Usertype == "seller" {
+
 		createdStore := &store.Store{
 			Name:               req.StoreName,
 			Link:               req.StoreLink,
@@ -126,6 +152,11 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 			Phone:              req.StorePhone,
 		}
 
+		//Create DVA for seller link for user
+		_, err := r.CreateDVAAccount(ctx, &DVADetails{UserID: strconv.FormatUint(uint64(newUser.ID), 10), StoreName: req.StoreName})
+		if err != nil {
+			return nil, err
+		}
 		if err := tx.Create(createdStore).Error; err != nil {
 			tx.Rollback()
 			return nil, err
@@ -141,94 +172,6 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 	return newUser, nil
 }
 
-// func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error) {
-// 	user, _ := r.GetUser(ctx, req.UserID)
-
-// 	//create a user for paystack account
-// 	paystackCustomerURL := "https://api.paystack.co/customer"
-// 	method := "POST"
-// 	names := strings.Split(user.Fullname, " ")
-// 	if len(names) <= 0 {
-// 		return "", errors.NewAppError(505, "Internal Server Error", "There was an error creating paystack account")
-// 	}
-// 	payload := map[string]interface{}{
-// 		"email":      user.Email,
-// 		"first_name": names[0],
-// 		"last_name":  req.StoreName,
-// 		"phone":      user.Phone,
-// 	}
-// 	jsonPayload, _ := json.Marshal(payload)
-
-// 	client := &http.Client{}
-// 	newReq, err := http.NewRequest(method, paystackCustomerURL, bytes.NewBuffer(jsonPayload))
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return "", err
-// 	}
-// 	newReq.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
-// 	newReq.Header.Add("Content-Type", "application/json")
-
-// 	res, err := client.Do(newReq)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return "", err
-// 	}
-// 	defer res.Body.Close()
-
-// 	var customerResp map[string]interface{}
-// 	json.NewDecoder(res.Body).Decode(&customerResp)
-// 	fmt.Println(customerResp)
-
-// 	//We should get a customerResp.data.code f
-
-// 	// verify the customer before creating his DVA account
-// 	// Accessing nested fields within customerResp
-// 	customerCode, ok := customerResp["data"].(map[string]interface{})["customer_code"].(string)
-// 	if !ok {
-// 		fmt.Println("Error: unable to extract customer code")
-
-// 	}
-
-// 	// verify the customer before creating his DVA account
-// 	paystackCustomerValidationURL := "https://api.paystack.co/customer/" + customerCode + "/identification"
-// 	method = "POST"
-// 	payload = map[string]interface{}{
-// 		"country":        "NG",
-// 		"type":           "bank_account",
-// 		"account_number": req.AccountNumber,
-// 		"bvn":            req.BVN,
-// 		"bank_code":      "007",
-// 		"first_name":     "Asta",
-// 		"last_name":      "Lavista",
-// 	}
-// 	jsonPayload, _ = json.Marshal(payload)
-
-// 	client = &http.Client{}
-
-// 	newReq2, err := http.NewRequest(method, paystackCustomerValidationURL, bytes.NewBuffer(jsonPayload))
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return "", err
-// 	}
-// 	newReq2.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
-// 	newReq2.Header.Add("Content-Type", "application/json")
-
-// 	res2, err := client.Do(newReq2)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return "", err
-// 	}
-// 	defer res2.Body.Close()
-
-//		var result map[string]interface{}
-//		json.NewDecoder(res.Body).Decode(&result)
-//		fmt.Println(result)
-//		jsonString, err := json.Marshal(result)
-//		if err != nil {
-//			return "", err
-//		}
-//		return string(jsonString), nil
-//	}
 func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error) {
 	user, err := r.GetUser(ctx, req.UserID)
 	if err != nil {

@@ -59,6 +59,7 @@ func (r *repository) CreateStore(ctx context.Context, req *Store) (*Store, error
 		Status:             true,
 		Phone:              req.Phone,
 	}
+
 	if err := r.db.Create(newStore).Error; err != nil {
 		return nil, err
 	}
