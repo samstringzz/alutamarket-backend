@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Chrisentech/aluta-market-api/internals/store"
+
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -81,6 +83,15 @@ func (s *service) GetUsers(c context.Context) ([]*User, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 	r, err := s.Repository.GetUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+func (s *service) CreateStore(c context.Context, req *store.Store) (*store.Store, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+	r, err := s.Repository.CreateStore(ctx, req)
 	if err != nil {
 		return nil, err
 	}

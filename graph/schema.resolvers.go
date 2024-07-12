@@ -710,15 +710,15 @@ func (r *mutationResolver) CreateStore(ctx context.Context, input model.StoreInp
 	if authErr != nil {
 		return nil, authErr
 	}
-	storeRep := app.InitializePackage(app.StorePackage)
+	storeRep := app.InitializePackage(app.UserPackage)
 
-	storeRepository, ok := storeRep.(store.Repository)
+	storeRepository, ok := storeRep.(user.Repository)
 	if !ok {
 		// Handle the case where the conversion failed
 		return nil, fmt.Errorf("storeRep is not a cart.Repository")
 	}
-	storeSrvc := store.NewService(storeRepository)
-	storeHandler := store.NewHandler(storeSrvc)
+	storeSrvc := user.NewService(storeRepository)
+	storeHandler := user.NewHandler(storeSrvc)
 
 	mod := &store.Store{
 		Name:               input.Name,

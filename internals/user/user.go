@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"gorm.io/gorm"
 )
 
@@ -86,6 +87,7 @@ type Repository interface {
 	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error
 	UpdateUser(ctx context.Context, user *User) (*User, error)
 	CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error)
+	CreateStore(ctx context.Context, req *store.Store) (*store.Store, error)
 }
 
 type Service interface {
@@ -97,4 +99,5 @@ type Service interface {
 	UpdateUser(ctx context.Context, user *User) (*User, error)
 	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error
 	CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error)
+	CreateStore(ctx context.Context, req *store.Store) (*store.Store, error)
 }

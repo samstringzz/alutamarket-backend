@@ -30,6 +30,11 @@ type Follower struct {
 	FollowerImage string `json:"follower_image" db:"follower_image"`
 }
 
+type DVADetails struct {
+	UserID    string `json:"user_id" db:"user_id"`
+	StoreName string `json:"store_name" db:"store_name"`
+}
+
 type Store struct {
 	gorm.Model
 	ID                 uint32       `gorm:"primaryKey;uniqueIndex;not null;autoIncrement"  json:"id" db:"id"`
