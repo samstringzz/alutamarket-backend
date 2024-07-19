@@ -151,3 +151,14 @@ func (s *service) CreateDVAAccount(ctx context.Context, req *DVADetails) (string
 	}
 	return resp, nil
 }
+
+func (s *service) GetMyDVA(ctx context.Context, email string) (*Account, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	resp, err := s.Repository.GetMyDVA(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}

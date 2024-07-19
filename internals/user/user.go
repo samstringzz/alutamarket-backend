@@ -11,23 +11,24 @@ import (
 // type Product *product.Product
 type User struct {
 	gorm.Model
-	ID           uint32    `gorm:"primaryKey;uniqueIndex;not null;autoIncrement" json:"id" db:"id"` // Unique identifier for the user
-	Campus       string    `json:"campus" db:"campus"`                                              // Campus of the user
-	Email        string    `json:"email" db:"email"`                                                // Email address of the user
-	Password     string    `json:"password" db:"password"`                                          // Password of the user
-	Fullname     string    `json:"fullname" db:"fullname"`                                          // Full name of the user
-	Phone        string    `json:"phone" db:"phone"`                                                // Phone number of the user
-	Avatar       string    `json:"avatar" db:"avatar"`                                              // Phone number of the user
-	Usertype     string    `json:"usertype" db:"usertype"`                                          // Type of user (e.g., seller,buyer,admin)
-	Dob          string    `json:"dob" db:"dob"`                                                    // Type of user (e.g., seller,buyer,admin)
-	Gender       string    `json:"gender" db:"gender"`                                              // Type of user (e.g., seller,buyer,admin)
-	Active       *bool     `json:"active" db:"active"`
-	Twofa        *bool     `json:"twofa" db:"twofa"`                           // Two factor authentication
-	AccessToken  string    `json:"access_token,omitempty" db:"access_token"`   // Balance of the user's wallet (only for seller)
-	RefreshToken string    `json:"refresh_token,omitempty" db:"refresh_token"` // Balance of the user's wallet (only for seller)
-	Code         string    `json:"code,omitempty" db:"code"`                   // otp code for verifications
-	Codeexpiry   time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"`       // Expiry time for otpCode
-	CreatedAt    time.Time // Set to current time if it is zero on creating
+	ID             uint32    `gorm:"primaryKey;uniqueIndex;not null;autoIncrement" json:"id" db:"id"` // Unique identifier for the user
+	Campus         string    `json:"campus" db:"campus"`                                              // Campus of the user
+	Email          string    `json:"email" db:"email"`                                                // Email address of the user
+	Password       string    `json:"password" db:"password"`                                          // Password of the user
+	Fullname       string    `json:"fullname" db:"fullname"`                                          // Full name of the user
+	Phone          string    `json:"phone" db:"phone"`                                                // Phone number of the user
+	Avatar         string    `json:"avatar" db:"avatar"`                                              // Phone number of the user
+	Usertype       string    `json:"usertype" db:"usertype"`                                          // Type of user (e.g., seller,buyer,admin)
+	Dob            string    `json:"dob" db:"dob"`                                                    // Type of user (e.g., seller,buyer,admin)
+	Gender         string    `json:"gender" db:"gender"`                                              // Type of user (e.g., seller,buyer,admin)
+	Active         *bool     `json:"active" db:"active"`
+	Twofa          *bool     `json:"twofa" db:"twofa"` // Two factor authentication
+	AccessToken    string    `json:"access_token,omitempty" db:"access_token"`
+	RefreshToken   string    `json:"refresh_token,omitempty" db:"refresh_token"`
+	FollowedStores []string  `gorm:"serializer:json" json:"stores" db:"stores _id"`
+	Code           string    `json:"code,omitempty" db:"code"`             // otp code for verifications
+	Codeexpiry     time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
+	CreatedAt      time.Time // Set to current time if it is zero on creating
 }
 
 type CreateUserReq struct {
@@ -41,7 +42,8 @@ type CreateUserReq struct {
 	Twofa              bool      `json:"twofa" db:"twofa"`                     // Two factor authentication
 	Code               string    `json:"code,omitempty" db:"code"`             // otp code for verifications
 	Codeexpiry         time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
-	StoreName          string    `json:"name" db:"name"`
+	StoreName          string    `json:"store_name" db:"name"`
+	StoreEmail         string    `json:"store_email" db:"name"`
 	StoreUser          uint32    `json:"user" db:"user_id"`
 	StoreLink          string    `json:"link" db:"link"`
 	StorePhone         string    `json:"store_phone" db:"store_phone"`
@@ -72,9 +74,45 @@ type LoginUserRes struct {
 	ID           uint32 `json:"id" db:"id"` // Unique identifier for the logged-in user
 }
 
+type Customer struct {
+	ID                       int         `json:"id"`
+	FirstName                string      `json:"first_name"`
+	LastName                 string      `json:"last_name"`
+	Email                    string      `json:"email"`
+	CustomerCode             string      `json:"customer_code"`
+	Phone                    string      `json:"phone"`
+	RiskAction               string      `json:"risk_action"`
+	InternationalFormatPhone interface{} `json:"international_format_phone"`
+}
+
+type Bank struct {
+	Name string `json:"name"`
+	ID   int    `json:"id"`
+	Slug string `json:"slug"`
+}
+
+type SplitConfig struct {
+	Subaccount string `json:"subaccount"`
+}
+
+type Account struct {
+	Customer      Customer    `json:"customer"`
+	Bank          Bank        `json:"bank"`
+	ID            int         `json:"id"`
+	AccountName   string      `json:"account_name"`
+	AccountNumber string      `json:"account_number"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
+	Currency      string      `json:"currency"`
+	SplitConfig   SplitConfig `json:"split_config"`
+	Active        bool        `json:"active"`
+	Assigned      bool        `json:"assigned"`
+}
+
 type DVADetails struct {
-	UserID    string `json:"user_id" db:"user_id"`
-	StoreName string `json:"store_name" db:"store_name"`
+	UserID     string `json:"user_id" db:"user_id"`
+	StoreName  string `json:"store_name" db:"store_name"`
+	StoreEmail string `json:"store_email" db:"store_email"`
 }
 
 type Repository interface {
@@ -88,6 +126,7 @@ type Repository interface {
 	UpdateUser(ctx context.Context, user *User) (*User, error)
 	CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error)
 	CreateStore(ctx context.Context, req *store.Store) (*store.Store, error)
+	GetMyDVA(ctx context.Context, userEmail string) (*Account, error)
 }
 
 type Service interface {
@@ -99,5 +138,6 @@ type Service interface {
 	UpdateUser(ctx context.Context, user *User) (*User, error)
 	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error
 	CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error)
+	GetMyDVA(ctx context.Context, userEmail string) (*Account, error)
 	CreateStore(ctx context.Context, req *store.Store) (*store.Store, error)
 }

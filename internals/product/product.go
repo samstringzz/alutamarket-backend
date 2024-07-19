@@ -35,6 +35,7 @@ type Review struct {
 	Username  string  `json:"username" db:"username"`
 	Image     string  `json:"image" db:"image"`
 	Message   string  `json:"message" db:"message"`
+	Seller    string  `json:"seller" db:"seller"`
 	Rating    float64 `json:"rating" db:"rating"`
 	ProductID uint32  `json:"product" db:"product_id"`
 }
@@ -82,6 +83,7 @@ type Product struct {
 	Views       []uint32       `gorm:"serializer:json" jsinput.ProductIDon:"views" db:"views"`
 	Subcategory string         `json:"subcategory" db:"subcategory"`
 	Reviews     []*Review      `gorm:"serializer:json"`
+	UnitSold    uint32         `json:"unit_sold" db:"unit_sold"`
 	Ads         *AdsGen        `gorm:"serializer:json" json:"ads,omitempty" db:"ads"`
 }
 
@@ -110,7 +112,7 @@ type Repository interface {
 	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
 	DeleteProduct(ctx context.Context, id uint32) error
 	AddReview(ctx context.Context, input *Review) (*Review, error)
-	GetReviews(ctx context.Context, productId uint32) ([]*Review, error)
+	GetProductReviews(ctx context.Context, productId uint32, sellerId string) ([]*Review, error)
 }
 
 type Service interface {
@@ -129,6 +131,6 @@ type Service interface {
 	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
 	RemoveHandledProduct(ctx context.Context, userId uint32, eventType string) error
 	AddReview(ctx context.Context, input *Review) (*Review, error)
-	GetReviews(ctx context.Context, productId uint32) ([]*Review, error)
+	GetProductReviews(ctx context.Context, productId uint32, sellerId string) ([]*Review, error)
 	DeleteProduct(ctx context.Context, id uint32) error
 }

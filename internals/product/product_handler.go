@@ -112,8 +112,8 @@ func (h *Handler) SearchProducts(ctx context.Context, query string) ([]*Product,
 	return item, nil
 }
 
-func (h *Handler) GetReviews(ctx context.Context, productId uint32) ([]*Review, error) {
-	item, err := h.Service.GetReviews(ctx, productId)
+func (h *Handler) GetProductReviews(ctx context.Context, productId uint32, sellerId string) ([]*Review, error) {
+	item, err := h.Service.GetProductReviews(ctx, productId, sellerId)
 	if err != nil {
 		return nil, err
 	}

@@ -202,10 +202,10 @@ func (s *service) AddReview(ctx context.Context, input *Review) (*Review, error)
 	return review, nil
 }
 
-func (s *service) GetReviews(ctx context.Context, productId uint32) ([]*Review, error) {
+func (s *service) GetProductReviews(ctx context.Context, productId uint32, sellerId string) ([]*Review, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
-	reviews, err := s.Repository.GetReviews(ctx, productId)
+	reviews, err := s.Repository.GetProductReviews(ctx, productId, sellerId)
 	if err != nil {
 		return nil, err
 	}

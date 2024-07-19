@@ -84,3 +84,36 @@ func (s *service) DeleteStore(c context.Context, id uint32) error {
 	err := s.Repository.DeleteStore(ctx, id)
 	return err
 }
+
+func (s *service) CreateOrder(c context.Context, req *StoreOrder) (*StoreOrder, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	resp, err := s.Repository.CreateOrder(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (s *service) GetOrders(c context.Context, storeId uint32) ([]*StoreOrder, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	resp, err := s.Repository.GetOrders(ctx, storeId)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (s *service) UpdateOrder(c context.Context, req *StoreOrder) (*StoreOrder, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	resp, err := s.Repository.UpdateOrder(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
