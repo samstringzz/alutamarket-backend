@@ -120,7 +120,6 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, input model.StoreOrd
 		StoreID:  resp.StoreID,
 		Status:   resp.Status,
 		Customer: &model.StoreCustomer{Name: resp.Customer.Name, Phone: resp.Customer.Phone, Address: resp.Customer.Address},
-		Product:  make([]*model.Product, 0, len(resp.Products)),
 	}
 	return output, nil
 }
@@ -1627,26 +1626,20 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 
 // Stores is the resolver for the Stores field.
 func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offset *int) (*model.StorePaginationData, error) {
-	token := ctx.Value("token").(string)
-
-	authErr := middlewares.AuthMiddleware("seller", token)
-	if authErr != nil {
-		return nil, authErr
-	}
 	storeRep := app.InitializePackage(app.StorePackage)
 
 	storeRepository, ok := storeRep.(store.Repository)
 	if !ok {
-		// Handle the case where the conversion failed
 		return nil, fmt.Errorf("productRep is not a product.Repository")
 	}
 	storeSrvc := store.NewService(storeRepository)
 	storeHandler := store.NewHandler(storeSrvc)
 	resp, err := storeHandler.GetStores(ctx, uint32(*user), *limit, *offset)
-	var stores []*model.Store
 	if err != nil {
 		return nil, err
 	}
+
+	var stores []*model.Store
 	for _, item := range resp {
 		id, _ := strconv.Atoi(strconv.FormatInt(int64(item.ID), 10))
 
@@ -1664,17 +1657,54 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 			Address:            item.Address,
 			Email:              item.Email,
 		}
+
+		// Map followers
 		if len(item.Followers) > 0 {
 			for _, follower := range item.Followers {
-				storeFollower := &model.Follower{}
-				storeFollower.FollowerID = int(follower.ID)
-				storeFollower.FollowerName = follower.FollowerName
+				storeFollower := &model.Follower{
+					FollowerID:   int(follower.ID),
+					FollowerName: follower.FollowerName,
+				}
 				store.Followers = append(store.Followers, storeFollower)
 			}
 		}
-		stores = append(stores, store)
 
+		// Map orders
+		if len(item.Orders) > 0 {
+			for _, order := range item.Orders {
+				storeOrder := &model.StoreOrder{
+					Status: order.Status,
+					Customer: &model.StoreCustomer{
+						Name:    order.Customer.Name,
+						Address: order.Customer.Address,
+						Phone:   order.Customer.Phone,
+					},
+					CreatedAt: order.CreatedAt,
+					UUID:      order.UUID,
+					StoreID:   order.StoreID,
+				}
+
+				// Map products within orders
+				var products []*model.Product
+				for _, p := range order.Products {
+					product := &model.Product{
+						ID:        int(p.ID), // Make sure this ID is correctly mapped
+						Name:      p.Name,
+						Quantity:  p.Quantity,
+						Price:     p.Price,
+						Thumbnail: p.Thumbnail,
+					}
+					products = append(products, product)
+				}
+
+				storeOrder.Product = products
+				store.Orders = append(store.Orders, storeOrder)
+			}
+		}
+
+		stores = append(stores, store)
 	}
+
 	payload := &model.StorePaginationData{
 		Data:        stores,
 		CurrentPage: *offset + 1,

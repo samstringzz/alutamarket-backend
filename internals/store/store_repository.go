@@ -161,7 +161,7 @@ func (r *repository) CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOr
 		return nil, err
 	}
 
-	// Convert []*Product to []Product
+	// Convert []*StoreProduct to []StoreProduct
 	var products []*StoreProduct
 	products = append(products, req.Products...)
 

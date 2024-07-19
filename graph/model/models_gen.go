@@ -294,22 +294,22 @@ type SplitConfig struct {
 }
 
 type Store struct {
-	ID                 string      `json:"id"`
-	Link               string      `json:"link"`
-	Name               string      `json:"name"`
-	Wallet             float64     `json:"wallet"`
-	User               int         `json:"user"`
-	Email              string      `json:"email"`
-	Description        string      `json:"description"`
-	Followers          []*Follower `json:"followers,omitempty"`
-	Product            []*Product  `json:"product,omitempty"`
-	Order              []*Order    `json:"order,omitempty"`
-	Address            string      `json:"address"`
-	Status             bool        `json:"status"`
-	Thumbnail          string      `json:"thumbnail"`
-	Phone              string      `json:"phone"`
-	Background         string      `json:"background"`
-	HasPhysicalAddress bool        `json:"has_physical_address"`
+	ID                 string        `json:"id"`
+	Link               string        `json:"link"`
+	Name               string        `json:"name"`
+	Wallet             float64       `json:"wallet"`
+	User               int           `json:"user"`
+	Email              string        `json:"email"`
+	Description        string        `json:"description"`
+	Followers          []*Follower   `json:"followers,omitempty"`
+	Product            []*Product    `json:"product,omitempty"`
+	Orders             []*StoreOrder `json:"orders,omitempty"`
+	Address            string        `json:"address"`
+	Status             bool          `json:"status"`
+	Thumbnail          string        `json:"thumbnail"`
+	Phone              string        `json:"phone"`
+	Background         string        `json:"background"`
+	HasPhysicalAddress bool          `json:"has_physical_address"`
 }
 
 type StoreCustomer struct {
@@ -335,10 +335,12 @@ type StoreInput struct {
 }
 
 type StoreOrder struct {
-	StoreID  string         `json:"store_id"`
-	Product  []*Product     `json:"product,omitempty"`
-	Status   string         `json:"status"`
-	Customer *StoreCustomer `json:"customer"`
+	StoreID   string         `json:"store_id"`
+	Product   []*Product     `json:"product,omitempty"`
+	Status    string         `json:"status"`
+	Customer  *StoreCustomer `json:"customer"`
+	UUID      string         `json:"uuid"`
+	CreatedAt time.Time      `json:"createdAt"`
 }
 
 type StoreOrderInput struct {

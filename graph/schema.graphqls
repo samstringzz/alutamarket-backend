@@ -57,6 +57,8 @@ type StoreOrder {
 	product: [Product!]
 	status: String!
 	customer: StoreCustomer!
+	uuid: String!
+	createdAt: Time!
 }
 
 type Store {
@@ -69,7 +71,7 @@ type Store {
 	description: String!
 	followers: [Follower!]
 	product: [Product!]
-	order: [Order!]
+	orders: [StoreOrder!]
 	address: String!
 	status: Boolean!
 	thumbnail: String!
