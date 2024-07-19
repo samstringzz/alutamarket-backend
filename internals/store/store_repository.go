@@ -5,8 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/Chrisentech/aluta-market-api/errors"
+	"github.com/Chrisentech/aluta-market-api/utils"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -150,4 +152,77 @@ func (r *repository) UpdateStore(ctx context.Context, req *Store) (*Store, error
 	}
 
 	return existingStore, nil
+}
+
+func (r *repository) CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error) {
+	var store Store
+	err := r.db.First(&store, req.StoreID).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert []*Product to []Product
+	var products []*StoreProduct
+	products = append(products, req.Products...)
+
+	req.CreatedAt = time.Now()
+	req.UpdatedAt = time.Now()
+	req.UUID = utils.GenerateUUID()
+	req.Products = products
+	store.Orders = append(store.Orders, req)
+
+	err = r.db.WithContext(ctx).Save(&store).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*StoreOrder, error) {
+	var store Store
+	err := r.db.WithContext(ctx).Preload("Orders").First(&store, storeID).Error
+	if err != nil {
+		return nil, err
+	}
+	return store.Orders, nil
+}
+
+func (r *repository) GetOrder(ctx context.Context, storeID uint32, orderID string) (*StoreOrder, error) {
+	var store Store
+	err := r.db.WithContext(ctx).Preload("Orders", "id = ?", orderID).First(&store, storeID).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(store.Orders) == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return store.Orders[0], nil
+}
+
+func (r *repository) UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error) {
+	var store Store
+	err := r.db.WithContext(ctx).Preload("Orders", "id = ?", req.UUID).First(&store, req.StoreID).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(store.Orders) == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	order := store.Orders[0]
+	order.Products = req.Products
+	order.Status = req.Status
+	order.Customer = req.Customer
+	order.UpdatedAt = time.Now()
+
+	err = r.db.WithContext(ctx).Save(&store).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return order, nil
 }

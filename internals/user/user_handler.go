@@ -77,3 +77,11 @@ func (h *Handler) CreateDVAAccount(ctx context.Context, req *DVADetails) (string
 	}
 	return resp, nil
 }
+
+func (h *Handler) GetMyDVA(ctx context.Context, email string) (*Account, error) {
+	resp, err := h.Service.GetMyDVA(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}

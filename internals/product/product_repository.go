@@ -293,6 +293,16 @@ func isValidQuery(query string) bool {
 	return match
 }
 
+func filterReviewsBySeller(reviews []*Review, sellerId string) []*Review {
+	var filteredReviews []*Review
+	for _, review := range reviews {
+		if review.Seller == sellerId {
+			filteredReviews = append(filteredReviews, review)
+		}
+	}
+	return filteredReviews
+}
+
 func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
 	if len(query) < 3 {
 		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "query string too short")
@@ -364,12 +374,26 @@ func (r *repository) AddReview(ctx context.Context, input *Review) (*Review, err
 	return input, nil
 }
 
-func (r *repository) GetReviews(ctx context.Context, productId uint32) ([]*Review, error) {
+func (r *repository) GetProductReviews(ctx context.Context, productId uint32, sellerId string) ([]*Review, error) {
 	product, err := r.GetProduct(ctx, productId, 0)
 	if err != nil {
 		return nil, err
 	}
-	return product.Reviews, nil
+
+	resp := product.Reviews
+	if sellerId != "" {
+		reviews := make([]*Review, 0)
+		products, _, err := r.GetProducts(ctx, sellerId, 10000, 0)
+		if err != nil {
+			return nil, err
+		}
+		for _, prd := range products {
+			reviews = append(reviews, prd.Reviews...)
+		}
+		resp = reviews
+	}
+
+	return resp, nil
 }
 
 func (r *repository) AddSavedForLater(ctx context.Context, userId, productId uint32) (*HandledProduct, error) {

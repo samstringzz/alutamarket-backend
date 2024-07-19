@@ -47,6 +47,17 @@ type Skynet {
 	type: String
 	receiever: String
 }
+type StoreCustomer {
+	name: String!
+	phone: String!
+	address: String!
+}
+type StoreOrder {
+	store_id: String!
+	product: [Product!]
+	status: String!
+	customer: StoreCustomer!
+}
 
 type Store {
 	id: ID!
@@ -95,6 +106,24 @@ input ProductInput {
 	store: String!
 	category: Int!
 	subcategory: Int!
+}
+input customerInput {
+	name: String!
+	phone: String!
+	address: String!
+}
+input StoreProductInput {
+	name: String!
+	thumbnail: String!
+	quantity: Int!
+	price: Float!
+	id: String
+}
+input StoreOrderInput {
+	store_id: String!
+	product: [StoreProductInput]
+	status: String!
+	customer: customerInput!
 }
 
 input DVAAccountInput {
@@ -266,6 +295,38 @@ type Product {
 	subcategory: String!
 }
 
+type Customer {
+	id: String!
+	first_name: String!
+	last_name: String!
+	email: String!
+	customer_code: String!
+	phone: String!
+	risk_action: String!
+}
+type Bank {
+	name: String!
+	id: Int!
+	slug: String!
+}
+
+type SplitConfig {
+	Subaccount: String!
+}
+
+type Account {
+	customer: Customer!
+	bank: Bank!
+	id: Int!
+	account_number: Int!
+	account_name: String!
+	created_at: Time!
+	updated_at: Time!
+	split_config: SplitConfig!
+	active: Boolean!
+	assigned: Boolean!
+}
+
 input PaymentData {
 	storeID: [Int!]
 	status: String
@@ -361,7 +422,7 @@ type Query {
 	HandledProducts(user: Int!, type: String!): [HandledProducts!]!
 	RecommendedProducts(query: String!): [Product!]!
 	RecentlyAddedProducts(user: Int!): [Product!]!
-	ProductReviews(id: Int!): [Review!]!
+	ProductReviews(id: Int!, sellerStore: String!): [Review!]!
 	Cart(user: Int!): Cart!
 	SubscriptionBundle(serviceID: String!): SubscriptionBundle
 	searchProducts(query: String!): [Product!]
@@ -370,10 +431,12 @@ type Query {
 	StoreByName(name: String!): Store
 	Skynets(id: String!): [Skynet!]
 	Skynet(id: String!): Skynet
+	MYDVA(email: String!): Account
 }
 
 type Mutation {
 	createUser(input: NewUser!): User!
+	createOrder(input: StoreOrderInput!): StoreOrder
 	updateUser(input: UpdateUserInput): User!
 	createVerifyOTP(input: NewVerifyOTP!): User!
 	loginUser(input: LoginReq!): LoginRes!

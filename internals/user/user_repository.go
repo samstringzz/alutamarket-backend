@@ -67,6 +67,7 @@ func (r *repository) CreateStore(ctx context.Context, req *store.Store) (*store.
 
 	resp := &store.Store{
 		Name:               req.Name,
+		Email:              req.Email,
 		Link:               req.Link,
 		UserID:             req.UserID,
 		Description:        req.Description,
@@ -81,7 +82,7 @@ func (r *repository) CreateStore(ctx context.Context, req *store.Store) (*store.
 		return nil, err
 	}
 	//Create DVA for seller link for user
-	_, err := r.CreateDVAAccount(ctx, &DVADetails{UserID: strconv.FormatUint(uint64(req.UserID), 10), StoreName: req.Name})
+	_, err := r.CreateDVAAccount(ctx, &DVADetails{UserID: strconv.FormatUint(uint64(req.UserID), 10), StoreName: req.Name, StoreEmail: req.Email})
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +154,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		}
 
 		//Create DVA for seller link for user
-		_, err := r.CreateDVAAccount(ctx, &DVADetails{UserID: strconv.FormatUint(uint64(newUser.ID), 10), StoreName: req.StoreName})
+		_, err := r.CreateDVAAccount(ctx, &DVADetails{UserID: strconv.FormatUint(uint64(newUser.ID), 10), StoreName: req.StoreName, StoreEmail: req.StoreEmail})
 		if err != nil {
 			return nil, err
 		}
@@ -171,6 +172,12 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 
 	return newUser, nil
 }
+func getEmail(storeEmail, userEmail string) string {
+	if storeEmail != "" {
+		return storeEmail
+	}
+	return userEmail
+}
 
 func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error) {
 	user, err := r.GetUser(ctx, req.UserID)
@@ -187,7 +194,7 @@ func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (str
 	}
 
 	payload := map[string]interface{}{
-		"email":          user.Email,
+		"email":          getEmail(req.StoreEmail, user.Email),
 		"first_name":     names[0],
 		"middle_name":    names[1],
 		"last_name":      req.StoreName,
@@ -479,4 +486,55 @@ func (r *repository) UpdateUser(ctx context.Context, req *User) (*User, error) {
 	}
 
 	return existingUser, nil
+}
+
+func (r *repository) GetMyDVA(ctx context.Context, userEmail string) (*Account, error) {
+
+	dedicatedAccountURL := "https://api.paystack.co/dedicated_account"
+	method := "GET"
+	client := &http.Client{}
+	newReq, err := http.NewRequest(method, dedicatedAccountURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	newReq.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
+	newReq.Header.Add("Content-Type", "application/json")
+	res, err := client.Do(newReq)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		bodyBytes, _ := ioutil.ReadAll(res.Body)
+		return nil, fmt.Errorf("error: paystack dedicated account creation failed with status %d, response: %s", res.StatusCode, string(bodyBytes))
+	}
+
+	if res.StatusCode != http.StatusOK {
+		bodyBytes, _ := ioutil.ReadAll(res.Body)
+		return nil, fmt.Errorf("error: paystack dedicated account retrieval failed with status %d, response: %s", res.StatusCode, string(bodyBytes))
+	}
+
+	var dedicatedAccountResp struct {
+		Status  bool       `json:"status"`
+		Message string     `json:"message"`
+		Data    []*Account `json:"data"`
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&dedicatedAccountResp)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding paystack dedicated account response: %w", err)
+	}
+
+	if !dedicatedAccountResp.Status {
+		return nil, fmt.Errorf("error: paystack dedicated account retrieval failed with message: %s", dedicatedAccountResp.Message)
+	}
+
+	for _, account := range dedicatedAccountResp.Data {
+		if account.Customer.Email == userEmail {
+			return account, nil
+		}
+	}
+
+	return nil, fmt.Errorf("error: no account found for user with email %s", userEmail)
 }

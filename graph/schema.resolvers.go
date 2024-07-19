@@ -69,6 +69,62 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	return user, nil
 }
 
+// CreateOrder is the resolver for the createOrder field.
+func (r *mutationResolver) CreateOrder(ctx context.Context, input model.StoreOrderInput) (*model.StoreOrder, error) {
+	storeRep := app.InitializePackage(app.StorePackage)
+	storeRepository, ok := storeRep.(store.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("storeRep is not a store.Repository")
+	}
+
+	storeSrvc := store.NewService(storeRepository)
+
+	storeHandler := store.NewHandler(storeSrvc)
+	storeInput := &store.StoreOrder{
+		StoreID: input.StoreID,
+		Status:  input.Status,
+		Customer: store.Customer{
+			Name:    input.Customer.Name,
+			Phone:   input.Customer.Phone,
+			Address: input.Customer.Address,
+		},
+	}
+	// Convert []*model.ProductInput to []*store.Product
+	var products []*store.StoreProduct
+
+	for _, p := range input.Product {
+		var id uint32
+		if p.ID != nil {
+			parsedID, err := strconv.ParseUint(*p.ID, 10, 32)
+			if err != nil {
+				return nil, fmt.Errorf("invalid product ID: %v", err)
+			}
+			id = uint32(parsedID)
+		}
+		newEntryPrd := store.StoreProduct{
+			ID:        id,
+			Name:      p.Name,
+			Quantity:  p.Quantity,
+			Price:     p.Price,
+			Thumbnail: p.Thumbnail,
+		}
+		products = append(products, &newEntryPrd)
+	}
+	storeInput.Products = products
+	resp, err := storeHandler.CreateOrder(ctx, storeInput)
+	if err != nil {
+		return nil, err
+	}
+	output := &model.StoreOrder{
+		StoreID:  resp.StoreID,
+		Status:   resp.Status,
+		Customer: &model.StoreCustomer{Name: resp.Customer.Name, Phone: resp.Customer.Phone, Address: resp.Customer.Address},
+		Product:  make([]*model.Product, 0, len(resp.Products)),
+	}
+	return output, nil
+}
+
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUserInput) (*model.User, error) {
 	userRep := app.InitializePackage(app.UserPackage)
@@ -1357,7 +1413,7 @@ func (r *queryResolver) RecentlyAddedProducts(ctx context.Context, user int) ([]
 }
 
 // ProductReviews is the resolver for the ProductReviews field.
-func (r *queryResolver) ProductReviews(ctx context.Context, id int) ([]*model.Review, error) {
+func (r *queryResolver) ProductReviews(ctx context.Context, id int, sellerStore string) ([]*model.Review, error) {
 	// token := ctx.Value("token").(string)
 
 	// authErr := middlewares.AuthMiddleware("", token)
@@ -1373,7 +1429,7 @@ func (r *queryResolver) ProductReviews(ctx context.Context, id int) ([]*model.Re
 	}
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
-	resp, err := productHandler.GetReviews(ctx, uint32(id))
+	resp, err := productHandler.GetProductReviews(ctx, uint32(id), sellerStore)
 	if err != nil {
 		return nil, err
 	}
@@ -1724,6 +1780,52 @@ func (r *queryResolver) Skynets(ctx context.Context, id string) ([]*model.Skynet
 // Skynet is the resolver for the Skynet field.
 func (r *queryResolver) Skynet(ctx context.Context, id string) (*model.Skynet, error) {
 	panic(fmt.Errorf("not implemented: Skynet - Skynet"))
+}
+
+// Mydva is the resolver for the MYDVA field.
+func (r *queryResolver) Mydva(ctx context.Context, email string) (*model.Account, error) {
+	userRep := app.InitializePackage(app.UserPackage)
+
+	userRepository, ok := userRep.(user.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("userRep is not a user.Repository")
+	}
+	userSrvc := user.NewService(userRepository)
+	userHandler := user.NewHandler(userSrvc)
+	res, err := userHandler.GetMyDVA(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	accntNum, _ := strconv.Atoi(res.AccountNumber)
+	account := &model.Account{
+		ID:            res.ID,
+		AccountNumber: accntNum,
+		AccountName:   res.AccountName,
+		CreatedAt:     res.CreatedAt,
+		UpdatedAt:     res.UpdatedAt,
+		Active:        res.Active,
+		Assigned:      res.Assigned,
+		Customer: &model.Customer{
+			ID:           fmt.Sprintf("%d", res.Customer.ID),
+			FirstName:    res.Customer.FirstName,
+			LastName:     res.Customer.LastName,
+			Email:        res.Customer.Email,
+			CustomerCode: res.Customer.CustomerCode,
+			Phone:        res.Customer.Phone,
+			RiskAction:   res.Customer.RiskAction,
+		},
+		Bank: &model.Bank{
+			Name: res.Bank.Name,
+			ID:   res.Bank.ID,
+			Slug: res.Bank.Slug,
+		},
+		SplitConfig: &model.SplitConfig{
+			Subaccount: res.SplitConfig.Subaccount,
+		},
+	}
+
+	return account, nil
 }
 
 // ProductSearchResults is the resolver for the productSearchResults field.

@@ -54,3 +54,27 @@ func (h *Handler) DeleteStore(ctx context.Context, input uint32) error {
 	err := h.Service.DeleteStore(ctx, input)
 	return err
 }
+
+func (h *Handler) CreateOrder(ctx context.Context, input *StoreOrder) (*StoreOrder, error) {
+	item, err := h.Service.CreateOrder(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+func (h *Handler) UpdateOrder(ctx context.Context, input *StoreOrder) (*StoreOrder, error) {
+	item, err := h.Service.UpdateOrder(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+func (h *Handler) GetOrders(ctx context.Context, storeID uint32) ([]*StoreOrder, error) {
+	item, err := h.Service.GetOrders(ctx, storeID)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}

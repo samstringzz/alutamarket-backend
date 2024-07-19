@@ -6,6 +6,25 @@ import (
 	"time"
 )
 
+type Account struct {
+	Customer      *Customer    `json:"customer"`
+	Bank          *Bank        `json:"bank"`
+	ID            int          `json:"id"`
+	AccountNumber int          `json:"account_number"`
+	AccountName   string       `json:"account_name"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
+	SplitConfig   *SplitConfig `json:"split_config"`
+	Active        bool         `json:"active"`
+	Assigned      bool         `json:"assigned"`
+}
+
+type Bank struct {
+	Name string `json:"name"`
+	ID   int    `json:"id"`
+	Slug string `json:"slug"`
+}
+
 type BundleVariation struct {
 	VariationCode   string `json:"variationCode"`
 	Name            string `json:"name"`
@@ -31,6 +50,16 @@ type Category struct {
 	Name          string         `json:"name"`
 	Slug          string         `json:"slug"`
 	Subcategories []*SubCategory `json:"subcategories,omitempty"`
+}
+
+type Customer struct {
+	ID           string `json:"id"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	Email        string `json:"email"`
+	CustomerCode string `json:"customer_code"`
+	Phone        string `json:"phone"`
+	RiskAction   string `json:"risk_action"`
 }
 
 type DVAAccountInput struct {
@@ -260,6 +289,10 @@ type SmartcardVerificationResponse struct {
 	Content *SmartcardContent `json:"content"`
 }
 
+type SplitConfig struct {
+	Subaccount string `json:"Subaccount"`
+}
+
 type Store struct {
 	ID                 string      `json:"id"`
 	Link               string      `json:"link"`
@@ -279,6 +312,12 @@ type Store struct {
 	HasPhysicalAddress bool        `json:"has_physical_address"`
 }
 
+type StoreCustomer struct {
+	Name    string `json:"name"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
+}
+
 type StoreInput struct {
 	ID                 *string `json:"id,omitempty"`
 	Link               string  `json:"link"`
@@ -295,11 +334,33 @@ type StoreInput struct {
 	Background         *string `json:"background,omitempty"`
 }
 
+type StoreOrder struct {
+	StoreID  string         `json:"store_id"`
+	Product  []*Product     `json:"product,omitempty"`
+	Status   string         `json:"status"`
+	Customer *StoreCustomer `json:"customer"`
+}
+
+type StoreOrderInput struct {
+	StoreID  string               `json:"store_id"`
+	Product  []*StoreProductInput `json:"product,omitempty"`
+	Status   string               `json:"status"`
+	Customer *CustomerInput       `json:"customer"`
+}
+
 type StorePaginationData struct {
 	Data        []*Store `json:"data"`
 	CurrentPage int      `json:"current_page"`
 	PerPage     int      `json:"per_page"`
 	Total       int      `json:"total"`
+}
+
+type StoreProductInput struct {
+	Name      string  `json:"name"`
+	Thumbnail string  `json:"thumbnail"`
+	Quantity  int     `json:"quantity"`
+	Price     float64 `json:"price"`
+	ID        *string `json:"id,omitempty"`
 }
 
 type SubCategory struct {
@@ -395,4 +456,10 @@ type VerifyOtp struct {
 	Phone string  `json:"phone"`
 	Code  string  `json:"code"`
 	Email *string `json:"email,omitempty"`
+}
+
+type CustomerInput struct {
+	Name    string `json:"name"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
 }
