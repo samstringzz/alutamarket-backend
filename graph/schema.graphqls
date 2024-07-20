@@ -173,6 +173,12 @@ input UpdateStoreInput {
 	thumbnail: String
 	background: String
 }
+
+input UpdateStoreOrderInput {
+	id: ID
+	status: String
+	store_id: String
+}
 type User {
 	id: ID!
 	fullname: String!
@@ -439,6 +445,7 @@ type Query {
 type Mutation {
 	createUser(input: NewUser!): User!
 	createOrder(input: StoreOrderInput!): StoreOrder
+	updateOrder(input: UpdateStoreOrderInput!): StoreOrder
 	updateUser(input: UpdateUserInput): User!
 	createVerifyOTP(input: NewVerifyOTP!): User!
 	loginUser(input: LoginReq!): LoginRes!

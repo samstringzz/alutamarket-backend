@@ -407,6 +407,12 @@ type UpdateStoreInput struct {
 	Background         *string `json:"background,omitempty"`
 }
 
+type UpdateStoreOrderInput struct {
+	ID      *string `json:"id,omitempty"`
+	Status  *string `json:"status,omitempty"`
+	StoreID *string `json:"store_id,omitempty"`
+}
+
 type UpdateUserInput struct {
 	ID       *string     `json:"id,omitempty"`
 	Fullname *string     `json:"fullname,omitempty"`

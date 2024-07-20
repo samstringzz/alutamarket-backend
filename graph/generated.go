@@ -162,6 +162,7 @@ type ComplexityRoot struct {
 		RemoveAllCart           func(childComplexity int, cartID int) int
 		RemoveHandledProduct    func(childComplexity int, user int, typeArg *string) int
 		ToggleStoreFollowStatus func(childComplexity int, user int, store int) int
+		UpdateOrder             func(childComplexity int, input model.UpdateStoreOrderInput) int
 		UpdateProduct           func(childComplexity int, input *model.ProductInput) int
 		UpdateStore             func(childComplexity int, input *model.UpdateStoreInput) int
 		UpdateUser              func(childComplexity int, input *model.UpdateUserInput) int
@@ -376,6 +377,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.NewUser) (*model.User, error)
 	CreateOrder(ctx context.Context, input model.StoreOrderInput) (*model.StoreOrder, error)
+	UpdateOrder(ctx context.Context, input model.UpdateStoreOrderInput) (*model.StoreOrder, error)
 	UpdateUser(ctx context.Context, input *model.UpdateUserInput) (*model.User, error)
 	CreateVerifyOtp(ctx context.Context, input model.NewVerifyOtp) (*model.User, error)
 	LoginUser(ctx context.Context, input model.LoginReq) (*model.LoginRes, error)
@@ -1083,6 +1085,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ToggleStoreFollowStatus(childComplexity, args["user"].(int), args["store"].(int)), true
+
+	case "Mutation.updateOrder":
+		if e.complexity.Mutation.UpdateOrder == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateOrder_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateOrder(childComplexity, args["input"].(model.UpdateStoreOrderInput)), true
 
 	case "Mutation.updateProduct":
 		if e.complexity.Mutation.UpdateProduct == nil {
@@ -2246,6 +2260,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputStoreOrderInput,
 		ec.unmarshalInputStoreProductInput,
 		ec.unmarshalInputUpdateStoreInput,
+		ec.unmarshalInputUpdateStoreOrderInput,
 		ec.unmarshalInputUpdateUserInput,
 		ec.unmarshalInputcustomerInput,
 	)
@@ -2699,6 +2714,21 @@ func (ec *executionContext) field_Mutation_toggleStoreFollowStatus_args(ctx cont
 		}
 	}
 	args["store"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateOrder_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpdateStoreOrderInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateStoreOrderInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateStoreOrderInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -5975,6 +6005,72 @@ func (ec *executionContext) fieldContext_Mutation_createOrder(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateOrder(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateOrder(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateOrder(rctx, fc.Args["input"].(model.UpdateStoreOrderInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.StoreOrder)
+	fc.Result = res
+	return ec.marshalOStoreOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreOrder(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "store_id":
+				return ec.fieldContext_StoreOrder_store_id(ctx, field)
+			case "product":
+				return ec.fieldContext_StoreOrder_product(ctx, field)
+			case "status":
+				return ec.fieldContext_StoreOrder_status(ctx, field)
+			case "customer":
+				return ec.fieldContext_StoreOrder_customer(ctx, field)
+			case "uuid":
+				return ec.fieldContext_StoreOrder_uuid(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_StoreOrder_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StoreOrder", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -17542,6 +17638,47 @@ func (ec *executionContext) unmarshalInputUpdateStoreInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateStoreOrderInput(ctx context.Context, obj interface{}) (model.UpdateStoreOrderInput, error) {
+	var it model.UpdateStoreOrderInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "status", "store_id"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "store_id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("store_id"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoreID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, obj interface{}) (model.UpdateUserInput, error) {
 	var it model.UpdateUserInput
 	asMap := map[string]interface{}{}
@@ -18376,6 +18513,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "createOrder":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createOrder(ctx, field)
+			})
+		case "updateOrder":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateOrder(ctx, field)
 			})
 		case "updateUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -21274,6 +21415,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNUpdateStoreOrderInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateStoreOrderInput(ctx context.Context, v interface{}) (model.UpdateStoreOrderInput, error) {
+	res, err := ec.unmarshalInputUpdateStoreOrderInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {

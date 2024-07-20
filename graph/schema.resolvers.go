@@ -124,6 +124,37 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, input model.StoreOrd
 	return output, nil
 }
 
+// UpdateOrder is the resolver for the updateOrder field.
+func (r *mutationResolver) UpdateOrder(ctx context.Context, input model.UpdateStoreOrderInput) (*model.StoreOrder, error) {
+	// token := ctx.Value("token").(string)
+
+	// authErr := middlewares.AuthMiddleware("seller", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
+	storeRep := app.InitializePackage(app.StorePackage)
+	storeRepository, ok := storeRep.(store.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("storeRep is not a store.Repository")
+	}
+
+	storeSrvc := store.NewService(storeRepository)
+
+	storeHandler := store.NewHandler(storeSrvc)
+	orderInput := &store.StoreOrder{UUID: *input.ID, Status: *input.Status, StoreID: *input.StoreID}
+	resp, err := storeHandler.UpdateOrder(ctx, orderInput)
+	if err != nil {
+		return nil, err
+	}
+	output := &model.StoreOrder{
+		StoreID:  resp.StoreID,
+		Status:   resp.Status,
+		Customer: &model.StoreCustomer{Name: resp.Customer.Name, Phone: resp.Customer.Phone, Address: resp.Customer.Address},
+	}
+	return output, nil
+}
+
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUserInput) (*model.User, error) {
 	userRep := app.InitializePackage(app.UserPackage)
@@ -269,7 +300,7 @@ func (r *mutationResolver) AddHandledProduct(ctx context.Context, userID int, pr
 func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInput) (*model.Review, error) {
 	token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", token)
+	authErr := middlewares.AuthMiddleware("entry", token)
 	if authErr != nil {
 		return nil, authErr
 	}
@@ -761,7 +792,7 @@ func (r *mutationResolver) RemoveAllCart(ctx context.Context, cartID int) (*mode
 func (r *mutationResolver) CreateStore(ctx context.Context, input model.StoreInput) (*model.Store, error) {
 	token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", token)
+	authErr := middlewares.AuthMiddleware("seller", token)
 	if authErr != nil {
 		return nil, authErr
 	}
