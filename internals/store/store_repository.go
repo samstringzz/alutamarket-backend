@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/errors"
@@ -203,26 +204,40 @@ func (r *repository) GetOrder(ctx context.Context, storeID uint32, orderID strin
 }
 
 func (r *repository) UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error) {
-	var store Store
-	err := r.db.WithContext(ctx).Preload("Orders", "id = ?", req.UUID).First(&store, req.StoreID).Error
+	storeID, err := strconv.ParseUint(req.StoreID, 10, 16)
 	if err != nil {
 		return nil, err
 	}
-
-	if len(store.Orders) == 0 {
+	existingStore, err := r.GetStore(ctx, uint32(storeID))
+	if err != nil {
+		return nil, err
+	}
+	if len(existingStore.Orders) == 0 {
 		return nil, gorm.ErrRecordNotFound
 	}
 
-	order := store.Orders[0]
-	order.Products = req.Products
-	order.Status = req.Status
-	order.Customer = req.Customer
-	order.UpdatedAt = time.Now()
+	// Find the order by UUID
+	var orderToUpdate *StoreOrder
+	for i, order := range existingStore.Orders {
+		if order.UUID == req.UUID {
+			orderToUpdate = existingStore.Orders[i]
+			break
+		}
+	}
 
-	err = r.db.WithContext(ctx).Save(&store).Error
+	if orderToUpdate == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	// Update the order fields
+	orderToUpdate.Status = req.Status
+	orderToUpdate.UpdatedAt = time.Now()
+
+	// Save the changes to the store
+	err = r.db.WithContext(ctx).Save(&existingStore).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return order, nil
+	return orderToUpdate, nil
 }
