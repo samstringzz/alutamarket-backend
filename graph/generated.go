@@ -160,7 +160,7 @@ type ComplexityRoot struct {
 		LoginUser               func(childComplexity int, input model.LoginReq) int
 		ModifyCart              func(childComplexity int, input model.ModifyCartItemInput) int
 		RemoveAllCart           func(childComplexity int, cartID int) int
-		RemoveHandledProduct    func(childComplexity int, user int, typeArg *string) int
+		RemoveHandledProduct    func(childComplexity int, prd int, typeArg *string) int
 		ToggleStoreFollowStatus func(childComplexity int, user int, store int) int
 		UpdateOrder             func(childComplexity int, input model.UpdateStoreOrderInput) int
 		UpdateProduct           func(childComplexity int, input *model.ProductInput) int
@@ -384,7 +384,7 @@ type MutationResolver interface {
 	AddHandledProduct(ctx context.Context, userID int, productID int, typeArg string) (*model.HandledProducts, error)
 	AddReview(ctx context.Context, input model.ReviewInput) (*model.Review, error)
 	CreateSkynet(ctx context.Context, input *model.SkynetInput) (string, error)
-	RemoveHandledProduct(ctx context.Context, user int, typeArg *string) (*model.HandledProducts, error)
+	RemoveHandledProduct(ctx context.Context, prd int, typeArg *string) (*model.HandledProducts, error)
 	CreateCategory(ctx context.Context, input model.NewCategory) (*model.Category, error)
 	CreateSubCategory(ctx context.Context, input model.NewSubCategory) (*model.SubCategory, error)
 	CreateProduct(ctx context.Context, input model.ProductInput) (*model.Product, error)
@@ -1072,7 +1072,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RemoveHandledProduct(childComplexity, args["user"].(int), args["type"].(*string)), true
+		return e.complexity.Mutation.RemoveHandledProduct(childComplexity, args["prd"].(int), args["type"].(*string)), true
 
 	case "Mutation.toggleStoreFollowStatus":
 		if e.complexity.Mutation.ToggleStoreFollowStatus == nil {
@@ -2673,14 +2673,14 @@ func (ec *executionContext) field_Mutation_removeHandledProduct_args(ctx context
 	var err error
 	args := map[string]interface{}{}
 	var arg0 int
-	if tmp, ok := rawArgs["user"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
+	if tmp, ok := rawArgs["prd"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prd"))
 		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["user"] = arg0
+	args["prd"] = arg0
 	var arg1 *string
 	if tmp, ok := rawArgs["type"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
@@ -6533,7 +6533,7 @@ func (ec *executionContext) _Mutation_removeHandledProduct(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RemoveHandledProduct(rctx, fc.Args["user"].(int), fc.Args["type"].(*string))
+		return ec.resolvers.Mutation().RemoveHandledProduct(rctx, fc.Args["prd"].(int), fc.Args["type"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16612,7 +16612,7 @@ func (ec *executionContext) unmarshalInputModifyCartItemInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"productId", "quantity", "user"}
+	fieldsInOrder := [...]string{"productId", "productName", "quantity", "user"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16626,6 +16626,13 @@ func (ec *executionContext) unmarshalInputModifyCartItemInput(ctx context.Contex
 				return it, err
 			}
 			it.ProductID = data
+		case "productName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productName"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProductName = data
 		case "quantity":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantity"))
 			data, err := ec.unmarshalNInt2int(ctx, v)

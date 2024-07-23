@@ -419,10 +419,10 @@ func (r *mutationResolver) CreateSkynet(ctx context.Context, input *model.Skynet
 }
 
 // RemoveHandledProduct is the resolver for the removeHandledProduct field.
-func (r *mutationResolver) RemoveHandledProduct(ctx context.Context, user int, typeArg *string) (*model.HandledProducts, error) {
+func (r *mutationResolver) RemoveHandledProduct(ctx context.Context, prd int, typeArg *string) (*model.HandledProducts, error) {
 	token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("", token)
+	authErr := middlewares.AuthMiddleware("entry", token)
 	if authErr != nil {
 		return nil, authErr
 	}
@@ -435,12 +435,12 @@ func (r *mutationResolver) RemoveHandledProduct(ctx context.Context, user int, t
 	}
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
-	err := productHandler.RemoveHandledProduct(ctx, uint32(user), *typeArg)
+	err := productHandler.RemoveHandledProduct(ctx, uint32(prd), *typeArg)
 	if err != nil {
 		return nil, err
 	}
 	schema := &model.HandledProducts{
-		UserID: user,
+		ProductID: prd,
 	}
 	return schema, nil
 }
@@ -718,6 +718,9 @@ func (r *mutationResolver) ModifyCart(ctx context.Context, input model.ModifyCar
 	var cartItem cart.CartItems
 	cartItem.Quantity = input.Quantity
 	num, _ := strconv.ParseUint(input.ProductID, 10, 32)
+	if input.ProductName != nil {
+		cartItem.Product = &product.Product{ID: uint32(num), Name: *input.ProductName}
+	}
 	cartItem.Product = &product.Product{ID: uint32(num)}
 
 	cartRep := app.InitializePackage(app.CartPackage)
@@ -1355,6 +1358,7 @@ func (r *queryResolver) HandledProducts(ctx context.Context, user int, typeArg s
 
 	productRepository, ok := productRep.(product.Repository)
 	if !ok {
+
 		// Handle the case where the conversion failed
 		return nil, fmt.Errorf("productRep is not a product.Repository")
 	}
@@ -1366,8 +1370,9 @@ func (r *queryResolver) HandledProducts(ctx context.Context, user int, typeArg s
 	}
 	prds := []*model.HandledProducts{}
 	for i, item := range resp {
+		// fmt.Println(item.Product)
 		prd := &model.HandledProducts{
-			ProductID:        int(item.Product.ID),
+			ProductID:        int(item.ID),
 			ProductName:      &item.Product.Name,
 			ProductDiscount:  &item.Product.Discount,
 			ProductPrice:     &item.Product.Price,

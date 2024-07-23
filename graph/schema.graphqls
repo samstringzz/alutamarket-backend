@@ -241,6 +241,7 @@ input NewVerifyOTP {
 
 input ModifyCartItemInput {
 	productId: ID!
+	productName: String
 	quantity: Int!
 	user: Int!
 }
@@ -456,7 +457,7 @@ type Mutation {
 	): HandledProducts!
 	addReview(input: ReviewInput!): Review!
 	createSkynet(input: SkynetInput): String!
-	removeHandledProduct(user: Int!, type: String): HandledProducts
+	removeHandledProduct(prd: Int!, type: String): HandledProducts
 	createCategory(input: NewCategory!): Category!
 	createSubCategory(input: NewSubCategory!): SubCategory!
 	createProduct(input: ProductInput!): Product!

@@ -39,6 +39,7 @@ func (h *Handler) Login(ctx context.Context, input *LoginUserReq) (*LoginUserRes
 	return res, nil
 }
 
+
 func (h *Handler) GetUsers(ctx context.Context) ([]*User, error) {
 	user, err := h.Service.GetUsers(ctx)
 	if err != nil {
