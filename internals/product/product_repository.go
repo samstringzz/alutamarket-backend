@@ -216,20 +216,16 @@ func (r *repository) GetHandledProducts(ctx context.Context, userId uint32, even
 	if err := r.db.Where("user_id = ? AND type = ? ", userId, eventType).Find(&prds).Error; err != nil {
 		return nil, err
 	}
+	// Print the fetched products for debugging
+	// for _, prd := range prds {
+	// 	log.Printf("Fetched product: %+v\n", prd)
+	// }
 	return prds, nil
 }
 
-// func (r *repository) GetWishListedProducts(ctx context.Context, userId uint32) ([]*HandledProduct, error) {
-// 	var wishlist []*HandledProduct
-// 	if err := r.db.Where("user_id = ? AND type = ? ", userId,"wishlist").Find(&wishlist).Error; err != nil {
-// 		return nil, err
-// 	}
-// 	return wishlist, nil
-// }
-
 func (r *repository) RemoveHandledProduct(ctx context.Context, id uint32, eventType string) error {
-	existingWishlist := &HandledProduct{}
-	err := r.db.Where("id=? AND type=?", id, eventType).Delete(existingWishlist).Error
+	handlePrd := &HandledProduct{}
+	err := r.db.Where("id=? AND type=?", id, eventType).Delete(handlePrd).Error
 	return err
 }
 

@@ -109,9 +109,10 @@ type LoginRes struct {
 }
 
 type ModifyCartItemInput struct {
-	ProductID string `json:"productId"`
-	Quantity  int    `json:"quantity"`
-	User      int    `json:"user"`
+	ProductID   string  `json:"productId"`
+	ProductName *string `json:"productName,omitempty"`
+	Quantity    int     `json:"quantity"`
+	User        int     `json:"user"`
 }
 
 type Mutation struct {

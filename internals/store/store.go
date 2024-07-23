@@ -71,6 +71,7 @@ type Order struct {
 }
 
 type Customer struct {
+	ID      uint32 `json:"id" db:"id"`
 	Name    string `json:"name" db:"name"`
 	Phone   string `json:"phone" db:"phone"`
 	Address string `json:"address" db:"address"`

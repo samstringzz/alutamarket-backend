@@ -71,7 +71,9 @@ func calculateTotalCartCost(data []*CartItems) float64 {
 
 func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32) (*Cart, error) {
 	prd := &product.Product{}
-	err2 := r.db.Model(prd).Where("id = ?", req.Product.ID).First(prd).Error
+	err2 := r.db.Model(&prd).
+		Where("id = ? OR name = ?", req.Product.ID, req.Product.Name).
+		First(&prd).Error
 	newQuantity := prd.Quantity - req.Quantity
 
 	if err2 != nil {
