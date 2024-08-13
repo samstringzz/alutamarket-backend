@@ -10,7 +10,7 @@ scalar Data
 #   status: Int!
 #   data: Data
 # }
-type Follower {
+type StoreFollower {
 	follower_id: Int!
 	follower_name: String!
 	store_id: Int!
@@ -69,7 +69,7 @@ type Store {
 	user: Int!
 	email: String!
 	description: String!
-	followers: [Follower!]
+	followers: [StoreFollower!]
 	product: [Product!]
 	orders: [StoreOrder!]
 	address: String!
@@ -120,6 +120,13 @@ input StoreProductInput {
 	quantity: Int!
 	price: Float!
 	id: String
+}
+input StoreFollowerInput {
+	follower_id: Int!
+	follower_name: String!
+	follower_image: String!
+	store_id: Int!
+	action: String!
 }
 input StoreOrderInput {
 	store_id: String!
@@ -240,7 +247,7 @@ input NewVerifyOTP {
 }
 
 input ModifyCartItemInput {
-	productId: ID!
+	productId: ID
 	productName: String
 	quantity: Int!
 	user: Int!
@@ -456,6 +463,8 @@ type Mutation {
 		type: String!
 	): HandledProducts!
 	addReview(input: ReviewInput!): Review!
+	checkStoreName(input: String!): String
+	updateStoreFollower(input: StoreFollowerInput): Store
 	createSkynet(input: SkynetInput): String!
 	removeHandledProduct(prd: Int!, type: String): HandledProducts
 	createCategory(input: NewCategory!): Category!

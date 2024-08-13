@@ -57,17 +57,29 @@ type Store struct {
 	Background         string        `json:"background" db:"background"`
 }
 
+type TrackedProduct struct {
+	gorm.Model
+	ID        uint32    `json:"id" db:"id"`
+	Name      string    `json:"name" db:"name"`
+	Thumbnail string    `json:"thumbnail" db:"thumbnail"`
+	Price     float64   `json:"price" db:"price"`
+	Discount  float64   `json:"discount" db:"discount"`
+	Status    string    `json:"status" db:"status"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
 type Order struct {
 	gorm.Model
-	StoresID       string  `gorm:"serializer:json" json:"store" db:"store_id"`
-	CartID         uint32  `json:"cart_id" db:"cart_id"`
-	Coupon         string  `json:"coupon,omitempty" db:"coupon"`
-	Fee            float64 `json:"fee" db:"fee"`
-	Status         string  `json:"status" db:"status"` //pending,completed,failed
-	UserID         string  `json:"user_id" db:"user_id"`
-	Amount         float64 `json:"amount" db:"amount"`
-	UUID           string  `json:"uuid" db:"uuid"`
-	PaymentGateway string  `json:"payment_gateway" db:"payment_gateway"`
+	// StoresID       string  `gorm:"serializer:json" json:"store" db:"store_id"`
+	CartID         uint32           `json:"cart_id" db:"cart_id"`
+	Coupon         string           `json:"coupon,omitempty" db:"coupon"`
+	Fee            float64          `json:"fee" db:"fee"`
+	Status         string           `json:"status" db:"status"` //pending,completed,failed
+	UserID         string           `json:"user_id" db:"user_id"`
+	Amount         float64          `json:"amount" db:"amount"`
+	UUID           string           `json:"uuid" db:"uuid"`
+	PaymentGateway string           `json:"payment_gateway" db:"payment_gateway"`
+	Products       []TrackedProduct `gorm:"serializer:json" json:"products" db:"products"`
 }
 
 type Customer struct {
@@ -99,6 +111,7 @@ type Review struct {
 type Repository interface {
 	CreateStore(ctx context.Context, req *Store) (*Store, error)
 	DeleteStore(ctx context.Context, id uint32) error
+	CheckStoreName(ctx context.Context, query string) error
 	UpdateStore(ctx context.Context, req *Store) (*Store, error)
 	GetStore(ctx context.Context, id uint32) (*Store, error)
 	GetStoreByName(ctx context.Context, name string) (*Store, error)
@@ -107,6 +120,7 @@ type Repository interface {
 	GetOrders(ctx context.Context, storeId uint32) ([]*StoreOrder, error)
 	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
+	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error)
 }
 
 type Service interface {
@@ -114,9 +128,11 @@ type Service interface {
 	UpdateStore(ctx context.Context, req *Store) (*Store, error)
 	DeleteStore(ctx context.Context, id uint32) error
 	GetStoreByName(ctx context.Context, name string) (*Store, error)
+	CheckStoreName(ctx context.Context, query string) error
 	GetStore(ctx context.Context, id uint32) (*Store, error)
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*StoreOrder, error)
 	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
+	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error)
 }

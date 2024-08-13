@@ -29,6 +29,18 @@ func (s *service) CreateStore(c context.Context, req *Store) (*Store, error) {
 	return r, nil
 }
 
+func (s *service) CheckStoreName(c context.Context, query string) error {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	err := s.Repository.CheckStoreName(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *service) GetStore(c context.Context, id uint32) (*Store, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
@@ -116,4 +128,15 @@ func (s *service) UpdateOrder(c context.Context, req *StoreOrder) (*StoreOrder, 
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (s *service) UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	store, err := s.Repository.UpdateStoreFollowership(ctx, storeID, follower, action)
+	if err != nil {
+		return nil, err
+	}
+	return store, nil
 }

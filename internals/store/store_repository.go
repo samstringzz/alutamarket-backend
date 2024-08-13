@@ -241,3 +241,52 @@ func (r *repository) UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOr
 
 	return orderToUpdate, nil
 }
+
+func (r *repository) UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error) {
+	existingStore, err := r.GetStore(ctx, storeID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if the user is already in the followers list
+	userExists := false
+	var followerIndex int
+	for i, existingFollower := range existingStore.Followers {
+		if existingFollower.FollowerID == follower.FollowerID {
+			userExists = true
+			followerIndex = i
+			break
+		}
+	}
+
+	switch action {
+	case "follow":
+		if userExists {
+			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "user is already a follower")
+		}
+		existingStore.Followers = append(existingStore.Followers, follower)
+	case "unfollow":
+		if !userExists {
+			return nil, errors.NewAppError(http.StatusNotFound, "NOT FOUND", "user is not a follower")
+		}
+		existingStore.Followers = append(existingStore.Followers[:followerIndex], existingStore.Followers[followerIndex+1:]...)
+	default:
+		return nil, errors.NewAppError(http.StatusNotAcceptable, "INVALID", "invalid action")
+	}
+
+	// Save the changes to the store
+	err = r.db.WithContext(ctx).Save(&existingStore).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return existingStore, nil
+}
+
+func (r *repository) GetStoresByFollower(ctx context.Context, followerID uint32) ([]*Store, error) {
+	var stores []*Store
+	if err := r.db.Where("followers_id=?", followerID).Find(&stores).Error; err != nil {
+		return nil, err
+	}
+	return stores, nil
+}

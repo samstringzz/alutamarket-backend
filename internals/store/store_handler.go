@@ -49,6 +49,13 @@ func (h *Handler) UpdateStore(ctx context.Context, input *Store) (*Store, error)
 	}
 	return item, nil
 }
+func (h *Handler) CheckStoreName(ctx context.Context, query string) error {
+	err := h.Service.CheckStoreName(ctx, query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (h *Handler) DeleteStore(ctx context.Context, input uint32) error {
 	err := h.Service.DeleteStore(ctx, input)
@@ -73,6 +80,14 @@ func (h *Handler) UpdateOrder(ctx context.Context, input *StoreOrder) (*StoreOrd
 
 func (h *Handler) GetOrders(ctx context.Context, storeID uint32) ([]*StoreOrder, error) {
 	item, err := h.Service.GetOrders(ctx, storeID)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+func (h *Handler) UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error) {
+	item, err := h.Service.UpdateStoreFollowership(ctx, storeID, follower, action)
 	if err != nil {
 		return nil, err
 	}

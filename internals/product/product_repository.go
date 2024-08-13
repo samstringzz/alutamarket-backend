@@ -225,7 +225,7 @@ func (r *repository) GetHandledProducts(ctx context.Context, userId uint32, even
 
 func (r *repository) RemoveHandledProduct(ctx context.Context, id uint32, eventType string) error {
 	handlePrd := &HandledProduct{}
-	err := r.db.Where("id=? AND type=?", id, eventType).Delete(handlePrd).Error
+	err := r.db.Unscoped().Where("id=? AND type=?", id, eventType).Delete(handlePrd).Error
 	return err
 }
 

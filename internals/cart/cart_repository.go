@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 
 	"encoding/json"
 	"log"
@@ -71,10 +72,23 @@ func calculateTotalCartCost(data []*CartItems) float64 {
 
 func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32) (*Cart, error) {
 	prd := &product.Product{}
-	err2 := r.db.Model(&prd).
-		Where("id = ? OR name = ?", req.Product.ID, req.Product.Name).
-		First(&prd).Error
-	newQuantity := prd.Quantity - req.Quantity
+	var err2 error
+	if req.Product.ID == 0 && req.Product.Name == "" {
+		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "both id and name cannot be empty")
+	} else if req.Product.ID == 0 {
+		err2 = r.db.Model(&prd).
+			Where("name = ?", req.Product.Name).
+			First(&prd).Error
+	} else if req.Product.Name == "" {
+		err2 = r.db.Model(&prd).
+			Where("id = ?", req.Product.ID).
+			First(&prd).Error
+	} else {
+		err2 = r.db.Model(&prd).
+			Where("name = ? OR id = ?", req.Product.Name, req.Product.ID).
+			First(&prd).Error
+	}
+	newQuantity := prd.Quantity + (-req.Quantity)
 
 	if err2 != nil {
 		return nil, errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Product not found")
@@ -158,6 +172,18 @@ func (r *repository) RemoveAllCart(ctx context.Context, id uint32) error {
 		return err
 	}
 
+	// Iterate over the items in the cart and update the product quantities
+	for _, item := range cart.Items {
+		var product product.Product
+		if err := r.db.Where("id = ?", item.Product.ID).First(&product).Error; err != nil {
+			return err
+		}
+		product.Quantity += item.Quantity
+		if err := r.db.Save(&product).Error; err != nil {
+			return err
+		}
+	}
+
 	// Set the 'active' field to false and update the cart
 	cart.Active = false
 	if err := r.db.Save(&cart).Error; err != nil {
@@ -173,94 +199,240 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	cart := &Cart{}
 	userID, _ := strconv.ParseUint(input.UserID, 10, 32)
 
+	// Fetch the cart from the database
 	err := r.db.Model(cart).Where("user_id = ? AND active =?", uint32(userID), true).First(cart).Error
-	// fmt.Println("Na here we dey")
 	if err != nil {
 		return "", errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Cart not found")
 	}
+
+	// Fetch the customer details
 	customer, _ := user.NewRepository().GetUser(ctx, input.UserID)
-	requestData := map[string]interface{}{
-		"tx_ref":       UUID,
-		"amount":       input.Fee + cart.Total,
-		"currency":     "NGN",
-		"redirect_url": redirectUrl,
-		"meta": map[string]interface{}{
-			"consumer_id":  23,
-			"consumer_mac": "92a3-912ba-1192a",
-		},
-		"customer": map[string]interface{}{
-			"email":       customer.Email,
-			"phonenumber": customer.Phone,
-			"name":        customer.Fullname,
-		},
-		"customizations": map[string]interface{}{
-			"title": "Aluta Market Checkout",
-			"logo":  "https://res.cloudinary.com/folajimidev/image/upload/v1697737213/logo_xesoiu.png",
-		},
-	}
-	// fmt.Println("And not here")
-
-	// Serialize the request data to JSON
-	requestDataBytes, err := json.Marshal(requestData)
-	if err != nil {
-		return "", err
+	if customer == nil {
+		return "", errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Customer not found")
 	}
 
-	// Create an HTTP client
-	client := &http.Client{}
-
-	// Create the HTTP request
-	req, err := http.NewRequest("POST", "https://api.flutterwave.com/v3/payments", bytes.NewBuffer(requestDataBytes))
-	if err != nil {
-		return "", err
-	}
-
-	// Set the request headers
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("FLW_SECRET_KEY"))
-
-	// Make the HTTP request
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	// Parse the response
-	var response map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return "", err
-	}
-	fmt.Println(response)
-	var paymentLink string
-	responseData, ok := response["data"].(map[string]interface{})
-	if ok {
-		linkValue, linkExists := responseData["link"].(string)
-		if linkExists {
-			paymentLink = linkValue
-		}
-	}
-	newOrder := &store.Transactions{}
+	newOrder := &store.Order{}
 	newOrder.Amount = cart.Total + input.Fee
 	newOrder.UserID = strconv.FormatUint(uint64(cart.UserID), 10)
 	newOrder.UUID = UUID
+	newOrder.CartID = cart.ID
+	var products []store.TrackedProduct
+
+	for _, item := range cart.Items {
+		product := store.TrackedProduct{
+			ID:        item.Product.ID,
+			Name:      item.Product.Name,
+			Thumbnail: item.Product.Thumbnail,
+			Price:     item.Product.Price,
+			Discount:  item.Product.Discount,
+			Status:    "open",     // Or any other status you'd want to set initially
+			CreatedAt: time.Now(), // Set current time for CreatedAt
+			UpdatedAt: time.Now(), // Set current time for UpdatedAt
+		}
+
+		products = append(products, product)
+	}
+
+	// Add the products to the new order
+	newOrder.Products = products
 	newOrder.Status = "pending"
-	for _, items := range cart.Items {
-		newOrder.StoresID = append(newOrder.StoresID, items.Product.Store)
-	}
-	if input.PaymentGateway == "flutterwave" {
-		newOrder.PaymentGateway = "flutterwave"
-		newOrder.Status = ""
-	} else if input.PaymentGateway == "paystack" {
-		newOrder.PaymentGateway = "paystack"
-		// return("paystack")
-	}
-	cart.Active = false
-	r.db.Save(&cart)
-	// err = r.db.Model(&store.Order{}).Save(newOrder).Error
-	// if err != nil {
-	// 	return "", err
+	// for _, items := range cart.Items {
+	// 	newOrder.StoresID = append(newOrder.StoresID, items.Product.Store)
 	// }
+
+	var paymentLink string
+
+	switch input.PaymentGateway {
+	case "flutterwave":
+		// Prepare the request data for Flutterwave
+		requestData := map[string]interface{}{
+			"tx_ref":       UUID,
+			"amount":       input.Fee + cart.Total,
+			"currency":     "NGN",
+			"redirect_url": redirectUrl,
+			"meta": map[string]interface{}{
+				"consumer_id":  userID,
+				"consumer_mac": "92a3-912ba-1192a",
+			},
+			"customer": map[string]interface{}{
+				"email":       customer.Email,
+				"phonenumber": customer.Phone,
+				"name":        customer.Fullname,
+			},
+			"customizations": map[string]interface{}{
+				"title": "Aluta Market Checkout",
+				"logo":  "https://res.cloudinary.com/folajimidev/image/upload/v1697737213/logo_xesoiu.png",
+			},
+		}
+
+		// Serialize the request data to JSON
+		requestDataBytes, err := json.Marshal(requestData)
+		if err != nil {
+			return "", err
+		}
+
+		// Create an HTTP request for Flutterwave
+		req, err := http.NewRequest("POST", "https://api.flutterwave.com/v3/charges?type=mobilemoneyghana", bytes.NewBuffer(requestDataBytes))
+		if err != nil {
+			return "", err
+		}
+
+		// Set the request headers
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+os.Getenv("FLW_SECRET_KEY"))
+
+		// Make the HTTP request
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return "", err
+		}
+		defer resp.Body.Close()
+
+		// Parse the response
+		var response map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+			return "", err
+		}
+
+		responseData, ok := response["data"].(map[string]interface{})
+		if ok {
+			linkValue, linkExists := responseData["link"].(string)
+			if linkExists {
+				paymentLink = linkValue
+			}
+		}
+
+		newOrder.PaymentGateway = "flutterwave"
+
+	case "paystack":
+		// Prepare the request data for Paystack
+		paystackRequestData := map[string]interface{}{
+			"email":        customer.Email,
+			"amount":       (input.Fee + cart.Total) * 100, // Amount should be in kobo
+			"currency":     "NGN",
+			"callback_url": redirectUrl,
+			"metadata": map[string]interface{}{
+				"consumer_id":  userID,
+				"consumer_mac": "92a3-912ba-1192a",
+			},
+			"customizations": map[string]interface{}{
+				"title": "Aluta Market Checkout",
+				"logo":  "https://res.cloudinary.com/folajimidev/image/upload/v1697737213/logo_xesoiu.png",
+			},
+		}
+
+		// Serialize the request data to JSON
+		paystackRequestDataBytes, err := json.Marshal(paystackRequestData)
+		if err != nil {
+			return "", err
+		}
+
+		// Create an HTTP request for Paystack
+		paystackReq, err := http.NewRequest("POST", "https://api.paystack.co/transaction/initialize", bytes.NewBuffer(paystackRequestDataBytes))
+		if err != nil {
+			return "", err
+		}
+
+		// Set the request headers for Paystack
+		paystackReq.Header.Set("Content-Type", "application/json")
+		paystackReq.Header.Set("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
+
+		// Make the HTTP request
+		paystackResp, err := http.DefaultClient.Do(paystackReq)
+		if err != nil {
+			return "", err
+		}
+		defer paystackResp.Body.Close()
+
+		// Parse the response
+		var paystackResponse map[string]interface{}
+		if err := json.NewDecoder(paystackResp.Body).Decode(&paystackResponse); err != nil {
+			return "", err
+		}
+
+		paystackResponseData, ok := paystackResponse["data"].(map[string]interface{})
+		if ok {
+			linkValue, linkExists := paystackResponseData["authorization_url"].(string)
+			if linkExists {
+				paymentLink = linkValue
+			}
+		}
+
+		newOrder.PaymentGateway = "paystack"
+
+	case "squad":
+		// Prepare the request data for Squad
+		squadRequestData := map[string]interface{}{
+			"currency":        "NGN",
+			"initiate_type":   "inline",
+			"transaction_ref": UUID,
+			"callback_url":    redirectUrl,
+			"amount":          (input.Fee + cart.Total) * 100,
+			// "redirectUrl":     ,
+			"email":         customer.Email,
+			"pass_charge":   true,
+			"customer_name": customer.Fullname,
+		}
+
+		// Serialize the request data to JSON
+		squadRequestDataBytes, err := json.Marshal(squadRequestData)
+		if err != nil {
+			return "", err
+		}
+
+		// Create an HTTP request for Squad
+		squadReq, err := http.NewRequest("POST", "https://sandbox-api-d.squadco.com/transaction/initiate", bytes.NewBuffer(squadRequestDataBytes))
+		if err != nil {
+			return "", err
+		}
+
+		// Set the request headers for Squad
+		squadReq.Header.Set("Content-Type", "application/json")
+		squadReq.Header.Set("Authorization", "Bearer "+os.Getenv("SQUAD_SECRET_KEY"))
+
+		// Make the HTTP request
+		squadResp, err := http.DefaultClient.Do(squadReq)
+		if err != nil {
+			return "", err
+		}
+		defer squadResp.Body.Close()
+
+		// Parse the response
+		var squadResponse map[string]interface{}
+		if err := json.NewDecoder(squadResp.Body).Decode(&squadResponse); err != nil {
+			return "", err
+		}
+
+		squadResponseData, ok := squadResponse["data"].(map[string]interface{})
+		// Deb// Debug print the entire response
+		// fmt.Printf("Squad Response: %+v\n", squadResponse)
+		// fmt.Printf("Status Code: %d\n", squadResp.StatusCode)
+		// fmt.Printf("Response Headers: %+v\n", squadResp.Header)
+
+		if ok {
+			linkValue, linkExists := squadResponseData["checkout_url"].(string)
+			if linkExists {
+				paymentLink = linkValue
+			}
+		}
+
+		newOrder.PaymentGateway = "squad"
+
+	default:
+		return "", errors.NewAppError(http.StatusBadRequest, "INVALID PAYMENT GATEWAY", "Unsupported payment gateway")
+	}
+
+	// Mark the cart as inactive
+	cart.Active = false
+	if err := r.db.Save(&cart).Error; err != nil {
+		return "", err
+	}
+
+	// Save the order in the database
+	if err := r.db.Model(&store.Order{}).Save(newOrder).Error; err != nil {
+		return "", err
+	}
+
 	return paymentLink, nil
 }
 
