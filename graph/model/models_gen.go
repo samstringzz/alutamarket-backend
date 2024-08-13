@@ -79,13 +79,6 @@ type DVADetails struct {
 	StoreName     string `json:"store_name"`
 }
 
-type Follower struct {
-	FollowerID    int    `json:"follower_id"`
-	FollowerName  string `json:"follower_name"`
-	StoreID       int    `json:"store_id"`
-	FollowerImage string `json:"follower_image"`
-}
-
 type HandledProducts struct {
 	UserID           int      `json:"userId"`
 	ProductID        int      `json:"productId"`
@@ -109,7 +102,7 @@ type LoginRes struct {
 }
 
 type ModifyCartItemInput struct {
-	ProductID   string  `json:"productId"`
+	ProductID   *string `json:"productId,omitempty"`
 	ProductName *string `json:"productName,omitempty"`
 	Quantity    int     `json:"quantity"`
 	User        int     `json:"user"`
@@ -295,28 +288,43 @@ type SplitConfig struct {
 }
 
 type Store struct {
-	ID                 string        `json:"id"`
-	Link               string        `json:"link"`
-	Name               string        `json:"name"`
-	Wallet             float64       `json:"wallet"`
-	User               int           `json:"user"`
-	Email              string        `json:"email"`
-	Description        string        `json:"description"`
-	Followers          []*Follower   `json:"followers,omitempty"`
-	Product            []*Product    `json:"product,omitempty"`
-	Orders             []*StoreOrder `json:"orders,omitempty"`
-	Address            string        `json:"address"`
-	Status             bool          `json:"status"`
-	Thumbnail          string        `json:"thumbnail"`
-	Phone              string        `json:"phone"`
-	Background         string        `json:"background"`
-	HasPhysicalAddress bool          `json:"has_physical_address"`
+	ID                 string           `json:"id"`
+	Link               string           `json:"link"`
+	Name               string           `json:"name"`
+	Wallet             float64          `json:"wallet"`
+	User               int              `json:"user"`
+	Email              string           `json:"email"`
+	Description        string           `json:"description"`
+	Followers          []*StoreFollower `json:"followers,omitempty"`
+	Product            []*Product       `json:"product,omitempty"`
+	Orders             []*StoreOrder    `json:"orders,omitempty"`
+	Address            string           `json:"address"`
+	Status             bool             `json:"status"`
+	Thumbnail          string           `json:"thumbnail"`
+	Phone              string           `json:"phone"`
+	Background         string           `json:"background"`
+	HasPhysicalAddress bool             `json:"has_physical_address"`
 }
 
 type StoreCustomer struct {
 	Name    string `json:"name"`
 	Phone   string `json:"phone"`
 	Address string `json:"address"`
+}
+
+type StoreFollower struct {
+	FollowerID    int    `json:"follower_id"`
+	FollowerName  string `json:"follower_name"`
+	StoreID       int    `json:"store_id"`
+	FollowerImage string `json:"follower_image"`
+}
+
+type StoreFollowerInput struct {
+	FollowerID    int    `json:"follower_id"`
+	FollowerName  string `json:"follower_name"`
+	FollowerImage string `json:"follower_image"`
+	StoreID       int    `json:"store_id"`
+	Action        string `json:"action"`
 }
 
 type StoreInput struct {

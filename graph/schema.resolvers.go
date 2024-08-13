@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 
 	"github.com/Chrisentech/aluta-market-api/app"
 	"github.com/Chrisentech/aluta-market-api/graph/model"
@@ -289,9 +290,14 @@ func (r *mutationResolver) AddHandledProduct(ctx context.Context, userID int, pr
 		return nil, err
 	}
 	schema := &model.HandledProducts{
-		UserID:      userID,
-		ProductID:   productID,
-		ProductName: &prod.Product.Name,
+		UserID:           userID,
+		ProductID:        productID,
+		ProductName:      &prod.Product.Name,
+		ProductThumbnail: &prod.Product.Thumbnail,
+		ProductQuantity:  &prod.Product.Quantity,
+		ProductStatus:    &prod.Product.Status,
+		ProductPrice:     &prod.Product.Price,
+		ProductDiscount:  &prod.Product.Discount,
 	}
 	return schema, nil
 }
@@ -333,6 +339,76 @@ func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInpu
 	}
 
 	return NewReview, nil
+}
+
+// CheckStoreName is the resolver for the checkStoreName field.
+func (r *mutationResolver) CheckStoreName(ctx context.Context, input string) (*string, error) {
+	// token := ctx.Value("token").(string)
+
+	// authErr := middlewares.AuthMiddleware("entry", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
+	storeRep := app.InitializePackage(app.StorePackage)
+
+	storeRepository, ok := storeRep.(store.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("storeRep is not a cart.Repository")
+	}
+	storeSrvc := store.NewService(storeRepository)
+	storeHandler := store.NewHandler(storeSrvc)
+
+	err := storeHandler.CheckStoreName(ctx, strings.ToLower(strings.TrimSpace(input)))
+	if err != nil {
+		return nil, err
+	}
+	return &input, nil
+}
+
+// UpdateStoreFollower is the resolver for the updateStoreFollower field.
+func (r *mutationResolver) UpdateStoreFollower(ctx context.Context, input *model.StoreFollowerInput) (*model.Store, error) {
+	token := ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("entry", token)
+	if authErr != nil {
+		return nil, authErr
+	}
+	storeRep := app.InitializePackage(app.StorePackage)
+
+	storeRepository, ok := storeRep.(store.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("storeRep is not a cart.Repository")
+	}
+	storeSrvc := store.NewService(storeRepository)
+	storeHandler := store.NewHandler(storeSrvc)
+	follower := store.Follower{}
+	resp, err := storeHandler.UpdateStoreFollowership(ctx, uint32(input.StoreID), follower, input.Action)
+	if err != nil {
+		return nil, err
+	}
+	store := &model.Store{
+		ID:                 strconv.Itoa(int(resp.ID)),
+		Name:               resp.Name,
+		HasPhysicalAddress: resp.HasPhysicalAddress,
+		Link:               resp.Link,
+		Wallet:             resp.Wallet,
+		User:               int(resp.UserID),
+		Description:        resp.Description,
+		Thumbnail:          resp.Thumbnail,
+		Background:         resp.Background,
+		Address:            resp.Address,
+		Phone:              resp.Phone,
+	}
+	for _, follower := range resp.Followers {
+		storeFollower := &model.StoreFollower{}
+		storeFollower.FollowerID = int(follower.ID)
+		storeFollower.FollowerName = follower.FollowerName
+		store.Followers = append(store.Followers, storeFollower)
+	}
+
+	return store, nil
 }
 
 // CreateSkynet is the resolver for the createSkynet field.
@@ -717,11 +793,13 @@ func (r *mutationResolver) DeleteProduct(ctx context.Context, productID int) (*m
 func (r *mutationResolver) ModifyCart(ctx context.Context, input model.ModifyCartItemInput) (*model.Cart, error) {
 	var cartItem cart.CartItems
 	cartItem.Quantity = input.Quantity
-	num, _ := strconv.ParseUint(input.ProductID, 10, 32)
+
+	num, _ := strconv.ParseUint(*input.ProductID, 10, 32)
+	cartItem.Product = &product.Product{ID: uint32(num)}
+
 	if input.ProductName != nil {
 		cartItem.Product = &product.Product{ID: uint32(num), Name: *input.ProductName}
 	}
-	cartItem.Product = &product.Product{ID: uint32(num)}
 
 	cartRep := app.InitializePackage(app.CartPackage)
 
@@ -1303,7 +1381,7 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 	}
 
 	product := &model.Product{
-		// ID:       strconv.FormatInt(int64(resp.ID), 10),
+		ID:          int(resp.ID),
 		Name:        resp.Name,
 		Description: resp.Description,
 		Image:       resp.Images,
@@ -1697,7 +1775,7 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 		// Map followers
 		if len(item.Followers) > 0 {
 			for _, follower := range item.Followers {
-				storeFollower := &model.Follower{
+				storeFollower := &model.StoreFollower{
 					FollowerID:   int(follower.ID),
 					FollowerName: follower.FollowerName,
 				}
@@ -1790,7 +1868,7 @@ func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error)
 		Phone:              resp.Phone,
 	}
 	for _, follower := range resp.Followers {
-		storeFollower := &model.Follower{}
+		storeFollower := &model.StoreFollower{}
 		storeFollower.FollowerID = int(follower.ID)
 		storeFollower.FollowerName = follower.FollowerName
 		store.Followers = append(store.Followers, storeFollower)
@@ -1829,7 +1907,7 @@ func (r *queryResolver) StoreByName(ctx context.Context, name string) (*model.St
 		Thumbnail:          resp.Thumbnail,
 	}
 	for _, follower := range resp.Followers {
-		storeFollower := &model.Follower{}
+		storeFollower := &model.StoreFollower{}
 		storeFollower.FollowerID = int(follower.ID)
 		storeFollower.FollowerName = follower.FollowerName
 		store.Followers = append(store.Followers, storeFollower)

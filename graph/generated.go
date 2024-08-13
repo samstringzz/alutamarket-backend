@@ -118,13 +118,6 @@ type ComplexityRoot struct {
 		UserID        func(childComplexity int) int
 	}
 
-	Follower struct {
-		FollowerID    func(childComplexity int) int
-		FollowerImage func(childComplexity int) int
-		FollowerName  func(childComplexity int) int
-		StoreID       func(childComplexity int) int
-	}
-
 	HandledProducts struct {
 		ProductDiscount  func(childComplexity int) int
 		ProductID        func(childComplexity int) int
@@ -145,6 +138,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AddHandledProduct       func(childComplexity int, userID int, productID int, typeArg string) int
 		AddReview               func(childComplexity int, input model.ReviewInput) int
+		CheckStoreName          func(childComplexity int, input string) int
 		CreateCategory          func(childComplexity int, input model.NewCategory) int
 		CreateDVAAccount        func(childComplexity int, input model.DVAAccountInput) int
 		CreateOrder             func(childComplexity int, input model.StoreOrderInput) int
@@ -165,6 +159,7 @@ type ComplexityRoot struct {
 		UpdateOrder             func(childComplexity int, input model.UpdateStoreOrderInput) int
 		UpdateProduct           func(childComplexity int, input *model.ProductInput) int
 		UpdateStore             func(childComplexity int, input *model.UpdateStoreInput) int
+		UpdateStoreFollower     func(childComplexity int, input *model.StoreFollowerInput) int
 		UpdateUser              func(childComplexity int, input *model.UpdateUserInput) int
 		VerifySmartCard         func(childComplexity int, input model.SmartCardInput) int
 	}
@@ -293,6 +288,13 @@ type ComplexityRoot struct {
 		Phone   func(childComplexity int) int
 	}
 
+	StoreFollower struct {
+		FollowerID    func(childComplexity int) int
+		FollowerImage func(childComplexity int) int
+		FollowerName  func(childComplexity int) int
+		StoreID       func(childComplexity int) int
+	}
+
 	StoreOrder struct {
 		CreatedAt func(childComplexity int) int
 		Customer  func(childComplexity int) int
@@ -383,6 +385,8 @@ type MutationResolver interface {
 	LoginUser(ctx context.Context, input model.LoginReq) (*model.LoginRes, error)
 	AddHandledProduct(ctx context.Context, userID int, productID int, typeArg string) (*model.HandledProducts, error)
 	AddReview(ctx context.Context, input model.ReviewInput) (*model.Review, error)
+	CheckStoreName(ctx context.Context, input string) (*string, error)
+	UpdateStoreFollower(ctx context.Context, input *model.StoreFollowerInput) (*model.Store, error)
 	CreateSkynet(ctx context.Context, input *model.SkynetInput) (string, error)
 	RemoveHandledProduct(ctx context.Context, prd int, typeArg *string) (*model.HandledProducts, error)
 	CreateCategory(ctx context.Context, input model.NewCategory) (*model.Category, error)
@@ -753,34 +757,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DVADetails.UserID(childComplexity), true
 
-	case "Follower.follower_id":
-		if e.complexity.Follower.FollowerID == nil {
-			break
-		}
-
-		return e.complexity.Follower.FollowerID(childComplexity), true
-
-	case "Follower.follower_image":
-		if e.complexity.Follower.FollowerImage == nil {
-			break
-		}
-
-		return e.complexity.Follower.FollowerImage(childComplexity), true
-
-	case "Follower.follower_name":
-		if e.complexity.Follower.FollowerName == nil {
-			break
-		}
-
-		return e.complexity.Follower.FollowerName(childComplexity), true
-
-	case "Follower.store_id":
-		if e.complexity.Follower.StoreID == nil {
-			break
-		}
-
-		return e.complexity.Follower.StoreID(childComplexity), true
-
 	case "HandledProducts.productDiscount":
 		if e.complexity.HandledProducts.ProductDiscount == nil {
 			break
@@ -881,6 +857,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AddReview(childComplexity, args["input"].(model.ReviewInput)), true
+
+	case "Mutation.checkStoreName":
+		if e.complexity.Mutation.CheckStoreName == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_checkStoreName_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CheckStoreName(childComplexity, args["input"].(string)), true
 
 	case "Mutation.createCategory":
 		if e.complexity.Mutation.CreateCategory == nil {
@@ -1121,6 +1109,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateStore(childComplexity, args["input"].(*model.UpdateStoreInput)), true
+
+	case "Mutation.updateStoreFollower":
+		if e.complexity.Mutation.UpdateStoreFollower == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateStoreFollower_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateStoreFollower(childComplexity, args["input"].(*model.StoreFollowerInput)), true
 
 	case "Mutation.updateUser":
 		if e.complexity.Mutation.UpdateUser == nil {
@@ -1878,6 +1878,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.StoreCustomer.Phone(childComplexity), true
 
+	case "StoreFollower.follower_id":
+		if e.complexity.StoreFollower.FollowerID == nil {
+			break
+		}
+
+		return e.complexity.StoreFollower.FollowerID(childComplexity), true
+
+	case "StoreFollower.follower_image":
+		if e.complexity.StoreFollower.FollowerImage == nil {
+			break
+		}
+
+		return e.complexity.StoreFollower.FollowerImage(childComplexity), true
+
+	case "StoreFollower.follower_name":
+		if e.complexity.StoreFollower.FollowerName == nil {
+			break
+		}
+
+		return e.complexity.StoreFollower.FollowerName(childComplexity), true
+
+	case "StoreFollower.store_id":
+		if e.complexity.StoreFollower.StoreID == nil {
+			break
+		}
+
+		return e.complexity.StoreFollower.StoreID(childComplexity), true
+
 	case "StoreOrder.createdAt":
 		if e.complexity.StoreOrder.CreatedAt == nil {
 			break
@@ -2256,6 +2284,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputReviewInput,
 		ec.unmarshalInputSkynetInput,
 		ec.unmarshalInputSmartCardInput,
+		ec.unmarshalInputStoreFollowerInput,
 		ec.unmarshalInputStoreInput,
 		ec.unmarshalInputStoreOrderInput,
 		ec.unmarshalInputStoreProductInput,
@@ -2436,6 +2465,21 @@ func (ec *executionContext) field_Mutation_addReview_args(ctx context.Context, r
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNReviewInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_checkStoreName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2739,6 +2783,21 @@ func (ec *executionContext) field_Mutation_updateProduct_args(ctx context.Contex
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalOProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateStoreFollower_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.StoreFollowerInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOStoreFollowerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollowerInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -5212,182 +5271,6 @@ func (ec *executionContext) fieldContext_DVADetails_store_name(_ context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Follower_follower_id(ctx context.Context, field graphql.CollectedField, obj *model.Follower) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Follower_follower_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.FollowerID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Follower_follower_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Follower",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Follower_follower_name(ctx context.Context, field graphql.CollectedField, obj *model.Follower) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Follower_follower_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.FollowerName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Follower_follower_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Follower",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Follower_store_id(ctx context.Context, field graphql.CollectedField, obj *model.Follower) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Follower_store_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.StoreID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Follower_store_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Follower",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Follower_follower_image(ctx context.Context, field graphql.CollectedField, obj *model.Follower) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Follower_follower_image(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.FollowerImage, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Follower_follower_image(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Follower",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _HandledProducts_userId(ctx context.Context, field graphql.CollectedField, obj *model.HandledProducts) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_HandledProducts_userId(ctx, field)
 	if err != nil {
@@ -6458,6 +6341,144 @@ func (ec *executionContext) fieldContext_Mutation_addReview(ctx context.Context,
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_addReview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_checkStoreName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_checkStoreName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CheckStoreName(rctx, fc.Args["input"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_checkStoreName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_checkStoreName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateStoreFollower(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateStoreFollower(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateStoreFollower(rctx, fc.Args["input"].(*model.StoreFollowerInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Store)
+	fc.Result = res
+	return ec.marshalOStore2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateStoreFollower(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Store_id(ctx, field)
+			case "link":
+				return ec.fieldContext_Store_link(ctx, field)
+			case "name":
+				return ec.fieldContext_Store_name(ctx, field)
+			case "wallet":
+				return ec.fieldContext_Store_wallet(ctx, field)
+			case "user":
+				return ec.fieldContext_Store_user(ctx, field)
+			case "email":
+				return ec.fieldContext_Store_email(ctx, field)
+			case "description":
+				return ec.fieldContext_Store_description(ctx, field)
+			case "followers":
+				return ec.fieldContext_Store_followers(ctx, field)
+			case "product":
+				return ec.fieldContext_Store_product(ctx, field)
+			case "orders":
+				return ec.fieldContext_Store_orders(ctx, field)
+			case "address":
+				return ec.fieldContext_Store_address(ctx, field)
+			case "status":
+				return ec.fieldContext_Store_status(ctx, field)
+			case "thumbnail":
+				return ec.fieldContext_Store_thumbnail(ctx, field)
+			case "phone":
+				return ec.fieldContext_Store_phone(ctx, field)
+			case "background":
+				return ec.fieldContext_Store_background(ctx, field)
+			case "has_physical_address":
+				return ec.fieldContext_Store_has_physical_address(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateStoreFollower_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -11874,9 +11895,9 @@ func (ec *executionContext) _Store_followers(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Follower)
+	res := resTmp.([]*model.StoreFollower)
 	fc.Result = res
-	return ec.marshalOFollower2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐFollowerᚄ(ctx, field.Selections, res)
+	return ec.marshalOStoreFollower2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollowerᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Store_followers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11888,15 +11909,15 @@ func (ec *executionContext) fieldContext_Store_followers(_ context.Context, fiel
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "follower_id":
-				return ec.fieldContext_Follower_follower_id(ctx, field)
+				return ec.fieldContext_StoreFollower_follower_id(ctx, field)
 			case "follower_name":
-				return ec.fieldContext_Follower_follower_name(ctx, field)
+				return ec.fieldContext_StoreFollower_follower_name(ctx, field)
 			case "store_id":
-				return ec.fieldContext_Follower_store_id(ctx, field)
+				return ec.fieldContext_StoreFollower_store_id(ctx, field)
 			case "follower_image":
-				return ec.fieldContext_Follower_follower_image(ctx, field)
+				return ec.fieldContext_StoreFollower_follower_image(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Follower", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type StoreFollower", field.Name)
 		},
 	}
 	return fc, nil
@@ -12416,6 +12437,182 @@ func (ec *executionContext) _StoreCustomer_address(ctx context.Context, field gr
 func (ec *executionContext) fieldContext_StoreCustomer_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "StoreCustomer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StoreFollower_follower_id(ctx context.Context, field graphql.CollectedField, obj *model.StoreFollower) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StoreFollower_follower_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FollowerID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StoreFollower_follower_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StoreFollower",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StoreFollower_follower_name(ctx context.Context, field graphql.CollectedField, obj *model.StoreFollower) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StoreFollower_follower_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FollowerName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StoreFollower_follower_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StoreFollower",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StoreFollower_store_id(ctx context.Context, field graphql.CollectedField, obj *model.StoreFollower) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StoreFollower_store_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StoreID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StoreFollower_store_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StoreFollower",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StoreFollower_follower_image(ctx context.Context, field graphql.CollectedField, obj *model.StoreFollower) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StoreFollower_follower_image(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FollowerImage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StoreFollower_follower_image(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StoreFollower",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -16621,7 +16818,7 @@ func (ec *executionContext) unmarshalInputModifyCartItemInput(ctx context.Contex
 		switch k {
 		case "productId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productId"))
-			data, err := ec.unmarshalNID2string(ctx, v)
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -17314,6 +17511,61 @@ func (ec *executionContext) unmarshalInputSmartCardInput(ctx context.Context, ob
 				return it, err
 			}
 			it.CardType = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputStoreFollowerInput(ctx context.Context, obj interface{}) (model.StoreFollowerInput, error) {
+	var it model.StoreFollowerInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"follower_id", "follower_name", "follower_image", "store_id", "action"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "follower_id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("follower_id"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FollowerID = data
+		case "follower_name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("follower_name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FollowerName = data
+		case "follower_image":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("follower_image"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FollowerImage = data
+		case "store_id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("store_id"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoreID = data
+		case "action":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("action"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Action = data
 		}
 	}
 
@@ -18332,60 +18584,6 @@ func (ec *executionContext) _DVADetails(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
-var followerImplementors = []string{"Follower"}
-
-func (ec *executionContext) _Follower(ctx context.Context, sel ast.SelectionSet, obj *model.Follower) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, followerImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Follower")
-		case "follower_id":
-			out.Values[i] = ec._Follower_follower_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "follower_name":
-			out.Values[i] = ec._Follower_follower_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "store_id":
-			out.Values[i] = ec._Follower_store_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "follower_image":
-			out.Values[i] = ec._Follower_follower_image(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var handledProductsImplementors = []string{"HandledProducts"}
 
 func (ec *executionContext) _HandledProducts(ctx context.Context, sel ast.SelectionSet, obj *model.HandledProducts) graphql.Marshaler {
@@ -18560,6 +18758,14 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "checkStoreName":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_checkStoreName(ctx, field)
+			})
+		case "updateStoreFollower":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateStoreFollower(ctx, field)
+			})
 		case "createSkynet":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createSkynet(ctx, field)
@@ -19802,6 +20008,60 @@ func (ec *executionContext) _StoreCustomer(ctx context.Context, sel ast.Selectio
 	return out
 }
 
+var storeFollowerImplementors = []string{"StoreFollower"}
+
+func (ec *executionContext) _StoreFollower(ctx context.Context, sel ast.SelectionSet, obj *model.StoreFollower) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, storeFollowerImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StoreFollower")
+		case "follower_id":
+			out.Values[i] = ec._StoreFollower_follower_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "follower_name":
+			out.Values[i] = ec._StoreFollower_follower_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "store_id":
+			out.Values[i] = ec._StoreFollower_store_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "follower_image":
+			out.Values[i] = ec._StoreFollower_follower_image(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var storeOrderImplementors = []string{"StoreOrder"}
 
 func (ec *executionContext) _StoreOrder(ctx context.Context, sel ast.SelectionSet, obj *model.StoreOrder) graphql.Marshaler {
@@ -20892,16 +21152,6 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) marshalNFollower2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐFollower(ctx context.Context, sel ast.SelectionSet, v *model.Follower) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Follower(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNHandledProducts2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐHandledProducts(ctx context.Context, sel ast.SelectionSet, v model.HandledProducts) graphql.Marshaler {
 	return ec._HandledProducts(ctx, sel, &v)
 }
@@ -21312,6 +21562,16 @@ func (ec *executionContext) marshalNStoreCustomer2ᚖgithubᚗcomᚋChrisentech�
 		return graphql.Null
 	}
 	return ec._StoreCustomer(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNStoreFollower2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollower(ctx context.Context, sel ast.SelectionSet, v *model.StoreFollower) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StoreFollower(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNStoreInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreInput(ctx context.Context, v interface{}) (model.StoreInput, error) {
@@ -21855,53 +22115,6 @@ func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel as
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) marshalOFollower2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐFollowerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Follower) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNFollower2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐFollower(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalOHandledProducts2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐHandledProducts(ctx context.Context, sel ast.SelectionSet, v *model.HandledProducts) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -22291,6 +22504,61 @@ func (ec *executionContext) marshalOStore2ᚖgithubᚗcomᚋChrisentechᚋaluta�
 		return graphql.Null
 	}
 	return ec._Store(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOStoreFollower2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollowerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StoreFollower) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStoreFollower2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollower(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOStoreFollowerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollowerInput(ctx context.Context, v interface{}) (*model.StoreFollowerInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputStoreFollowerInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOStoreInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreInput(ctx context.Context, v interface{}) (*model.StoreInput, error) {
