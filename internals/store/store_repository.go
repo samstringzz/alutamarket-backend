@@ -170,6 +170,7 @@ func (r *repository) CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOr
 	req.UpdatedAt = time.Now()
 	req.UUID = utils.GenerateUUID()
 	req.Products = products
+	req.Status = "pending"
 	store.Orders = append(store.Orders, req)
 
 	err = r.db.WithContext(ctx).Save(&store).Error

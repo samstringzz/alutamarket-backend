@@ -15,6 +15,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/app"
 	"github.com/Chrisentech/aluta-market-api/graph/model"
 	"github.com/Chrisentech/aluta-market-api/internals/cart"
+	"github.com/Chrisentech/aluta-market-api/internals/messages"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/skynet"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
@@ -1105,6 +1106,44 @@ func (r *mutationResolver) VerifySmartCard(ctx context.Context, input model.Smar
 
 	return verificationResponse, nil
 }
+func intToUint32Array(intArr []int) []int64 {
+	uint32Arr := make([]int64, len(intArr))
+	for i, v := range intArr {
+		uint32Arr[i] = int64(v)
+	}
+	return uint32Arr
+}
+
+// CreateChat is the resolver for the createChat field.
+func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput) (*string, error) {
+	messagesRep := app.InitializePackage(app.MessagePackage)
+
+	messagesRepository, ok := messagesRep.(messages.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("messagesRep is not a messages.Repository")
+	}
+	messagesSrvc := messages.NewService(messagesRepository)
+	messagesHandler := messages.NewHandler(messagesSrvc)
+	if input.ChatID != nil {
+		chatId, _ := strconv.ParseUint(*input.ChatID, 10, 32)
+
+		chatID := uint32(chatId)
+		err := messagesHandler.CreateChat(ctx, chatID, intToUint32Array(input.UsersID))
+		if err != nil {
+			return nil, err
+		}
+		resp := "sucess"
+		return &resp, nil
+	} else {
+		err := messagesHandler.CreateChat(ctx, 0, intToUint32Array(input.UsersID))
+		if err != nil {
+			return nil, err
+		}
+		resp := "sucess"
+		return &resp, nil
+	}
+}
 
 // Users is the resolver for the Users field.
 func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error) {
@@ -1972,6 +2011,44 @@ func (r *queryResolver) Mydva(ctx context.Context, email string) (*model.Account
 	return account, nil
 }
 
+// Chats is the resolver for the Chats field.
+func (r *queryResolver) Chats(ctx context.Context, userID string) ([]*model.Chat, error) {
+	messageRep := app.InitializePackage(app.MessagePackage)
+
+	messageRepository, ok := messageRep.(messages.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("messageRep is not a messages.Repository")
+	}
+	messagesSrvc := messages.NewService(messageRepository)
+	id, _ := strconv.ParseUint(userID, 10, 32)
+	messagesHandler := messages.NewHandler(messagesSrvc)
+	chats, err := messagesHandler.GetChatLists(ctx, int64(id))
+	if err != nil {
+		return nil, err
+	}
+
+	var resp []*model.Chat
+	for _, chat := range chats {
+		// Convert []uint32 to []*int
+		var users []*int
+		for _, user := range chat.Users {
+			userInt := int(user)
+			users = append(users, &userInt)
+		}
+		latestMessage := convertToModelMessage(chat.LatestMessage)
+		newChat := &model.Chat{
+			ID:            int(chat.ID),
+			LatestMessage: latestMessage,
+			UnreadCount:   chat.UnreadCount,
+			Users:         users,
+		}
+
+		resp = append(resp, newChat)
+	}
+	return resp, nil
+}
+
 // ProductSearchResults is the resolver for the productSearchResults field.
 func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
 	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
@@ -1996,6 +2073,26 @@ type subscriptionResolver struct{ *Resolver }
 //   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //     it when you're done.
 //   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func convertToModelMessage(msg messages.Message) *model.Message {
+	// Assuming you have a way to convert msg.Media to model.MediaType
+	return &model.Message{
+		ID:      int(msg.ID),
+		ChatID:  int(msg.ChatID),
+		Content: msg.Content,
+		// Uncomment and implement this if msg.Media needs conversion
+		// Media:   convertToModelMedia(msg.Media),
+		IsRead: msg.IsRead,
+		User:   convertToModelUser(msg.User), // Assuming conversion is needed
+	}
+}
+func convertToModelUser(msgUser messages.User) *model.MessageUser {
+	// Assuming this is how you convert a messages.MessageUser to *model.MessageUser
+	return &model.MessageUser{
+		ID:   int(msgUser.ID),
+		Name: msgUser.Name,
+		// Add other fields as necessary
+	}
+}
 func uint32ToStringPtr(value uint32) *string {
 	strValue := strconv.FormatUint(uint64(value), 10)
 	return &strValue

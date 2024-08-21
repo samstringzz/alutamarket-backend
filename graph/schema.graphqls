@@ -5,11 +5,18 @@
 scalar Time
 scalar Data
 
-# type ApiResponse {
-#   message: String!
-#   status: Int!
-#   data: Data
-# }
+enum MediaType {
+	IMAGE
+	VIDEO
+	AUDIO
+	DOCUMENT
+}
+
+enum RoleType {
+	RECIVER
+	SENDER
+}
+
 type StoreFollower {
 	follower_id: Int!
 	follower_name: String!
@@ -24,6 +31,50 @@ type Order {
 	status: String!
 	date: String!
 	store_id: String!
+}
+type MessageUser {
+	id: Int!
+	avatar: String
+	role: RoleType!
+	name: String!
+	status: String!
+}
+
+type Message {
+	id: Int!
+	chat_id: Int!
+	content: String!
+	user: MessageUser!
+	media: MediaType!
+	is_read: Boolean!
+}
+
+type Chat {
+	id: Int!
+	latest_message: Message
+	unread_count: Int!
+	users: [Int]
+}
+
+input MessageUserInput {
+	id: Int!
+	avatar: String
+	role: RoleType!
+	name: String!
+}
+
+input MessageInput {
+	id: Int!
+	chat_id: String!
+	content: String!
+	user: MessageUserInput!
+	media: MediaType!
+	is_read: Boolean!
+}
+
+input ChatInput {
+	users_id: [Int!]!
+	chat_id: String
 }
 
 type DVADetails {
@@ -448,6 +499,7 @@ type Query {
 	Skynets(id: String!): [Skynet!]
 	Skynet(id: String!): Skynet
 	MYDVA(email: String!): Account
+	Chats(userID: String!): [Chat]
 }
 
 type Mutation {
@@ -481,6 +533,7 @@ type Mutation {
 	createDVAAccount(input: DVAAccountInput!): String!
 	initializePayment(input: PaymentData!): String
 	verifySmartCard(input: SmartCardInput!): SmartcardVerificationResponse
+	createChat(input: ChatInput!): String
 }
 
 type Subscription {

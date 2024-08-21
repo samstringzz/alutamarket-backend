@@ -211,13 +211,14 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		return "", errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Customer not found")
 	}
 
+	//Create Buyer Order Logic
+
 	newOrder := &store.Order{}
 	newOrder.Amount = cart.Total + input.Fee
 	newOrder.UserID = strconv.FormatUint(uint64(cart.UserID), 10)
 	newOrder.UUID = UUID
 	newOrder.CartID = cart.ID
 	var products []store.TrackedProduct
-
 	for _, item := range cart.Items {
 		product := store.TrackedProduct{
 			ID:        item.Product.ID,
@@ -225,21 +226,39 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 			Thumbnail: item.Product.Thumbnail,
 			Price:     item.Product.Price,
 			Discount:  item.Product.Discount,
-			Status:    "open",     // Or any other status you'd want to set initially
+			Status:    "open",
 			CreatedAt: time.Now(), // Set current time for CreatedAt
 			UpdatedAt: time.Now(), // Set current time for UpdatedAt
 		}
 
 		products = append(products, product)
 	}
-
-	// Add the products to the new order
 	newOrder.Products = products
 	newOrder.Status = "pending"
-	// for _, items := range cart.Items {
-	// 	newOrder.StoresID = append(newOrder.StoresID, items.Product.Store)
-	// }
 
+	//Create Seller Order Logic
+	var storePrd []*store.StoreProduct
+	for _, item := range cart.Items {
+		product := &store.StoreProduct{
+			ID:        item.Product.ID,
+			Name:      item.Product.Name,
+			Thumbnail: item.Product.Thumbnail,
+			Price:     item.Product.Price,
+			Quantity:  item.Product.Quantity,
+		}
+
+		storePrd = append(storePrd, product)
+	}
+	req := &store.StoreOrder{
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UUID:      UUID,
+		Products:  storePrd,
+	}
+	_, err = store.NewRepository().CreateOrder(ctx, req)
+	if err != nil {
+		return "", err
+	}
 	var paymentLink string
 
 	switch input.PaymentGateway {
@@ -422,14 +441,14 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		return "", errors.NewAppError(http.StatusBadRequest, "INVALID PAYMENT GATEWAY", "Unsupported payment gateway")
 	}
 
-	// Mark the cart as inactive
-	cart.Active = false
-	if err := r.db.Save(&cart).Error; err != nil {
+	// Save the order in the database
+	if err := r.db.Model(&store.Order{}).Save(newOrder).Error; err != nil {
 		return "", err
 	}
 
-	// Save the order in the database
-	if err := r.db.Model(&store.Order{}).Save(newOrder).Error; err != nil {
+	// Mark the cart as inactive
+	cart.Active = false
+	if err := r.db.Save(&cart).Error; err != nil {
 		return "", err
 	}
 

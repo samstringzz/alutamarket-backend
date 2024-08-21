@@ -14,6 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/Chrisentech/aluta-market-api/db"
 	"github.com/Chrisentech/aluta-market-api/graph"
+	"github.com/Chrisentech/aluta-market-api/internals/messages"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
@@ -26,6 +27,7 @@ type WebhookPayload struct {
 	Event string `json:"event"`
 	Data  string `json:"data"`
 }
+type Message *messages.Message
 
 func ExtractTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +74,13 @@ func PSWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "Paystack Webhook received successfully")
 }
+
+// WebSocket handler
+
 func main() {
+	// Start broadcasting messages to connected clients
+	go messages.BroadcastMessages()
+
 	// Create a new CORS middleware with the desired options
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "https://www.thealutamarket.com", "https://thealutamarket.com"}, // Specify the allowed origins
@@ -101,7 +109,7 @@ func main() {
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// Check against your desired domains here
-				return r.Host == "http://localhost:5173"
+				return r.Host == os.Getenv("BASE_URL") || r.Host == "http://localhost:5173"
 			},
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,

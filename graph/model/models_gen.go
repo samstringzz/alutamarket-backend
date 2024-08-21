@@ -3,6 +3,9 @@
 package model
 
 import (
+	"fmt"
+	"io"
+	"strconv"
 	"time"
 )
 
@@ -52,6 +55,18 @@ type Category struct {
 	Subcategories []*SubCategory `json:"subcategories,omitempty"`
 }
 
+type Chat struct {
+	ID            int      `json:"id"`
+	LatestMessage *Message `json:"latest_message,omitempty"`
+	UnreadCount   int      `json:"unread_count"`
+	Users         []*int   `json:"users,omitempty"`
+}
+
+type ChatInput struct {
+	UsersID []int   `json:"users_id"`
+	ChatID  *string `json:"chat_id,omitempty"`
+}
+
 type Customer struct {
 	ID           string `json:"id"`
 	FirstName    string `json:"first_name"`
@@ -99,6 +114,39 @@ type LoginRes struct {
 	ID           int    `json:"id"`
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type Message struct {
+	ID      int          `json:"id"`
+	ChatID  int          `json:"chat_id"`
+	Content string       `json:"content"`
+	User    *MessageUser `json:"user"`
+	Media   MediaType    `json:"media"`
+	IsRead  bool         `json:"is_read"`
+}
+
+type MessageInput struct {
+	ID      int               `json:"id"`
+	ChatID  string            `json:"chat_id"`
+	Content string            `json:"content"`
+	User    *MessageUserInput `json:"user"`
+	Media   MediaType         `json:"media"`
+	IsRead  bool              `json:"is_read"`
+}
+
+type MessageUser struct {
+	ID     int      `json:"id"`
+	Avatar *string  `json:"avatar,omitempty"`
+	Role   RoleType `json:"role"`
+	Name   string   `json:"name"`
+	Status string   `json:"status"`
+}
+
+type MessageUserInput struct {
+	ID     int      `json:"id"`
+	Avatar *string  `json:"avatar,omitempty"`
+	Role   RoleType `json:"role"`
+	Name   string   `json:"name"`
 }
 
 type ModifyCartItemInput struct {
@@ -479,4 +527,90 @@ type CustomerInput struct {
 	Name    string `json:"name"`
 	Phone   string `json:"phone"`
 	Address string `json:"address"`
+}
+
+type MediaType string
+
+const (
+	MediaTypeImage    MediaType = "IMAGE"
+	MediaTypeVideo    MediaType = "VIDEO"
+	MediaTypeAudio    MediaType = "AUDIO"
+	MediaTypeDocument MediaType = "DOCUMENT"
+)
+
+var AllMediaType = []MediaType{
+	MediaTypeImage,
+	MediaTypeVideo,
+	MediaTypeAudio,
+	MediaTypeDocument,
+}
+
+func (e MediaType) IsValid() bool {
+	switch e {
+	case MediaTypeImage, MediaTypeVideo, MediaTypeAudio, MediaTypeDocument:
+		return true
+	}
+	return false
+}
+
+func (e MediaType) String() string {
+	return string(e)
+}
+
+func (e *MediaType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = MediaType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid MediaType", str)
+	}
+	return nil
+}
+
+func (e MediaType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type RoleType string
+
+const (
+	RoleTypeReciver RoleType = "RECIVER"
+	RoleTypeSender  RoleType = "SENDER"
+)
+
+var AllRoleType = []RoleType{
+	RoleTypeReciver,
+	RoleTypeSender,
+}
+
+func (e RoleType) IsValid() bool {
+	switch e {
+	case RoleTypeReciver, RoleTypeSender:
+		return true
+	}
+	return false
+}
+
+func (e RoleType) String() string {
+	return string(e)
+}
+
+func (e *RoleType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RoleType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RoleType", str)
+	}
+	return nil
+}
+
+func (e RoleType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
