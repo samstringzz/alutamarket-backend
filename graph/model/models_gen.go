@@ -267,6 +267,18 @@ type ProductPaginationData struct {
 	PrevPage    int        `json:"prev_page"`
 }
 
+type PurchasedOrder struct {
+	CartID         int               `json:"cart_id"`
+	Coupon         string            `json:"coupon"`
+	Fee            float64           `json:"fee"`
+	Status         string            `json:"status"`
+	UserID         string            `json:"user_id"`
+	Amount         float64           `json:"amount"`
+	UUID           string            `json:"uuid"`
+	PaymentGateway string            `json:"paymentGateway"`
+	Products       []*TrackedProduct `json:"products"`
+}
+
 type Query struct {
 }
 
@@ -436,6 +448,15 @@ type SubscriptionBundle struct {
 	ServiceID      string             `json:"serviceID"`
 	ConvinienceFee string             `json:"convinienceFee"`
 	Variations     []*BundleVariation `json:"variations"`
+}
+
+type TrackedProduct struct {
+	ID        int     `json:"id"`
+	Name      string  `json:"name"`
+	Thumbnail string  `json:"thumbnail"`
+	Price     float64 `json:"price"`
+	Discount  float64 `json:"discount"`
+	Status    string  `json:"status"`
 }
 
 type Transaction struct {

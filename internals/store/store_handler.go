@@ -86,6 +86,14 @@ func (h *Handler) GetOrders(ctx context.Context, storeID uint32) ([]*StoreOrder,
 	return item, nil
 }
 
+func (h *Handler) GetPurchasedOrders(ctx context.Context, userId uint32) ([]*Order, error) {
+	item, err := h.Service.GetPurchasedOrders(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
 func (h *Handler) UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error) {
 	item, err := h.Service.UpdateStoreFollowership(ctx, storeID, follower, action)
 	if err != nil {

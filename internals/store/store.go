@@ -68,13 +68,15 @@ type TrackedProduct struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
+
+// Purchased Orders
 type Order struct {
 	gorm.Model
 	// StoresID       string  `gorm:"serializer:json" json:"store" db:"store_id"`
 	CartID         uint32           `json:"cart_id" db:"cart_id"`
 	Coupon         string           `json:"coupon,omitempty" db:"coupon"`
 	Fee            float64          `json:"fee" db:"fee"`
-	Status         string           `json:"status" db:"status"` //pending,completed,failed
+	Status         string           `json:"status" db:"status"` //open || closed
 	UserID         string           `json:"user_id" db:"user_id"`
 	Amount         float64          `json:"amount" db:"amount"`
 	UUID           string           `json:"uuid" db:"uuid"`
@@ -118,6 +120,7 @@ type Repository interface {
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetOrder(ctx context.Context, storeId uint32, orderId string) (*StoreOrder, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*StoreOrder, error)
+	GetPurchasedOrders(ctx context.Context, storeId uint32) ([]*Order, error)
 	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error)
@@ -130,6 +133,7 @@ type Service interface {
 	GetStoreByName(ctx context.Context, name string) (*Store, error)
 	CheckStoreName(ctx context.Context, query string) error
 	GetStore(ctx context.Context, id uint32) (*Store, error)
+	GetPurchasedOrders(ctx context.Context, storeId uint32) ([]*Order, error)
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*StoreOrder, error)
 	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)

@@ -1106,13 +1106,6 @@ func (r *mutationResolver) VerifySmartCard(ctx context.Context, input model.Smar
 
 	return verificationResponse, nil
 }
-func intToUint32Array(intArr []int) []int64 {
-	uint32Arr := make([]int64, len(intArr))
-	for i, v := range intArr {
-		uint32Arr[i] = int64(v)
-	}
-	return uint32Arr
-}
 
 // CreateChat is the resolver for the createChat field.
 func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput) (*string, error) {
@@ -1954,6 +1947,53 @@ func (r *queryResolver) StoreByName(ctx context.Context, name string) (*model.St
 
 	return store, nil
 }
+func convertToModelTrackedProducts(products []store.TrackedProduct) []*model.TrackedProduct {
+	modelProducts := make([]*model.TrackedProduct, len(products))
+	for i, p := range products {
+		// Convert store.TrackedProduct to *model.TrackedProduct
+		modelProducts[i] = &model.TrackedProduct{
+			ID:        int(p.ID),
+			Name:      p.Name,
+			Thumbnail: p.Thumbnail,
+			Price:     p.Price,
+			Discount:  p.Discount,
+			Status:    p.Status,
+		}
+	}
+	return modelProducts
+}
+
+// PurchasedOrder is the resolver for the PurchasedOrder field.
+func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.PurchasedOrder, error) {
+	storeRep := app.InitializePackage(app.StorePackage)
+
+	storeRepository, ok := storeRep.(store.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("productRep is not a product.Repository")
+	}
+	storeSrvc := store.NewService(storeRepository)
+	storeHandler := store.NewHandler(storeSrvc)
+	resp, err := storeHandler.GetPurchasedOrders(ctx, uint32(user))
+	if err != nil {
+		return nil, err
+	}
+	purchasedOrders := []*model.PurchasedOrder{}
+
+	for _, order := range resp {
+		purchasedOrder := &model.PurchasedOrder{}
+
+		purchasedOrder.CartID = int(order.CartID)
+		purchasedOrder.UUID = order.UUID
+		purchasedOrder.Fee = order.Fee
+		purchasedOrder.Amount = order.Amount
+		purchasedOrder.PaymentGateway = order.PaymentGateway
+		purchasedOrder.Products = convertToModelTrackedProducts(order.Products)
+		purchasedOrder.Status = order.Status
+		purchasedOrders = append(purchasedOrders, purchasedOrder)
+	}
+	return purchasedOrders, nil
+}
 
 // Skynets is the resolver for the Skynets field.
 func (r *queryResolver) Skynets(ctx context.Context, id string) ([]*model.Skynet, error) {
@@ -2073,6 +2113,13 @@ type subscriptionResolver struct{ *Resolver }
 //   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //     it when you're done.
 //   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func intToUint32Array(intArr []int) []int64 {
+	uint32Arr := make([]int64, len(intArr))
+	for i, v := range intArr {
+		uint32Arr[i] = int64(v)
+	}
+	return uint32Arr
+}
 func convertToModelMessage(msg messages.Message) *model.Message {
 	// Assuming you have a way to convert msg.Media to model.MediaType
 	return &model.Message{
