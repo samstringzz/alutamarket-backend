@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/Chrisentech/aluta-market-api/internals/cart"
+	"github.com/Chrisentech/aluta-market-api/internals/messages"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/skynet"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
@@ -16,11 +17,10 @@ const (
 	CartPackage
 	StorePackage
 	SkynetPackage
+	MessagePackage
 )
 
 func CreateRepository(pkgType PackageType) interface{} {
-
-	// var
 	switch pkgType {
 	case UserPackage:
 		return user.NewRepository()
@@ -30,6 +30,8 @@ func CreateRepository(pkgType PackageType) interface{} {
 		return cart.NewRepository()
 	case StorePackage:
 		return store.NewRepository()
+	case MessagePackage:
+		return messages.NewRepository()
 	case SkynetPackage:
 		return skynet.NewRepository()
 	// Add more cases for other packages as needed
