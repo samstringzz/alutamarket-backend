@@ -192,7 +192,7 @@ func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*StoreOrd
 
 func (r *repository) GetPurchasedOrders(ctx context.Context, userID uint32) ([]*Order, error) {
 	var orders []*Order
-	err := r.db.WithContext(ctx).Preload("Orders").First(&orders, userID).Error
+	err := r.db.Where("user_id = ?", userID).Find(&orders).Error
 	if err != nil {
 		return nil, err
 	}
