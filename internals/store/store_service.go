@@ -119,6 +119,17 @@ func (s *service) GetOrders(c context.Context, storeId uint32) ([]*StoreOrder, e
 	return resp, nil
 }
 
+func (s *service) GetPurchasedOrders(c context.Context, userId uint32) ([]*Order, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	resp, err := s.Repository.GetPurchasedOrders(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (s *service) UpdateOrder(c context.Context, req *StoreOrder) (*StoreOrder, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()

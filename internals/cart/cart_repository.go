@@ -195,7 +195,8 @@ func (r *repository) RemoveAllCart(ctx context.Context, id uint32) error {
 
 func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, error) {
 	UUID := utils.GenerateUUID()
-	redirectUrl := "http://yemi.com/redirect"
+	redirectUrl := "https://www.thealutamarket.com" //
+	// redirectUrl := "https://www.thealutamarket.com/api/payment"
 	cart := &Cart{}
 	userID, _ := strconv.ParseUint(input.UserID, 10, 32)
 

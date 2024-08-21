@@ -473,6 +473,25 @@ type SmartcardContent {
 	currentBouquetCode: String!
 	renewalAmount: Float!
 }
+type TrackedProduct {
+	id: Int!
+	name: String!
+	thumbnail: String!
+	price: Float!
+	discount: Float!
+	status: String!
+}
+type PurchasedOrder {
+	cart_id: Int!
+	coupon: String!
+	fee: Float!
+	status: String!
+	user_id: String!
+	amount: Float!
+	uuid: String!
+	paymentGateway: String!
+	products: [TrackedProduct]!
+}
 input SmartCardInput {
 	service_id: String!
 	billers_code: String!
@@ -496,6 +515,7 @@ type Query {
 	Stores(user: Int, limit: Int, offset: Int): StorePaginationData!
 	Store(id: Int!): Store
 	StoreByName(name: String!): Store
+	PurchasedOrder(user: Int!): [PurchasedOrder!]!
 	Skynets(id: String!): [Skynet!]
 	Skynet(id: String!): Skynet
 	MYDVA(email: String!): Account
