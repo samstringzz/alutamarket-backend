@@ -447,9 +447,11 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	}
 
 	// Mark the cart as inactive
-	cart.Active = false
-	if err := r.db.Save(&cart).Error; err != nil {
-		return "", err
+	if paymentLink != "" {
+		cart.Active = false
+		if err := r.db.Save(&cart).Error; err != nil {
+			return "", err
+		}
 	}
 
 	return paymentLink, nil
