@@ -255,10 +255,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		UUID:      UUID,
 		Products:  storePrd,
 	}
-	_, err = store.NewRepository().CreateOrder(ctx, req)
-	if err != nil {
-		return "", err
-	}
+
 	var paymentLink string
 
 	switch input.PaymentGateway {
@@ -441,17 +438,21 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		return "", errors.NewAppError(http.StatusBadRequest, "INVALID PAYMENT GATEWAY", "Unsupported payment gateway")
 	}
 
-	// Save the order in the database
-	if err := r.db.Model(&store.Order{}).Save(newOrder).Error; err != nil {
-		return "", err
-	}
-
 	// Mark the cart as inactive
 	if paymentLink != "" {
 		cart.Active = false
 		if err := r.db.Save(&cart).Error; err != nil {
 			return "", err
 		}
+		_, err = store.NewRepository().CreateOrder(ctx, req)
+		if err != nil {
+			return "", err
+		}
+		// Save the order in the database
+		if err := r.db.Model(&store.Order{}).Save(newOrder).Error; err != nil {
+			return "", err
+		}
+
 	}
 
 	return paymentLink, nil
