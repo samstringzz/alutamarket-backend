@@ -1,8 +1,13 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
+	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -55,4 +60,56 @@ func GenerateRequestID() string {
 	requestID := dateTime + string(randomString)
 
 	return requestID
+}
+
+
+
+// Define the structure for adding a new subscriber to OneSignal
+type OneSignalSubscriber struct {
+	AppID        string `json:"app_id"`
+	Identifier   string `json:"identifier"`
+	DeviceType   int    `json:"device_type"` // Use 11 for Email
+	EmailAuthHash string `json:"email_auth_hash,omitempty"` // Optional, for email authentication
+}
+
+func AddEmailSubscriber(email string) error {
+	url := "https://onesignal.com/api/v1/players"
+	subscriber := OneSignalSubscriber{
+		AppID:      os.Getenv("ONE_SIGNAL_APP_ID"),
+		Identifier: email,
+		DeviceType: 11, // 11 represents Email
+	}
+
+	jsonData, err := json.Marshal(subscriber)
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %v", err)
+	}
+
+	req.Header.Set("Authorization", "Basic "+os.Getenv("ONE_SIGNAL_KEY"))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	fmt.Println("Response body:", string(body))
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("received non-200 response: %d", resp.StatusCode)
+	}
+
+	return nil
 }

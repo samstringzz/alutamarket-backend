@@ -15,6 +15,7 @@ import (
 
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"github.com/Chrisentech/aluta-market-api/services"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joho/godotenv"
@@ -120,7 +121,10 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User already exists")
 	}
 	// emails.SendVerificationMail(req.Fullname, otpCode)
-
+	err := utils.AddEmailSubscriber(req.Email)
+	if err != nil {
+		return nil, err
+	}
 	newUser := &User{
 		Campus:     req.Campus,
 		Email:      req.Email,
@@ -138,6 +142,11 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 	if err := tx.Create(newUser).Error; err != nil {
 		tx.Rollback()
 		return nil, err
+	}
+	//email credentials
+	to := []string{req.Email}
+	contents := map[string]string{
+		"otp_code": otpCode,
 	}
 	if req.Usertype == "seller" {
 
@@ -160,6 +169,18 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		}
 		if err := tx.Create(createdStore).Error; err != nil {
 			tx.Rollback()
+			return nil, err
+		}
+
+		templateID := "7178d0b2-a957-410d-b24d-e812252451da"
+		err = services.SendEmail(templateID, "Welcome to Alutamarket🎉", to, contents)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		templateID := "633d65f7-0545-4550-9983-8b309afa3d03"
+		err := services.SendEmail(templateID, "Welcome to Alutamarket🎉", to, contents)
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -284,12 +305,13 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 	if err := r.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
 	}
-	if err := r.db.Where("active = ?", true).First(&user).Error; err != nil {
-		return nil, errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Your account is suspended/not verified")
-	}
 	if err := utils.CheckPassword(req.Password, user.Password); err != nil {
 		return nil, errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid Credentials")
 	}
+	if err := r.db.Where("active = ?", true).First(&user).Error; err != nil {
+		return nil, errors.NewAppError(http.StatusExpectationFailed, "FAILED", "Your account is suspended/not verified")
+	}
+
 	// Generate a new refresh token
 	refreshClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, MyJWTClaims{
 		ID:       strconv.Itoa(int(user.ID)),
