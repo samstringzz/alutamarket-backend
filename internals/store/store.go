@@ -89,6 +89,7 @@ type Customer struct {
 	Name    string `json:"name" db:"name"`
 	Phone   string `json:"phone" db:"phone"`
 	Address string `json:"address" db:"address"`
+	Info    string `json:"info" db:"info"`
 }
 type StoreProduct struct {
 	Name      string  `json:"name" db:"name"`
@@ -104,7 +105,7 @@ type StoreOrder struct {
 	Products  []*StoreProduct `gorm:"serializer:json" json:"products" db:"products"`
 	Status    string          `json:"status" db:"status"`
 	UUID      string          `json:"uuid" db:"uuid"`
-	Customer  `json:"customer" db:"customer"`
+	Customer  Customer        `json:"customer" db:"customer"`
 }
 
 type Review struct {
