@@ -148,6 +148,16 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 	contents := map[string]string{
 		"otp_code": otpCode,
 	}
+	// Define the template string with a placeholder for the passcode
+	messageTemplate := "Hello Comrade, your Alutamarket VIP passcode is: %s. Make haste, the party is waiting."
+	// Remove the plus sign from the phone number
+	phoneWithoutPlus := strings.TrimPrefix(req.Phone, "+")
+	// Insert the dynamic data into the template string
+	message := fmt.Sprintf(messageTemplate, otpCode)
+	_, err = services.SendSMS(phoneWithoutPlus, "N-Alert", message)
+	if err != nil {
+		return nil, err
+	}
 	if req.Usertype == "seller" {
 
 		createdStore := &store.Store{
@@ -272,7 +282,7 @@ func (r *repository) VerifyOTP(ctx context.Context, req *User) (*User, error) {
 	}
 
 	// If the code is incorrect, increment the r.otpCounter and send a new code if the r.otpCounter is greater than 3.
-	if req.Code != "12345" {
+	if req.Code != foundUser.Code {
 		r.otpCounter++
 		if r.otpCounter > 3 {
 			// Send a new code here.
@@ -283,7 +293,7 @@ func (r *repository) VerifyOTP(ctx context.Context, req *User) (*User, error) {
 		return nil, errors.NewAppError(http.StatusConflict, "BAD REQUEST", "OTP Expired!!")
 	}
 	// If the r.otpCounter is less than or equal to 3 and the code is correct, verify the user.
-	if r.otpCounter <= 3 && req.Code == "12345" {
+	if r.otpCounter <= 3 && req.Code == foundUser.Code {
 		if foundUser.ID == 0 {
 			return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist in the database")
 		}
@@ -295,9 +305,10 @@ func (r *repository) VerifyOTP(ctx context.Context, req *User) (*User, error) {
 		}
 		return foundUser, nil
 	}
+	r.db.Model(&foundUser).Update("active", true)
 
 	// If the code is incorrect and the counter is less than or equal to 3, return an error.
-	return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Incorrect Otp Provided")
+	return foundUser, nil
 }
 func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRes, error) {
 	var user User
@@ -501,7 +512,7 @@ func (r *repository) UpdateUser(ctx context.Context, req *User) (*User, error) {
 		existingUser.Twofa = req.Twofa
 	}
 
-	// Update the Store in the repository
+	// Update the User in the repository
 	err = r.db.Save(existingUser).Error
 	if err != nil {
 		return nil, err
@@ -559,4 +570,25 @@ func (r *repository) GetMyDVA(ctx context.Context, userEmail string) (*Account, 
 	}
 
 	return nil, fmt.Errorf("error: no account found for user with email %s", userEmail)
+}
+
+func (r *repository) SetPaymentDetais(ctx context.Context, req *PaymentDetails, userId uint32) error {
+	existingUser, err := r.GetUser(ctx, strconv.FormatUint(uint64(userId), 10))
+	if err != nil {
+		return err
+	}
+	detail := &PaymentDetails{
+		Name:    req.Name,
+		Address: req.Address,
+		Phone:   req.Phone,
+		Info:    req.Info,
+	}
+	existingUser.PaymentDetails = *detail
+
+	// Update the Store in the repository
+	err = r.db.Save(existingUser).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -207,9 +207,9 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	}
 
 	// Fetch the customer details
-	customer, _ := user.NewRepository().GetUser(ctx, input.UserID)
-	if customer == nil {
-		return "", errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Customer not found")
+	customer, err := user.NewRepository().GetUser(ctx, input.UserID)
+	if err == nil {
+		return "", err
 	}
 
 	//Create Buyer Order Logic
@@ -255,6 +255,13 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		UpdatedAt: time.Now(),
 		UUID:      UUID,
 		Products:  storePrd,
+		Customer: store.Customer{
+			ID:      uint32(customer.ID),
+			Name:    customer.PaymentDetails.Name,
+			Phone:   customer.PaymentDetails.Phone,
+			Address: customer.PaymentDetails.Address,
+			Info:    customer.PaymentDetails.Info,
+		},
 	}
 
 	var paymentLink string
@@ -289,7 +296,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		}
 
 		// Create an HTTP request for Flutterwave
-		req, err := http.NewRequest("POST", "https://api.flutterwave.com/v3/charges?type=mobilemoneyghana", bytes.NewBuffer(requestDataBytes))
+		req, err := http.NewRequest("POST", "https://api.flutterwave.com/v3/charges?type=mobilemoneynigeria", bytes.NewBuffer(requestDataBytes))
 		if err != nil {
 			return "", err
 		}
@@ -438,7 +445,6 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	default:
 		return "", errors.NewAppError(http.StatusBadRequest, "INVALID PAYMENT GATEWAY", "Unsupported payment gateway")
 	}
-
 	// Mark the cart as inactive
 	if paymentLink != "" {
 		cart.Active = false

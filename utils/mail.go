@@ -44,9 +44,9 @@ func GenerateOTP() string {
 	seed := time.Now().UnixNano()
 	rand.New(rand.NewSource(seed)) // Seed the random number generator with the current time
 
-	otpLength := 6 // Length of the OTP
-	min := 100000  // Minimum value of the OTP (inclusive)
-	max := 999999  // Maximum value of the OTP (inclusive)
+	otpLength := 5 // Length of the OTP
+	min := 10000   // Minimum value of the OTP (inclusive)
+	max := 99999   // Maximum value of the OTP (inclusive)
 
 	otp := strconv.Itoa(rand.Intn(max-min+1) + min) // Generate a random number within the specified range
 
