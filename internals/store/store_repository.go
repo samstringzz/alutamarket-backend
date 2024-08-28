@@ -190,7 +190,7 @@ func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*StoreOrd
 	return store.Orders, nil
 }
 
-func (r *repository) GetPurchasedOrders(ctx context.Context, userID uint32) ([]*Order, error) {
+func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*Order, error) {
 	var orders []*Order
 	err := r.db.Where("user_id = ?", userID).Find(&orders).Error
 	if err != nil {

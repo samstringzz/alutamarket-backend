@@ -224,6 +224,20 @@ type PaymentData struct {
 	PaymentGateway string   `json:"paymentGateway"`
 }
 
+type PaymentDetails struct {
+	Name    string `json:"name"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
+	Info    string `json:"info"`
+}
+
+type PaymentDetailsInput struct {
+	Name    string `json:"name"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
+	Info    string `json:"info"`
+}
+
 type Product struct {
 	ID          int        `json:"id"`
 	Name        string     `json:"name"`
@@ -268,15 +282,17 @@ type ProductPaginationData struct {
 }
 
 type PurchasedOrder struct {
-	CartID         int               `json:"cart_id"`
-	Coupon         string            `json:"coupon"`
-	Fee            float64           `json:"fee"`
-	Status         string            `json:"status"`
-	UserID         string            `json:"user_id"`
-	Amount         float64           `json:"amount"`
-	UUID           string            `json:"uuid"`
-	PaymentGateway string            `json:"paymentGateway"`
-	Products       []*TrackedProduct `json:"products"`
+	CartID          int               `json:"cart_id"`
+	Coupon          string            `json:"coupon"`
+	Fee             float64           `json:"fee"`
+	Status          string            `json:"status"`
+	UserID          string            `json:"user_id"`
+	Amount          float64           `json:"amount"`
+	UUID            string            `json:"uuid"`
+	PaymentGateway  string            `json:"paymentGateway"`
+	Products        []*TrackedProduct `json:"products"`
+	DeliveryDetails *DeliveryDetails  `json:"deliveryDetails"`
+	TextRef         string            `json:"textRef"`
 }
 
 type Query struct {
@@ -492,39 +508,41 @@ type UpdateStoreOrderInput struct {
 }
 
 type UpdateUserInput struct {
-	ID       *string     `json:"id,omitempty"`
-	Fullname *string     `json:"fullname,omitempty"`
-	Email    *string     `json:"email,omitempty"`
-	Campus   *string     `json:"campus,omitempty"`
-	Password *string     `json:"password,omitempty"`
-	Stores   *StoreInput `json:"stores,omitempty"`
-	Dob      *string     `json:"dob,omitempty"`
-	Phone    *string     `json:"phone,omitempty"`
-	Gender   *string     `json:"gender,omitempty"`
-	Active   *bool       `json:"active,omitempty"`
-	Usertype *string     `json:"usertype,omitempty"`
-	Code     *string     `json:"code,omitempty"`
-	Avatar   *string     `json:"avatar,omitempty"`
+	ID             *string              `json:"id,omitempty"`
+	Fullname       *string              `json:"fullname,omitempty"`
+	Email          *string              `json:"email,omitempty"`
+	Campus         *string              `json:"campus,omitempty"`
+	Password       *string              `json:"password,omitempty"`
+	Stores         *StoreInput          `json:"stores,omitempty"`
+	Dob            *string              `json:"dob,omitempty"`
+	Phone          *string              `json:"phone,omitempty"`
+	Gender         *string              `json:"gender,omitempty"`
+	Active         *bool                `json:"active,omitempty"`
+	Usertype       *string              `json:"usertype,omitempty"`
+	Code           *string              `json:"code,omitempty"`
+	Avatar         *string              `json:"avatar,omitempty"`
+	PaymnetDetails *PaymentDetailsInput `json:"paymnetDetails,omitempty"`
 }
 
 type User struct {
-	ID           string   `json:"id"`
-	Fullname     string   `json:"fullname"`
-	Email        string   `json:"email"`
-	Campus       string   `json:"campus"`
-	Avatar       *string  `json:"avatar,omitempty"`
-	Dob          *string  `json:"dob,omitempty"`
-	Gender       *string  `json:"gender,omitempty"`
-	Password     string   `json:"password"`
-	Phone        string   `json:"phone"`
-	Usertype     string   `json:"usertype"`
-	Stores       []*Store `json:"stores,omitempty"`
-	Active       bool     `json:"active"`
-	AccessToken  *string  `json:"access_token,omitempty"`
-	RefreshToken *string  `json:"refresh_token,omitempty"`
-	Twofa        bool     `json:"twofa"`
-	Code         string   `json:"code"`
-	Codeexpiry   string   `json:"codeexpiry"`
+	ID             string          `json:"id"`
+	Fullname       string          `json:"fullname"`
+	Email          string          `json:"email"`
+	Campus         string          `json:"campus"`
+	Avatar         *string         `json:"avatar,omitempty"`
+	Dob            *string         `json:"dob,omitempty"`
+	Gender         *string         `json:"gender,omitempty"`
+	Password       string          `json:"password"`
+	Phone          string          `json:"phone"`
+	Usertype       string          `json:"usertype"`
+	Stores         []*Store        `json:"stores,omitempty"`
+	Active         bool            `json:"active"`
+	AccessToken    *string         `json:"access_token,omitempty"`
+	RefreshToken   *string         `json:"refresh_token,omitempty"`
+	Twofa          bool            `json:"twofa"`
+	Code           string          `json:"code"`
+	PaymnetDetails *PaymentDetails `json:"paymnetDetails,omitempty"`
+	Codeexpiry     string          `json:"codeexpiry"`
 }
 
 type Variant struct {
@@ -548,6 +566,12 @@ type CustomerInput struct {
 	Name    string `json:"name"`
 	Phone   string `json:"phone"`
 	Address string `json:"address"`
+}
+
+type DeliveryDetails struct {
+	Method  string  `json:"method"`
+	Address string  `json:"address"`
+	Fee     float64 `json:"fee"`
 }
 
 type MediaType string

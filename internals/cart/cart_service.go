@@ -2,6 +2,7 @@ package cart
 
 import (
 	"context"
+	"errors"
 	"time"
 )
 
@@ -13,7 +14,7 @@ type service struct {
 func NewService(repository Repository) Service {
 	return &service{
 		repository,
-		time.Duration(5) * time.Second,
+		time.Duration(20) * time.Second,
 	}
 }
 
@@ -53,6 +54,9 @@ func (s *service) InitiatePayment(c context.Context, input Order) (string, error
 	defer cancel()
 	r, err := s.Repository.InitiatePayment(ctx, input)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return "", errors.New("operation timed out: payment initiation took too long")
+		}
 		return "", err
 	}
 	return r, nil

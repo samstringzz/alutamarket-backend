@@ -119,7 +119,7 @@ func (s *service) GetOrders(c context.Context, storeId uint32) ([]*StoreOrder, e
 	return resp, nil
 }
 
-func (s *service) GetPurchasedOrders(c context.Context, userId uint32) ([]*Order, error) {
+func (s *service) GetPurchasedOrders(c context.Context, userId string) ([]*Order, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 

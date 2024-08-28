@@ -191,6 +191,13 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUs
 		usr.Usertype = *input.Usertype
 	}
 
+	if input.PaymnetDetails != nil {
+		usr.PaymentDetails.Name = input.PaymnetDetails.Name
+		usr.PaymentDetails.Phone = input.PaymnetDetails.Phone
+		usr.PaymentDetails.Address = input.PaymnetDetails.Address
+		usr.PaymentDetails.Info = input.PaymnetDetails.Info
+	}
+
 	if input.ID != nil {
 		idUint64, err := strconv.ParseUint(*input.ID, 10, 32)
 		if err != nil {
@@ -1045,12 +1052,12 @@ func (r *mutationResolver) CreateDVAAccount(ctx context.Context, input model.DVA
 
 // InitializePayment is the resolver for the initializePayment field.
 func (r *mutationResolver) InitializePayment(ctx context.Context, input model.PaymentData) (*string, error) {
-	token := ctx.Value("token").(string)
+	// token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("entry", token)
-	if authErr != nil {
-		return nil, authErr
-	}
+	// authErr := middlewares.AuthMiddleware("entry", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
 	cartRep := app.InitializePackage(app.CartPackage)
 
 	cartRepository, ok := cartRep.(cart.Repository)
@@ -1061,7 +1068,7 @@ func (r *mutationResolver) InitializePayment(ctx context.Context, input model.Pa
 	cartSrvc := cart.NewService(cartRepository)
 	cartHandler := cart.NewHandler(cartSrvc)
 	paymentOrder := &store.Order{
-		Fee:            10.56,
+		Amount:         *input.Amount,
 		UserID:         input.UserID,
 		PaymentGateway: input.PaymentGateway,
 	}
@@ -1159,7 +1166,12 @@ func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*
 	for _, item := range resp {
 		accessToken := item.AccessToken
 		refreshToken := item.RefreshToken
-
+		paymentDetails := &model.PaymentDetails{
+			Name:    item.PaymentDetails.Name,
+			Address: item.PaymentDetails.Address,
+			Phone:   item.PaymentDetails.Phone,
+			Info:    item.PaymentDetails.Info,
+		}
 		user := &model.User{
 			ID:           strconv.FormatInt(int64(item.ID), 10),
 			Fullname:     item.Fullname,
@@ -1174,7 +1186,8 @@ func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*
 			Code:         item.Code,
 			Avatar:       &item.Avatar,
 			// Codeexpiry: item.Codeexpiry.Format(time.RFC3339),
-			Password: "lol......what do y'need it for?",
+			Password:       "lol......what do y'need it for?",
+			PaymnetDetails: paymentDetails,
 		}
 
 		users = append(users, user)
@@ -1199,22 +1212,28 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 	}
 	accessToken := resp.AccessToken
 	refreshToken := resp.RefreshToken
+	paymentDetails := &model.PaymentDetails{
+		Name:    resp.PaymentDetails.Name,
+		Address: resp.PaymentDetails.Address,
+		Phone:   resp.PaymentDetails.Phone,
+		Info:    resp.PaymentDetails.Info,
+	}
 
 	user := &model.User{
-		ID:           strconv.FormatInt(int64(resp.ID), 10),
-		Fullname:     resp.Fullname,
-		Campus:       resp.Campus,
-		Email:        resp.Email,
-		Phone:        resp.Phone,
-		Twofa:        *resp.Twofa,
-		Active:       *resp.Active,
-		AccessToken:  &accessToken,
-		RefreshToken: &refreshToken,
-		Usertype:     resp.Usertype,
-		Code:         resp.Code,
-		Avatar:       &resp.Avatar,
-
-		Password: "lol......what do y'need it for?",
+		ID:             strconv.FormatInt(int64(resp.ID), 10),
+		Fullname:       resp.Fullname,
+		Campus:         resp.Campus,
+		Email:          resp.Email,
+		Phone:          resp.Phone,
+		Twofa:          *resp.Twofa,
+		Active:         *resp.Active,
+		AccessToken:    &accessToken,
+		RefreshToken:   &refreshToken,
+		Usertype:       resp.Usertype,
+		Code:           resp.Code,
+		Avatar:         &resp.Avatar,
+		PaymnetDetails: paymentDetails,
+		Password:       "lol......what do y'need it for?",
 	}
 
 	return user, nil
@@ -1947,21 +1966,6 @@ func (r *queryResolver) StoreByName(ctx context.Context, name string) (*model.St
 
 	return store, nil
 }
-func convertToModelTrackedProducts(products []store.TrackedProduct) []*model.TrackedProduct {
-	modelProducts := make([]*model.TrackedProduct, len(products))
-	for i, p := range products {
-		// Convert store.TrackedProduct to *model.TrackedProduct
-		modelProducts[i] = &model.TrackedProduct{
-			ID:        int(p.ID),
-			Name:      p.Name,
-			Thumbnail: p.Thumbnail,
-			Price:     p.Price,
-			Discount:  p.Discount,
-			Status:    p.Status,
-		}
-	}
-	return modelProducts
-}
 
 // PurchasedOrder is the resolver for the PurchasedOrder field.
 func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.PurchasedOrder, error) {
@@ -1974,7 +1978,7 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 	}
 	storeSrvc := store.NewService(storeRepository)
 	storeHandler := store.NewHandler(storeSrvc)
-	resp, err := storeHandler.GetPurchasedOrders(ctx, uint32(user))
+	resp, err := storeHandler.GetPurchasedOrders(ctx, strconv.FormatInt(int64(user), 10))
 	if err != nil {
 		return nil, err
 	}
@@ -1990,6 +1994,11 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 		purchasedOrder.PaymentGateway = order.PaymentGateway
 		purchasedOrder.Products = convertToModelTrackedProducts(order.Products)
 		purchasedOrder.Status = order.Status
+		purchasedOrder.DeliveryDetails = &model.DeliveryDetails{
+			Fee:     order.DeliveryDetails.Fee,
+			Method:  order.DeliveryDetails.Method,
+			Address: order.DeliveryDetails.Address,
+		}
 		purchasedOrders = append(purchasedOrders, purchasedOrder)
 	}
 	return purchasedOrders, nil
@@ -2113,6 +2122,21 @@ type subscriptionResolver struct{ *Resolver }
 //   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //     it when you're done.
 //   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func convertToModelTrackedProducts(products []store.TrackedProduct) []*model.TrackedProduct {
+	modelProducts := make([]*model.TrackedProduct, len(products))
+	for i, p := range products {
+		// Convert store.TrackedProduct to *model.TrackedProduct
+		modelProducts[i] = &model.TrackedProduct{
+			ID:        int(p.ID),
+			Name:      p.Name,
+			Thumbnail: p.Thumbnail,
+			Price:     p.Price,
+			Discount:  p.Discount,
+			Status:    p.Status,
+		}
+	}
+	return modelProducts
+}
 func intToUint32Array(intArr []int) []int64 {
 	uint32Arr := make([]int64, len(intArr))
 	for i, v := range intArr {
