@@ -63,25 +63,37 @@ type TrackedProduct struct {
 	Name      string    `json:"name" db:"name"`
 	Thumbnail string    `json:"thumbnail" db:"thumbnail"`
 	Price     float64   `json:"price" db:"price"`
+	Quantity  int       `json:"quantity" db:"quantity"`
 	Discount  float64   `json:"discount" db:"discount"`
 	Status    string    `json:"status" db:"status"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
+type DeliveryDetails struct {
+	Method  string  `json:"method,omitempty" db:"method"`
+	Address string  `json:"address,omitempty" db:"address"`
+	Fee     float64 `json:"fee,omitempty" db:"fee"`
 }
 
 // Purchased Orders
 type Order struct {
 	gorm.Model
 	// StoresID       string  `gorm:"serializer:json" json:"store" db:"store_id"`
-	CartID         uint32           `json:"cart_id" db:"cart_id"`
-	Coupon         string           `json:"coupon,omitempty" db:"coupon"`
-	Fee            float64          `json:"fee" db:"fee"`
-	Status         string           `json:"status" db:"status"` //open || closed
-	UserID         string           `json:"user_id" db:"user_id"`
-	Amount         float64          `json:"amount" db:"amount"`
-	UUID           string           `json:"uuid" db:"uuid"`
-	PaymentGateway string           `json:"payment_gateway" db:"payment_gateway"`
-	Products       []TrackedProduct `gorm:"serializer:json" json:"products" db:"products"`
+	CartID          uint32           `json:"cart_id" db:"cart_id"`
+	Coupon          string           `json:"coupon,omitempty" db:"coupon"`
+	Fee             float64          `json:"fee" db:"fee"`
+	Status          string           `json:"status" db:"status"` //open || closed
+	UserID          string           `json:"user_id" db:"user_id"`
+	DeliveryDetails DeliveryDetails  `gorm:"serializer:json" json:"delivery_details" db:"delivery_details"`
+	Amount          float64          `json:"amount" db:"amount"`
+	UUID            string           `json:"uuid" db:"uuid"`
+	PaymentGateway  string           `json:"payment_gateway" db:"payment_gateway"`
+	PaymentMethod   string           `json:"payment_method" db:"payment_method"`
+	TextRef         string           `json:"txt_ref" db:"txt_ref"`
+	TxtStatus       string           `json:"txt_status" db:"txt_status"`
+	Products        []TrackedProduct `gorm:"serializer:json" json:"products" db:"products"`
+	CreatedAt       time.Time        `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time        `json:"updated_at" db:"updated_at"`
 }
 
 type Customer struct {
@@ -100,12 +112,12 @@ type StoreProduct struct {
 }
 type StoreOrder struct {
 	StoreID   string          `gorm:"serializer:json" json:"store" db:"store_id"`
-	CreatedAt time.Time       `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time       `json:"updated_at" db:"updated_at"`
 	Products  []*StoreProduct `gorm:"serializer:json" json:"products" db:"products"`
 	Status    string          `json:"status" db:"status"`
 	UUID      string          `json:"uuid" db:"uuid"`
 	Customer  Customer        `json:"customer" db:"customer"`
+	CreatedAt time.Time       `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at" db:"updated_at"`
 }
 
 type Review struct {
@@ -121,7 +133,7 @@ type Repository interface {
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetOrder(ctx context.Context, storeId uint32, orderId string) (*StoreOrder, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*StoreOrder, error)
-	GetPurchasedOrders(ctx context.Context, storeId uint32) ([]*Order, error)
+	GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error)
 	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error)
@@ -134,7 +146,7 @@ type Service interface {
 	GetStoreByName(ctx context.Context, name string) (*Store, error)
 	CheckStoreName(ctx context.Context, query string) error
 	GetStore(ctx context.Context, id uint32) (*Store, error)
-	GetPurchasedOrders(ctx context.Context, storeId uint32) ([]*Order, error)
+	GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error)
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*StoreOrder, error)
 	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)

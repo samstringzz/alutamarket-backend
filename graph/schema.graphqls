@@ -237,6 +237,12 @@ input UpdateStoreOrderInput {
 	status: String
 	store_id: String
 }
+type PaymentDetails {
+	name: String!
+	phone: String!
+	address: String!
+	info: String!
+}
 type User {
 	id: ID!
 	fullname: String!
@@ -254,6 +260,7 @@ type User {
 	refresh_token: String
 	twofa: Boolean!
 	code: String!
+	paymnetDetails: PaymentDetails
 	codeexpiry: String!
 }
 
@@ -267,6 +274,12 @@ input NewUser {
 	usertype: String!
 	code: String
 	codeexpiry: Time
+}
+input PaymentDetailsInput {
+	name: String!
+	phone: String!
+	address: String!
+	info: String!
 }
 input UpdateUserInput {
 	id: ID
@@ -282,6 +295,7 @@ input UpdateUserInput {
 	usertype: String
 	code: String
 	avatar: String
+	paymnetDetails: PaymentDetailsInput
 }
 
 input NewCategory {
@@ -481,6 +495,11 @@ type TrackedProduct {
 	discount: Float!
 	status: String!
 }
+type deliveryDetails {
+	method: String!
+	address: String!
+	fee: Float!
+}
 type PurchasedOrder {
 	cart_id: Int!
 	coupon: String!
@@ -491,6 +510,8 @@ type PurchasedOrder {
 	uuid: String!
 	paymentGateway: String!
 	products: [TrackedProduct]!
+	deliveryDetails: deliveryDetails!
+	textRef: String!
 }
 input SmartCardInput {
 	service_id: String!

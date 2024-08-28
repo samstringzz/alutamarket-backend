@@ -511,6 +511,9 @@ func (r *repository) UpdateUser(ctx context.Context, req *User) (*User, error) {
 	if req.Twofa != existingUser.Twofa && req.Twofa != nil {
 		existingUser.Twofa = req.Twofa
 	}
+	if req.PaymentDetails.Address != "" {
+		existingUser.PaymentDetails = req.PaymentDetails
+	}
 
 	// Update the User in the repository
 	err = r.db.Save(existingUser).Error

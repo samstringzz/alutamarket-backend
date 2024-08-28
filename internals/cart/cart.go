@@ -26,6 +26,7 @@ type CartItems struct {
 	Product  Product `gorm:"embedded"`
 	CartID   uint32  `json:"cart" db:"cart_id"`
 	Quantity int     `json:"quantity" db:"quantity"`
+	Fee      float64 `json:"fee" db:"fee"`
 }
 
 type Repository interface {

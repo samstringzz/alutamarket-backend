@@ -199,6 +199,13 @@ type ComplexityRoot struct {
 		StoreID       func(childComplexity int) int
 	}
 
+	PaymentDetails struct {
+		Address func(childComplexity int) int
+		Info    func(childComplexity int) int
+		Name    func(childComplexity int) int
+		Phone   func(childComplexity int) int
+	}
+
 	Product struct {
 		Category    func(childComplexity int) int
 		Description func(childComplexity int) int
@@ -227,15 +234,17 @@ type ComplexityRoot struct {
 	}
 
 	PurchasedOrder struct {
-		Amount         func(childComplexity int) int
-		CartID         func(childComplexity int) int
-		Coupon         func(childComplexity int) int
-		Fee            func(childComplexity int) int
-		PaymentGateway func(childComplexity int) int
-		Products       func(childComplexity int) int
-		Status         func(childComplexity int) int
-		UUID           func(childComplexity int) int
-		UserID         func(childComplexity int) int
+		Amount          func(childComplexity int) int
+		CartID          func(childComplexity int) int
+		Coupon          func(childComplexity int) int
+		DeliveryDetails func(childComplexity int) int
+		Fee             func(childComplexity int) int
+		PaymentGateway  func(childComplexity int) int
+		Products        func(childComplexity int) int
+		Status          func(childComplexity int) int
+		TextRef         func(childComplexity int) int
+		UUID            func(childComplexity int) int
+		UserID          func(childComplexity int) int
 	}
 
 	Query struct {
@@ -387,23 +396,24 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		AccessToken  func(childComplexity int) int
-		Active       func(childComplexity int) int
-		Avatar       func(childComplexity int) int
-		Campus       func(childComplexity int) int
-		Code         func(childComplexity int) int
-		Codeexpiry   func(childComplexity int) int
-		Dob          func(childComplexity int) int
-		Email        func(childComplexity int) int
-		Fullname     func(childComplexity int) int
-		Gender       func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Password     func(childComplexity int) int
-		Phone        func(childComplexity int) int
-		RefreshToken func(childComplexity int) int
-		Stores       func(childComplexity int) int
-		Twofa        func(childComplexity int) int
-		Usertype     func(childComplexity int) int
+		AccessToken    func(childComplexity int) int
+		Active         func(childComplexity int) int
+		Avatar         func(childComplexity int) int
+		Campus         func(childComplexity int) int
+		Code           func(childComplexity int) int
+		Codeexpiry     func(childComplexity int) int
+		Dob            func(childComplexity int) int
+		Email          func(childComplexity int) int
+		Fullname       func(childComplexity int) int
+		Gender         func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Password       func(childComplexity int) int
+		PaymnetDetails func(childComplexity int) int
+		Phone          func(childComplexity int) int
+		RefreshToken   func(childComplexity int) int
+		Stores         func(childComplexity int) int
+		Twofa          func(childComplexity int) int
+		Usertype       func(childComplexity int) int
 	}
 
 	Variant struct {
@@ -421,6 +431,12 @@ type ComplexityRoot struct {
 		Code  func(childComplexity int) int
 		Email func(childComplexity int) int
 		Phone func(childComplexity int) int
+	}
+
+	DeliveryDetails struct {
+		Address func(childComplexity int) int
+		Fee     func(childComplexity int) int
+		Method  func(childComplexity int) int
 	}
 }
 
@@ -1363,6 +1379,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Order.StoreID(childComplexity), true
 
+	case "PaymentDetails.address":
+		if e.complexity.PaymentDetails.Address == nil {
+			break
+		}
+
+		return e.complexity.PaymentDetails.Address(childComplexity), true
+
+	case "PaymentDetails.info":
+		if e.complexity.PaymentDetails.Info == nil {
+			break
+		}
+
+		return e.complexity.PaymentDetails.Info(childComplexity), true
+
+	case "PaymentDetails.name":
+		if e.complexity.PaymentDetails.Name == nil {
+			break
+		}
+
+		return e.complexity.PaymentDetails.Name(childComplexity), true
+
+	case "PaymentDetails.phone":
+		if e.complexity.PaymentDetails.Phone == nil {
+			break
+		}
+
+		return e.complexity.PaymentDetails.Phone(childComplexity), true
+
 	case "Product.category":
 		if e.complexity.Product.Category == nil {
 			break
@@ -1531,6 +1575,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PurchasedOrder.Coupon(childComplexity), true
 
+	case "PurchasedOrder.deliveryDetails":
+		if e.complexity.PurchasedOrder.DeliveryDetails == nil {
+			break
+		}
+
+		return e.complexity.PurchasedOrder.DeliveryDetails(childComplexity), true
+
 	case "PurchasedOrder.fee":
 		if e.complexity.PurchasedOrder.Fee == nil {
 			break
@@ -1558,6 +1609,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PurchasedOrder.Status(childComplexity), true
+
+	case "PurchasedOrder.textRef":
+		if e.complexity.PurchasedOrder.TextRef == nil {
+			break
+		}
+
+		return e.complexity.PurchasedOrder.TextRef(childComplexity), true
 
 	case "PurchasedOrder.uuid":
 		if e.complexity.PurchasedOrder.UUID == nil {
@@ -2467,6 +2525,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Password(childComplexity), true
 
+	case "User.paymnetDetails":
+		if e.complexity.User.PaymnetDetails == nil {
+			break
+		}
+
+		return e.complexity.User.PaymnetDetails(childComplexity), true
+
 	case "User.phone":
 		if e.complexity.User.Phone == nil {
 			break
@@ -2558,6 +2623,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.VerifyOTP.Phone(childComplexity), true
 
+	case "deliveryDetails.address":
+		if e.complexity.DeliveryDetails.Address == nil {
+			break
+		}
+
+		return e.complexity.DeliveryDetails.Address(childComplexity), true
+
+	case "deliveryDetails.fee":
+		if e.complexity.DeliveryDetails.Fee == nil {
+			break
+		}
+
+		return e.complexity.DeliveryDetails.Fee(childComplexity), true
+
+	case "deliveryDetails.method":
+		if e.complexity.DeliveryDetails.Method == nil {
+			break
+		}
+
+		return e.complexity.DeliveryDetails.Method(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -2580,6 +2666,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNewVariantValue,
 		ec.unmarshalInputNewVerifyOTP,
 		ec.unmarshalInputPaymentData,
+		ec.unmarshalInputPaymentDetailsInput,
 		ec.unmarshalInputProductInput,
 		ec.unmarshalInputReviewInput,
 		ec.unmarshalInputSkynetInput,
@@ -6830,6 +6917,8 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 				return ec.fieldContext_User_twofa(ctx, field)
 			case "code":
 				return ec.fieldContext_User_code(ctx, field)
+			case "paymnetDetails":
+				return ec.fieldContext_User_paymnetDetails(ctx, field)
 			case "codeexpiry":
 				return ec.fieldContext_User_codeexpiry(ctx, field)
 			}
@@ -7053,6 +7142,8 @@ func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context
 				return ec.fieldContext_User_twofa(ctx, field)
 			case "code":
 				return ec.fieldContext_User_code(ctx, field)
+			case "paymnetDetails":
+				return ec.fieldContext_User_paymnetDetails(ctx, field)
 			case "codeexpiry":
 				return ec.fieldContext_User_codeexpiry(ctx, field)
 			}
@@ -7144,6 +7235,8 @@ func (ec *executionContext) fieldContext_Mutation_createVerifyOTP(ctx context.Co
 				return ec.fieldContext_User_twofa(ctx, field)
 			case "code":
 				return ec.fieldContext_User_code(ctx, field)
+			case "paymnetDetails":
+				return ec.fieldContext_User_paymnetDetails(ctx, field)
 			case "codeexpiry":
 				return ec.fieldContext_User_codeexpiry(ctx, field)
 			}
@@ -8999,6 +9092,182 @@ func (ec *executionContext) fieldContext_Order_store_id(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _PaymentDetails_name(ctx context.Context, field graphql.CollectedField, obj *model.PaymentDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentDetails_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentDetails_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaymentDetails_phone(ctx context.Context, field graphql.CollectedField, obj *model.PaymentDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentDetails_phone(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Phone, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentDetails_phone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaymentDetails_address(ctx context.Context, field graphql.CollectedField, obj *model.PaymentDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentDetails_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentDetails_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaymentDetails_info(ctx context.Context, field graphql.CollectedField, obj *model.PaymentDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentDetails_info(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Info, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentDetails_info(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Product_id(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Product_id(ctx, field)
 	if err != nil {
@@ -10379,6 +10648,102 @@ func (ec *executionContext) fieldContext_PurchasedOrder_products(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _PurchasedOrder_deliveryDetails(ctx context.Context, field graphql.CollectedField, obj *model.PurchasedOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PurchasedOrder_deliveryDetails(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeliveryDetails, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DeliveryDetails)
+	fc.Result = res
+	return ec.marshalNdeliveryDetails2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDeliveryDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PurchasedOrder_deliveryDetails(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PurchasedOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "method":
+				return ec.fieldContext_deliveryDetails_method(ctx, field)
+			case "address":
+				return ec.fieldContext_deliveryDetails_address(ctx, field)
+			case "fee":
+				return ec.fieldContext_deliveryDetails_fee(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type deliveryDetails", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PurchasedOrder_textRef(ctx context.Context, field graphql.CollectedField, obj *model.PurchasedOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PurchasedOrder_textRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TextRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PurchasedOrder_textRef(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PurchasedOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_Users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_Users(ctx, field)
 	if err != nil {
@@ -10450,6 +10815,8 @@ func (ec *executionContext) fieldContext_Query_Users(ctx context.Context, field 
 				return ec.fieldContext_User_twofa(ctx, field)
 			case "code":
 				return ec.fieldContext_User_code(ctx, field)
+			case "paymnetDetails":
+				return ec.fieldContext_User_paymnetDetails(ctx, field)
 			case "codeexpiry":
 				return ec.fieldContext_User_codeexpiry(ctx, field)
 			}
@@ -10538,6 +10905,8 @@ func (ec *executionContext) fieldContext_Query_User(ctx context.Context, field g
 				return ec.fieldContext_User_twofa(ctx, field)
 			case "code":
 				return ec.fieldContext_User_code(ctx, field)
+			case "paymnetDetails":
+				return ec.fieldContext_User_paymnetDetails(ctx, field)
 			case "codeexpiry":
 				return ec.fieldContext_User_codeexpiry(ctx, field)
 			}
@@ -11710,6 +12079,10 @@ func (ec *executionContext) fieldContext_Query_PurchasedOrder(ctx context.Contex
 				return ec.fieldContext_PurchasedOrder_paymentGateway(ctx, field)
 			case "products":
 				return ec.fieldContext_PurchasedOrder_products(ctx, field)
+			case "deliveryDetails":
+				return ec.fieldContext_PurchasedOrder_deliveryDetails(ctx, field)
+			case "textRef":
+				return ec.fieldContext_PurchasedOrder_textRef(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PurchasedOrder", field.Name)
 		},
@@ -16448,6 +16821,57 @@ func (ec *executionContext) fieldContext_User_code(_ context.Context, field grap
 	return fc, nil
 }
 
+func (ec *executionContext) _User_paymnetDetails(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_paymnetDetails(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PaymnetDetails, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.PaymentDetails)
+	fc.Result = res
+	return ec.marshalOPaymentDetails2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaymentDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_paymnetDetails(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_PaymentDetails_name(ctx, field)
+			case "phone":
+				return ec.fieldContext_PaymentDetails_phone(ctx, field)
+			case "address":
+				return ec.fieldContext_PaymentDetails_address(ctx, field)
+			case "info":
+				return ec.fieldContext_PaymentDetails_info(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PaymentDetails", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_codeexpiry(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_codeexpiry(ctx, field)
 	if err != nil {
@@ -18615,6 +19039,138 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _deliveryDetails_method(ctx context.Context, field graphql.CollectedField, obj *model.DeliveryDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_deliveryDetails_method(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Method, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_deliveryDetails_method(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "deliveryDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _deliveryDetails_address(ctx context.Context, field graphql.CollectedField, obj *model.DeliveryDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_deliveryDetails_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_deliveryDetails_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "deliveryDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _deliveryDetails_fee(ctx context.Context, field graphql.CollectedField, obj *model.DeliveryDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_deliveryDetails_fee(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Fee, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_deliveryDetails_fee(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "deliveryDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 // endregion **************************** field.gotpl *****************************
 
 // region    **************************** input.gotpl *****************************
@@ -19250,6 +19806,54 @@ func (ec *executionContext) unmarshalInputPaymentData(ctx context.Context, obj i
 				return it, err
 			}
 			it.PaymentGateway = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPaymentDetailsInput(ctx context.Context, obj interface{}) (model.PaymentDetailsInput, error) {
+	var it model.PaymentDetailsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "phone", "address", "info"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "phone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phone"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Phone = data
+		case "address":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Address = data
+		case "info":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("info"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Info = data
 		}
 	}
 
@@ -19974,7 +20578,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "fullname", "email", "campus", "password", "stores", "dob", "phone", "gender", "active", "usertype", "code", "avatar"}
+	fieldsInOrder := [...]string{"id", "fullname", "email", "campus", "password", "stores", "dob", "phone", "gender", "active", "usertype", "code", "avatar", "paymnetDetails"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20072,6 +20676,13 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.Avatar = data
+		case "paymnetDetails":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paymnetDetails"))
+			data, err := ec.unmarshalOPaymentDetailsInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaymentDetailsInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PaymnetDetails = data
 		}
 	}
 
@@ -21159,6 +21770,60 @@ func (ec *executionContext) _Order(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
+var paymentDetailsImplementors = []string{"PaymentDetails"}
+
+func (ec *executionContext) _PaymentDetails(ctx context.Context, sel ast.SelectionSet, obj *model.PaymentDetails) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, paymentDetailsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PaymentDetails")
+		case "name":
+			out.Values[i] = ec._PaymentDetails_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "phone":
+			out.Values[i] = ec._PaymentDetails_phone(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "address":
+			out.Values[i] = ec._PaymentDetails_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "info":
+			out.Values[i] = ec._PaymentDetails_info(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var productImplementors = []string{"Product"}
 
 func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, obj *model.Product) graphql.Marshaler {
@@ -21379,6 +22044,16 @@ func (ec *executionContext) _PurchasedOrder(ctx context.Context, sel ast.Selecti
 			}
 		case "products":
 			out.Values[i] = ec._PurchasedOrder_products(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deliveryDetails":
+			out.Values[i] = ec._PurchasedOrder_deliveryDetails(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "textRef":
+			out.Values[i] = ec._PurchasedOrder_textRef(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -22812,6 +23487,8 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "paymnetDetails":
+			out.Values[i] = ec._User_paymnetDetails(ctx, field, obj)
 		case "codeexpiry":
 			out.Values[i] = ec._User_codeexpiry(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -23275,6 +23952,55 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec.___Type_ofType(ctx, field, obj)
 		case "specifiedByURL":
 			out.Values[i] = ec.___Type_specifiedByURL(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deliveryDetailsImplementors = []string{"deliveryDetails"}
+
+func (ec *executionContext) _deliveryDetails(ctx context.Context, sel ast.SelectionSet, obj *model.DeliveryDetails) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deliveryDetailsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("deliveryDetails")
+		case "method":
+			out.Values[i] = ec._deliveryDetails_method(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "address":
+			out.Values[i] = ec._deliveryDetails_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fee":
+			out.Values[i] = ec._deliveryDetails_fee(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -24608,6 +25334,16 @@ func (ec *executionContext) unmarshalNcustomerInput2ᚖgithubᚗcomᚋChrisentec
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNdeliveryDetails2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDeliveryDetails(ctx context.Context, sel ast.SelectionSet, v *model.DeliveryDetails) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._deliveryDetails(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOAccount2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model.Account) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -24866,6 +25602,21 @@ func (ec *executionContext) unmarshalONewVariant2ᚕᚖgithubᚗcomᚋChrisentec
 		}
 	}
 	return res, nil
+}
+
+func (ec *executionContext) marshalOPaymentDetails2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaymentDetails(ctx context.Context, sel ast.SelectionSet, v *model.PaymentDetails) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PaymentDetails(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOPaymentDetailsInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaymentDetailsInput(ctx context.Context, v interface{}) (*model.PaymentDetailsInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPaymentDetailsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {

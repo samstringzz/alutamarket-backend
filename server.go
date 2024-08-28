@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +12,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/db"
 	"github.com/Chrisentech/aluta-market-api/graph"
 	"github.com/Chrisentech/aluta-market-api/internals/messages"
+	"github.com/Chrisentech/aluta-market-api/services"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
@@ -23,10 +21,7 @@ import (
 
 const defaultPort = "8080"
 
-type WebhookPayload struct {
-	Event string `json:"event"`
-	Data  string `json:"data"`
-}
+// WebSocket handler
 type Message *messages.Message
 
 func ExtractTokenMiddleware(next http.Handler) http.Handler {
@@ -39,43 +34,6 @@ func ExtractTokenMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-func FWWebhookHandler(w http.ResponseWriter, r *http.Request) {
-	// Read the request body
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
-		return
-	}
-	// Unmarshal the JSON data into a struct
-	var webhookPayload WebhookPayload
-
-	if err := json.Unmarshal(body, &webhookPayload); err != nil {
-		http.Error(w, "Failed to parse JSON data", http.StatusBadRequest)
-		return
-	}
-
-	// Access the event field
-	event := webhookPayload.Event
-
-	if event == "charge.completed" {
-
-	}
-
-	// Close the request body to avoid resource leaks
-	defer r.Body.Close()
-
-	// Process the request body (e.g., decode JSON or parse form data)
-
-	fmt.Fprint(w, "Flutterwave Webhook received successfully")
-	fmt.Println("Received Webhook Body:", string(body))
-	w.WriteHeader(http.StatusOK)
-}
-func PSWebhookHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "Paystack Webhook received successfully")
-}
-
-// WebSocket handler
 
 func main() {
 	// Start broadcasting messages to connected clients
@@ -83,10 +41,10 @@ func main() {
 
 	// Create a new CORS middleware with the desired options
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "https://www.thealutamarket.com", "https://thealutamarket.com","https://thealutamarket.netlify.app"}, // Specify the allowed origins
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},                                                                                         // Specify allowed HTTP methods
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},                                                                                  // Specify allowed headers
-		AllowCredentials: true,                                                                                                                       // Allow credentials like cookies
+		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "https://www.thealutamarket.com", "https://thealutamarket.com", "https://thealutamarket.netlify.app"}, // Specify the allowed origins
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},                                                                                                                               // Specify allowed HTTP methods
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},                                                                                                                        // Specify allowed headers
+		AllowCredentials: true,                                                                                                                                                             // Allow credentials like cookies
 	})
 
 	// Load environment variables from .env file
@@ -98,8 +56,10 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
-	http.HandleFunc("/webhook/fw", FWWebhookHandler)
-	http.HandleFunc("/webhook/ps", PSWebhookHandler)
+	repo := services.NewRepository()
+	http.HandleFunc("/webhook/fw", repo.FWWebhookHandler)
+	http.HandleFunc("/webhook/ps", repo.PaystackWebhookHandler)
+	// http.HandleFunc("/webhook/squad", repo.SquadWebhookHandler)
 	// Run auto migration
 	db.Migrate()
 

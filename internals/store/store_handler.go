@@ -86,7 +86,7 @@ func (h *Handler) GetOrders(ctx context.Context, storeID uint32) ([]*StoreOrder,
 	return item, nil
 }
 
-func (h *Handler) GetPurchasedOrders(ctx context.Context, userId uint32) ([]*Order, error) {
+func (h *Handler) GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error) {
 	item, err := h.Service.GetPurchasedOrders(ctx, userId)
 	if err != nil {
 		return nil, err
