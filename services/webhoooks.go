@@ -327,7 +327,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 	fmt.Println("Received Webhook Body:", string(body))
 }
 
-func SquadWebhookHandler(w http.ResponseWriter, r *http.Request) {
+func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	// Close the request body to avoid resource leaks
 	defer r.Body.Close()
 
@@ -353,15 +353,46 @@ func SquadWebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Access the event field
 	event := webhookPayload.Event
+	data := webhookPayload.Data
 
 	// Process the event
 	switch event {
 	case "payment.success":
+		buyerOrder := &store.Order{}
+		// Handle charge success logic here
+		err := repo.db.Model(buyerOrder).Where("trt_ref = ? ", data.Reference).Error
+		if err != nil {
+			http.Error(w, "Failed to find order", http.StatusNotFound)
+			return
+		}
+		buyerOrder.TransStatus = data.Status
+		buyerOrder.Status = "pending"
+		buyerOrder.PaymentMethod = data.PaymentMethod.Type
+		buyerOrder.PaymentGateway = "squad"
+		if err := repo.db.Save(buyerOrder).Error; err != nil {
+			http.Error(w, "Failed to save order", http.StatusInternalServerError)
+			return
+		}
 		// Handle successful payment logic here
 		fmt.Printf("Payment success: %s for email: %s, Amount: %d\n", webhookPayload.Data.Reference, webhookPayload.Data.Customer.Email, webhookPayload.Data.Amount)
 
 	case "payment.failed":
 		// Handle failed payment logic here
+		buyerOrder := &store.Order{}
+		// Handle charge success logic here
+		err := repo.db.Model(buyerOrder).Where("trt_ref = ? ", data.Reference).Error
+		if err != nil {
+			http.Error(w, "Failed to find order", http.StatusNotFound)
+			return
+		}
+		buyerOrder.TransStatus = data.Status
+		buyerOrder.Status = "pending"
+		buyerOrder.PaymentMethod = data.PaymentMethod.Type
+		buyerOrder.PaymentGateway = "squad"
+		if err := repo.db.Save(buyerOrder).Error; err != nil {
+			http.Error(w, "Failed to save order", http.StatusInternalServerError)
+			return
+		}
 		fmt.Printf("Payment failed: %s for email: %s\n", webhookPayload.Data.Reference, webhookPayload.Data.Customer.Email)
 
 	default:
