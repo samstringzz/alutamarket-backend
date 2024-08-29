@@ -205,12 +205,13 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 
 		buyerOrder := &store.Order{}
 		// Handle charge completion logic here
-		err := repo.db.Model(buyerOrder).Where("text_ref", data.TxRef).Error
+		err := repo.db.Model(buyerOrder).Where("trt_ref", data.TxRef).Error
 		if err != nil {
 			http.Error(w, "Failed to find order", http.StatusNotFound)
 			return
 		}
-		buyerOrder.Status = data.Status
+		buyerOrder.TransStatus = data.Status
+		buyerOrder.Status = "pending"
 		buyerOrder.PaymentMethod = data.PaymentType
 		buyerOrder.PaymentGateway = "flutterwave"
 		if err := repo.db.Save(buyerOrder).Error; err != nil {
@@ -283,12 +284,13 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 	case "charge.success":
 		buyerOrder := &store.Order{}
 		// Handle charge success logic here
-		err := repo.db.Model(buyerOrder).Where("txt_ref = ? ", data.Reference).Error
+		err := repo.db.Model(buyerOrder).Where("trt_ref = ? ", data.Reference).Error
 		if err != nil {
 			http.Error(w, "Failed to find order", http.StatusNotFound)
 			return
 		}
-		buyerOrder.Status = data.Status
+		buyerOrder.TransStatus = data.Status
+		buyerOrder.Status = "pending"
 		buyerOrder.PaymentMethod = data.Channel
 		buyerOrder.PaymentGateway = "paystack"
 		if err := repo.db.Save(buyerOrder).Error; err != nil {
@@ -301,12 +303,13 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 		// Handle charge failure logic here
 		buyerOrder := &store.Order{}
 		// Handle charge success logic here
-		err := repo.db.Model(buyerOrder).Where("txt_ref = ? ", data.Reference).Error
+		err := repo.db.Model(buyerOrder).Where("trt_ref = ? ", data.Reference).Error
 		if err != nil {
 			http.Error(w, "Failed to find order", http.StatusNotFound)
 			return
 		}
-		buyerOrder.Status = data.Status
+		buyerOrder.TransStatus = data.Status
+		buyerOrder.Status = "pending"
 		buyerOrder.PaymentMethod = data.Channel
 		buyerOrder.PaymentGateway = "paystack"
 		if err := repo.db.Save(buyerOrder).Error; err != nil {
