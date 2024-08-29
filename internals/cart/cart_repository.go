@@ -18,7 +18,6 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
-	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -342,7 +341,7 @@ func processPaymentGateway(gateway string, UUID string, Fee float64, cartTotal f
 }
 
 func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, error) {
-	UUID := utils.GenerateUUID()
+	UUID := input.UUID
 	redirectUrl := "https://www.thealutamarket.com"
 
 	errChan := make(chan error, 2)
