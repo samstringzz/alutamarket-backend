@@ -1071,6 +1071,7 @@ func (r *mutationResolver) InitializePayment(ctx context.Context, input model.Pa
 		Amount:         *input.Amount,
 		UserID:         input.UserID,
 		PaymentGateway: input.PaymentGateway,
+		UUID:           *input.UUID,
 	}
 	resp, err := cartHandler.InitiatePayment(ctx, paymentOrder)
 	if err != nil {
