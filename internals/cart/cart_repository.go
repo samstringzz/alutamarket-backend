@@ -406,7 +406,8 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	newOrder.Amount = cart.Total + input.Amount
 	newOrder.UserID = strconv.FormatUint(uint64(cart.UserID), 10)
 	newOrder.UUID = UUID
-	newOrder.TxtStatus = "pending"
+	newOrder.TransStatus = "not processed"
+	newOrder.Status = "canceled"
 	newOrder.Fee = input.Amount
 	newOrder.CartID = cart.ID
 	newOrder.CreatedAt = time.Now().UTC()
