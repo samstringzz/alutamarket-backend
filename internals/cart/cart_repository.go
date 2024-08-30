@@ -3,16 +3,15 @@ package cart
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
-	"strconv"
-	"time"
-
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
@@ -455,6 +454,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		UpdatedAt: time.Now(),
 		UUID:      UUID,
 		Products:  storePrd,
+		Active:    false,
 		Customer: store.Customer{
 			ID:      uint32(customer.ID),
 			Name:    customer.PaymentDetails.Name,

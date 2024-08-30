@@ -204,20 +204,37 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 	case "charge.completed":
 
 		buyerOrder := &store.Order{}
+		sellerOrder := &store.StoreOrder{}
 		// Handle charge completion logic here
 		err := repo.db.Model(buyerOrder).Where("trt_ref", data.TxRef).Error
 		if err != nil {
 			http.Error(w, "Failed to find order", http.StatusNotFound)
 			return
 		}
+
 		buyerOrder.TransStatus = data.Status
 		buyerOrder.Status = "pending"
 		buyerOrder.PaymentMethod = data.PaymentType
 		buyerOrder.PaymentGateway = "flutterwave"
+
 		if err := repo.db.Save(buyerOrder).Error; err != nil {
-			http.Error(w, "Failed to save order", http.StatusInternalServerError)
+			http.Error(w, "Failed to update buyer order", http.StatusInternalServerError)
 			return
 		}
+
+		if data.Status == "successful" {
+			err = repo.db.Model(sellerOrder).Where("trt_ref", data.TxRef).Error
+			if err != nil {
+				http.Error(w, "Failed to find order", http.StatusNotFound)
+				return
+			}
+			sellerOrder.Active = true
+			if err := repo.db.Save(sellerOrder).Error; err != nil {
+				http.Error(w, "Failed to update seller order", http.StatusInternalServerError)
+				return
+			}
+		}
+
 		fmt.Printf("Received charge completed event: %s for email: %s, Amount: %d\n", event, webhookPayload.Data.Customer.Email, int64(webhookPayload.Data.Amount))
 
 	default:
@@ -279,12 +296,19 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 	event := webhookPayload.Event
 	data := webhookPayload.Data
 
+	buyerOrder := &store.Order{}
+	sellerOrder := &store.StoreOrder{}
 	// Process the event
 	switch event {
 	case "charge.success":
-		buyerOrder := &store.Order{}
+
 		// Handle charge success logic here
 		err := repo.db.Model(buyerOrder).Where("trt_ref = ? ", data.Reference).Error
+		if err != nil {
+			http.Error(w, "Failed to find order", http.StatusNotFound)
+			return
+		}
+		err = repo.db.Model(sellerOrder).Where("trt_ref", data.Reference).Error
 		if err != nil {
 			http.Error(w, "Failed to find order", http.StatusNotFound)
 			return
@@ -293,15 +317,20 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 		buyerOrder.Status = "pending"
 		buyerOrder.PaymentMethod = data.Channel
 		buyerOrder.PaymentGateway = "paystack"
+		sellerOrder.Active = true
+
 		if err := repo.db.Save(buyerOrder).Error; err != nil {
 			http.Error(w, "Failed to save order", http.StatusInternalServerError)
+			return
+		}
+		if err := repo.db.Save(sellerOrder).Error; err != nil {
+			http.Error(w, "Failed to update seller order", http.StatusInternalServerError)
 			return
 		}
 		fmt.Printf("Received charge success event: %s for email: %s, Amount: %d\n", event, webhookPayload.Data.Customer.Email, webhookPayload.Data.Amount)
 
 	case "charge.failed":
 		// Handle charge failure logic here
-		buyerOrder := &store.Order{}
 		// Handle charge success logic here
 		err := repo.db.Model(buyerOrder).Where("trt_ref = ? ", data.Reference).Error
 		if err != nil {
@@ -316,6 +345,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 			http.Error(w, "Failed to save order", http.StatusInternalServerError)
 			return
 		}
+
 		fmt.Printf("Received charge failed event: %s for email: %s\n", event, webhookPayload.Data.Customer.Email)
 
 	default:
@@ -355,10 +385,12 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 	event := webhookPayload.Event
 	data := webhookPayload.Data
 
+	buyerOrder := &store.Order{}
+	sellerOrder := &store.StoreOrder{}
+
 	// Process the event
 	switch event {
 	case "payment.success":
-		buyerOrder := &store.Order{}
 		// Handle charge success logic here
 		err := repo.db.Model(buyerOrder).Where("trt_ref = ? ", data.Reference).Error
 		if err != nil {
@@ -369,8 +401,14 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 		buyerOrder.Status = "pending"
 		buyerOrder.PaymentMethod = data.PaymentMethod.Type
 		buyerOrder.PaymentGateway = "squad"
+		sellerOrder.Active = true
+
 		if err := repo.db.Save(buyerOrder).Error; err != nil {
 			http.Error(w, "Failed to save order", http.StatusInternalServerError)
+			return
+		}
+		if err := repo.db.Save(sellerOrder).Error; err != nil {
+			http.Error(w, "Failed to update seller order", http.StatusInternalServerError)
 			return
 		}
 		// Handle successful payment logic here

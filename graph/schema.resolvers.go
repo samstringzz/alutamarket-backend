@@ -1845,6 +1845,8 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 						Address: order.Customer.Address,
 						Phone:   order.Customer.Phone,
 					},
+					Active:    order.Active,
+					TrtRef:    order.TransRef,
 					CreatedAt: order.CreatedAt,
 					UUID:      order.UUID,
 					StoreID:   order.StoreID,
@@ -1993,6 +1995,10 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 		purchasedOrder.Fee = order.Fee
 		purchasedOrder.Amount = order.Amount
 		purchasedOrder.PaymentGateway = order.PaymentGateway
+		purchasedOrder.PaymentMethod = order.PaymentMethod
+		// purchasedOrder.Cre = order.CreatedAt
+		purchasedOrder.TransRef = order.TransRef
+		purchasedOrder.TransStatus = order.TransStatus
 		purchasedOrder.Products = convertToModelTrackedProducts(order.Products)
 		purchasedOrder.Status = order.Status
 		purchasedOrder.DeliveryDetails = &model.DeliveryDetails{

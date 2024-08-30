@@ -106,6 +106,8 @@ type StoreCustomer {
 type StoreOrder {
 	store_id: String!
 	product: [Product!]
+	trtRef: String!
+	active: Boolean!
 	status: String!
 	customer: StoreCustomer!
 	uuid: String!
@@ -509,6 +511,9 @@ type PurchasedOrder {
 	amount: Float!
 	uuid: String!
 	paymentGateway: String!
+	paymentMethod: String!
+	transRef: String!
+	transStatus: String!
 	products: [TrackedProduct]!
 	deliveryDetails: deliveryDetails!
 	textRef: String!
