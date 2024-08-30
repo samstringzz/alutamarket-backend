@@ -114,6 +114,8 @@ type StoreOrder struct {
 	StoreID   string          `gorm:"serializer:json" json:"store" db:"store_id"`
 	Products  []*StoreProduct `gorm:"serializer:json" json:"products" db:"products"`
 	Status    string          `json:"status" db:"status"`
+	TransRef  string          `json:"trt_ref" db:"trt_ref"`
+	Active    bool            `json:"active" db:"active"`
 	UUID      string          `json:"uuid" db:"uuid"`
 	Customer  Customer        `json:"customer" db:"customer"`
 	CreatedAt time.Time       `json:"created_at" db:"created_at"`

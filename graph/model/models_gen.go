@@ -290,6 +290,9 @@ type PurchasedOrder struct {
 	Amount          float64           `json:"amount"`
 	UUID            string            `json:"uuid"`
 	PaymentGateway  string            `json:"paymentGateway"`
+	PaymentMethod   string            `json:"paymentMethod"`
+	TransRef        string            `json:"transRef"`
+	TransStatus     string            `json:"transStatus"`
 	Products        []*TrackedProduct `json:"products"`
 	DeliveryDetails *DeliveryDetails  `json:"deliveryDetails"`
 	TextRef         string            `json:"textRef"`
@@ -422,6 +425,8 @@ type StoreInput struct {
 type StoreOrder struct {
 	StoreID   string         `json:"store_id"`
 	Product   []*Product     `json:"product,omitempty"`
+	TrtRef    string         `json:"trtRef"`
+	Active    bool           `json:"active"`
 	Status    string         `json:"status"`
 	Customer  *StoreCustomer `json:"customer"`
 	UUID      string         `json:"uuid"`
