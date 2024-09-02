@@ -124,6 +124,7 @@ type Store {
 	description: String!
 	followers: [StoreFollower!]
 	product: [Product!]
+	transactions: [Transaction!]
 	orders: [StoreOrder!]
 	address: String!
 	status: Boolean!
@@ -421,13 +422,14 @@ input PaymentData {
 }
 
 type Transaction {
-	storeID: [Int!]
-	cartID: Int!
-	status: String
-	userID: String!
-	amount: Float
-	UUID: String
-	paymentGateway: String
+	storeID: Int!
+	status: String!
+	type: String!
+	user: String!
+	amount: Float!
+	UUID: String!
+	category: String!
+	created_at: Time!
 }
 type LoginRes {
 	id: Int!
@@ -524,6 +526,14 @@ input SmartCardInput {
 	billers_code: String!
 	card_type: String
 }
+input TransactionInput {
+	store_id: String!
+	status: String!
+	user: String!
+	amount: Float
+	type: String!
+	category: String!
+}
 type Query {
 	Users(limit: Int, offset: Int): [User!]!
 	User(id: ID!): User
@@ -581,6 +591,7 @@ type Mutation {
 	initializePayment(input: PaymentData!): String
 	verifySmartCard(input: SmartCardInput!): SmartcardVerificationResponse
 	createChat(input: ChatInput!): String
+	createTransaction(input: TransactionInput!): Transaction
 }
 
 type Subscription {

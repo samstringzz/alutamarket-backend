@@ -151,3 +151,14 @@ func (s *service) UpdateStoreFollowership(ctx context.Context, storeID uint32, f
 	}
 	return store, nil
 }
+
+func (s *service) CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	store, err := s.Repository.CreateTransactions(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return store, nil
+}

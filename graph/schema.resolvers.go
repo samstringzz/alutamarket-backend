@@ -1147,6 +1147,47 @@ func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput
 	}
 }
 
+// CreateTransaction is the resolver for the createTransaction field.
+func (r *mutationResolver) CreateTransaction(ctx context.Context, input model.TransactionInput) (*model.Transaction, error) {
+	token := ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("seller", token)
+	if authErr != nil {
+		return nil, authErr
+	}
+	storeRep := app.InitializePackage(app.StorePackage)
+
+	storeRepository, ok := storeRep.(store.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("storeRep is not a cart.Repository")
+	}
+	storeSrvc := store.NewService(storeRepository)
+	storeHandler := store.NewHandler(storeSrvc)
+	transaction := &store.Transactions{
+		Amount:   *input.Amount,
+		StoreID:  input.StoreID,
+		User:     input.User,
+		Type:     input.Type,
+		Category: input.Category,
+		Status:   input.Status,
+	}
+	resp, err := storeHandler.CreateTransactions(ctx, transaction)
+	if err != nil {
+		return nil, err
+	}
+	id, _ := strconv.Atoi(resp.StoreID)
+	modTransaction := &model.Transaction{
+		Amount:   resp.Amount,
+		StoreID:  id,
+		User:     resp.User,
+		Type:     resp.Type,
+		Category: resp.Category,
+		Status:   resp.Status,
+	}
+	return modTransaction, nil
+}
+
 // Users is the resolver for the Users field.
 func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error) {
 	userRep := app.InitializePackage(app.UserPackage)
@@ -1836,6 +1877,23 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 			}
 		}
 
+		// Map transactions
+		if len(item.Transactions) > 0 {
+			for _, transaction := range item.Transactions {
+				storeTransactions := &model.Transaction{
+					StoreID:   convertStringToInt(transaction.StoreID),
+					User:      transaction.User,
+					Amount:    transaction.Amount,
+					Type:      transaction.Type,
+					Category:  transaction.Category,
+					Status:    transaction.Status,
+					CreatedAt: transaction.CreatedAt,
+					UUID:      transaction.UUID,
+				}
+				store.Transactions = append(store.Transactions, storeTransactions)
+			}
+		}
+
 		// Map orders
 		if len(item.Orders) > 0 {
 			for _, order := range item.Orders {
@@ -1922,11 +1980,57 @@ func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error)
 		Address:            resp.Address,
 		Phone:              resp.Phone,
 	}
+
+	for _, transaction := range store.Transactions {
+		storeTransactions := &model.Transaction{
+			StoreID:   transaction.StoreID,
+			User:      transaction.User,
+			Amount:    transaction.Amount,
+			Type:      transaction.Type,
+			Category:  transaction.Category,
+			Status:    transaction.Status,
+			CreatedAt: transaction.CreatedAt,
+			UUID:      transaction.UUID,
+		}
+		store.Transactions = append(store.Transactions, storeTransactions)
+	}
 	for _, follower := range resp.Followers {
 		storeFollower := &model.StoreFollower{}
 		storeFollower.FollowerID = int(follower.ID)
 		storeFollower.FollowerName = follower.FollowerName
 		store.Followers = append(store.Followers, storeFollower)
+	}
+
+	for _, order := range store.Orders {
+		storeOrder := &model.StoreOrder{
+			Status: order.Status,
+			Customer: &model.StoreCustomer{
+				Name:    order.Customer.Name,
+				Address: order.Customer.Address,
+				Phone:   order.Customer.Phone,
+			},
+			Active:    order.Active,
+			TrtRef:    order.TrtRef,
+			CreatedAt: order.CreatedAt,
+			UUID:      order.UUID,
+			StoreID:   order.StoreID,
+		}
+
+		// Map products within orders
+		var products []*model.Product
+		for _, p := range order.Product {
+			product := &model.Product{
+				ID:        int(p.ID), // Make sure this ID is correctly mapped
+				Name:      p.Name,
+				Quantity:  p.Quantity,
+				Price:     p.Price,
+				Thumbnail: p.Thumbnail,
+			}
+			products = append(products, product)
+		}
+
+		storeOrder.Product = products
+		store.Orders = append(store.Orders, storeOrder)
 	}
 
 	return store, nil
@@ -1966,6 +2070,52 @@ func (r *queryResolver) StoreByName(ctx context.Context, name string) (*model.St
 		storeFollower.FollowerID = int(follower.ID)
 		storeFollower.FollowerName = follower.FollowerName
 		store.Followers = append(store.Followers, storeFollower)
+	}
+
+	for _, order := range store.Orders {
+		storeOrder := &model.StoreOrder{
+			Status: order.Status,
+			Customer: &model.StoreCustomer{
+				Name:    order.Customer.Name,
+				Address: order.Customer.Address,
+				Phone:   order.Customer.Phone,
+			},
+			Active:    order.Active,
+			TrtRef:    order.TrtRef,
+			CreatedAt: order.CreatedAt,
+			UUID:      order.UUID,
+			StoreID:   order.StoreID,
+		}
+
+		// Map products within orders
+		var products []*model.Product
+		for _, p := range order.Product {
+			product := &model.Product{
+				ID:        int(p.ID), // Make sure this ID is correctly mapped
+				Name:      p.Name,
+				Quantity:  p.Quantity,
+				Price:     p.Price,
+				Thumbnail: p.Thumbnail,
+			}
+			products = append(products, product)
+		}
+
+		storeOrder.Product = products
+		store.Orders = append(store.Orders, storeOrder)
+	}
+
+	for _, transaction := range store.Transactions {
+		storeTransactions := &model.Transaction{
+			StoreID:   transaction.StoreID,
+			User:      transaction.User,
+			Amount:    transaction.Amount,
+			Type:      transaction.Type,
+			Category:  transaction.Category,
+			Status:    transaction.Status,
+			CreatedAt: transaction.CreatedAt,
+			UUID:      transaction.UUID,
+		}
+		store.Transactions = append(store.Transactions, storeTransactions)
 	}
 
 	return store, nil
@@ -2130,6 +2280,13 @@ type subscriptionResolver struct{ *Resolver }
 //   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //     it when you're done.
 //   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func convertStringToInt(val string) int {
+	i, err := strconv.Atoi(val)
+	if err != nil {
+		return 0
+	}
+	return i
+}
 func convertToModelTrackedProducts(products []store.TrackedProduct) []*model.TrackedProduct {
 	modelProducts := make([]*model.TrackedProduct, len(products))
 	for i, p := range products {

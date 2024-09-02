@@ -62,13 +62,11 @@ func GenerateRequestID() string {
 	return requestID
 }
 
-
-
 // Define the structure for adding a new subscriber to OneSignal
 type OneSignalSubscriber struct {
-	AppID        string `json:"app_id"`
-	Identifier   string `json:"identifier"`
-	DeviceType   int    `json:"device_type"` // Use 11 for Email
+	AppID         string `json:"app_id"`
+	Identifier    string `json:"identifier"`
+	DeviceType    int    `json:"device_type"`               // Use 11 for Email
 	EmailAuthHash string `json:"email_auth_hash,omitempty"` // Optional, for email authentication
 }
 
@@ -112,4 +110,16 @@ func AddEmailSubscriber(email string) error {
 	}
 
 	return nil
+}
+
+func GenerateRandomString(length int) string {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	var sb strings.Builder
+	sb.Grow(length)
+	for i := 0; i < length; i++ {
+		randomIndex := rng.Intn(len(charset))
+		sb.WriteByte(charset[randomIndex])
+	}
+	return sb.String()
 }

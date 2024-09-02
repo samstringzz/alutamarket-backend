@@ -377,6 +377,7 @@ type Store struct {
 	Description        string           `json:"description"`
 	Followers          []*StoreFollower `json:"followers,omitempty"`
 	Product            []*Product       `json:"product,omitempty"`
+	Transactions       []*Transaction   `json:"transactions,omitempty"`
 	Orders             []*StoreOrder    `json:"orders,omitempty"`
 	Address            string           `json:"address"`
 	Status             bool             `json:"status"`
@@ -482,13 +483,23 @@ type TrackedProduct struct {
 }
 
 type Transaction struct {
-	StoreID        []int    `json:"storeID,omitempty"`
-	CartID         int      `json:"cartID"`
-	Status         *string  `json:"status,omitempty"`
-	UserID         string   `json:"userID"`
-	Amount         *float64 `json:"amount,omitempty"`
-	UUID           *string  `json:"UUID,omitempty"`
-	PaymentGateway *string  `json:"paymentGateway,omitempty"`
+	StoreID   int       `json:"storeID"`
+	Status    string    `json:"status"`
+	Type      string    `json:"type"`
+	User      string    `json:"user"`
+	Amount    float64   `json:"amount"`
+	UUID      string    `json:"UUID"`
+	Category  string    `json:"category"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type TransactionInput struct {
+	StoreID  string   `json:"store_id"`
+	Status   string   `json:"status"`
+	User     string   `json:"user"`
+	Amount   *float64 `json:"amount,omitempty"`
+	Type     string   `json:"type"`
+	Category string   `json:"category"`
 }
 
 type UpdateStoreInput struct {

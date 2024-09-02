@@ -101,3 +101,11 @@ func (h *Handler) UpdateStoreFollowership(ctx context.Context, storeID uint32, f
 	}
 	return item, nil
 }
+
+func (h *Handler) CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error) {
+	item, err := h.Service.CreateTransactions(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
