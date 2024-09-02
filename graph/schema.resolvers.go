@@ -617,6 +617,7 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.Produc
 		Images:        input.Image,
 		Price:         input.Price,
 		Discount:      input.Discount,
+		File:          input.File,
 		Quantity:      input.Quantity,
 		Status:        true,
 		Thumbnail:     input.Thumbnail,

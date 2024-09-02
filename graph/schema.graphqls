@@ -151,6 +151,7 @@ input ProductInput {
 	name: String!
 	id: String
 	description: String!
+	file: String!
 	price: Float!
 	discount: Float!
 	thumbnail: String!
