@@ -17,6 +17,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
+	"github.com/Chrisentech/aluta-market-api/services"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -191,7 +192,7 @@ func (r *repository) RemoveAllCart(ctx context.Context, id uint32) error {
 	return nil
 }
 
-func processPaymentGateway(gateway string, UUID string, Fee float64, cartTotal float64, redirectUrl string, customer *user.User) (string, error) {
+func processPaymentGateway(gateway string, UUID string, cartTotal float64, redirectUrl string, customer *user.User) (string, error) {
 	var paymentLink string
 	var err error
 	var requestData map[string]interface{}
@@ -224,7 +225,7 @@ func processPaymentGateway(gateway string, UUID string, Fee float64, cartTotal f
 	case "flutterwave":
 		requestData = map[string]interface{}{
 			"tx_ref":       UUID,
-			"amount":       Fee + cartTotal,
+			"amount":       cartTotal,
 			"currency":     "NGN",
 			"redirect_url": redirectUrl,
 			"meta": map[string]interface{}{
@@ -247,7 +248,7 @@ func processPaymentGateway(gateway string, UUID string, Fee float64, cartTotal f
 	case "paystack":
 		requestData = map[string]interface{}{
 			"email":        customer.Email,
-			"amount":       (Fee + cartTotal) * 100, // Amount should be in kobo
+			"amount":       (cartTotal) * 100, // Amount should be in kobo
 			"currency":     "NGN",
 			"callback_url": redirectUrl,
 			"metadata": map[string]interface{}{
@@ -268,7 +269,7 @@ func processPaymentGateway(gateway string, UUID string, Fee float64, cartTotal f
 			"initiate_type":   "inline",
 			"transaction_ref": UUID,
 			"callback_url":    redirectUrl,
-			"amount":          (Fee + cartTotal) * 100,
+			"amount":          (cartTotal) * 100,
 			"email":           customer.Email,
 			"pass_charge":     true,
 			"customer_name":   customer.Fullname,
@@ -385,13 +386,18 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	paymentErrChan := make(chan error)
 
 	go func() {
-		paymentLink, err := processPaymentGateway(input.PaymentGateway, UUID, input.Amount, cart.Total, redirectUrl, customer)
+		paymentLink, err := processPaymentGateway(input.PaymentGateway, UUID, cart.Total, redirectUrl, customer)
 		if err != nil {
 			paymentErrChan <- err
 		} else {
 			paymentLinkChan <- paymentLink
 		}
 	}()
+
+	err := services.PayDeliveryFund(float32(input.Amount))
+	if err != nil {
+		return "", err
+	}
 
 	// Handle concurrent payment processing
 	var paymentLink string

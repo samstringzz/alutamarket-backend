@@ -300,3 +300,24 @@ func (r *repository) GetStoresByFollower(ctx context.Context, followerID uint32)
 	}
 	return stores, nil
 }
+
+func (r *repository) CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error) {
+
+	var store *Store
+	err := r.db.First(&store, req.StoreID).Error
+	if err != nil {
+		return nil, err
+	}
+	req.CreatedAt = time.Now()
+	req.UpdatedAt = time.Now()
+	req.UUID = "AM-" + utils.GenerateRandomString(6)
+
+	store.Transactions = append(store.Transactions, req)
+
+	err = r.db.WithContext(ctx).Save(&store).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}

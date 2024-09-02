@@ -10,15 +10,15 @@ import (
 
 type Transactions struct {
 	gorm.Model
-	StoresID       []string `gorm:"serializer:json" json:"store" db:"store_id"`
-	CartID         uint32   `json:"cart_id" db:"cart_id"`
-	Coupon         string   `json:"coupon,omitempty" db:"coupon"`
-	Fee            float64  `json:"fee" db:"fee"`
-	Status         string   `json:"status" db:"status"` //pending,completed,failed
-	UserID         string   `json:"user_id" db:"user_id"`
-	Amount         float64  `json:"amount" db:"amount"`
-	UUID           string   `json:"uuid" db:"uuid"`
-	PaymentGateway string   `json:"payment_gateway" db:"payment_gateway"`
+	StoreID   string    `json:"store_id" db:"store_id"`
+	Status    string    `json:"status" db:"status"` //pending,approved,canceled
+	User      string    `json:"user" db:"user"`
+	Amount    float64   `json:"amount" db:"amount"`
+	UUID      string    `json:"uuid" db:"uuid"`
+	Type      string    `json:"type" db:"type"`
+	Category  string    `json:"category" db:"category"` // inovice/ transaction
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type Product product.Product
@@ -38,23 +38,23 @@ type DVADetails struct {
 
 type Store struct {
 	gorm.Model
-	ID                 uint32        `gorm:"primaryKey;uniqueIndex;not null;autoIncrement"  json:"id" db:"id"`
-	Name               string        `json:"name" db:"name"`
-	UserID             uint32        `json:"user_id" db:"user_id"`
-	Link               string        `json:"link" db:"link"`
-	Description        string        `json:"description" db:"description"`
-	HasPhysicalAddress bool          `json:"hasphysical_address" db:"has_physical_address"`
-	Address            string        `json:"address" db:"address"`
-	Transactions       Transactions  `gorm:"serializer:json"`
-	Followers          []Follower    `gorm:"serializer:json"`
-	Orders             []*StoreOrder `gorm:"serializer:json"`
-	Products           []Product     `gorm:"serializer:json"`
-	Wallet             float64       `json:"wallet" db:"wallet"`
-	Status             bool          `json:"status" db:"status"`
-	Thumbnail          string        `json:"thumbnail" db:"thumbnail"`
-	Phone              string        `json:"phone" db:"phone"`
-	Email              string        `json:"email" db:"email"`
-	Background         string        `json:"background" db:"background"`
+	ID                 uint32          `gorm:"primaryKey;uniqueIndex;not null;autoIncrement"  json:"id" db:"id"`
+	Name               string          `json:"name" db:"name"`
+	UserID             uint32          `json:"user_id" db:"user_id"`
+	Link               string          `json:"link" db:"link"`
+	Description        string          `json:"description" db:"description"`
+	HasPhysicalAddress bool            `json:"hasphysical_address" db:"has_physical_address"`
+	Address            string          `json:"address" db:"address"`
+	Transactions       []*Transactions `gorm:"serializer:json"`
+	Followers          []Follower      `gorm:"serializer:json"`
+	Orders             []*StoreOrder   `gorm:"serializer:json"`
+	Products           []Product       `gorm:"serializer:json"`
+	Wallet             float64         `json:"wallet" db:"wallet"`
+	Status             bool            `json:"status" db:"status"`
+	Thumbnail          string          `json:"thumbnail" db:"thumbnail"`
+	Phone              string          `json:"phone" db:"phone"`
+	Email              string          `json:"email" db:"email"`
+	Background         string          `json:"background" db:"background"`
 }
 
 type TrackedProduct struct {
@@ -139,6 +139,7 @@ type Repository interface {
 	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error)
+	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
 }
 
 type Service interface {
@@ -153,5 +154,6 @@ type Service interface {
 	GetOrders(ctx context.Context, storeId uint32) ([]*StoreOrder, error)
 	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
+	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error)
 }
