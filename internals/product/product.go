@@ -59,6 +59,7 @@ type NewProduct struct {
 	Discount      float64        `json:"discount" db:"discount"`
 	Status        bool           `json:"status" db:"status"`
 	Quantity      int            `json:"quantity" db:"quantity"`
+	File          string         `json:"file" db:"file"`
 	Slug          string         `json:"slug" db:"slug"`
 	Variant       []*VariantType `gorm:"serializer:json" json:"variant,omitempty" db:"variant"`
 	Store         string         `json:"store" db:"store"`
@@ -76,6 +77,7 @@ type Product struct {
 	Discount    float64        `json:"discount" db:"discount"`
 	Status      bool           `json:"status" db:"status"`
 	Quantity    int            `json:"quantity" db:"quantity"`
+	File        string         `json:"file" db:"file"`
 	Slug        string         `json:"slug" db:"slug"`
 	Variant     []*VariantType `gorm:"serializer:json" json:"variant,omitempty" db:"variant"`
 	Store       string         `json:"store" db:"store"`

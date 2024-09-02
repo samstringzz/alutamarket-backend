@@ -260,6 +260,7 @@ type ProductInput struct {
 	Name        string        `json:"name"`
 	ID          *string       `json:"id,omitempty"`
 	Description string        `json:"description"`
+	File        string        `json:"file"`
 	Price       float64       `json:"price"`
 	Discount    float64       `json:"discount"`
 	Thumbnail   string        `json:"thumbnail"`

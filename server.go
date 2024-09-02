@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -34,10 +35,31 @@ func ExtractTokenMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+func withCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*") // Update with the specific origin if needed
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		if r.Method == http.MethodOptions {
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 func main() {
+
+	const uploadPath = "./uploads/"
 	// Start broadcasting messages to connected clients
 	go messages.BroadcastMessages()
+
+	// Create upload directory if it doesn't exist
+	if err := os.MkdirAll(uploadPath, os.ModePerm); err != nil {
+		fmt.Println("Error creating upload directory:", err)
+		return
+	}
 
 	// Create a new CORS middleware with the desired options
 	c := cors.New(cors.Options{
@@ -59,6 +81,9 @@ func main() {
 	repo := services.NewRepository()
 	http.HandleFunc("/webhook/fw", repo.FWWebhookHandler)
 	http.HandleFunc("/webhook/ps", repo.PaystackWebhookHandler)
+	http.Handle("/upload", withCORS(http.HandlerFunc(services.UploadHandler)))
+	http.Handle("/download/", withCORS(http.HandlerFunc(services.DownloadHandler)))
+
 	// http.HandleFunc("/webhook/squad", repo.SquadWebhookHandler)
 	// Run auto migration
 	db.Migrate()
