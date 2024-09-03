@@ -12,11 +12,12 @@ import (
 // PayDeliveryFund sends a request to the Paystack API to charge a customer and returns an error if something goes wrong.
 func PayDeliveryFund(amount float32, email string) error {
 	url := "https://api.paystack.co/charge"
-
+	// Convert amount to kobo (for Nigerian Naira)
+	amountInKobo := int(amount * 100)
 	// Create the request payload
 	payload := map[string]interface{}{
 		"email":  email,
-		"amount": amount,
+		"amount": amountInKobo,
 		"bank": map[string]string{
 			"code":           "058",
 			"account_number": "0936231445",

@@ -40,6 +40,7 @@ type User struct {
 }
 
 type CreateUserReq struct {
+	// ID                 uint32    `gorm:"primaryKey;uniqueIndex;not null;autoIncrement" json:"id" db:"id"` // Unique identifier for the user
 	Campus             string    `json:"campus" db:"campus"`     // Campus of the user
 	Email              string    `json:"email" db:"email"`       // Email address of the user
 	Password           string    `json:"password" db:"password"` // Password of the user
