@@ -239,39 +239,41 @@ type PaymentDetailsInput struct {
 }
 
 type Product struct {
-	ID          int        `json:"id"`
-	Name        string     `json:"name"`
-	Slug        string     `json:"slug"`
-	Description string     `json:"description"`
-	Price       float64    `json:"price"`
-	Discount    float64    `json:"discount"`
-	Status      bool       `json:"status"`
-	Quantity    int        `json:"quantity"`
-	Thumbnail   string     `json:"thumbnail"`
-	Image       []string   `json:"image"`
-	File        *string    `json:"file,omitempty"`
-	Variant     []*Variant `json:"variant,omitempty"`
-	Review      []*Review  `json:"review,omitempty"`
-	Store       string     `json:"store"`
-	Category    string     `json:"category"`
-	Subcategory string     `json:"subcategory"`
+	ID              int        `json:"id"`
+	Name            string     `json:"name"`
+	Slug            string     `json:"slug"`
+	Description     string     `json:"description"`
+	Price           float64    `json:"price"`
+	Discount        float64    `json:"discount"`
+	Status          bool       `json:"status"`
+	Quantity        int        `json:"quantity"`
+	Thumbnail       string     `json:"thumbnail"`
+	Image           []string   `json:"image"`
+	File            *string    `json:"file,omitempty"`
+	Variant         []*Variant `json:"variant,omitempty"`
+	Review          []*Review  `json:"review,omitempty"`
+	Store           string     `json:"store"`
+	Category        string     `json:"category"`
+	Subcategory     string     `json:"subcategory"`
+	AlwaysAvailable bool       `json:"always_available"`
 }
 
 type ProductInput struct {
-	Name        string        `json:"name"`
-	ID          *string       `json:"id,omitempty"`
-	Description string        `json:"description"`
-	File        string        `json:"file"`
-	Price       float64       `json:"price"`
-	Discount    float64       `json:"discount"`
-	Thumbnail   string        `json:"thumbnail"`
-	Image       []string      `json:"image"`
-	Quantity    int           `json:"quantity"`
-	Variant     []*NewVariant `json:"variant,omitempty"`
-	Review      []*NewReview  `json:"review,omitempty"`
-	Store       string        `json:"store"`
-	Category    int           `json:"category"`
-	Subcategory int           `json:"subcategory"`
+	Name            string        `json:"name"`
+	ID              *string       `json:"id,omitempty"`
+	Description     string        `json:"description"`
+	File            string        `json:"file"`
+	Price           float64       `json:"price"`
+	Discount        float64       `json:"discount"`
+	Thumbnail       string        `json:"thumbnail"`
+	Image           []string      `json:"image"`
+	Quantity        int           `json:"quantity"`
+	Variant         []*NewVariant `json:"variant,omitempty"`
+	Review          []*NewReview  `json:"review,omitempty"`
+	Store           string        `json:"store"`
+	Category        int           `json:"category"`
+	Subcategory     int           `json:"subcategory"`
+	AlwaysAvailable bool          `json:"always_available"`
 }
 
 type ProductPaginationData struct {
