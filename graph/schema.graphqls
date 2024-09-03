@@ -373,6 +373,7 @@ type Product {
 	quantity: Int!
 	thumbnail: String!
 	image: [String!]!
+	file: String
 	variant: [Variant]
 	review: [Review]
 	store: String!

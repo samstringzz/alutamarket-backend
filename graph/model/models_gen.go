@@ -249,6 +249,7 @@ type Product struct {
 	Quantity    int        `json:"quantity"`
 	Thumbnail   string     `json:"thumbnail"`
 	Image       []string   `json:"image"`
+	File        *string    `json:"file,omitempty"`
 	Variant     []*Variant `json:"variant,omitempty"`
 	Review      []*Review  `json:"review,omitempty"`
 	Store       string     `json:"store"`

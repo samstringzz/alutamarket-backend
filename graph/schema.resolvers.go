@@ -1399,6 +1399,7 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 			Thumbnail:   item.Thumbnail,
 			Category:    item.Category,
 			Subcategory: item.Subcategory,
+			File:        &item.File,
 		}
 		if len(item.Variant) != 0 {
 			for _, outerItem := range item.Variant {
@@ -1486,6 +1487,7 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 		Store:       resp.Store,
 		Category:    resp.Category,
 		Subcategory: resp.Subcategory,
+		File:        &resp.File,
 		Thumbnail:   resp.Thumbnail,
 	}
 	if len(resp.Variant) != 0 {
@@ -2274,12 +2276,6 @@ type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
 func convertStringToInt(val string) int {
 	i, err := strconv.Atoi(val)
 	if err != nil {
