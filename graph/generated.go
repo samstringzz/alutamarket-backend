@@ -208,22 +208,23 @@ type ComplexityRoot struct {
 	}
 
 	Product struct {
-		Category    func(childComplexity int) int
-		Description func(childComplexity int) int
-		Discount    func(childComplexity int) int
-		File        func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Image       func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Price       func(childComplexity int) int
-		Quantity    func(childComplexity int) int
-		Review      func(childComplexity int) int
-		Slug        func(childComplexity int) int
-		Status      func(childComplexity int) int
-		Store       func(childComplexity int) int
-		Subcategory func(childComplexity int) int
-		Thumbnail   func(childComplexity int) int
-		Variant     func(childComplexity int) int
+		AlwaysAvailable func(childComplexity int) int
+		Category        func(childComplexity int) int
+		Description     func(childComplexity int) int
+		Discount        func(childComplexity int) int
+		File            func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Image           func(childComplexity int) int
+		Name            func(childComplexity int) int
+		Price           func(childComplexity int) int
+		Quantity        func(childComplexity int) int
+		Review          func(childComplexity int) int
+		Slug            func(childComplexity int) int
+		Status          func(childComplexity int) int
+		Store           func(childComplexity int) int
+		Subcategory     func(childComplexity int) int
+		Thumbnail       func(childComplexity int) int
+		Variant         func(childComplexity int) int
 	}
 
 	ProductPaginationData struct {
@@ -1428,6 +1429,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PaymentDetails.Phone(childComplexity), true
+
+	case "Product.always_available":
+		if e.complexity.Product.AlwaysAvailable == nil {
+			break
+		}
+
+		return e.complexity.Product.AlwaysAvailable(childComplexity), true
 
 	case "Product.category":
 		if e.complexity.Product.Category == nil {
@@ -4863,6 +4871,8 @@ func (ec *executionContext) fieldContext_CartItem_product(_ context.Context, fie
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -8030,6 +8040,8 @@ func (ec *executionContext) fieldContext_Mutation_createProduct(ctx context.Cont
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -8119,6 +8131,8 @@ func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Cont
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -8260,6 +8274,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteProduct(ctx context.Cont
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -10171,6 +10187,50 @@ func (ec *executionContext) fieldContext_Product_subcategory(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Product_always_available(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_always_available(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AlwaysAvailable, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_always_available(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ProductPaginationData_data(ctx context.Context, field graphql.CollectedField, obj *model.ProductPaginationData) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ProductPaginationData_data(ctx, field)
 	if err != nil {
@@ -10242,6 +10302,8 @@ func (ec *executionContext) fieldContext_ProductPaginationData_data(_ context.Co
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -11603,6 +11665,8 @@ func (ec *executionContext) fieldContext_Query_Product(ctx context.Context, fiel
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -11765,6 +11829,8 @@ func (ec *executionContext) fieldContext_Query_RecommendedProducts(ctx context.C
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -11854,6 +11920,8 @@ func (ec *executionContext) fieldContext_Query_RecentlyAddedProducts(ctx context
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -12138,6 +12206,8 @@ func (ec *executionContext) fieldContext_Query_searchProducts(ctx context.Contex
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -14366,6 +14436,8 @@ func (ec *executionContext) fieldContext_Store_product(_ context.Context, field 
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -15175,6 +15247,8 @@ func (ec *executionContext) fieldContext_StoreOrder_product(_ context.Context, f
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -15880,6 +15954,8 @@ func (ec *executionContext) fieldContext_Subscription_productSearchResults(ctx c
 				return ec.fieldContext_Product_category(ctx, field)
 			case "subcategory":
 				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "always_available":
+				return ec.fieldContext_Product_always_available(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -20468,7 +20544,7 @@ func (ec *executionContext) unmarshalInputProductInput(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "id", "description", "file", "price", "discount", "thumbnail", "image", "quantity", "variant", "review", "store", "category", "subcategory"}
+	fieldsInOrder := [...]string{"name", "id", "description", "file", "price", "discount", "thumbnail", "image", "quantity", "variant", "review", "store", "category", "subcategory", "always_available"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20573,6 +20649,13 @@ func (ec *executionContext) unmarshalInputProductInput(ctx context.Context, obj 
 				return it, err
 			}
 			it.Subcategory = data
+		case "always_available":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("always_available"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AlwaysAvailable = data
 		}
 	}
 
@@ -22577,6 +22660,11 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "subcategory":
 			out.Values[i] = ec._Product_subcategory(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "always_available":
+			out.Values[i] = ec._Product_always_available(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

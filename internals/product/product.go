@@ -50,43 +50,45 @@ type VariantType struct {
 }
 type NewProduct struct {
 	gorm.Model
-	ID            uint32         `json:"id" db:"id"`
-	Name          string         `json:"name" db:"name"`
-	Description   string         `json:"description" db:"description"`
-	Images        []string       `gorm:"serializer:json" json:"image" db:"image"`
-	Thumbnail     string         `json:"thumbnail" db:"thumbnail"`
-	Price         float64        `json:"price" db:"price"`
-	Discount      float64        `json:"discount" db:"discount"`
-	Status        bool           `json:"status" db:"status"`
-	Quantity      int            `json:"quantity" db:"quantity"`
-	File          string         `json:"file" db:"file"`
-	Slug          string         `json:"slug" db:"slug"`
-	Variant       []*VariantType `gorm:"serializer:json" json:"variant,omitempty" db:"variant"`
-	Store         string         `json:"store" db:"store"`
-	CategoryID    uint8          `json:"category" db:"category_id"`
-	SubCategoryID uint8          `json:"subcategory" db:"sub_category_id"`
+	ID              uint32         `json:"id" db:"id"`
+	Name            string         `json:"name" db:"name"`
+	Description     string         `json:"description" db:"description"`
+	Images          []string       `gorm:"serializer:json" json:"image" db:"image"`
+	Thumbnail       string         `json:"thumbnail" db:"thumbnail"`
+	Price           float64        `json:"price" db:"price"`
+	Discount        float64        `json:"discount" db:"discount"`
+	Status          bool           `json:"status" db:"status"`
+	Quantity        int            `json:"quantity" db:"quantity"`
+	File            string         `json:"file" db:"file"`
+	Slug            string         `json:"slug" db:"slug"`
+	Variant         []*VariantType `gorm:"serializer:json" json:"variant,omitempty" db:"variant"`
+	Store           string         `json:"store" db:"store"`
+	CategoryID      uint8          `json:"category" db:"category_id"`
+	SubCategoryID   uint8          `json:"subcategory" db:"sub_category_id"`
+	AlwaysAvailbale bool           `json:"always_available" db:"always_available"`
 }
 type Product struct {
 	gorm.Model
-	ID          uint32         `json:"id" db:"id"`
-	Name        string         `json:"name" db:"name"`
-	Description string         `json:"description" db:"description"`
-	Images      []string       `gorm:"serializer:json" json:"image" db:"image"`
-	Thumbnail   string         `json:"thumbnail" db:"thumbnail"`
-	Price       float64        `json:"price" db:"price"`
-	Discount    float64        `json:"discount" db:"discount"`
-	Status      bool           `json:"status" db:"status"`
-	Quantity    int            `json:"quantity" db:"quantity"`
-	File        string         `json:"file" db:"file"`
-	Slug        string         `json:"slug" db:"slug"`
-	Variant     []*VariantType `gorm:"serializer:json" json:"variant,omitempty" db:"variant"`
-	Store       string         `json:"store" db:"store"`
-	Category    string         `json:"category" db:"category"`
-	Views       []uint32       `gorm:"serializer:json" jsinput.ProductIDon:"views" db:"views"`
-	Subcategory string         `json:"subcategory" db:"subcategory"`
-	Reviews     []*Review      `gorm:"serializer:json"`
-	UnitSold    uint32         `json:"unit_sold" db:"unit_sold"`
-	Ads         *AdsGen        `gorm:"serializer:json" json:"ads,omitempty" db:"ads"`
+	ID              uint32         `json:"id" db:"id"`
+	Name            string         `json:"name" db:"name"`
+	Description     string         `json:"description" db:"description"`
+	Images          []string       `gorm:"serializer:json" json:"image" db:"image"`
+	Thumbnail       string         `json:"thumbnail" db:"thumbnail"`
+	Price           float64        `json:"price" db:"price"`
+	Discount        float64        `json:"discount" db:"discount"`
+	Status          bool           `json:"status" db:"status"`
+	AlwaysAvailbale bool           `json:"always_available" db:"always_available"`
+	Quantity        int            `json:"quantity" db:"quantity"`
+	File            string         `json:"file" db:"file"`
+	Slug            string         `json:"slug" db:"slug"`
+	Variant         []*VariantType `gorm:"serializer:json" json:"variant,omitempty" db:"variant"`
+	Store           string         `json:"store" db:"store"`
+	Category        string         `json:"category" db:"category"`
+	Views           []uint32       `gorm:"serializer:json" jsinput.ProductIDon:"views" db:"views"`
+	Subcategory     string         `json:"subcategory" db:"subcategory"`
+	Reviews         []*Review      `gorm:"serializer:json"`
+	UnitSold        uint32         `json:"unit_sold" db:"unit_sold"`
+	Ads             *AdsGen        `gorm:"serializer:json" json:"ads,omitempty" db:"ads"`
 }
 
 type HandledProduct struct { //wisihlist,recently_added,recommended,saved_for_later

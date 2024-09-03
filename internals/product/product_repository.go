@@ -91,19 +91,21 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Discount cannot exceed Product Price")
 	}
 	newProduct := &Product{
-		Name:        req.Name,
-		Slug:        utils.GenerateSlug(req.Name),
-		Description: req.Description,
-		Images:      req.Images,
-		Thumbnail:   req.Thumbnail,
-		Price:       req.Price,
-		Discount:    req.Discount,
-		Status:      req.Status,
-		Quantity:    req.Quantity,
-		Variant:     req.Variant,
-		Store:       req.Store,
-		Category:    category.Name,
-		Subcategory: subcategoryName,
+		Name:            req.Name,
+		Slug:            utils.GenerateSlug(req.Name),
+		Description:     req.Description,
+		Images:          req.Images,
+		Thumbnail:       req.Thumbnail,
+		Price:           req.Price,
+		Discount:        req.Discount,
+		Status:          req.Status,
+		Quantity:        req.Quantity,
+		File:            req.File,
+		Variant:         req.Variant,
+		Store:           req.Store,
+		Category:        category.Name,
+		Subcategory:     subcategoryName,
+		AlwaysAvailbale: req.AlwaysAvailbale,
 	}
 	if err := r.db.Create(newProduct).Error; err != nil {
 

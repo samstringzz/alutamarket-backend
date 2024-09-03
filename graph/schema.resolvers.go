@@ -612,18 +612,19 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.Produc
 
 	// Create a new product
 	newProduct := &product.NewProduct{
-		Name:          input.Name,
-		Description:   input.Description,
-		Images:        input.Image,
-		Price:         input.Price,
-		Discount:      input.Discount,
-		File:          input.File,
-		Quantity:      input.Quantity,
-		Status:        true,
-		Thumbnail:     input.Thumbnail,
-		CategoryID:    uint8(input.Category),
-		SubCategoryID: uint8(input.Subcategory),
-		Store:         input.Store,
+		Name:            input.Name,
+		Description:     input.Description,
+		Images:          input.Image,
+		Price:           input.Price,
+		Discount:        input.Discount,
+		File:            input.File,
+		Quantity:        input.Quantity,
+		Status:          true,
+		Thumbnail:       input.Thumbnail,
+		CategoryID:      uint8(input.Category),
+		SubCategoryID:   uint8(input.Subcategory),
+		Store:           input.Store,
+		AlwaysAvailbale: input.AlwaysAvailable,
 	}
 
 	// Create product variants and their values
@@ -1387,19 +1388,20 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 	for _, item := range resp {
 		id, _ := strconv.Atoi(strconv.FormatInt(int64(item.ID), 10))
 		product := &model.Product{
-			ID:          id,
-			Name:        item.Name,
-			Description: item.Description,
-			Image:       item.Images,
-			Price:       item.Price,
-			Status:      item.Status,
-			Quantity:    item.Quantity,
-			Slug:        item.Slug,
-			Store:       item.Store,
-			Thumbnail:   item.Thumbnail,
-			Category:    item.Category,
-			Subcategory: item.Subcategory,
-			File:        &item.File,
+			ID:              id,
+			Name:            item.Name,
+			Description:     item.Description,
+			Image:           item.Images,
+			Price:           item.Price,
+			Status:          item.Status,
+			Quantity:        item.Quantity,
+			Slug:            item.Slug,
+			Store:           item.Store,
+			Thumbnail:       item.Thumbnail,
+			Category:        item.Category,
+			Subcategory:     item.Subcategory,
+			File:            &item.File,
+			AlwaysAvailable: item.AlwaysAvailbale,
 		}
 		if len(item.Variant) != 0 {
 			for _, outerItem := range item.Variant {
@@ -1476,19 +1478,20 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 	}
 
 	product := &model.Product{
-		ID:          int(resp.ID),
-		Name:        resp.Name,
-		Description: resp.Description,
-		Image:       resp.Images,
-		Price:       resp.Price,
-		Status:      resp.Status,
-		Quantity:    resp.Quantity,
-		Slug:        resp.Slug,
-		Store:       resp.Store,
-		Category:    resp.Category,
-		Subcategory: resp.Subcategory,
-		File:        &resp.File,
-		Thumbnail:   resp.Thumbnail,
+		ID:              int(resp.ID),
+		Name:            resp.Name,
+		Description:     resp.Description,
+		Image:           resp.Images,
+		Price:           resp.Price,
+		Status:          resp.Status,
+		Quantity:        resp.Quantity,
+		Slug:            resp.Slug,
+		Store:           resp.Store,
+		Category:        resp.Category,
+		Subcategory:     resp.Subcategory,
+		File:            &resp.File,
+		AlwaysAvailable: resp.AlwaysAvailbale,
+		Thumbnail:       resp.Thumbnail,
 	}
 	if len(resp.Variant) != 0 {
 		for _, outerItem := range resp.Variant {
@@ -2276,6 +2279,12 @@ type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
 func convertStringToInt(val string) int {
 	i, err := strconv.Atoi(val)
 	if err != nil {

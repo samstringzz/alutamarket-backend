@@ -163,6 +163,7 @@ input ProductInput {
 	store: String!
 	category: Int!
 	subcategory: Int!
+	always_available: Boolean!
 }
 input customerInput {
 	name: String!
@@ -379,6 +380,7 @@ type Product {
 	store: String!
 	category: String!
 	subcategory: String!
+	always_available: Boolean!
 }
 
 type Customer {
