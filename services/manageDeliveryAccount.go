@@ -10,12 +10,12 @@ import (
 )
 
 // PayDeliveryFund sends a request to the Paystack API to charge a customer and returns an error if something goes wrong.
-func PayDeliveryFund(amount float32) error {
+func PayDeliveryFund(amount float32, email string) error {
 	url := "https://api.paystack.co/charge"
 
 	// Create the request payload
 	payload := map[string]interface{}{
-		"email":  "alutamarket",
+		"email":  email,
 		"amount": amount,
 		"bank": map[string]string{
 			"code":           "058",
