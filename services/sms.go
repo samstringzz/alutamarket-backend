@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
+	"time"
 )
 
 type TermiiSMSRequest struct {
@@ -26,14 +27,19 @@ type TermiiSMSResponse struct {
 func SendSMS(to, from, message string) (*TermiiSMSResponse, error) {
 	url := "https://api.ng.termii.com/api/sms/send"
 
+	apiKey := os.Getenv("TERMII_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("TERMII_API_KEY is not set")
+	}
+
 	// Prepare the SMS request payload
 	smsRequest := TermiiSMSRequest{
 		To:      to,
 		From:    from,
 		Sms:     message,
 		Type:    "plain", // Use "plain" for plain text messages
-		Channel: "dnd",   // Use "generic" for regular SMS; you can use "dnd" for Do Not Disturb
-		ApiKey:  os.Getenv("TERMII_API_KEY"),
+		Channel: "dnd",   // Use "generic" for regular SMS; "dnd" for Do Not Disturb
+		ApiKey:  apiKey,
 	}
 
 	// Log the request payload
@@ -52,7 +58,9 @@ func SendSMS(to, from, message string) (*TermiiSMSResponse, error) {
 
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %v", err)
@@ -60,7 +68,7 @@ func SendSMS(to, from, message string) (*TermiiSMSResponse, error) {
 	defer resp.Body.Close()
 
 	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}

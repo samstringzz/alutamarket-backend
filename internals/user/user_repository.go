@@ -320,7 +320,7 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 		return nil, errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid Credentials")
 	}
 	if err := r.db.Where("active = ?", true).First(&user).Error; err != nil {
-		return nil, errors.NewAppError(http.StatusExpectationFailed, "FAILED", "Your account is suspended/not verified")
+		return nil, errors.NewAppError(http.StatusExpectationFailed, user.Phone, "Your account is suspended/not verified")
 	}
 
 	// Generate a new refresh token
@@ -366,10 +366,11 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 		//send otp
 		otpCode := utils.GenerateOTP()
 		r.db.Model(&user).Update("code", otpCode)
-		return nil, errors.NewAppError(http.StatusCreated, "ACTION REQUIRED", "This account is 2-FA protected,enter Otp to continue")
+		return nil, errors.NewAppError(http.StatusProxyAuthRequired, "ACTION REQUIRED", "This account is 2-FA protected,enter Otp to continue")
 	}
 
 	// if err != nil {
+
 	// 	return nil, err
 	// }
 
