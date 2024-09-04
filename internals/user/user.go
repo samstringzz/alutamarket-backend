@@ -100,6 +100,13 @@ type Bank struct {
 	Slug string `json:"slug"`
 }
 
+type VerifyOTPReq struct {
+	Code     string `json:"code," db:"code"`  // otp code for verifications
+	Email    string `json:"email" db:"email"` // Email address of the user for login
+	Phone    string `json:"phone" db:"phone"` // Email address of the user for login
+	Attempts int    `json:"attempts" db:"attempts"`
+}
+
 type SplitConfig struct {
 	Subaccount string `json:"subaccount"`
 }
@@ -130,7 +137,7 @@ type Repository interface {
 	GetUser(ctx context.Context, filter string) (*User, error)              // Create a new user
 	GetUserByEmailOrPhone(ctx context.Context, email string) (*User, error) // Get user information by email
 	Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error)      // Perform user login
-	VerifyOTP(ctx context.Context, req *User) (*User, error)
+	VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*User, error)
 	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error
 	UpdateUser(ctx context.Context, user *User) (*User, error)
 	CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error)
@@ -143,7 +150,7 @@ type Service interface {
 	CreateUser(c context.Context, req *CreateUserReq) (*CreateUserRes, error) // Create a new user
 	GetUsers(ctx context.Context) ([]*User, error)
 	GetUser(ctx context.Context, filter string) (*User, error) // Create a new user
-	VerifyOTP(ctx context.Context, req *User) (*User, error)
+	VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*User, error)
 	Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error) // Perform user login
 	UpdateUser(ctx context.Context, user *User) (*User, error)
 	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error

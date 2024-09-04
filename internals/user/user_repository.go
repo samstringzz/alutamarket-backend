@@ -39,6 +39,29 @@ func GetAccessTokenCookie(ctx context.Context) *http.Cookie {
 	cookie, _ := ctx.Value(accessTokenCookieKey{}).(*http.Cookie)
 	return cookie
 }
+
+func (r *repository) resendOTP(ctx context.Context, phone string) error {
+	otpCode := utils.GenerateOTP()
+	codeExpiry := time.Now().Add(5 * time.Minute) //An expiry time of 5min
+	user, _ := r.GetUserByEmailOrPhone(ctx, phone)
+
+	user.Code = otpCode
+	user.Codeexpiry = codeExpiry
+	if err := r.db.Save(user).Error; err != nil {
+		return err
+	}
+	// Define the template string with a placeholder for the passcode
+	messageTemplate := "Hello Comrade, your Alutamarket VIP passcode is: %s. Make haste, the party is waiting."
+	// Remove the plus sign from the phone number
+	phoneWithoutPlus := strings.TrimPrefix(phone, "+")
+	// Insert the dynamic data into the template string
+	message := fmt.Sprintf(messageTemplate, otpCode)
+	_, err := services.SendSMS(phoneWithoutPlus, "N-Alert", message)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func NewRepository() Repository {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
@@ -273,27 +296,29 @@ func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (str
 	return string(jsonString), nil
 }
 
-func (r *repository) VerifyOTP(ctx context.Context, req *User) (*User, error) {
-	foundUser := &User{}
+func (r *repository) VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*User, error) {
+	foundUser, _ := r.GetUserByEmailOrPhone(ctx, req.Phone)
 	err := r.db.Where("phone = ?", req.Phone).First(foundUser).Error
-
+	fmt.Print(req.Attempts)
 	if err != nil {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
 	}
 
-	// If the code is incorrect, increment the r.otpCounter and send a new code if the r.otpCounter is greater than 3.
+	// If the code is incorrect, increment the req.Attempts and send a new code if the req.Attempts is greater than 3.
 	if req.Code != foundUser.Code {
-		r.otpCounter++
-		if r.otpCounter > 3 {
+		if req.Attempts > 3 {
 			// Send a new code here.
+			r.resendOTP(ctx, foundUser.Phone)
 			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "New code has been sent")
+		} else {
+			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Invalid code!!")
 		}
 	}
 	if foundUser.Codeexpiry.Before(time.Now()) {
 		return nil, errors.NewAppError(http.StatusConflict, "BAD REQUEST", "OTP Expired!!")
 	}
-	// If the r.otpCounter is less than or equal to 3 and the code is correct, verify the user.
-	if r.otpCounter <= 3 && req.Code == foundUser.Code {
+	// If the req.Attempts is less than or equal to 3 and the code is correct, verify the user.
+	if req.Attempts <= 3 && req.Code == foundUser.Code {
 		if foundUser.ID == 0 {
 			return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist in the database")
 		}
@@ -320,6 +345,7 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 		return nil, errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid Credentials")
 	}
 	if err := r.db.Where("active = ?", true).First(&user).Error; err != nil {
+		r.resendOTP(ctx, user.Phone)
 		return nil, errors.NewAppError(http.StatusExpectationFailed, user.Phone, "Your account is suspended/not verified")
 	}
 

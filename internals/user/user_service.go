@@ -65,13 +65,14 @@ func (s *service) CreateUser(c context.Context, req *CreateUserReq) (*CreateUser
 	}
 	return res, nil
 }
-func (s *service) VerifyOTP(c context.Context, req *User) (*User, error) {
+func (s *service) VerifyOTP(c context.Context, req *VerifyOTPReq) (*User, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
-	u := &User{
-		Phone: req.Phone,
-		Email: req.Email,
-		Code:  req.Code,
+	u := &VerifyOTPReq{
+		Phone:    req.Phone,
+		Email:    req.Email,
+		Code:     req.Code,
+		Attempts: req.Attempts,
 	}
 	r, err := s.Repository.VerifyOTP(ctx, u)
 	if err != nil {

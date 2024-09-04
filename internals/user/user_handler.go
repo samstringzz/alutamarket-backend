@@ -24,7 +24,7 @@ func (h *Handler) CreateUser(ctx context.Context, input *CreateUserReq) (*Create
 	return user, nil
 }
 
-func (h *Handler) VerifyOTP(ctx context.Context, input *User) (*User, error) {
+func (h *Handler) VerifyOTP(ctx context.Context, input *VerifyOTPReq) (*User, error) {
 	user, err := h.Service.VerifyOTP(ctx, input)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,6 @@ func (h *Handler) Login(ctx context.Context, input *LoginUserReq) (*LoginUserRes
 	}
 	return res, nil
 }
-
 
 func (h *Handler) GetUsers(ctx context.Context) ([]*User, error) {
 	user, err := h.Service.GetUsers(ctx)
