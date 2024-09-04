@@ -24,8 +24,7 @@ import (
 )
 
 type repository struct {
-	db         *gorm.DB
-	otpCounter uint8
+	db *gorm.DB
 }
 type accessTokenCookieKey struct{}
 
@@ -314,6 +313,7 @@ func (r *repository) VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*User, e
 			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Invalid code!!")
 		}
 	}
+
 	if foundUser.Codeexpiry.Before(time.Now()) {
 		return nil, errors.NewAppError(http.StatusConflict, "BAD REQUEST", "OTP Expired!!")
 	}
@@ -330,8 +330,6 @@ func (r *repository) VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*User, e
 		}
 		return foundUser, nil
 	}
-	r.db.Model(&foundUser).Update("active", true)
-
 	// If the code is incorrect and the counter is less than or equal to 3, return an error.
 	return foundUser, nil
 }
