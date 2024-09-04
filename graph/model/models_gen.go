@@ -200,9 +200,10 @@ type NewVariantValue struct {
 }
 
 type NewVerifyOtp struct {
-	Phone string  `json:"phone"`
-	Code  string  `json:"code"`
-	Email *string `json:"email,omitempty"`
+	Phone    string  `json:"phone"`
+	Code     string  `json:"code"`
+	Email    *string `json:"email,omitempty"`
+	Attempts int     `json:"attempts"`
 }
 
 type Order struct {
@@ -592,6 +593,12 @@ type DeliveryDetails struct {
 	Method  string  `json:"method"`
 	Address string  `json:"address"`
 	Fee     float64 `json:"fee"`
+}
+
+type Verifyotpinput struct {
+	Code     string `json:"code"`
+	Phone    string `json:"phone"`
+	Attempts int    `json:"attempts"`
 }
 
 type MediaType string

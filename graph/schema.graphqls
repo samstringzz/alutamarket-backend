@@ -77,6 +77,11 @@ input ChatInput {
 	chat_id: String
 }
 
+input verifyotpinput {
+	code: String!
+	phone: String!
+	attempts: Int!
+}
 type DVADetails {
 	surname: String!
 	othername: String!
@@ -314,6 +319,7 @@ input NewVerifyOTP {
 	phone: String!
 	code: String!
 	email: String
+	attempts: Int!
 }
 
 input ModifyCartItemInput {

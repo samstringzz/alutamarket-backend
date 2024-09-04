@@ -234,10 +234,11 @@ func (r *mutationResolver) CreateVerifyOtp(ctx context.Context, input model.NewV
 	userSrvc := user.NewService(userRepository)
 	userHandler := user.NewHandler(userSrvc)
 
-	req := &user.User{
+	req := &user.VerifyOTPReq{
 		Phone: input.Phone,
 		// Email: *input.Email,
-		Code: input.Code,
+		Code:     input.Code,
+		Attempts: input.Attempts,
 	}
 	resp, err := userHandler.VerifyOTP(ctx, req)
 	if err != nil {

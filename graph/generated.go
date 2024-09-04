@@ -2766,6 +2766,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateStoreOrderInput,
 		ec.unmarshalInputUpdateUserInput,
 		ec.unmarshalInputcustomerInput,
+		ec.unmarshalInputverifyotpinput,
 	)
 	first := true
 
@@ -20393,7 +20394,7 @@ func (ec *executionContext) unmarshalInputNewVerifyOTP(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"phone", "code", "email"}
+	fieldsInOrder := [...]string{"phone", "code", "email", "attempts"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20421,6 +20422,13 @@ func (ec *executionContext) unmarshalInputNewVerifyOTP(ctx context.Context, obj 
 				return it, err
 			}
 			it.Email = data
+		case "attempts":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attempts"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Attempts = data
 		}
 	}
 
@@ -21477,6 +21485,47 @@ func (ec *executionContext) unmarshalInputcustomerInput(ctx context.Context, obj
 				return it, err
 			}
 			it.Address = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputverifyotpinput(ctx context.Context, obj interface{}) (model.Verifyotpinput, error) {
+	var it model.Verifyotpinput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"code", "phone", "attempts"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "phone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phone"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Phone = data
+		case "attempts":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attempts"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Attempts = data
 		}
 	}
 
