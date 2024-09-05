@@ -65,7 +65,7 @@ func (s *service) CreateUser(c context.Context, req *CreateUserReq) (*CreateUser
 	}
 	return res, nil
 }
-func (s *service) VerifyOTP(c context.Context, req *VerifyOTPReq) (*User, error) {
+func (s *service) VerifyOTP(c context.Context, req *VerifyOTPReq) (*LoginUserRes, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 	u := &VerifyOTPReq{
@@ -162,4 +162,15 @@ func (s *service) GetMyDVA(ctx context.Context, email string) (*Account, error) 
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (s *service) SendPasswordResetLink(ctx context.Context, req *PasswordReset) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	err := s.Repository.SendPasswordResetLink(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
 }

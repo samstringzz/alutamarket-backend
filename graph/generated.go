@@ -455,7 +455,7 @@ type MutationResolver interface {
 	CreateOrder(ctx context.Context, input model.StoreOrderInput) (*model.StoreOrder, error)
 	UpdateOrder(ctx context.Context, input model.UpdateStoreOrderInput) (*model.StoreOrder, error)
 	UpdateUser(ctx context.Context, input *model.UpdateUserInput) (*model.User, error)
-	CreateVerifyOtp(ctx context.Context, input model.NewVerifyOtp) (*model.User, error)
+	CreateVerifyOtp(ctx context.Context, input model.NewVerifyOtp) (*model.LoginRes, error)
 	LoginUser(ctx context.Context, input model.LoginReq) (*model.LoginRes, error)
 	AddHandledProduct(ctx context.Context, userID int, productID int, typeArg string) (*model.HandledProducts, error)
 	AddReview(ctx context.Context, input model.ReviewInput) (*model.Review, error)
@@ -7305,9 +7305,9 @@ func (ec *executionContext) _Mutation_createVerifyOTP(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*model.LoginRes)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNLoginRes2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐLoginRes(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createVerifyOTP(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7319,43 +7319,13 @@ func (ec *executionContext) fieldContext_Mutation_createVerifyOTP(ctx context.Co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "fullname":
-				return ec.fieldContext_User_fullname(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "campus":
-				return ec.fieldContext_User_campus(ctx, field)
-			case "avatar":
-				return ec.fieldContext_User_avatar(ctx, field)
-			case "dob":
-				return ec.fieldContext_User_dob(ctx, field)
-			case "gender":
-				return ec.fieldContext_User_gender(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
-			case "phone":
-				return ec.fieldContext_User_phone(ctx, field)
-			case "usertype":
-				return ec.fieldContext_User_usertype(ctx, field)
-			case "stores":
-				return ec.fieldContext_User_stores(ctx, field)
-			case "active":
-				return ec.fieldContext_User_active(ctx, field)
+				return ec.fieldContext_LoginRes_id(ctx, field)
 			case "access_token":
-				return ec.fieldContext_User_access_token(ctx, field)
+				return ec.fieldContext_LoginRes_access_token(ctx, field)
 			case "refresh_token":
-				return ec.fieldContext_User_refresh_token(ctx, field)
-			case "twofa":
-				return ec.fieldContext_User_twofa(ctx, field)
-			case "code":
-				return ec.fieldContext_User_code(ctx, field)
-			case "paymnetDetails":
-				return ec.fieldContext_User_paymnetDetails(ctx, field)
-			case "codeexpiry":
-				return ec.fieldContext_User_codeexpiry(ctx, field)
+				return ec.fieldContext_LoginRes_refresh_token(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type LoginRes", field.Name)
 		},
 	}
 	defer func() {

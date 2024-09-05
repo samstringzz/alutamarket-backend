@@ -223,7 +223,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUs
 }
 
 // CreateVerifyOtp is the resolver for the createVerifyOTP field.
-func (r *mutationResolver) CreateVerifyOtp(ctx context.Context, input model.NewVerifyOtp) (*model.User, error) {
+func (r *mutationResolver) CreateVerifyOtp(ctx context.Context, input model.NewVerifyOtp) (*model.LoginRes, error) {
 	userRep := app.InitializePackage(app.UserPackage)
 	userRepository, ok := userRep.(user.Repository)
 	if !ok {
@@ -244,14 +244,10 @@ func (r *mutationResolver) CreateVerifyOtp(ctx context.Context, input model.NewV
 	if err != nil {
 		return nil, err
 	}
-	schema := &model.User{
-		Fullname: resp.Fullname,
-		Email:    resp.Email,
-		Campus:   resp.Campus,
-		Password: resp.Password,
-		Phone:    resp.Phone,
-		Usertype: resp.Usertype,
-		Active:   *resp.Active,
+	schema := &model.LoginRes{
+		ID:           int(resp.ID),
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
 	}
 	return schema, nil
 }
@@ -1043,7 +1039,7 @@ func (r *mutationResolver) CreateDVAAccount(ctx context.Context, input model.DVA
 	userSrvc := user.NewService(userRepository)
 	userHandler := user.NewHandler(userSrvc)
 	modelInput := user.DVADetails{
-		UserID:    input.UserID,
+		// UserEmail:    ,
 		StoreName: input.StoreName,
 	}
 	resp, err := userHandler.CreateDVAAccount(ctx, &modelInput)
