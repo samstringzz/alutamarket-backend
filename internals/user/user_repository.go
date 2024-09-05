@@ -271,7 +271,7 @@ func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (str
 		"middle_name":    names[1],
 		"last_name":      req.StoreName,
 		"phone":          req.User.Phone,
-		"preferred_bank": "wema",
+		"preferred_bank": "wema-bank",
 		"country":        "NG",
 	}
 	jsonPayload, err := json.Marshal(payload)
