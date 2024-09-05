@@ -269,7 +269,7 @@ func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (str
 		"email":          getEmail(req.StoreEmail, req.User.Email),
 		"first_name":     names[0],
 		"middle_name":    names[1],
-		"last_name":      req.StoreName,
+		"last_name":      names[1],
 		"phone":          req.User.Phone,
 		"preferred_bank": "wema-bank",
 		"country":        "NG",

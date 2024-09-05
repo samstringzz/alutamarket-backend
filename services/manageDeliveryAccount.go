@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 )
@@ -14,6 +14,7 @@ func PayDeliveryFund(amount float32, email string) error {
 	url := "https://api.paystack.co/charge"
 	// Convert amount to kobo (for Nigerian Naira)
 	amountInKobo := int(amount * 100)
+	fmt.Print(amountInKobo)
 	// Create the request payload
 	payload := map[string]interface{}{
 		"email":  email,
@@ -49,7 +50,7 @@ func PayDeliveryFund(amount float32, email string) error {
 	defer resp.Body.Close()
 
 	// Read and check response
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("error reading response body: %w", err)
 	}
