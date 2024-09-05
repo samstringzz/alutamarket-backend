@@ -24,7 +24,7 @@ func (h *Handler) CreateUser(ctx context.Context, input *CreateUserReq) (*Create
 	return user, nil
 }
 
-func (h *Handler) VerifyOTP(ctx context.Context, input *VerifyOTPReq) (*User, error) {
+func (h *Handler) VerifyOTP(ctx context.Context, input *VerifyOTPReq) (*LoginUserRes, error) {
 	user, err := h.Service.VerifyOTP(ctx, input)
 	if err != nil {
 		return nil, err
@@ -84,4 +84,12 @@ func (h *Handler) GetMyDVA(ctx context.Context, email string) (*Account, error) 
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (h *Handler) SendPasswordResetLink(ctx context.Context, req *PasswordReset) error {
+	err := h.Service.SendPasswordResetLink(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
 }

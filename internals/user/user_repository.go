@@ -104,49 +104,55 @@ func (r *repository) CreateStore(ctx context.Context, req *store.Store) (*store.
 		r.db.Rollback()
 		return nil, err
 	}
+	// user: &User{
+	// 	// Fullname: req.,
+	// }
 	//Create DVA for seller link for user
-	_, err := r.CreateDVAAccount(ctx, &DVADetails{UserID: strconv.FormatUint(uint64(req.UserID), 10), StoreName: req.Name, StoreEmail: req.Email})
-	if err != nil {
-		return nil, err
-	}
+	// _, err := r.CreateDVAAccount(ctx, &DVADetails{UserEmail: req.Email, StoreName: req.Name, StoreEmail: req.Email})
+	// if err != nil {
+	// 	return nil, err
+	// }
 	return resp, nil
 }
 
 func boolPtr(b bool) *bool {
 	return &b
 }
+
 func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User, error) {
 	// Start a new database transaction
-
 	tx := r.db.Begin()
 	if tx.Error != nil {
+		log.Printf("Failed to start transaction: %v", tx.Error)
 		return nil, tx.Error
 	}
 
 	// Defer a function to handle transaction rollback in case of error
 	defer func() {
 		if r := recover(); r != nil {
+			log.Printf("Panic recovered: %v", r)
 			tx.Rollback()
 		}
 	}()
 
 	otpCode := utils.GenerateOTP()
-	fmt.Printf("The generatedOtp is %s", otpCode)
-
-	// utils.SendOTPMessage(req.Phone,otpCode)
+	fmt.Printf("The generated OTP is %s\n", otpCode)
 
 	var count int64
-	codeExpiry := time.Now().Add(5 * time.Minute) //An expiry time of 5min
+	codeExpiry := time.Now().Add(5 * time.Minute) // An expiry time of 5 minutes
 	tx.Model(&User{}).Where("email = ? OR phone = ?", req.Email, req.Phone).Count(&count)
 	if count > 0 {
+		log.Printf("User already exists: email=%s, phone=%s", req.Email, req.Phone)
 		tx.Rollback()
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User already exists")
 	}
-	// emails.SendVerificationMail(req.Fullname, otpCode)
+
 	err := utils.AddEmailSubscriber(req.Email)
 	if err != nil {
+		log.Printf("Failed to add email subscriber: %v", err)
 		return nil, err
 	}
+
 	newUser := &User{
 		Campus:     req.Campus,
 		Email:      req.Email,
@@ -160,16 +166,18 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		Codeexpiry: codeExpiry,
 		Avatar:     "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
 	}
-
 	if err := tx.Create(newUser).Error; err != nil {
+		log.Printf("Failed to create new user: %v", err)
 		tx.Rollback()
 		return nil, err
 	}
-	//email credentials
+
+	// Email credentials
 	to := []string{req.Email}
 	contents := map[string]string{
 		"otp_code": otpCode,
 	}
+
 	// Define the template string with a placeholder for the passcode
 	messageTemplate := "Hello Comrade, your Alutamarket VIP passcode is: %s. Make haste, the party is waiting."
 	// Remove the plus sign from the phone number
@@ -178,10 +186,11 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 	message := fmt.Sprintf(messageTemplate, otpCode)
 	_, err = services.SendSMS(phoneWithoutPlus, "N-Alert", message)
 	if err != nil {
+		log.Printf("Failed to send SMS: %v", err)
 		return nil, err
 	}
-	if req.Usertype == "seller" {
 
+	if req.Usertype == "seller" {
 		createdStore := &store.Store{
 			Name:               req.StoreName,
 			Link:               req.StoreLink,
@@ -194,12 +203,21 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 			Phone:              req.StorePhone,
 		}
 
-		//Create DVA for seller link for user
-		_, err := r.CreateDVAAccount(ctx, &DVADetails{UserID: strconv.FormatUint(uint64(newUser.ID), 10), StoreName: req.StoreName, StoreEmail: req.StoreEmail})
+		user := &User{
+			Fullname: req.Fullname,
+			Email:    req.Email,
+			Phone:    req.Phone,
+		}
+
+		// Create DVA for seller link for user
+		_, err := r.CreateDVAAccount(ctx, &DVADetails{User: *user, StoreName: req.StoreName, StoreEmail: req.StoreEmail})
 		if err != nil {
+			log.Printf("Failed to create DVA account: %v", err)
 			return nil, err
 		}
+
 		if err := tx.Create(createdStore).Error; err != nil {
+			log.Printf("Failed to create store: %v", err)
 			tx.Rollback()
 			return nil, err
 		}
@@ -207,24 +225,29 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		templateID := "7178d0b2-a957-410d-b24d-e812252451da"
 		err = services.SendEmail(templateID, "Welcome to Alutamarket🎉", to, contents)
 		if err != nil {
+			log.Printf("Failed to send welcome email to seller: %v", err)
 			return nil, err
 		}
 	} else {
 		templateID := "633d65f7-0545-4550-9983-8b309afa3d03"
 		err := services.SendEmail(templateID, "Welcome to Alutamarket🎉", to, contents)
 		if err != nil {
+			log.Printf("Failed to send welcome email: %v", err)
 			return nil, err
 		}
 	}
 
 	// Commit the transaction if everything succeeded
 	if err := tx.Commit().Error; err != nil {
+		log.Printf("Failed to commit transaction: %v", err)
 		tx.Rollback()
 		return nil, err
 	}
 
+	log.Printf("Successfully created user: ID=%d", newUser.ID)
 	return newUser, nil
 }
+
 func getEmail(storeEmail, userEmail string) string {
 	if storeEmail != "" {
 		return storeEmail
@@ -233,26 +256,22 @@ func getEmail(storeEmail, userEmail string) string {
 }
 
 func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error) {
-	user, err := r.GetUser(ctx, req.UserID)
-	if err != nil {
-		return "", err
-	}
 
 	// Create dedicated account
 	dedicatedAccountURL := "https://api.paystack.co/dedicated_account/assign"
 	method := "POST"
-	names := strings.Split(user.Fullname, " ")
+	names := strings.Split(req.User.Fullname, " ")
 	if len(names) < 2 {
 		return "", fmt.Errorf("invalid user name")
 	}
 
 	payload := map[string]interface{}{
-		"email":          getEmail(req.StoreEmail, user.Email),
+		"email":          getEmail(req.StoreEmail, req.User.Email),
 		"first_name":     names[0],
 		"middle_name":    names[1],
 		"last_name":      req.StoreName,
-		"phone":          user.Phone,
-		"preferred_bank": "test-bank",
+		"phone":          req.User.Phone,
+		"preferred_bank": "wema",
 		"country":        "NG",
 	}
 	jsonPayload, err := json.Marshal(payload)
@@ -295,7 +314,7 @@ func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (str
 	return string(jsonString), nil
 }
 
-func (r *repository) VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*User, error) {
+func (r *repository) VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*LoginUserRes, error) {
 	foundUser, _ := r.GetUserByEmailOrPhone(ctx, req.Phone)
 	err := r.db.Where("phone = ?", req.Phone).First(foundUser).Error
 	fmt.Print(req.Attempts)
@@ -313,6 +332,48 @@ func (r *repository) VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*User, e
 			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Invalid code!!")
 		}
 	}
+	refreshClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, MyJWTClaims{
+		ID:       strconv.Itoa(int(foundUser.ID)),
+		Fullname: foundUser.Fullname,
+		Usertype: foundUser.Usertype,
+		Campus:   foundUser.Campus,
+		Phone:    foundUser.Phone,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    strconv.Itoa(int(foundUser.ID)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)), // Example: Refresh token expires in 7 days
+		},
+	})
+	refreshSS, err := refreshClaims.SignedString([]byte(os.Getenv("REFRESH_SECRET_KEY")))
+	if err != nil {
+		return nil, err
+	}
+
+	accessClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, MyJWTClaims{
+		ID:       strconv.Itoa(int(foundUser.ID)),
+		Fullname: foundUser.Fullname,
+		Campus:   foundUser.Campus,
+		Usertype: foundUser.Usertype,
+		Phone:    foundUser.Phone,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    strconv.Itoa(int(foundUser.ID)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		},
+	})
+	accessSS, err := accessClaims.SignedString([]byte(os.Getenv("SECRET_KEY")))
+	if err != nil {
+		return nil, err
+	}
+	accessCookie := http.Cookie{
+		Name:     "access_token",
+		Value:    accessSS,
+		Expires:  time.Now().Add(24 * time.Hour), // Set the expiration to match the token's expiration
+		HttpOnly: true,
+		Secure:   false, // Set to true if your server uses HTTPS
+		SameSite: http.SameSiteStrictMode,
+	}
+
+	// Add the access token cookie to the context
+	SetAccessTokenCookie(ctx, &accessCookie)
 
 	if foundUser.Codeexpiry.Before(time.Now()) {
 		return nil, errors.NewAppError(http.StatusConflict, "BAD REQUEST", "OTP Expired!!")
@@ -328,10 +389,12 @@ func (r *repository) VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*User, e
 		if err := r.db.Model(foundUser).Update("active", true).Error; err != nil {
 			return nil, err
 		}
-		return foundUser, nil
+		return &LoginUserRes{AccessToken: accessSS, RefreshToken: refreshSS, ID: foundUser.ID}, nil
 	}
+
 	// If the code is incorrect and the counter is less than or equal to 3, return an error.
-	return foundUser, nil
+	return &LoginUserRes{AccessToken: accessSS, RefreshToken: refreshSS, ID: foundUser.ID}, nil
+
 }
 func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRes, error) {
 	var user User
@@ -619,4 +682,9 @@ func (r *repository) SetPaymentDetais(ctx context.Context, req *PaymentDetails, 
 		return err
 	}
 	return nil
+}
+
+func (r *repository) SendPasswordResetLink(ctx context.Context, req *PasswordReset) error {
+
+	panic("hello")
 }

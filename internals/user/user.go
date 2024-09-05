@@ -126,31 +126,38 @@ type Account struct {
 }
 
 type DVADetails struct {
-	UserID     string `json:"user_id" db:"user_id"`
+	User       User   `json:"user"`
 	StoreName  string `json:"store_name" db:"store_name"`
 	StoreEmail string `json:"store_email" db:"store_email"`
 }
 
+type PasswordReset struct {
+	gorm.Model
+	Link      string    `json:"store_name" db:"store_name"`
+	ExpiresAt time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
+	CSRF      string    `json:"csrf,omitempty" db:"csrf"`
+}
 type Repository interface {
 	CreateUser(ctx context.Context, user *CreateUserReq) (*User, error)     // Create a new user
 	GetUsers(ctx context.Context) ([]*User, error)                          // Create a new user
 	GetUser(ctx context.Context, filter string) (*User, error)              // Create a new user
 	GetUserByEmailOrPhone(ctx context.Context, email string) (*User, error) // Get user information by email
 	Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error)      // Perform user login
-	VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*User, error)
+	VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*LoginUserRes, error)
 	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error
 	UpdateUser(ctx context.Context, user *User) (*User, error)
 	CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error)
 	CreateStore(ctx context.Context, req *store.Store) (*store.Store, error)
 	GetMyDVA(ctx context.Context, userEmail string) (*Account, error)
 	SetPaymentDetais(ctx context.Context, req *PaymentDetails, userId uint32) error
+	SendPasswordResetLink(ctx context.Context, req *PasswordReset) error
 }
 
 type Service interface {
 	CreateUser(c context.Context, req *CreateUserReq) (*CreateUserRes, error) // Create a new user
 	GetUsers(ctx context.Context) ([]*User, error)
 	GetUser(ctx context.Context, filter string) (*User, error) // Create a new user
-	VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*User, error)
+	VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*LoginUserRes, error)
 	Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error) // Perform user login
 	UpdateUser(ctx context.Context, user *User) (*User, error)
 	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error
@@ -158,4 +165,5 @@ type Service interface {
 	GetMyDVA(ctx context.Context, userEmail string) (*Account, error)
 	CreateStore(ctx context.Context, req *store.Store) (*store.Store, error)
 	SetPaymentDetais(ctx context.Context, req *PaymentDetails, userId uint32) error
+	SendPasswordResetLink(ctx context.Context, req *PasswordReset) error
 }
