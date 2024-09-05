@@ -201,6 +201,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 			Wallet:             0,
 			Status:             true,
 			Phone:              req.StorePhone,
+			Background:         "https://static01.nyt.com/images/2021/02/07/fashion/NEW-BLUE-1/NEW-BLUE-1-superJumbo.jpg",
 		}
 
 		user := &User{
