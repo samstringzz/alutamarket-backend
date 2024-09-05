@@ -80,7 +80,7 @@ func (r *repository) GetStore(ctx context.Context, id uint32) (*Store, error) {
 
 func (r *repository) GetStoreByName(ctx context.Context, name string) (*Store, error) {
 	var store *Store
-	err := r.db.Where("name = ? or link = ?", name).First(&store).Error
+	err := r.db.Where("name = ? or link = ?", name, name).First(&store).Error
 	if err != nil {
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Store does not exist")
 	}
