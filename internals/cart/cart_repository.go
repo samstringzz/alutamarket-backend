@@ -344,7 +344,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	UUID := input.UUID
 	redirectUrl := "https://www.thealutamarket.com"
 
-	log.Println("Starting InitiatePayment process...")
+	// log.Println("Starting InitiatePayment process...")
 
 	errChan := make(chan error, 2)
 	cartChan := make(chan *Cart)
@@ -354,14 +354,14 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	// Fetch cart concurrently
 	go func() {
 		cart := &Cart{}
-		log.Printf("Fetching cart for user ID %d...\n", userID)
+		// log.Printf("Fetching cart for user ID %d...\n", userID)
 		err := r.db.Model(cart).Where("user_id = ? AND active =?", uint32(userID), true).First(cart).Error
 		if err != nil {
 			errChan <- errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Cart not found")
 			log.Println("Cart not found")
 		} else {
 			cartChan <- cart
-			log.Printf("Cart fetched successfully: %+v\n", cart)
+			// log.Printf("Cart fetched successfully: %+v\n", cart)
 		}
 	}()
 
@@ -371,10 +371,10 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		customer, err := user.NewRepository().GetUser(ctx, input.UserID)
 		if err != nil {
 			errChan <- err
-			log.Println("Error fetching customer details:", err)
+			// log.Println("Error fetching customer details:", err)
 		} else {
 			customerChan <- customer
-			log.Printf("Customer details fetched successfully: %+v\n", customer)
+			// log.Printf("Customer details fetched successfully: %+v\n", customer)
 		}
 	}()
 
@@ -389,21 +389,21 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		case customer = <-customerChan:
 		}
 	}
-	log.Printf("Customer Details: ID=%d, Name=%s, Email=%s\n", customer.ID, customer.PaymentDetails.Name, customer.Email)
+	// log.Printf("Customer Details: ID=%d, Name=%s, Email=%s\n", customer.ID, customer.PaymentDetails.Name, customer.Email)
 
 	// Payment gateway processing (this is I/O-bound, consider running it concurrently)
 	paymentLinkChan := make(chan string)
 	paymentErrChan := make(chan error)
 
 	go func() {
-		log.Printf("Processing payment gateway for customer %s...\n", customer.Email)
+		// log.Printf("Processing payment gateway for customer %s...\n", customer.Email)
 		paymentLink, err := processPaymentGateway(input.PaymentGateway, UUID, cart.Total, redirectUrl, customer)
 		if err != nil {
 			paymentErrChan <- err
-			log.Println("Error processing payment gateway:", err)
+			// log.Println("Error processing payment gateway:", err)
 		} else {
 			paymentLinkChan <- paymentLink
-			log.Printf("Payment gateway processed successfully. Payment link: %s\n", paymentLink)
+			// log.Printf("Payment gateway processed successfully. Payment link: %s\n", paymentLink)
 		}
 	}()
 
@@ -422,7 +422,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		return "", err
 	}
 
-	log.Println("Payment link obtained:", paymentLink)
+	// log.Println("Payment link obtained:", paymentLink)
 
 	newOrder := &store.Order{
 		Amount:         cart.Total + input.Amount,
@@ -441,7 +441,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 			Fee:     input.Amount,
 		},
 	}
-	log.Printf("New order created: %+v\n", newOrder)
+	// log.Printf("New order created: %+v\n", newOrder)
 
 	var products []store.TrackedProduct
 	for _, item := range cart.Items {
@@ -461,7 +461,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	newOrder.Products = products
 	newOrder.Status = "pending"
 
-	log.Printf("Tracking products: %+v\n", products)
+	// log.Printf("Tracking products: %+v\n", products)
 
 	// Create Seller Order Logic
 	var storePrd []*store.StoreProduct
@@ -489,7 +489,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 			Info:    customer.PaymentDetails.Info,
 		},
 	}
-	log.Printf("Store order created: %+v\n", req)
+	// log.Printf("Store order created: %+v\n", req)
 
 	// Mark the cart as inactive and process the order concurrently
 	if paymentLink != "" {
@@ -506,7 +506,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 				log.Println("Error saving cart:", err)
 			} else {
 				errChan <- nil
-				log.Println("Cart saved successfully.")
+				// log.Println("Cart saved successfully.")
 			}
 		}()
 
@@ -519,19 +519,19 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 				log.Println("Error creating store order:", err)
 			} else {
 				errChan <- nil
-				log.Println("Store order created successfully.")
+				// log.Println("Store order created successfully.")
 			}
 		}()
 
 		// Save the order in the database concurrently
 		go func() {
-			log.Println("Saving order to database...")
+			// log.Println("Saving order to database...")
 			if err := r.db.Model(&store.Order{}).Save(newOrder).Error; err != nil {
 				errChan <- err
 				log.Println("Error saving order to database:", err)
 			} else {
 				errChan <- nil
-				log.Println("Order saved to database successfully.")
+				// log.Println("Order saved to database successfully.")
 			}
 		}()
 
@@ -544,7 +544,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		}
 	}
 
-	log.Println("InitiatePayment process completed successfully.")
+	// log.Println("InitiatePayment process completed successfully.")
 	return paymentLink, nil
 }
 

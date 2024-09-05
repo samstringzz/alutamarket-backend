@@ -50,7 +50,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		userReq.StoreAddress = input.Stores.Address
 		userReq.Description = input.Stores.Description
 		userReq.HasPhysicalAddress = input.Stores.HasPhysicalAddress
-		userReq.Phone = input.Stores.Phone
+		userReq.StorePhone = input.Stores.Phone
 	}
 	_, err := userHandler.CreateUser(ctx, userReq)
 
