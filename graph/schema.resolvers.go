@@ -1836,6 +1836,12 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 
 // Stores is the resolver for the Stores field.
 func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offset *int) (*model.StorePaginationData, error) {
+	token := ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("seller", token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	storeRep := app.InitializePackage(app.StorePackage)
 
 	storeRepository, ok := storeRep.(store.Repository)
@@ -1945,12 +1951,6 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 
 // Store is the resolver for the Store field.
 func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error) {
-	// token := ctx.Value("token").(string)
-
-	// authErr := middlewares.AuthMiddleware("seller", token)
-	// if authErr != nil {
-	// 	return nil, authErr
-	// }
 
 	storeRep := app.InitializePackage(app.StorePackage)
 
@@ -1983,6 +1983,13 @@ func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error)
 		Phone:              resp.Phone,
 	}
 
+	for _, follower := range resp.Followers {
+		storeFollower := &model.StoreFollower{}
+		storeFollower.FollowerID = int(follower.ID)
+		storeFollower.FollowerName = follower.FollowerName
+		store.Followers = append(store.Followers, storeFollower)
+	}
+
 	for _, transaction := range store.Transactions {
 		storeTransactions := &model.Transaction{
 			StoreID:   transaction.StoreID,
@@ -1995,12 +2002,6 @@ func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error)
 			UUID:      transaction.UUID,
 		}
 		store.Transactions = append(store.Transactions, storeTransactions)
-	}
-	for _, follower := range resp.Followers {
-		storeFollower := &model.StoreFollower{}
-		storeFollower.FollowerID = int(follower.ID)
-		storeFollower.FollowerName = follower.FollowerName
-		store.Followers = append(store.Followers, storeFollower)
 	}
 
 	for _, order := range store.Orders {
@@ -2066,6 +2067,9 @@ func (r *queryResolver) StoreByName(ctx context.Context, name string) (*model.St
 		User:               int(resp.UserID),
 		Description:        resp.Description,
 		Thumbnail:          resp.Thumbnail,
+		Background:         resp.Background,
+		Address:            resp.Address,
+		Phone:              resp.Phone,
 	}
 	for _, follower := range resp.Followers {
 		storeFollower := &model.StoreFollower{}
