@@ -543,6 +543,16 @@ input TransactionInput {
 	type: String!
 	category: String!
 }
+
+input passwordResetInput {
+	link: String!
+	email: String!
+}
+
+input passwordUpdateInput {
+	email: String!
+	password: String!
+}
 type Query {
 	Users(limit: Int, offset: Int): [User!]!
 	User(id: ID!): User
@@ -601,6 +611,9 @@ type Mutation {
 	verifySmartCard(input: SmartCardInput!): SmartcardVerificationResponse
 	createChat(input: ChatInput!): String
 	createTransaction(input: TransactionInput!): Transaction
+	createResetPasswordLink(input: passwordResetInput!): Boolean! # Assuming this returns a success status
+	verifyResetPasswordLink(input: String!): Boolean! # Changed input to use an input type, returning success/failure
+	updateUserPassword(input: passwordUpdateInput!): Boolean!
 }
 
 type Subscription {

@@ -3,6 +3,8 @@ package user
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -690,5 +692,105 @@ func (r *repository) SetPaymentDetais(ctx context.Context, req *PaymentDetails, 
 
 func (r *repository) SendPasswordResetLink(ctx context.Context, req *PasswordReset) error {
 
-	panic("hello")
+	foundUser, err := r.GetUserByEmailOrPhone(ctx, req.Email)
+	// If user not found, terminate operation
+	if err != nil {
+		return err
+	}
+
+	// Generate a 32-byte secure random token
+	token := make([]byte, 32)
+	_, err = rand.Read(token)
+	if err != nil {
+		return err
+	}
+
+	// Encode the byte slice as a base64 string for safe URL usage
+	t := base64.URLEncoding.EncodeToString(token)
+
+	// Construct reset password link
+	resetLink := fmt.Sprintf("%s/reset_password?token=%s", req.Link, t)
+
+	// Send email
+	to := []string{foundUser.Email}
+	contents := map[string]string{
+		"new_link": resetLink,
+	}
+	templateID := "7ee50170-1af2-44b4-a819-ab638593f08d"
+	err = services.SendEmail(templateID, "Reset Password Link", to, contents)
+	if err != nil {
+		log.Printf("Failed to send reset password link email: %v", err)
+		return err
+	}
+
+	// Store the password reset token in the database
+	pwdReset := &PasswordReset{
+		Link:      fmt.Sprintf("%s/reset_password?token=%s", req.Link, t),
+		Token:     t,
+		ExpiresAt: time.Now().Add(10 * time.Minute),
+	}
+	if err := r.db.Create(pwdReset).Error; err != nil {
+		log.Printf("Failed to store password reset token: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *repository) VerifyResetLink(ctx context.Context, token string) error {
+	pwdReset := &PasswordReset{}
+
+	// Decode the base64 token
+	decodedToken, err := base64.URLEncoding.DecodeString(token)
+	if err != nil {
+		return errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "invalid token")
+	}
+
+	// Find the reset request by token
+	err = r.db.Where("token = ?", decodedToken).First(pwdReset).Error
+	if err != nil {
+		return errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "invalid or expired token")
+	}
+
+	// Check if the token has expired
+	if time.Now().After(pwdReset.ExpiresAt) {
+		// Delete the expired token
+		r.db.Delete(&pwdReset)
+		return errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "token has expired")
+	}
+
+	return nil
+}
+
+func (r *repository) UpdatePassword(ctx context.Context, req *PasswordReset) error {
+	pwdReset := &PasswordReset{}
+	// Find the user by Email
+	user, err := r.GetUserByEmailOrPhone(ctx, req.Email)
+	if err != nil {
+		return err
+	}
+	err = r.db.Where("link = ?", req.Link).First(pwdReset).Error
+	if err != nil {
+		return errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "invalid or expired token")
+	}
+	// Check if the token has expired
+	if time.Now().After(pwdReset.ExpiresAt) {
+		// Delete the expired token
+		r.db.Delete(&pwdReset)
+		return errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "token has expired")
+	}
+	// Update user's password (assuming `generateHash` hashes the password)
+	user.Password, _ = utils.HashPasswword(req.Password)
+	err = r.db.Save(user).Error
+	if err != nil {
+		return err
+	}
+
+	// After successful password update, delete the password reset token
+	err = r.db.Delete(&pwdReset).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

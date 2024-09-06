@@ -174,3 +174,25 @@ func (s *service) SendPasswordResetLink(ctx context.Context, req *PasswordReset)
 	}
 	return nil
 }
+
+func (s *service) UpdatePassword(ctx context.Context, req *PasswordReset) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	err := s.Repository.UpdatePassword(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *service) VerifyResetLink(ctx context.Context, req string) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	err := s.Repository.VerifyResetLink(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}

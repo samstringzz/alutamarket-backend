@@ -1186,6 +1186,86 @@ func (r *mutationResolver) CreateTransaction(ctx context.Context, input model.Tr
 	return modTransaction, nil
 }
 
+// CreateResetPasswordLink is the resolver for the createResetPasswordLink field.
+func (r *mutationResolver) CreateResetPasswordLink(ctx context.Context, input model.PasswordResetInput) (bool, error) {
+	// token := ctx.Value("token").(string)
+
+	// authErr := middlewares.AuthMiddleware("entry", token)
+	// if authErr != nil {
+	// 	return false, authErr
+	// }
+	userRep := app.InitializePackage(app.UserPackage)
+	userRepository, ok := userRep.(user.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return false, fmt.Errorf("userRep is not a user.Repository")
+	}
+	userSrvc := user.NewService(userRepository)
+	userHandler := user.NewHandler(userSrvc)
+
+	req := &user.PasswordReset{
+		Link:  input.Link,
+		Email: input.Email,
+	}
+	err := userHandler.SendPasswordResetLink(ctx, req)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// VerifyResetPasswordLink is the resolver for the verifyResetPasswordLink field.
+func (r *mutationResolver) VerifyResetPasswordLink(ctx context.Context, input string) (bool, error) {
+	// token := ctx.Value("token").(string)
+
+	// authErr := middlewares.AuthMiddleware("entry", token)
+	// if authErr != nil {
+	// 	return false, authErr
+	// }
+	userRep := app.InitializePackage(app.UserPackage)
+	userRepository, ok := userRep.(user.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return false, fmt.Errorf("userRep is not a user.Repository")
+	}
+	userSrvc := user.NewService(userRepository)
+	userHandler := user.NewHandler(userSrvc)
+
+	err := userHandler.VerifyResetLink(ctx, input)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// UpdateUserPassword is the resolver for the updateUserPassword field.
+func (r *mutationResolver) UpdateUserPassword(ctx context.Context, input model.PasswordUpdateInput) (bool, error) {
+	// token := ctx.Value("token").(string)
+
+	// authErr := middlewares.AuthMiddleware("entry", token)
+	// if authErr != nil {
+	// 	return false, authErr
+	// }
+	userRep := app.InitializePackage(app.UserPackage)
+	userRepository, ok := userRep.(user.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return false, fmt.Errorf("userRep is not a user.Repository")
+	}
+	userSrvc := user.NewService(userRepository)
+	userHandler := user.NewHandler(userSrvc)
+	req := &user.PasswordReset{
+		Password: input.Password,
+		Email:    input.Email,
+	}
+
+	err := userHandler.UpdatePassword(ctx, req)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Users is the resolver for the Users field.
 func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error) {
 	userRep := app.InitializePackage(app.UserPackage)
@@ -1951,7 +2031,6 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 
 // Store is the resolver for the Store field.
 func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error) {
-
 	storeRep := app.InitializePackage(app.StorePackage)
 
 	storeRepository, ok := storeRep.(store.Repository)
