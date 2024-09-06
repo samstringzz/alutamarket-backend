@@ -87,7 +87,9 @@ func (r *repository) GetUserByEmailOrPhone(ctx context.Context, identifier strin
 	return &u, nil
 }
 func (r *repository) CreateStore(ctx context.Context, req *store.Store) (*store.Store, error) {
-
+	// Convert userId to a string
+	userIdStr := strconv.FormatUint(uint64(req.UserID), 10)
+	foundUser, _ := r.GetUser(ctx, userIdStr)
 	resp := &store.Store{
 		Name:               req.Name,
 		Email:              req.Email,
@@ -98,6 +100,7 @@ func (r *repository) CreateStore(ctx context.Context, req *store.Store) (*store.
 		Address:            req.Address,
 		Wallet:             0,
 		Status:             true,
+		Background:         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQLbvWGTFQh6OGWPfkLx2xBS_OP3oZJzQubA&s",
 		Phone:              req.Phone,
 	}
 	if err := r.db.Create(resp).Error; err != nil {
@@ -107,11 +110,11 @@ func (r *repository) CreateStore(ctx context.Context, req *store.Store) (*store.
 	// user: &User{
 	// 	// Fullname: req.,
 	// }
-	//Create DVA for seller link for user
-	// _, err := r.CreateDVAAccount(ctx, &DVADetails{UserEmail: req.Email, StoreName: req.Name, StoreEmail: req.Email})
-	// if err != nil {
-	// 	return nil, err
-	// }
+	// Create DVA for seller link for user
+	_, err := r.CreateDVAAccount(ctx, &DVADetails{User: *foundUser, StoreName: req.Name, StoreEmail: req.Email})
+	if err != nil {
+		return nil, err
+	}
 	return resp, nil
 }
 
@@ -201,7 +204,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 			Wallet:             0,
 			Status:             true,
 			Phone:              req.StorePhone,
-			Background:         "https://static01.nyt.com/images/2021/02/07/fashion/NEW-BLUE-1/NEW-BLUE-1-superJumbo.jpg",
+			Background:         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQLbvWGTFQh6OGWPfkLx2xBS_OP3oZJzQubA&s",
 		}
 
 		user := &User{
