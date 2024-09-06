@@ -133,9 +133,11 @@ type DVADetails struct {
 
 type PasswordReset struct {
 	gorm.Model
-	Link      string    `json:"store_name" db:"store_name"`
+	Link      string    `json:"link" db:"link"`
 	ExpiresAt time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
-	CSRF      string    `json:"csrf,omitempty" db:"csrf"`
+	Token     string    `json:"token,omitempty" db:"token"`
+	Email     string    `json:"email" db:"email"`
+	Password  string    `json:"password,omitempty" db:"password"`
 }
 type Repository interface {
 	CreateUser(ctx context.Context, user *CreateUserReq) (*User, error)     // Create a new user
@@ -151,6 +153,8 @@ type Repository interface {
 	GetMyDVA(ctx context.Context, userEmail string) (*Account, error)
 	SetPaymentDetais(ctx context.Context, req *PaymentDetails, userId uint32) error
 	SendPasswordResetLink(ctx context.Context, req *PasswordReset) error
+	UpdatePassword(ctx context.Context, req *PasswordReset) error
+	VerifyResetLink(ctx context.Context, token string) error
 }
 
 type Service interface {
@@ -166,4 +170,6 @@ type Service interface {
 	CreateStore(ctx context.Context, req *store.Store) (*store.Store, error)
 	SetPaymentDetais(ctx context.Context, req *PaymentDetails, userId uint32) error
 	SendPasswordResetLink(ctx context.Context, req *PasswordReset) error
+	UpdatePassword(ctx context.Context, req *PasswordReset) error
+	VerifyResetLink(ctx context.Context, token string) error
 }

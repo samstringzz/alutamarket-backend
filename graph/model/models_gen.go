@@ -595,6 +595,16 @@ type DeliveryDetails struct {
 	Fee     float64 `json:"fee"`
 }
 
+type PasswordResetInput struct {
+	Link  string `json:"link"`
+	Email string `json:"email"`
+}
+
+type PasswordUpdateInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type Verifyotpinput struct {
 	Code     string `json:"code"`
 	Phone    string `json:"phone"`

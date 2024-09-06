@@ -93,3 +93,19 @@ func (h *Handler) SendPasswordResetLink(ctx context.Context, req *PasswordReset)
 	}
 	return nil
 }
+
+func (h *Handler) UpdatePassword(ctx context.Context, req *PasswordReset) error {
+	err := h.Service.UpdatePassword(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *Handler) VerifyResetLink(ctx context.Context, req string) error {
+	err := h.Service.VerifyResetLink(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
