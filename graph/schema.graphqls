@@ -552,6 +552,7 @@ input passwordResetInput {
 input passwordUpdateInput {
 	email: String!
 	password: String!
+	token:String!
 }
 type Query {
 	Users(limit: Int, offset: Int): [User!]!

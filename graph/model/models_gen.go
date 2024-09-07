@@ -603,6 +603,7 @@ type PasswordResetInput struct {
 type PasswordUpdateInput struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Token    string `json:"token"`
 }
 
 type Verifyotpinput struct {
