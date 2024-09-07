@@ -709,7 +709,7 @@ func (r *repository) SendPasswordResetLink(ctx context.Context, req *PasswordRes
 	t := base64.URLEncoding.EncodeToString(token)
 
 	// Construct reset password link
-	resetLink := fmt.Sprintf("%s/reset_password?token=%s", req.Link, t)
+	resetLink := fmt.Sprintf("%s/reset_password?token=%s&email=%s", req.Link, t, foundUser.Email)
 
 	// Send email
 	to := []string{foundUser.Email}
@@ -725,7 +725,7 @@ func (r *repository) SendPasswordResetLink(ctx context.Context, req *PasswordRes
 
 	// Store the password reset token in the database
 	pwdReset := &PasswordReset{
-		Link:      fmt.Sprintf("%s/reset_password?token=%s", req.Link, t),
+		Link:      fmt.Sprintf("%s/reset_password?token=%s&email=%s", req.Link, t, foundUser.Email),
 		Token:     t,
 		ExpiresAt: time.Now().Add(10 * time.Minute),
 	}
@@ -741,13 +741,13 @@ func (r *repository) VerifyResetLink(ctx context.Context, token string) error {
 	pwdReset := &PasswordReset{}
 
 	// Decode the base64 token
-	decodedToken, err := base64.URLEncoding.DecodeString(token)
-	if err != nil {
-		return errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "invalid token")
-	}
-
+	// decodedToken, err := base64.URLEncoding.DecodeString(token)
+	// if err != nil {
+	// 	return errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "invalid token")
+	// }
+	// fmt.Print(token)
 	// Find the reset request by token
-	err = r.db.Where("token = ?", decodedToken).First(pwdReset).Error
+	err := r.db.Where("token = ?", token).First(pwdReset).Error
 	if err != nil {
 		return errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "invalid or expired token")
 	}
@@ -769,7 +769,7 @@ func (r *repository) UpdatePassword(ctx context.Context, req *PasswordReset) err
 	if err != nil {
 		return err
 	}
-	err = r.db.Where("link = ?", req.Link).First(pwdReset).Error
+	err = r.db.Where("token = ?", req.Token).First(pwdReset).Error
 	if err != nil {
 		return errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "invalid or expired token")
 	}

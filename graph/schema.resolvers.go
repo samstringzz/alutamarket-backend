@@ -1257,6 +1257,7 @@ func (r *mutationResolver) UpdateUserPassword(ctx context.Context, input model.P
 	req := &user.PasswordReset{
 		Password: input.Password,
 		Email:    input.Email,
+		Token:    input.Token,
 	}
 
 	err := userHandler.UpdatePassword(ctx, req)
