@@ -2270,6 +2270,8 @@ func (r *queryResolver) Mydva(ctx context.Context, email string) (*model.Account
 	userSrvc := user.NewService(userRepository)
 	userHandler := user.NewHandler(userSrvc)
 	res, err := userHandler.GetMyDVA(ctx, email)
+
+	// fmt.Print(res)
 	if err != nil {
 		return nil, err
 	}
@@ -2283,7 +2285,7 @@ func (r *queryResolver) Mydva(ctx context.Context, email string) (*model.Account
 		Active:        res.Active,
 		Assigned:      res.Assigned,
 		Customer: &model.Customer{
-			ID:           fmt.Sprintf("%d", res.Customer.ID),
+			ID:           res.Customer.ID,
 			FirstName:    res.Customer.FirstName,
 			LastName:     res.Customer.LastName,
 			Email:        res.Customer.Email,
@@ -2340,6 +2342,24 @@ func (r *queryResolver) Chats(ctx context.Context, userID string) ([]*model.Chat
 		resp = append(resp, newChat)
 	}
 	return resp, nil
+}
+
+// GetDVABalance is the resolver for the GetDVABalance field.
+func (r *queryResolver) GetDVABalance(ctx context.Context, id string) (*string, error) {
+	userRep := app.InitializePackage(app.UserPackage)
+
+	userRepository, ok := userRep.(user.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("userRep is not a user.Repository")
+	}
+	userSrvc := user.NewService(userRepository)
+	userHandler := user.NewHandler(userSrvc)
+	err := userHandler.GetBalance(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 // ProductSearchResults is the resolver for the productSearchResults field.
