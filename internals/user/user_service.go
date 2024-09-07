@@ -196,3 +196,14 @@ func (s *service) VerifyResetLink(ctx context.Context, req string) error {
 	}
 	return nil
 }
+
+func (s *service) GetBalance(ctx context.Context, req string) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	err := s.Repository.GetBalance(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}

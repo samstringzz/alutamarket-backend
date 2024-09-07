@@ -390,7 +390,7 @@ type Product {
 }
 
 type Customer {
-	id: String!
+	id: Int!
 	first_name: String!
 	last_name: String!
 	email: String!
@@ -414,8 +414,8 @@ type Account {
 	id: Int!
 	account_number: Int!
 	account_name: String!
-	created_at: Time!
-	updated_at: Time!
+	created_at: String!
+	updated_at: String!
 	split_config: SplitConfig!
 	active: Boolean!
 	assigned: Boolean!
@@ -552,7 +552,7 @@ input passwordResetInput {
 input passwordUpdateInput {
 	email: String!
 	password: String!
-	token:String!
+	token: String!
 }
 type Query {
 	Users(limit: Int, offset: Int): [User!]!
@@ -577,6 +577,7 @@ type Query {
 	Skynet(id: String!): Skynet
 	MYDVA(email: String!): Account
 	Chats(userID: String!): [Chat]
+	GetDVABalance(id: String!): String
 }
 
 type Mutation {

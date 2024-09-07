@@ -15,8 +15,8 @@ type Account struct {
 	ID            int          `json:"id"`
 	AccountNumber int          `json:"account_number"`
 	AccountName   string       `json:"account_name"`
-	CreatedAt     time.Time    `json:"created_at"`
-	UpdatedAt     time.Time    `json:"updated_at"`
+	CreatedAt     string       `json:"created_at"`
+	UpdatedAt     string       `json:"updated_at"`
 	SplitConfig   *SplitConfig `json:"split_config"`
 	Active        bool         `json:"active"`
 	Assigned      bool         `json:"assigned"`
@@ -68,7 +68,7 @@ type ChatInput struct {
 }
 
 type Customer struct {
-	ID           string `json:"id"`
+	ID           int    `json:"id"`
 	FirstName    string `json:"first_name"`
 	LastName     string `json:"last_name"`
 	Email        string `json:"email"`

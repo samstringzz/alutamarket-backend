@@ -84,14 +84,14 @@ type LoginUserRes struct {
 }
 
 type Customer struct {
-	ID                       int         `json:"id"`
-	FirstName                string      `json:"first_name"`
-	LastName                 string      `json:"last_name"`
-	Email                    string      `json:"email"`
-	CustomerCode             string      `json:"customer_code"`
-	Phone                    string      `json:"phone"`
-	RiskAction               string      `json:"risk_action"`
-	InternationalFormatPhone interface{} `json:"international_format_phone"`
+	ID           int    `json:"id"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	Email        string `json:"email"`
+	CustomerCode string `json:"customer_code"`
+	Phone        string `json:"phone"`
+	RiskAction   string `json:"risk_action"`
+	// InternationalFormatPhone interface{} `json:"international_format_phone"`
 }
 
 type Bank struct {
@@ -112,23 +112,42 @@ type SplitConfig struct {
 }
 
 type Account struct {
-	Customer      Customer    `json:"customer"`
-	Bank          Bank        `json:"bank"`
 	ID            int         `json:"id"`
-	AccountName   string      `json:"account_name"`
 	AccountNumber string      `json:"account_number"`
-	CreatedAt     time.Time   `json:"created_at"`
-	UpdatedAt     time.Time   `json:"updated_at"`
-	Currency      string      `json:"currency"`
-	SplitConfig   SplitConfig `json:"split_config"`
+	AccountName   string      `json:"account_name"`
+	CreatedAt     string      `json:"created_at"`
+	UpdatedAt     string      `json:"updated_at"`
 	Active        bool        `json:"active"`
 	Assigned      bool        `json:"assigned"`
+	Customer      *Customer   `json:"customer"`
+	Bank          *Bank       `json:"bank"`
+	SplitConfig   SplitConfig `json:"split_config"`
 }
 
 type DVADetails struct {
 	User       User   `json:"user"`
 	StoreName  string `json:"store_name" db:"store_name"`
 	StoreEmail string `json:"store_email" db:"store_email"`
+}
+
+// Transaction model
+type Transaction struct {
+	ID        int    `json:"id"`
+	Status    string `json:"status"`
+	Reference string `json:"reference"`
+	Amount    int    `json:"amount"`
+	Customer  struct {
+		ID           int    `json:"id"`
+		CustomerCode string `json:"customer_code"`
+		Email        string `json:"email"`
+	} `json:"customer"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type TransactionsResponse struct {
+	Status  bool          `json:"status"`
+	Message string        `json:"message"`
+	Data    []Transaction `json:"data"`
 }
 
 type PasswordReset struct {
@@ -155,6 +174,7 @@ type Repository interface {
 	SendPasswordResetLink(ctx context.Context, req *PasswordReset) error
 	UpdatePassword(ctx context.Context, req *PasswordReset) error
 	VerifyResetLink(ctx context.Context, token string) error
+	GetBalance(ctx context.Context, userId string) error
 }
 
 type Service interface {
@@ -171,5 +191,6 @@ type Service interface {
 	SetPaymentDetais(ctx context.Context, req *PaymentDetails, userId uint32) error
 	SendPasswordResetLink(ctx context.Context, req *PasswordReset) error
 	UpdatePassword(ctx context.Context, req *PasswordReset) error
+	GetBalance(ctx context.Context, userId string) error
 	VerifyResetLink(ctx context.Context, token string) error
 }

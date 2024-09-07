@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -636,12 +637,7 @@ func (r *repository) GetMyDVA(ctx context.Context, userEmail string) (*Account, 
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		bodyBytes, _ := ioutil.ReadAll(res.Body)
-		return nil, fmt.Errorf("error: paystack dedicated account creation failed with status %d, response: %s", res.StatusCode, string(bodyBytes))
-	}
-
-	if res.StatusCode != http.StatusOK {
-		bodyBytes, _ := ioutil.ReadAll(res.Body)
+		bodyBytes, _ := io.ReadAll(res.Body)
 		return nil, fmt.Errorf("error: paystack dedicated account retrieval failed with status %d, response: %s", res.StatusCode, string(bodyBytes))
 	}
 
@@ -661,6 +657,7 @@ func (r *repository) GetMyDVA(ctx context.Context, userEmail string) (*Account, 
 	}
 
 	for _, account := range dedicatedAccountResp.Data {
+		// Check for the email match and return the account if found
 		if account.Customer.Email == userEmail {
 			return account, nil
 		}
@@ -755,7 +752,7 @@ func (r *repository) VerifyResetLink(ctx context.Context, token string) error {
 	// Check if the token has expired
 	if time.Now().After(pwdReset.ExpiresAt) {
 		// Delete the expired token
-		r.db.Delete(&pwdReset)
+		r.db.Unscoped().Delete(&pwdReset)
 		return errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "token has expired")
 	}
 
@@ -776,7 +773,7 @@ func (r *repository) UpdatePassword(ctx context.Context, req *PasswordReset) err
 	// Check if the token has expired
 	if time.Now().After(pwdReset.ExpiresAt) {
 		// Delete the expired token
-		r.db.Delete(&pwdReset)
+		r.db.Unscoped().Delete(&pwdReset)
 		return errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "token has expired")
 	}
 	// Update user's password (assuming `generateHash` hashes the password)
@@ -791,6 +788,68 @@ func (r *repository) UpdatePassword(ctx context.Context, req *PasswordReset) err
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (r *repository) getTransactionsByCustomerID(customerID string) ([]Transaction, error) {
+	transactionURL := fmt.Sprintf("https://api.paystack.co/transaction?customer=%s", customerID)
+	method := "GET"
+	client := &http.Client{}
+
+	// Create a new HTTP request
+	req, err := http.NewRequest(method, transactionURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the request headers
+	req.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
+	req.Header.Add("Content-Type", "application/json")
+
+	// Make the request
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	// Check if the response is successful
+	if res.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("error: failed to retrieve transactions with status %d, response: %s", res.StatusCode, string(bodyBytes))
+	}
+
+	// Decode the response body
+	var transactionsResp TransactionsResponse
+	err = json.NewDecoder(res.Body).Decode(&transactionsResp)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding transactions response: %w", err)
+	}
+
+	// Check if Paystack API response was successful
+	if !transactionsResp.Status {
+		return nil, fmt.Errorf("error: transactions retrieval failed with message: %s", transactionsResp.Message)
+	}
+
+	return transactionsResp.Data, nil
+}
+
+func (r *repository) GetBalance(ctx context.Context, userId string) error {
+	// Get the transactions by customer ID
+	transactions, err := r.getTransactionsByCustomerID(userId)
+	if err != nil {
+		return err
+	}
+
+	// Convert the transactions to a JSON string for logging
+	transactionsJSON, err := json.MarshalIndent(transactions, "", "  ")
+	if err != nil {
+		return fmt.Errorf("error marshalling transactions: %w", err)
+	}
+
+	// Print the transactions in JSON format
+	fmt.Println(string(transactionsJSON))
 
 	return nil
 }

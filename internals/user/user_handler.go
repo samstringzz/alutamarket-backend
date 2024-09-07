@@ -109,3 +109,11 @@ func (h *Handler) VerifyResetLink(ctx context.Context, req string) error {
 	}
 	return nil
 }
+
+func (h *Handler) GetBalance(ctx context.Context, req string) error {
+	err := h.Service.GetBalance(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
