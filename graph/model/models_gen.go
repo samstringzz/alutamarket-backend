@@ -389,6 +389,7 @@ type Store struct {
 	Phone              string           `json:"phone"`
 	Background         string           `json:"background"`
 	HasPhysicalAddress bool             `json:"has_physical_address"`
+	Visitors           []string         `json:"visitors"`
 }
 
 type StoreCustomer struct {
@@ -520,6 +521,7 @@ type UpdateStoreInput struct {
 	Email              *string `json:"email,omitempty"`
 	Thumbnail          *string `json:"thumbnail,omitempty"`
 	Background         *string `json:"background,omitempty"`
+	Visitor            *string `json:"visitor,omitempty"`
 }
 
 type UpdateStoreOrderInput struct {

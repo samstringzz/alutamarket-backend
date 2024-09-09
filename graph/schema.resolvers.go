@@ -128,12 +128,12 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, input model.StoreOrd
 
 // UpdateOrder is the resolver for the updateOrder field.
 func (r *mutationResolver) UpdateOrder(ctx context.Context, input model.UpdateStoreOrderInput) (*model.StoreOrder, error) {
-	// token := ctx.Value("token").(string)
+	token := ctx.Value("token").(string)
 
-	// authErr := middlewares.AuthMiddleware("seller", token)
-	// if authErr != nil {
-	// 	return nil, authErr
-	// }
+	authErr := middlewares.AuthMiddleware("seller", token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	storeRep := app.InitializePackage(app.StorePackage)
 	storeRepository, ok := storeRep.(store.Repository)
 	if !ok {
@@ -950,7 +950,7 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 	storeSrvc := store.NewService(storeRepository)
 	storeHandler := store.NewHandler(storeSrvc)
 
-	mod := &store.Store{}
+	mod := &store.UpdateStore{}
 
 	if input.Name != nil {
 		return nil, errors.New("Store name cannot be changed after being created")
@@ -975,6 +975,11 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 	if input.Phone != nil {
 		mod.Phone = *input.Phone
 	}
+
+	if input.Visitor != nil {
+		mod.Visitors = *input.Visitor
+	}
+
 	if input.Email != nil {
 		mod.Email = *input.Email
 	}
@@ -1953,6 +1958,7 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 			Phone:              item.Phone,
 			Address:            item.Address,
 			Email:              item.Email,
+			Visitors:           item.Visitors,
 		}
 
 		// Map followers
@@ -2061,6 +2067,7 @@ func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error)
 		Background:         resp.Background,
 		Address:            resp.Address,
 		Phone:              resp.Phone,
+		Visitors:           resp.Visitors,
 	}
 
 	for _, follower := range resp.Followers {

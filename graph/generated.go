@@ -338,6 +338,7 @@ type ComplexityRoot struct {
 		Thumbnail          func(childComplexity int) int
 		Transactions       func(childComplexity int) int
 		User               func(childComplexity int) int
+		Visitors           func(childComplexity int) int
 		Wallet             func(childComplexity int) int
 	}
 
@@ -2283,6 +2284,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Store.User(childComplexity), true
+
+	case "Store.visitors":
+		if e.complexity.Store.Visitors == nil {
+			break
+		}
+
+		return e.complexity.Store.Visitors(childComplexity), true
 
 	case "Store.wallet":
 		if e.complexity.Store.Wallet == nil {
@@ -7787,6 +7795,8 @@ func (ec *executionContext) fieldContext_Mutation_updateStoreFollower(ctx contex
 				return ec.fieldContext_Store_background(ctx, field)
 			case "has_physical_address":
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
+			case "visitors":
+				return ec.fieldContext_Store_visitors(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -8590,6 +8600,8 @@ func (ec *executionContext) fieldContext_Mutation_createStore(ctx context.Contex
 				return ec.fieldContext_Store_background(ctx, field)
 			case "has_physical_address":
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
+			case "visitors":
+				return ec.fieldContext_Store_visitors(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -8681,6 +8693,8 @@ func (ec *executionContext) fieldContext_Mutation_updateStore(ctx context.Contex
 				return ec.fieldContext_Store_background(ctx, field)
 			case "has_physical_address":
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
+			case "visitors":
+				return ec.fieldContext_Store_visitors(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -8772,6 +8786,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteStore(ctx context.Contex
 				return ec.fieldContext_Store_background(ctx, field)
 			case "has_physical_address":
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
+			case "visitors":
+				return ec.fieldContext_Store_visitors(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -12615,6 +12631,8 @@ func (ec *executionContext) fieldContext_Query_Store(ctx context.Context, field 
 				return ec.fieldContext_Store_background(ctx, field)
 			case "has_physical_address":
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
+			case "visitors":
+				return ec.fieldContext_Store_visitors(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -12703,6 +12721,8 @@ func (ec *executionContext) fieldContext_Query_StoreByName(ctx context.Context, 
 				return ec.fieldContext_Store_background(ctx, field)
 			case "has_physical_address":
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
+			case "visitors":
+				return ec.fieldContext_Store_visitors(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -15133,6 +15153,50 @@ func (ec *executionContext) fieldContext_Store_has_physical_address(_ context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Store_visitors(ctx context.Context, field graphql.CollectedField, obj *model.Store) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Store_visitors(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Visitors, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Store_visitors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Store",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _StoreCustomer_name(ctx context.Context, field graphql.CollectedField, obj *model.StoreCustomer) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_StoreCustomer_name(ctx, field)
 	if err != nil {
@@ -15907,6 +15971,8 @@ func (ec *executionContext) fieldContext_StorePaginationData_data(_ context.Cont
 				return ec.fieldContext_Store_background(ctx, field)
 			case "has_physical_address":
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
+			case "visitors":
+				return ec.fieldContext_Store_visitors(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -17583,6 +17649,8 @@ func (ec *executionContext) fieldContext_User_stores(_ context.Context, field gr
 				return ec.fieldContext_Store_background(ctx, field)
 			case "has_physical_address":
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
+			case "visitors":
+				return ec.fieldContext_Store_visitors(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -21492,7 +21560,7 @@ func (ec *executionContext) unmarshalInputUpdateStoreInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "link", "name", "user", "description", "address", "wallet", "has_physical_address", "status", "phone", "email", "thumbnail", "background"}
+	fieldsInOrder := [...]string{"id", "link", "name", "user", "description", "address", "wallet", "has_physical_address", "status", "phone", "email", "thumbnail", "background", "visitor"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -21590,6 +21658,13 @@ func (ec *executionContext) unmarshalInputUpdateStoreInput(ctx context.Context, 
 				return it, err
 			}
 			it.Background = data
+		case "visitor":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("visitor"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Visitor = data
 		}
 	}
 
@@ -24179,6 +24254,11 @@ func (ec *executionContext) _Store(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "has_physical_address":
 			out.Values[i] = ec._Store_has_physical_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "visitors":
+			out.Values[i] = ec._Store_visitors(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
