@@ -108,7 +108,7 @@ func (r *repository) DeleteStore(ctx context.Context, id uint32) error {
 	return err
 }
 
-func (r *repository) UpdateStore(ctx context.Context, req *Store) (*Store, error) {
+func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store, error) {
 
 	// First, check if the Store exists by its ID or another unique identifier
 	existingStore, err := r.GetStore(ctx, req.ID)
@@ -123,9 +123,9 @@ func (r *repository) UpdateStore(ctx context.Context, req *Store) (*Store, error
 	if req.Description != "" {
 		existingStore.Description = req.Description
 	}
-	// if req.Link != "" {
-	// 	existingStore.Link = req.Link
-	// }
+	if req.Visitors != "" {
+		existingStore.Visitors = append(existingStore.Visitors, req.Visitors)
+	}
 	if req.HasPhysicalAddress != existingStore.HasPhysicalAddress {
 		existingStore.HasPhysicalAddress = req.HasPhysicalAddress
 	}

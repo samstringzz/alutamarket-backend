@@ -137,6 +137,7 @@ type Store {
 	phone: String!
 	background: String!
 	has_physical_address: Boolean!
+	visitors: [String!]!
 }
 type VerifyOTP {
 	phone: String!
@@ -240,6 +241,7 @@ input UpdateStoreInput {
 	email: String
 	thumbnail: String
 	background: String
+	visitor: String
 }
 
 input UpdateStoreOrderInput {

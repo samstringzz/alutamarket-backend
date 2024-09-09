@@ -77,7 +77,7 @@ func (s *service) GetStores(ctx context.Context, user uint32, limit, offset int)
 	return r, nil
 }
 
-func (s *service) UpdateStore(c context.Context, req *Store) (*Store, error) {
+func (s *service) UpdateStore(c context.Context, req *UpdateStore) (*Store, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 

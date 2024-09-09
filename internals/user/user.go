@@ -32,7 +32,7 @@ type User struct {
 	Twofa          *bool          `json:"twofa" db:"twofa"` // Two factor authentication
 	AccessToken    string         `json:"access_token,omitempty" db:"access_token"`
 	RefreshToken   string         `json:"refresh_token,omitempty" db:"refresh_token"`
-	FollowedStores []string       `gorm:"serializer:json" json:"stores" db:"stores _id"`
+	FollowedStores []string       `gorm:"serializer:json" json:"followed_stores" db:"followed_stores"`
 	Code           string         `json:"code,omitempty" db:"code"` // otp code for verifications
 	PaymentDetails PaymentDetails `gorm:"serializer:json"`
 	Codeexpiry     time.Time      `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode

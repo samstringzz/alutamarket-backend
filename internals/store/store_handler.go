@@ -42,7 +42,7 @@ func (h *Handler) GetStores(ctx context.Context, user uint32, limit, offset int)
 	return r, nil
 }
 
-func (h *Handler) UpdateStore(ctx context.Context, input *Store) (*Store, error) {
+func (h *Handler) UpdateStore(ctx context.Context, input *UpdateStore) (*Store, error) {
 	item, err := h.Service.UpdateStore(ctx, input)
 	if err != nil {
 		return nil, err
