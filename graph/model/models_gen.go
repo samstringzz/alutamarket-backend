@@ -56,15 +56,16 @@ type Category struct {
 }
 
 type Chat struct {
-	ID            int      `json:"id"`
-	LatestMessage *Message `json:"latest_message,omitempty"`
-	UnreadCount   int      `json:"unread_count"`
-	Users         []*int   `json:"users,omitempty"`
+	ID            *int           `json:"id,omitempty"`
+	LatestMessage *Message       `json:"latest_message,omitempty"`
+	Messages      []*Message     `json:"messages,omitempty"`
+	UnreadCount   int            `json:"unread_count"`
+	Users         []*MessageUser `json:"users"`
+	Time          time.Time      `json:"time"`
 }
 
 type ChatInput struct {
-	UsersID []int   `json:"users_id"`
-	ChatID  *string `json:"chat_id,omitempty"`
+	Users []*MessageUserInput `json:"users,omitempty"`
 }
 
 type Customer struct {
@@ -117,36 +118,38 @@ type LoginRes struct {
 }
 
 type Message struct {
-	ID      int          `json:"id"`
-	ChatID  int          `json:"chat_id"`
-	Content string       `json:"content"`
-	User    *MessageUser `json:"user"`
-	Media   MediaType    `json:"media"`
-	IsRead  bool         `json:"is_read"`
+	ID        int            `json:"id"`
+	ChatID    int            `json:"chat_id"`
+	Sender    int            `json:"sender"`
+	Content   string         `json:"content"`
+	Users     []*MessageUser `json:"users"`
+	Media     MediaType      `json:"media"`
+	IsRead    bool           `json:"is_read"`
+	CreatedAt *time.Time     `json:"created_at,omitempty"`
+	UpdatedAt *time.Time     `json:"updated_at,omitempty"`
 }
 
 type MessageInput struct {
-	ID      int               `json:"id"`
-	ChatID  string            `json:"chat_id"`
-	Content string            `json:"content"`
-	User    *MessageUserInput `json:"user"`
-	Media   MediaType         `json:"media"`
-	IsRead  bool              `json:"is_read"`
+	ID      *int       `json:"id,omitempty"`
+	ChatID  int        `json:"chat_id"`
+	Content string     `json:"content"`
+	Sender  int        `json:"sender"`
+	Media   *MediaType `json:"media,omitempty"`
+	IsRead  bool       `json:"is_read"`
 }
 
 type MessageUser struct {
-	ID     int      `json:"id"`
-	Avatar *string  `json:"avatar,omitempty"`
-	Role   RoleType `json:"role"`
-	Name   string   `json:"name"`
-	Status string   `json:"status"`
+	ID     int     `json:"id"`
+	Avatar *string `json:"avatar,omitempty"`
+	Online bool    `json:"online"`
+	Name   string  `json:"name"`
+	Status string  `json:"status"`
 }
 
 type MessageUserInput struct {
-	ID     int      `json:"id"`
-	Avatar *string  `json:"avatar,omitempty"`
-	Role   RoleType `json:"role"`
-	Name   string   `json:"name"`
+	ID     int     `json:"id"`
+	Avatar *string `json:"avatar,omitempty"`
+	Name   string  `json:"name"`
 }
 
 type ModifyCartItemInput struct {

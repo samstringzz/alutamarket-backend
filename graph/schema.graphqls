@@ -35,7 +35,7 @@ type Order {
 type MessageUser {
 	id: Int!
 	avatar: String
-	role: RoleType!
+	online: Boolean!
 	name: String!
 	status: String!
 }
@@ -43,38 +43,41 @@ type MessageUser {
 type Message {
 	id: Int!
 	chat_id: Int!
+	sender: Int!
 	content: String!
-	user: MessageUser!
+	users: [MessageUser]!
 	media: MediaType!
 	is_read: Boolean!
+	created_at: Time
+	updated_at: Time
 }
 
 type Chat {
-	id: Int!
+	id: Int
 	latest_message: Message
+	messages: [Message]
 	unread_count: Int!
-	users: [Int]
+	users: [MessageUser]!
+	time: Time!
 }
 
 input MessageUserInput {
 	id: Int!
 	avatar: String
-	role: RoleType!
 	name: String!
 }
 
 input MessageInput {
-	id: Int!
-	chat_id: String!
+	id: Int
+	chat_id: Int!
 	content: String!
-	user: MessageUserInput!
-	media: MediaType!
+	sender: Int!
+	media: MediaType
 	is_read: Boolean!
 }
 
 input ChatInput {
-	users_id: [Int!]!
-	chat_id: String
+	users: [MessageUserInput]
 }
 
 input verifyotpinput {
@@ -579,6 +582,7 @@ type Query {
 	Skynet(id: String!): Skynet
 	MYDVA(email: String!): Account
 	Chats(userID: String!): [Chat]
+	Messages(chatId: String!): [Message]
 	GetDVABalance(id: String!): String
 }
 
@@ -613,7 +617,8 @@ type Mutation {
 	createDVAAccount(input: DVAAccountInput!): String!
 	initializePayment(input: PaymentData!): String
 	verifySmartCard(input: SmartCardInput!): SmartcardVerificationResponse
-	createChat(input: ChatInput!): String
+	createChat(input: ChatInput!): Chat!
+	sendMessage(input: MessageInput!): Message!
 	createTransaction(input: TransactionInput!): Transaction
 	createResetPasswordLink(input: passwordResetInput!): Boolean! # Assuming this returns a success status
 	verifyResetPasswordLink(input: String!): Boolean! # Changed input to use an input type, returning success/failure

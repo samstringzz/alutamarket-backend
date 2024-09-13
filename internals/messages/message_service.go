@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/lib/pq"
+	"github.com/Chrisentech/aluta-market-api/internals/user"
 )
 
 type service struct {
@@ -19,16 +19,16 @@ func NewService(repository Repository) Service {
 	}
 }
 
-func (s *service) CreateChat(c context.Context, chatID uint32, usersID pq.Int64Array) error {
+func (s *service) FindOrCreateChat(c context.Context, users []*user.User) (*Chat, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 
-	err := s.Repository.CreateChat(ctx, chatID, usersID)
+	resp, err := s.Repository.FindOrCreateChat(ctx, users)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return resp, nil
 }
 
 func (s *service) SendMessage(c context.Context, req *Message) error {
@@ -43,7 +43,7 @@ func (s *service) SendMessage(c context.Context, req *Message) error {
 	return nil
 }
 
-func (s *service) GetChatLists(c context.Context, req int64) ([]*Chat, error) {
+func (s *service) GetChatLists(c context.Context, req uint32) ([]*Chat, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 

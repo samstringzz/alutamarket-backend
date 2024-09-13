@@ -34,6 +34,7 @@ type User struct {
 	RefreshToken   string         `json:"refresh_token,omitempty" db:"refresh_token"`
 	FollowedStores []string       `gorm:"serializer:json" json:"followed_stores" db:"followed_stores"`
 	Code           string         `json:"code,omitempty" db:"code"` // otp code for verifications
+	Online         bool           `json:"online,omitempty" db:"online"`
 	PaymentDetails PaymentDetails `gorm:"serializer:json"`
 	Codeexpiry     time.Time      `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
 	CreatedAt      time.Time      // Set to current time if it is zero on creating
