@@ -3,7 +3,7 @@ package messages
 import (
 	"context"
 
-	"github.com/lib/pq"
+	"github.com/Chrisentech/aluta-market-api/internals/user"
 )
 
 type Handler struct {
@@ -16,12 +16,12 @@ func NewHandler(s Service) *Handler {
 	}
 }
 
-func (h *Handler) CreateChat(ctx context.Context, chatID uint32, usersID pq.Int64Array) error {
-	err := h.Service.CreateChat(ctx, chatID, usersID)
+func (h *Handler) FindOrCreateChat(ctx context.Context, users []*user.User) (*Chat, error) {
+	resp, err := h.Service.FindOrCreateChat(ctx, users)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return resp, nil
 }
 
 func (h *Handler) SendMessage(ctx context.Context, req *Message) error {
@@ -32,7 +32,7 @@ func (h *Handler) SendMessage(ctx context.Context, req *Message) error {
 	return nil
 }
 
-func (h *Handler) GetChatLists(ctx context.Context, userID int64) ([]*Chat, error) {
+func (h *Handler) GetChatLists(ctx context.Context, userID uint32) ([]*Chat, error) {
 	chats, err := h.Service.GetChatLists(ctx, userID)
 	if err != nil {
 		return nil, err

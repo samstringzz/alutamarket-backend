@@ -1120,7 +1120,13 @@ func (r *mutationResolver) VerifySmartCard(ctx context.Context, input model.Smar
 }
 
 // CreateChat is the resolver for the createChat field.
-func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput) (*string, error) {
+func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput) (*model.Chat, error) {
+	// token := ctx.Value("token").(string)
+
+	// authErr := middlewares.AuthMiddleware("entry", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
 	messagesRep := app.InitializePackage(app.MessagePackage)
 
 	messagesRepository, ok := messagesRep.(messages.Repository)
@@ -1130,24 +1136,65 @@ func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput
 	}
 	messagesSrvc := messages.NewService(messagesRepository)
 	messagesHandler := messages.NewHandler(messagesSrvc)
-	if input.ChatID != nil {
-		chatId, _ := strconv.ParseUint(*input.ChatID, 10, 32)
-
-		chatID := uint32(chatId)
-		err := messagesHandler.CreateChat(ctx, chatID, intToUint32Array(input.UsersID))
-		if err != nil {
-			return nil, err
+	var chatUsers []*user.User
+	for _, usr := range input.Users {
+		chatUser := &user.User{
+			ID:       uint32(usr.ID),
+			Fullname: usr.Name,
 		}
-		resp := "sucess"
-		return &resp, nil
-	} else {
-		err := messagesHandler.CreateChat(ctx, 0, intToUint32Array(input.UsersID))
-		if err != nil {
-			return nil, err
-		}
-		resp := "sucess"
-		return &resp, nil
+		chatUsers = append(chatUsers, chatUser)
 	}
+
+	resp, err := messagesHandler.FindOrCreateChat(ctx, chatUsers)
+	var cUsers []*model.MessageUser
+	for _, cUser := range resp.Users {
+
+		res := &model.MessageUser{
+			ID:   int(cUser.ID),
+			Name: cUser.Fullname,
+		}
+		cUsers = append(cUsers, res)
+	}
+	modelResponse := &model.Chat{
+		Time:  resp.UpdatedAt,
+		Users: cUsers,
+	}
+	if err != nil {
+		return nil, err
+	}
+	return modelResponse, nil
+}
+
+// SendMessage is the resolver for the sendMessage field.
+func (r *mutationResolver) SendMessage(ctx context.Context, input model.MessageInput) (*model.Message, error) {
+	// token := ctx.Value("token").(string)
+
+	// authErr := middlewares.AuthMiddleware("entry", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
+	messagesRep := app.InitializePackage(app.MessagePackage)
+
+	messagesRepository, ok := messagesRep.(messages.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("messagesRep is not a messages.Repository")
+	}
+	messagesSrvc := messages.NewService(messagesRepository)
+	messagesHandler := messages.NewHandler(messagesSrvc)
+	req := &messages.Message{
+		ChatID:  uint32(input.ChatID),
+		Content: input.Content,
+		Media:   (*messages.MediaType)(input.Media),
+		IsRead:  false,
+		Sender:  uint32(input.Sender),
+	}
+
+	err := messagesHandler.SendMessage(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return convertToModelMessage(*req), nil
 }
 
 // CreateTransaction is the resolver for the createTransaction field.
@@ -2325,7 +2372,7 @@ func (r *queryResolver) Chats(ctx context.Context, userID string) ([]*model.Chat
 	messagesSrvc := messages.NewService(messageRepository)
 	id, _ := strconv.ParseUint(userID, 10, 32)
 	messagesHandler := messages.NewHandler(messagesSrvc)
-	chats, err := messagesHandler.GetChatLists(ctx, int64(id))
+	chats, err := messagesHandler.GetChatLists(ctx, uint32(id))
 	if err != nil {
 		return nil, err
 	}
@@ -2333,22 +2380,48 @@ func (r *queryResolver) Chats(ctx context.Context, userID string) ([]*model.Chat
 	var resp []*model.Chat
 	for _, chat := range chats {
 		// Convert []uint32 to []*int
-		var users []*int
+		var users []*model.MessageUser
 		for _, user := range chat.Users {
-			userInt := int(user)
-			users = append(users, &userInt)
+			r := &model.MessageUser{
+				ID:     int(user.ID),
+				Name:   user.Fullname,
+				Avatar: &user.Avatar,
+			}
+			users = append(users, r)
+		}
+		var messages []*model.Message
+		chatID := int(chat.ID)
+		for _, message := range chat.Messages {
+			msg := &model.Message{
+				ID:        int(message.ID),
+				ChatID:    int(message.ChatID),
+				Content:   message.Content,
+				Sender:    int(message.Sender),
+				Users:     users,
+				CreatedAt: &message.CreatedAt,
+				UpdatedAt: &message.UpdatedAt,
+			}
+			messages = append(messages, msg)
 		}
 		latestMessage := convertToModelMessage(chat.LatestMessage)
+
 		newChat := &model.Chat{
-			ID:            int(chat.ID),
+			ID:            &chatID,
 			LatestMessage: latestMessage,
+			Messages:      messages,
 			UnreadCount:   chat.UnreadCount,
 			Users:         users,
+			Time:          chat.UpdatedAt,
 		}
 
 		resp = append(resp, newChat)
 	}
 	return resp, nil
+}
+
+// Messages is the resolver for the Messages field.
+func (r *queryResolver) Messages(ctx context.Context, chatID string) ([]*model.Message, error) {
+	panic(fmt.Errorf("not implemented: Messages - Messages"))
 }
 
 // GetDVABalance is the resolver for the GetDVABalance field.
@@ -2424,21 +2497,28 @@ func intToUint32Array(intArr []int) []int64 {
 }
 func convertToModelMessage(msg messages.Message) *model.Message {
 	// Assuming you have a way to convert msg.Media to model.MediaType
+	var users []*model.MessageUser
+	for _, user := range msg.Users {
+		users = append(users, convertToModelUser(user))
+	}
 	return &model.Message{
-		ID:      int(msg.ID),
-		ChatID:  int(msg.ChatID),
-		Content: msg.Content,
-		// Uncomment and implement this if msg.Media needs conversion
-		// Media:   convertToModelMedia(msg.Media),
-		IsRead: msg.IsRead,
-		User:   convertToModelUser(msg.User), // Assuming conversion is needed
+		ID:        int(msg.ID),
+		ChatID:    int(msg.ChatID),
+		Content:   msg.Content,
+		Sender:    int(msg.Sender),
+		CreatedAt: &msg.CreatedAt,
+		UpdatedAt: &msg.UpdatedAt,
+		Users:     users,
+		IsRead:    msg.IsRead,
 	}
 }
-func convertToModelUser(msgUser messages.User) *model.MessageUser {
+func convertToModelUser(msgUser *user.User) *model.MessageUser {
 	// Assuming this is how you convert a messages.MessageUser to *model.MessageUser
 	return &model.MessageUser{
-		ID:   int(msgUser.ID),
-		Name: msgUser.Name,
+		ID:     int(msgUser.ID),
+		Name:   msgUser.Fullname,
+		Avatar: &msgUser.Avatar,
+
 		// Add other fields as necessary
 	}
 }
