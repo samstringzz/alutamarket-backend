@@ -207,3 +207,14 @@ func (s *service) GetBalance(ctx context.Context, req string) error {
 	}
 	return nil
 }
+
+func (s *service) ConfirmPassword(ctx context.Context, password, userId string) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	err := s.Repository.ConfirmPassword(ctx, password, userId)
+	if err != nil {
+		return err
+	}
+	return nil
+}

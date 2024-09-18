@@ -36,26 +36,34 @@ type DVADetails struct {
 	StoreName string `json:"store_name" db:"store_name"`
 }
 
+type WithdrawalAccount struct {
+	BankName      string `json:"bank_name" db:"bank_name"`
+	BankCode      string `json:"bank_code" db:"bank_code"`
+	BankImage     string `json:"bank_image" db:"bank_image"`
+	AccountNumber string `json:"account_number" db:"account_number"`
+	AccountName   string `json:"account_name" db:"account_name"`
+}
 type Store struct {
 	gorm.Model
-	ID                 uint32          `gorm:"primaryKey;uniqueIndex;not null;autoIncrement"  json:"id" db:"id"`
-	Name               string          `json:"name" db:"name"`
-	UserID             uint32          `json:"user_id" db:"user_id"`
-	Link               string          `json:"link" db:"link"`
-	Description        string          `json:"description" db:"description"`
-	HasPhysicalAddress bool            `json:"hasphysical_address" db:"has_physical_address"`
-	Address            string          `json:"address" db:"address"`
-	Transactions       []*Transactions `gorm:"serializer:json"`
-	Followers          []Follower      `gorm:"serializer:json"`
-	Orders             []*StoreOrder   `gorm:"serializer:json"`
-	Products           []Product       `gorm:"serializer:json"`
-	Wallet             float64         `json:"wallet" db:"wallet"`
-	Status             bool            `json:"status" db:"status"`
-	Thumbnail          string          `json:"thumbnail" db:"thumbnail"`
-	Phone              string          `json:"phone" db:"phone"`
-	Email              string          `json:"email" db:"email"`
-	Background         string          `json:"background" db:"background"`
-	Visitors           []string        `gorm:"serializer:json" json:"visitors" db:"visitors"`
+	ID                 uint32               `gorm:"primaryKey;uniqueIndex;not null;autoIncrement"  json:"id" db:"id"`
+	Name               string               `json:"name" db:"name"`
+	UserID             uint32               `json:"user_id" db:"user_id"`
+	Link               string               `json:"link" db:"link"`
+	Description        string               `json:"description" db:"description"`
+	HasPhysicalAddress bool                 `json:"hasphysical_address" db:"has_physical_address"`
+	Address            string               `json:"address" db:"address"`
+	Transactions       []*Transactions      `gorm:"serializer:json"`
+	Followers          []Follower           `gorm:"serializer:json"`
+	Orders             []*StoreOrder        `gorm:"serializer:json"`
+	Products           []Product            `gorm:"serializer:json"`
+	Wallet             float64              `json:"wallet" db:"wallet"`
+	Status             bool                 `json:"status" db:"status"`
+	Thumbnail          string               `json:"thumbnail" db:"thumbnail"`
+	Phone              string               `json:"phone" db:"phone"`
+	Email              string               `json:"email" db:"email"`
+	Background         string               `json:"background" db:"background"`
+	Visitors           []string             `gorm:"serializer:json" json:"visitors" db:"visitors"`
+	Accounts           []*WithdrawalAccount `gorm:"serializer:json" json:"accounts" db:"accounts"`
 }
 
 type UpdateStore struct {
@@ -148,6 +156,15 @@ type StoreOrder struct {
 type Review struct {
 }
 
+type Fund struct {
+	StoreID       uint32  `json:"store_id" db:"store_id"`
+	UserID        uint32  `json:"user_id" db:"user_id"`
+	Amount        float32 `json:"amount" db:"amount"`
+	Email         string  `json:"email" db:"email"`
+	AccountNumber string  `json:"account_number" db:"account_number"`
+	BankCode      string  `json:"bank_code" db:"bank_code"`
+}
+
 type Repository interface {
 	CreateStore(ctx context.Context, req *Store) (*Store, error)
 	DeleteStore(ctx context.Context, id uint32) error
@@ -163,6 +180,7 @@ type Repository interface {
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error)
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
+	WithdrawFund(ctx context.Context, req *Fund) error
 }
 
 type Service interface {
@@ -179,4 +197,5 @@ type Service interface {
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error)
+	WithdrawFund(ctx context.Context, req *Fund) error
 }

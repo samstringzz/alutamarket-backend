@@ -92,19 +92,6 @@ func main() {
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 
-	// srv.AddTransport(&transport.Websocket{
-	// 	Upgrader: websocket.Upgrader{
-	// 		CheckOrigin: func(r *http.Request) bool {
-	// 			// Check against your desired domains here
-	// 			return r.Host == os.Getenv("BASE_URL") || r.Host == "http://localhost:5173"
-	// 		},
-	// 		ReadBufferSize:  1024,
-	// 		WriteBufferSize: 1024,
-	// 	},
-	// })
-
-	// Extract the token from the request context
-
 	// Wrap the GraphQL handler with CORS middleware
 	wrappedHandler := c.Handler(srv)
 	http.Handle("/graphql", ExtractTokenMiddleware(wrappedHandler))

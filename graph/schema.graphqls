@@ -230,6 +230,13 @@ input StoreInput {
 	thumbnail: String
 	background: String
 }
+input withdrawAccountInput {
+	bank_code: String!
+	bank_name: String!
+	bank_image: String!
+	account_number: String!
+	account_name: String!
+}
 input UpdateStoreInput {
 	id: ID
 	link: String
@@ -245,6 +252,7 @@ input UpdateStoreInput {
 	thumbnail: String
 	background: String
 	visitor: String
+	account: withdrawAccountInput
 }
 
 input UpdateStoreOrderInput {
@@ -261,6 +269,7 @@ type PaymentDetails {
 type User {
 	id: ID!
 	fullname: String!
+	UUID: String!
 	email: String!
 	campus: String!
 	avatar: String
@@ -274,6 +283,7 @@ type User {
 	access_token: String
 	refresh_token: String
 	twofa: Boolean!
+	online: Boolean!
 	code: String!
 	paymnetDetails: PaymentDetails
 	codeexpiry: String!
@@ -299,6 +309,7 @@ input PaymentDetailsInput {
 input UpdateUserInput {
 	id: ID
 	fullname: String
+	UUID: String
 	email: String
 	campus: String
 	password: String
@@ -559,6 +570,27 @@ input passwordUpdateInput {
 	password: String!
 	token: String!
 }
+
+type fund {
+	store_id: Int!
+	user_id: Int!
+	amount: Float!
+	email: String!
+	account_number: String!
+	bank_code: String!
+}
+input fundInput {
+	store_id: Int!
+	user_id: Int!
+	amount: Float!
+	email: String!
+	account_number: String!
+	bank_code: String!
+}
+input confirmPasswordInput {
+	password: String!
+	userId: String!
+}
 type Query {
 	Users(limit: Int, offset: Int): [User!]!
 	User(id: ID!): User
@@ -623,6 +655,8 @@ type Mutation {
 	createResetPasswordLink(input: passwordResetInput!): Boolean! # Assuming this returns a success status
 	verifyResetPasswordLink(input: String!): Boolean! # Changed input to use an input type, returning success/failure
 	updateUserPassword(input: passwordUpdateInput!): Boolean!
+	withdrawFund(input: fundInput!): Boolean!
+	confirmPassword(input: confirmPasswordInput): Boolean!
 }
 
 type Subscription {

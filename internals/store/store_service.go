@@ -162,3 +162,14 @@ func (s *service) CreateTransactions(ctx context.Context, req *Transactions) (*T
 	}
 	return store, nil
 }
+
+func (s *service) WithdrawFund(ctx context.Context, req *Fund) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	err := s.Repository.WithdrawFund(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}

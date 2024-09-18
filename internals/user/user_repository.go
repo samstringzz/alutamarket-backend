@@ -853,3 +853,16 @@ func (r *repository) GetBalance(ctx context.Context, userId string) error {
 
 	return nil
 }
+
+func (r *repository) ConfirmPassword(ctx context.Context, password, userId string) error {
+	// Get the transactions by customer ID
+	foundUser, err := r.GetUser(ctx, userId)
+	if err != nil {
+		return err
+	}
+	if err := utils.CheckPassword(password, foundUser.Password); err != nil {
+		return errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid Credentials")
+	}
+
+	return nil
+}
