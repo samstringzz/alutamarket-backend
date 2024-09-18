@@ -144,6 +144,9 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 	if req.Thumbnail != "" {
 		existingStore.Thumbnail = req.Thumbnail
 	}
+	if req.Email != "" {
+		existingStore.Email = req.Email
+	}
 	existingStore.Wallet += req.Wallet
 
 	// Update the Store in the repository
