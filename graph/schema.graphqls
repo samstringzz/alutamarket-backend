@@ -175,6 +175,7 @@ input ProductInput {
 	subcategory: Int!
 	always_available: Boolean!
 }
+
 input customerInput {
 	name: String!
 	phone: String!
@@ -592,6 +593,25 @@ input confirmPasswordInput {
 	password: String!
 	userId: String!
 }
+
+input UpdateProductInput {
+	name: String
+	id: String!
+	description: String
+	file: String
+	price: Float
+	discount: Float
+	thumbnail: String
+	image: [String!]
+	quantity: Int
+	variant: [NewVariant!]
+	review: [NewReview!]
+	store: String
+	status: Boolean
+	category: Int
+	subcategory: Int
+	always_available: Boolean
+}
 type Query {
 	Users(limit: Int, offset: Int): [User!]!
 	User(id: ID!): User
@@ -639,7 +659,7 @@ type Mutation {
 	createCategory(input: NewCategory!): Category!
 	createSubCategory(input: NewSubCategory!): SubCategory!
 	createProduct(input: ProductInput!): Product!
-	updateProduct(input: ProductInput): Product!
+	updateProduct(input: UpdateProductInput): Product!
 	toggleStoreFollowStatus(user: Int!, store: Int!): String
 	deleteProduct(productId: Int!): Product!
 	modifyCart(input: ModifyCartItemInput!): Cart!

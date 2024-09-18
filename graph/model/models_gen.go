@@ -511,6 +511,25 @@ type TransactionInput struct {
 	Category string   `json:"category"`
 }
 
+type UpdateProductInput struct {
+	Name            *string       `json:"name,omitempty"`
+	ID              string        `json:"id"`
+	Description     *string       `json:"description,omitempty"`
+	File            *string       `json:"file,omitempty"`
+	Price           *float64      `json:"price,omitempty"`
+	Discount        *float64      `json:"discount,omitempty"`
+	Thumbnail       *string       `json:"thumbnail,omitempty"`
+	Image           []string      `json:"image,omitempty"`
+	Quantity        *int          `json:"quantity,omitempty"`
+	Variant         []*NewVariant `json:"variant,omitempty"`
+	Review          []*NewReview  `json:"review,omitempty"`
+	Store           *string       `json:"store,omitempty"`
+	Status          *bool         `json:"status,omitempty"`
+	Category        *int          `json:"category,omitempty"`
+	Subcategory     *int          `json:"subcategory,omitempty"`
+	AlwaysAvailable *bool         `json:"always_available,omitempty"`
+}
+
 type UpdateStoreInput struct {
 	ID                 *string               `json:"id,omitempty"`
 	Link               *string               `json:"link,omitempty"`

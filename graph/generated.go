@@ -191,7 +191,7 @@ type ComplexityRoot struct {
 		SendMessage             func(childComplexity int, input model.MessageInput) int
 		ToggleStoreFollowStatus func(childComplexity int, user int, store int) int
 		UpdateOrder             func(childComplexity int, input model.UpdateStoreOrderInput) int
-		UpdateProduct           func(childComplexity int, input *model.ProductInput) int
+		UpdateProduct           func(childComplexity int, input *model.UpdateProductInput) int
 		UpdateStore             func(childComplexity int, input *model.UpdateStoreInput) int
 		UpdateStoreFollower     func(childComplexity int, input *model.StoreFollowerInput) int
 		UpdateUser              func(childComplexity int, input *model.UpdateUserInput) int
@@ -491,7 +491,7 @@ type MutationResolver interface {
 	CreateCategory(ctx context.Context, input model.NewCategory) (*model.Category, error)
 	CreateSubCategory(ctx context.Context, input model.NewSubCategory) (*model.SubCategory, error)
 	CreateProduct(ctx context.Context, input model.ProductInput) (*model.Product, error)
-	UpdateProduct(ctx context.Context, input *model.ProductInput) (*model.Product, error)
+	UpdateProduct(ctx context.Context, input *model.UpdateProductInput) (*model.Product, error)
 	ToggleStoreFollowStatus(ctx context.Context, user int, store int) (*string, error)
 	DeleteProduct(ctx context.Context, productID int) (*model.Product, error)
 	ModifyCart(ctx context.Context, input model.ModifyCartItemInput) (*model.Cart, error)
@@ -1407,7 +1407,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateProduct(childComplexity, args["input"].(*model.ProductInput)), true
+		return e.complexity.Mutation.UpdateProduct(childComplexity, args["input"].(*model.UpdateProductInput)), true
 
 	case "Mutation.updateStore":
 		if e.complexity.Mutation.UpdateStore == nil {
@@ -2989,6 +2989,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputStoreOrderInput,
 		ec.unmarshalInputStoreProductInput,
 		ec.unmarshalInputTransactionInput,
+		ec.unmarshalInputUpdateProductInput,
 		ec.unmarshalInputUpdateStoreInput,
 		ec.unmarshalInputUpdateStoreOrderInput,
 		ec.unmarshalInputUpdateUserInput,
@@ -4085,22 +4086,22 @@ func (ec *executionContext) field_Mutation_updateProduct_args(ctx context.Contex
 func (ec *executionContext) field_Mutation_updateProduct_argsInput(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (*model.ProductInput, error) {
+) (*model.UpdateProductInput, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["input"]
 	if !ok {
-		var zeroVal *model.ProductInput
+		var zeroVal *model.UpdateProductInput
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalOProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInput(ctx, tmp)
+		return ec.unmarshalOUpdateProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateProductInput(ctx, tmp)
 	}
 
-	var zeroVal *model.ProductInput
+	var zeroVal *model.UpdateProductInput
 	return zeroVal, nil
 }
 
@@ -9891,7 +9892,7 @@ func (ec *executionContext) _Mutation_updateProduct(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateProduct(rctx, fc.Args["input"].(*model.ProductInput))
+		return ec.resolvers.Mutation().UpdateProduct(rctx, fc.Args["input"].(*model.UpdateProductInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -23902,6 +23903,138 @@ func (ec *executionContext) unmarshalInputTransactionInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateProductInput(ctx context.Context, obj interface{}) (model.UpdateProductInput, error) {
+	var it model.UpdateProductInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "id", "description", "file", "price", "discount", "thumbnail", "image", "quantity", "variant", "review", "store", "status", "category", "subcategory", "always_available"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "file":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.File = data
+		case "price":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("price"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Price = data
+		case "discount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("discount"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Discount = data
+		case "thumbnail":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("thumbnail"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Thumbnail = data
+		case "image":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Image = data
+		case "quantity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantity"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Quantity = data
+		case "variant":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("variant"))
+			data, err := ec.unmarshalONewVariant2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVariantᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Variant = data
+		case "review":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("review"))
+			data, err := ec.unmarshalONewReview2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewReviewᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Review = data
+		case "store":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("store"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Store = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
+		case "subcategory":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subcategory"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Subcategory = data
+		case "always_available":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("always_available"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AlwaysAvailable = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateStoreInput(ctx context.Context, obj interface{}) (model.UpdateStoreInput, error) {
 	var it model.UpdateStoreInput
 	asMap := map[string]interface{}{}
@@ -29825,14 +29958,6 @@ func (ec *executionContext) marshalOProduct2ᚖgithubᚗcomᚋChrisentechᚋalut
 	return ec._Product(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInput(ctx context.Context, v interface{}) (*model.ProductInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputProductInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) marshalOReview2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v []*model.Review) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -30339,6 +30464,14 @@ func (ec *executionContext) marshalOTransaction2ᚖgithubᚗcomᚋChrisentechᚋ
 		return graphql.Null
 	}
 	return ec._Transaction(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOUpdateProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateProductInput(ctx context.Context, v interface{}) (*model.UpdateProductInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputUpdateProductInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOUpdateStoreInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateStoreInput(ctx context.Context, v interface{}) (*model.UpdateStoreInput, error) {

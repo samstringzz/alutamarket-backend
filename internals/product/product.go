@@ -67,6 +67,26 @@ type NewProduct struct {
 	SubCategoryID   uint8          `json:"subcategory" db:"sub_category_id"`
 	AlwaysAvailbale bool           `json:"always_available" db:"always_available"`
 }
+
+type UpdateStore struct {
+	gorm.Model
+	ID              uint32         `json:"id" db:"id"`
+	Name            string         `json:"name" db:"name"`
+	Description     string         `json:"description" db:"description"`
+	Images          []string       `gorm:"serializer:json" json:"image" db:"image"`
+	Thumbnail       string         `json:"thumbnail" db:"thumbnail"`
+	Price           float64        `json:"price" db:"price"`
+	Discount        float64        `json:"discount" db:"discount"`
+	Status          bool           `json:"status" db:"status"`
+	Quantity        int            `json:"quantity" db:"quantity"`
+	File            string         `json:"file" db:"file"`
+	Slug            string         `json:"slug" db:"slug"`
+	Variant         []*VariantType `gorm:"serializer:json" json:"variant,omitempty" db:"variant"`
+	Store           string         `json:"store" db:"store"`
+	CategoryID      uint8          `json:"category" db:"category_id"`
+	SubCategoryID   uint8          `json:"subcategory" db:"sub_category_id"`
+	AlwaysAvailbale bool           `json:"always_available" db:"always_available"`
+}
 type Product struct {
 	gorm.Model
 	ID              uint32         `json:"id" db:"id"`
@@ -113,7 +133,7 @@ type Repository interface {
 	SearchProducts(ctx context.Context, query string) ([]*Product, error)
 	RemoveHandledProduct(ctx context.Context, userId uint32, eventType string) error
 	// GetProductByFilter(ctx context.Context, filter string,filterOption string )(*Product,error)    //by slug,by store,by id,(by category||subcategory)
-	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
+	UpdateProduct(ctx context.Context, req *NewProduct) (*Product, error)
 	DeleteProduct(ctx context.Context, id uint32) error
 	AddReview(ctx context.Context, input *Review) (*Review, error)
 	GetProductReviews(ctx context.Context, productId uint32, sellerId string) ([]*Review, error)
@@ -132,7 +152,7 @@ type Service interface {
 	// GetProductByFilter(ctx context.Context, filter string,filterOption string)(*Product,error)    //by slug,by store,by id,(by category||subcategory)
 	GetHandledProducts(ctx context.Context, userId uint32, eventType string) ([]*HandledProduct, error)
 	SearchProducts(ctx context.Context, query string) ([]*Product, error)
-	UpdateProduct(ctx context.Context, req *Product) (*Product, error)
+	UpdateProduct(ctx context.Context, req *NewProduct) (*Product, error)
 	RemoveHandledProduct(ctx context.Context, userId uint32, eventType string) error
 	AddReview(ctx context.Context, input *Review) (*Review, error)
 	GetProductReviews(ctx context.Context, productId uint32, sellerId string) ([]*Review, error)

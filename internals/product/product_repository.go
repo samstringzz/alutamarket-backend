@@ -115,7 +115,7 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 	return newProduct, nil
 }
 
-func (r *repository) UpdateProduct(ctx context.Context, req *Product) (*Product, error) {
+func (r *repository) UpdateProduct(ctx context.Context, req *NewProduct) (*Product, error) {
 
 	// First, check if the product exists by its ID or another unique identifier
 	existingProduct, err := r.GetProduct(ctx, req.ID, 0)
