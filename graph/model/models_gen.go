@@ -275,6 +275,7 @@ type ProductInput struct {
 	Variant         []*NewVariant `json:"variant,omitempty"`
 	Review          []*NewReview  `json:"review,omitempty"`
 	Store           string        `json:"store"`
+	Status          bool          `json:"status"`
 	Category        int           `json:"category"`
 	Subcategory     int           `json:"subcategory"`
 	AlwaysAvailable bool          `json:"always_available"`

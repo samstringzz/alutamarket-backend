@@ -23267,7 +23267,7 @@ func (ec *executionContext) unmarshalInputProductInput(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "id", "description", "file", "price", "discount", "thumbnail", "image", "quantity", "variant", "review", "store", "category", "subcategory", "always_available"}
+	fieldsInOrder := [...]string{"name", "id", "description", "file", "price", "discount", "thumbnail", "image", "quantity", "variant", "review", "store", "status", "category", "subcategory", "always_available"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -23358,6 +23358,13 @@ func (ec *executionContext) unmarshalInputProductInput(ctx context.Context, obj 
 				return it, err
 			}
 			it.Store = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
 		case "category":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
 			data, err := ec.unmarshalNInt2int(ctx, v)

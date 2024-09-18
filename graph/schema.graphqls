@@ -170,6 +170,7 @@ input ProductInput {
 	variant: [NewVariant!]
 	review: [NewReview!]
 	store: String!
+	status: Boolean!
 	category: Int!
 	subcategory: Int!
 	always_available: Boolean!

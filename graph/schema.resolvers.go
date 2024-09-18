@@ -759,7 +759,7 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.Produ
 		}
 	}
 
-	panic(fmt.Errorf("not implemented: UpdateProduct - updateProduct"))
+	return modResp, nil
 }
 
 // ToggleStoreFollowStatus is the resolver for the toggleStoreFollowStatus field.
