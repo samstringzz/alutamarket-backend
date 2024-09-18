@@ -23,6 +23,7 @@ type User struct {
 	Email          string         `json:"email" db:"email"`                                                // Email address of the user
 	Password       string         `json:"password" db:"password"`                                          // Password of the user
 	Fullname       string         `json:"fullname" db:"fullname"`                                          // Full name of the user
+	UUID           string         `json:"uuid" db:"uuid"`                                                  // Full name of the user
 	Phone          string         `json:"phone" db:"phone"`                                                // Phone number of the user
 	Avatar         string         `json:"avatar" db:"avatar"`                                              // Phone number of the user
 	Usertype       string         `json:"usertype" db:"usertype"`                                          // Type of user (e.g., seller,buyer,admin)
@@ -176,6 +177,7 @@ type Repository interface {
 	UpdatePassword(ctx context.Context, req *PasswordReset) error
 	VerifyResetLink(ctx context.Context, token string) error
 	GetBalance(ctx context.Context, userId string) error
+	ConfirmPassword(ctx context.Context, password, userId string) error
 }
 
 type Service interface {
@@ -193,5 +195,6 @@ type Service interface {
 	SendPasswordResetLink(ctx context.Context, req *PasswordReset) error
 	UpdatePassword(ctx context.Context, req *PasswordReset) error
 	GetBalance(ctx context.Context, userId string) error
+	ConfirmPassword(ctx context.Context, password, userId string) error
 	VerifyResetLink(ctx context.Context, token string) error
 }

@@ -109,3 +109,11 @@ func (h *Handler) CreateTransactions(ctx context.Context, req *Transactions) (*T
 	}
 	return item, nil
 }
+
+func (h *Handler) WithdrawFund(ctx context.Context, req *Fund) error {
+	err := h.Service.WithdrawFund(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -1,4 +1,4 @@
-package services
+package utils
 
 import (
 	"bytes"
@@ -102,7 +102,7 @@ func initiateTransfer(amountInKobo int, recipientCode string) error {
 		"source":    "balance",
 		"amount":    amountInKobo,
 		"recipient": recipientCode,
-		"reason":    "Dellvery fund", // Customize this message
+		"reason":    "Wthdrawal fund", // Customize this message
 	}
 
 	// Marshal payload into JSON

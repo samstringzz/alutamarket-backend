@@ -511,20 +511,21 @@ type TransactionInput struct {
 }
 
 type UpdateStoreInput struct {
-	ID                 *string `json:"id,omitempty"`
-	Link               *string `json:"link,omitempty"`
-	Name               *string `json:"name,omitempty"`
-	User               *int    `json:"user,omitempty"`
-	Description        *string `json:"description,omitempty"`
-	Address            *string `json:"address,omitempty"`
-	Wallet             *int    `json:"wallet,omitempty"`
-	HasPhysicalAddress *bool   `json:"has_physical_address,omitempty"`
-	Status             *bool   `json:"status,omitempty"`
-	Phone              *string `json:"phone,omitempty"`
-	Email              *string `json:"email,omitempty"`
-	Thumbnail          *string `json:"thumbnail,omitempty"`
-	Background         *string `json:"background,omitempty"`
-	Visitor            *string `json:"visitor,omitempty"`
+	ID                 *string               `json:"id,omitempty"`
+	Link               *string               `json:"link,omitempty"`
+	Name               *string               `json:"name,omitempty"`
+	User               *int                  `json:"user,omitempty"`
+	Description        *string               `json:"description,omitempty"`
+	Address            *string               `json:"address,omitempty"`
+	Wallet             *int                  `json:"wallet,omitempty"`
+	HasPhysicalAddress *bool                 `json:"has_physical_address,omitempty"`
+	Status             *bool                 `json:"status,omitempty"`
+	Phone              *string               `json:"phone,omitempty"`
+	Email              *string               `json:"email,omitempty"`
+	Thumbnail          *string               `json:"thumbnail,omitempty"`
+	Background         *string               `json:"background,omitempty"`
+	Visitor            *string               `json:"visitor,omitempty"`
+	Account            *WithdrawAccountInput `json:"account,omitempty"`
 }
 
 type UpdateStoreOrderInput struct {
@@ -536,6 +537,7 @@ type UpdateStoreOrderInput struct {
 type UpdateUserInput struct {
 	ID             *string              `json:"id,omitempty"`
 	Fullname       *string              `json:"fullname,omitempty"`
+	UUID           *string              `json:"UUID,omitempty"`
 	Email          *string              `json:"email,omitempty"`
 	Campus         *string              `json:"campus,omitempty"`
 	Password       *string              `json:"password,omitempty"`
@@ -553,6 +555,7 @@ type UpdateUserInput struct {
 type User struct {
 	ID             string          `json:"id"`
 	Fullname       string          `json:"fullname"`
+	UUID           string          `json:"UUID"`
 	Email          string          `json:"email"`
 	Campus         string          `json:"campus"`
 	Avatar         *string         `json:"avatar,omitempty"`
@@ -566,6 +569,7 @@ type User struct {
 	AccessToken    *string         `json:"access_token,omitempty"`
 	RefreshToken   *string         `json:"refresh_token,omitempty"`
 	Twofa          bool            `json:"twofa"`
+	Online         bool            `json:"online"`
 	Code           string          `json:"code"`
 	PaymnetDetails *PaymentDetails `json:"paymnetDetails,omitempty"`
 	Codeexpiry     string          `json:"codeexpiry"`
@@ -588,6 +592,11 @@ type VerifyOtp struct {
 	Email *string `json:"email,omitempty"`
 }
 
+type ConfirmPasswordInput struct {
+	Password string `json:"password"`
+	UserID   string `json:"userId"`
+}
+
 type CustomerInput struct {
 	Name    string `json:"name"`
 	Phone   string `json:"phone"`
@@ -598,6 +607,24 @@ type DeliveryDetails struct {
 	Method  string  `json:"method"`
 	Address string  `json:"address"`
 	Fee     float64 `json:"fee"`
+}
+
+type Fund struct {
+	StoreID       int     `json:"store_id"`
+	UserID        int     `json:"user_id"`
+	Amount        float64 `json:"amount"`
+	Email         string  `json:"email"`
+	AccountNumber string  `json:"account_number"`
+	BankCode      string  `json:"bank_code"`
+}
+
+type FundInput struct {
+	StoreID       int     `json:"store_id"`
+	UserID        int     `json:"user_id"`
+	Amount        float64 `json:"amount"`
+	Email         string  `json:"email"`
+	AccountNumber string  `json:"account_number"`
+	BankCode      string  `json:"bank_code"`
 }
 
 type PasswordResetInput struct {
@@ -615,6 +642,14 @@ type Verifyotpinput struct {
 	Code     string `json:"code"`
 	Phone    string `json:"phone"`
 	Attempts int    `json:"attempts"`
+}
+
+type WithdrawAccountInput struct {
+	BankCode      string `json:"bank_code"`
+	BankName      string `json:"bank_name"`
+	BankImage     string `json:"bank_image"`
+	AccountNumber string `json:"account_number"`
+	AccountName   string `json:"account_name"`
 }
 
 type MediaType string

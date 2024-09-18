@@ -321,3 +321,22 @@ func (r *repository) CreateTransactions(ctx context.Context, req *Transactions) 
 
 	return req, nil
 }
+
+func (r *repository) WithdrawFund(ctx context.Context, req *Fund) error {
+	var store *Store
+	err := r.db.First(&store, req.StoreID).Error
+	if err != nil {
+		return err
+	}
+	if req.UserID != store.UserID {
+		return errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Oops, An error occured in transaction")
+	}
+	if req.Amount > float32(store.Wallet) {
+		return errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Your Wallet amount is not within range of withdrawal amount")
+	}
+	err = utils.PayFund(req.Amount, req.Email, req.AccountNumber, req.BankCode)
+	if err != nil {
+		return err
+	}
+	return nil
+}

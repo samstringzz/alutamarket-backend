@@ -346,7 +346,41 @@ func (r *repository) FindOrCreateChat(ctx context.Context, users []*user.User) (
 			log.Printf("Error creating new chat: %v", err)
 			return nil, err
 		}
-
+		// Fetch users from the chat
+		var users []*user.User
+		if err := r.db.Model(&newChat).Association("Users").Find(&users); err != nil {
+			log.Printf("Error fetching users from chat: %v", err)
+			return nil, err
+		}
+		var userInfoList []*user.User
+		for _, u := range users {
+			userInfoList = append(userInfoList, &user.User{
+				ID:       u.ID,
+				Fullname: u.Fullname, // Assuming Fullname is a field in the user model
+				Avatar:   u.Avatar,   // Assuming Avatar is a field in the user model
+			})
+		}
+		newMessage := Message{
+			ChatID:    newChat.ID,
+			Content:   "Hello, I was surfing through your product and would like to make some enquiry/complains",
+			Sender:    users[0].ID,
+			Users:     userInfoList, // Automatically assigned users from the chat
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		// Save the new message to the database
+		if err := r.db.Create(&newMessage).Error; err != nil {
+			log.Printf("Error creating message: %v", err)
+			return nil, err
+		}
+		// Update the chat with the latest message ID and increment the unread count
+		if err := r.db.Model(&newChat).Updates(map[string]interface{}{
+			"LatestMessageID": newMessage.ID,
+			"UnreadCount":     newChat.UnreadCount + 1,
+		}).Error; err != nil {
+			log.Printf("Error updating chat with latest message ID and unread count: %v", err)
+			return nil, err
+		}
 		return &newChat, nil
 	}
 

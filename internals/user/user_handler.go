@@ -117,3 +117,11 @@ func (h *Handler) GetBalance(ctx context.Context, req string) error {
 	}
 	return nil
 }
+
+func (h *Handler) ConfirmPassword(ctx context.Context, password, userId string) error {
+	err := h.Service.ConfirmPassword(ctx, password, userId)
+	if err != nil {
+		return err
+	}
+	return nil
+}

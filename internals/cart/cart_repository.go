@@ -92,7 +92,7 @@ func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32
 	if err2 != nil {
 		return nil, errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Product not found")
 	}
-	if req.Quantity > prd.Quantity {
+	if req.Quantity > prd.Quantity && !prd.AlwaysAvailbale {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Quantity Exceeded")
 	}
 	r.db.Model(prd).Update("quantity", newQuantity)
@@ -109,7 +109,7 @@ func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32
 					// Remove the item from the cart when quantity becomes zero or negative
 					cart.Items = append(cart.Items[:i], cart.Items[i+1:]...)
 					r.db.Model(prd).Update("quantity", prd.Quantity+item.Quantity)
-				} else if req.Quantity+item.Quantity < 0 {
+				} else if req.Quantity+item.Quantity < 0 && !item.Product.AlwaysAvailbale {
 					r.db.Model(prd).Update("quantity", prd.Quantity+req.Quantity)
 					return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Quantity Exceeded")
 				} else {
@@ -406,10 +406,10 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 			// log.Printf("Payment gateway processed successfully. Payment link: %s\n", paymentLink)
 		}
 	}()
-
-	err := services.PayDeliveryFund(float32(input.Amount), customer.Email)
+	//Pay Delivery fee
+	err := services.PayFund(float32(input.Amount), customer.Email, "3002290305", "50211")
 	if err != nil {
-		log.Println("Error in PayDeliveryFund:", err)
+		log.Println("Error in PayFund:", err)
 		return "", err
 	}
 
