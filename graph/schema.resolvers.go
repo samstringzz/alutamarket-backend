@@ -691,7 +691,7 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.Produc
 }
 
 // UpdateProduct is the resolver for the updateProduct field.
-func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.ProductInput) (*model.Product, error) {
+func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.UpdateProductInput) (*model.Product, error) {
 	token := ctx.Value("token").(string)
 
 	authErr := middlewares.AuthMiddleware("seller", token)
@@ -706,7 +706,37 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.Produ
 	}
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
-	mod := &product.Product{}
+	mod := &product.NewProduct{}
+
+	if input.Name != nil {
+		mod.Name = *input.Name
+	}
+	if input.Description != nil {
+		mod.Description = *input.Description
+	}
+	if input.Price != nil {
+		mod.Price = *input.Price
+	}
+
+	if input.Status != nil {
+		mod.Status = *input.Status
+	}
+
+	if input.Quantity != nil {
+		mod.Quantity = *input.Quantity
+	}
+
+	if input.Category != nil {
+		mod.CategoryID = uint8(*input.Category)
+	}
+
+	if input.Subcategory != nil {
+		mod.SubCategoryID = uint8(*input.Subcategory)
+	}
+
+	if input.Thumbnail != nil {
+		mod.Thumbnail = *input.Thumbnail
+	}
 
 	resp, err := productHandler.UpdateProduct(ctx, mod)
 	if err != nil {

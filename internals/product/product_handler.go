@@ -20,7 +20,7 @@ func (h *Handler) CreateProduct(ctx context.Context, input *NewProduct) (*Produc
 	return item, nil
 }
 
-func (h *Handler) UpdateProduct(ctx context.Context, input *Product) (*Product, error) {
+func (h *Handler) UpdateProduct(ctx context.Context, input *NewProduct) (*Product, error) {
 	item, err := h.Service.UpdateProduct(ctx, input)
 	if err != nil {
 		return nil, err

@@ -106,7 +106,7 @@ func (s *service) GetProducts(c context.Context, store string, limit int, offset
 	return r, count, nil
 }
 
-func (s *service) UpdateProduct(c context.Context, req *Product) (*Product, error) {
+func (s *service) UpdateProduct(c context.Context, req *NewProduct) (*Product, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 	// Update the product in the repository
