@@ -1620,6 +1620,7 @@ func (r *queryResolver) Products(ctx context.Context, store *string, limit *int,
 			Category:        item.Category,
 			Subcategory:     item.Subcategory,
 			File:            &item.File,
+			Type:            item.Type,
 			AlwaysAvailable: item.AlwaysAvailbale,
 		}
 		if len(item.Variant) != 0 {
@@ -1709,6 +1710,7 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 		Category:        resp.Category,
 		Subcategory:     resp.Subcategory,
 		File:            &resp.File,
+		Type:            resp.Type,
 		AlwaysAvailable: resp.AlwaysAvailbale,
 		Thumbnail:       resp.Thumbnail,
 	}

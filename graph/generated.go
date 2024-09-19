@@ -235,6 +235,7 @@ type ComplexityRoot struct {
 		Store           func(childComplexity int) int
 		Subcategory     func(childComplexity int) int
 		Thumbnail       func(childComplexity int) int
+		Type            func(childComplexity int) int
 		Variant         func(childComplexity int) int
 	}
 
@@ -1681,6 +1682,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Product.Thumbnail(childComplexity), true
+
+	case "Product.type":
+		if e.complexity.Product.Type == nil {
+			break
+		}
+
+		return e.complexity.Product.Type(childComplexity), true
 
 	case "Product.variant":
 		if e.complexity.Product.Variant == nil {
@@ -6436,6 +6444,8 @@ func (ec *executionContext) fieldContext_CartItem_product(_ context.Context, fie
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -9834,6 +9844,8 @@ func (ec *executionContext) fieldContext_Mutation_createProduct(ctx context.Cont
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -9925,6 +9937,8 @@ func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Cont
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -10068,6 +10082,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteProduct(ctx context.Cont
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -11839,6 +11855,50 @@ func (ec *executionContext) fieldContext_Product_description(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Product_type(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Product_price(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Product_price(ctx, field)
 	if err != nil {
@@ -12469,6 +12529,8 @@ func (ec *executionContext) fieldContext_ProductPaginationData_data(_ context.Co
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -13840,6 +13902,8 @@ func (ec *executionContext) fieldContext_Query_Product(ctx context.Context, fiel
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -14004,6 +14068,8 @@ func (ec *executionContext) fieldContext_Query_RecommendedProducts(ctx context.C
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -14095,6 +14161,8 @@ func (ec *executionContext) fieldContext_Query_RecentlyAddedProducts(ctx context
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -14381,6 +14449,8 @@ func (ec *executionContext) fieldContext_Query_searchProducts(ctx context.Contex
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -16743,6 +16813,8 @@ func (ec *executionContext) fieldContext_Store_product(_ context.Context, field 
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -17598,6 +17670,8 @@ func (ec *executionContext) fieldContext_StoreOrder_product(_ context.Context, f
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -18307,6 +18381,8 @@ func (ec *executionContext) fieldContext_Subscription_productSearchResults(ctx c
 				return ec.fieldContext_Product_slug(ctx, field)
 			case "description":
 				return ec.fieldContext_Product_description(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
 			case "price":
 				return ec.fieldContext_Product_price(ctx, field)
 			case "discount":
@@ -25821,6 +25897,11 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "description":
 			out.Values[i] = ec._Product_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._Product_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

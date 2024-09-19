@@ -247,6 +247,7 @@ type Product struct {
 	Name            string     `json:"name"`
 	Slug            string     `json:"slug"`
 	Description     string     `json:"description"`
+	Type            string     `json:"type"`
 	Price           float64    `json:"price"`
 	Discount        float64    `json:"discount"`
 	Status          bool       `json:"status"`
