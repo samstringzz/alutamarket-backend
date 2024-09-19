@@ -50,14 +50,14 @@ type VariantType struct {
 }
 type NewProduct struct {
 	gorm.Model
-	ID              uint32         `json:"id" db:"id"`
+	ID              string         `json:"id" db:"id"`
 	Name            string         `json:"name" db:"name"`
 	Description     string         `json:"description" db:"description"`
 	Images          []string       `gorm:"serializer:json" json:"image" db:"image"`
 	Thumbnail       string         `json:"thumbnail" db:"thumbnail"`
 	Price           float64        `json:"price" db:"price"`
 	Discount        float64        `json:"discount" db:"discount"`
-	Status          bool           `json:"status" db:"status"`
+	Status          *bool          `json:"status" db:"status"`
 	Quantity        int            `json:"quantity" db:"quantity"`
 	File            string         `json:"file" db:"file"`
 	Slug            string         `json:"slug" db:"slug"`
