@@ -611,7 +611,7 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.Produc
 	}
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
-
+	initStatus := true
 	// Create a new product
 	newProduct := &product.NewProduct{
 		Name:            input.Name,
@@ -621,7 +621,7 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.Produc
 		Discount:        input.Discount,
 		File:            input.File,
 		Quantity:        input.Quantity,
-		Status:          true,
+		Status:          &initStatus,
 		Thumbnail:       input.Thumbnail,
 		CategoryID:      uint8(input.Category),
 		SubCategoryID:   uint8(input.Subcategory),
@@ -707,6 +707,7 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.Updat
 	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
 	mod := &product.NewProduct{}
+	mod.ID = input.ID
 
 	if input.Name != nil {
 		mod.Name = *input.Name
@@ -719,7 +720,7 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.Updat
 	}
 
 	if input.Status != nil {
-		mod.Status = *input.Status
+		mod.Status = input.Status
 	}
 
 	if input.Quantity != nil {

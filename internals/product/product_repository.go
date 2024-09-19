@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/Chrisentech/aluta-market-api/errors"
@@ -98,7 +99,7 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 		Thumbnail:       req.Thumbnail,
 		Price:           req.Price,
 		Discount:        req.Discount,
-		Status:          req.Status,
+		Status:          *req.Status,
 		Quantity:        req.Quantity,
 		File:            req.File,
 		Variant:         req.Variant,
@@ -116,9 +117,14 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 }
 
 func (r *repository) UpdateProduct(ctx context.Context, req *NewProduct) (*Product, error) {
-
+	idUint32, err := strconv.ParseUint(req.ID, 10, 32) // 10 is for base 10, 32 is the bit size
+	if err != nil {
+		// Handle conversion error
+		fmt.Println("Error converting string to uint32:", err)
+		return nil, err
+	}
 	// First, check if the product exists by its ID or another unique identifier
-	existingProduct, err := r.GetProduct(ctx, req.ID, 0)
+	existingProduct, err := r.GetProduct(ctx, uint32(idUint32), 0)
 	if err != nil {
 		return nil, err
 	}
@@ -140,9 +146,11 @@ func (r *repository) UpdateProduct(ctx context.Context, req *NewProduct) (*Produ
 	if req.Discount != 0 {
 		existingProduct.Discount = req.Discount
 	}
-	if req.Status {
-		existingProduct.Status = req.Status
+	// Check if Status is not nil before updating (to handle both true and false)
+	if req.Status != nil {
+		existingProduct.Status = *req.Status
 	}
+
 	if req.Thumbnail != "" {
 		existingProduct.Thumbnail = req.Thumbnail
 	}
