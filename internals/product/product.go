@@ -106,6 +106,7 @@ type Product struct {
 	Category        string         `json:"category" db:"category"`
 	Views           []uint32       `gorm:"serializer:json" jsinput.ProductIDon:"views" db:"views"`
 	Subcategory     string         `json:"subcategory" db:"subcategory"`
+	Type            string         `json:"type" db:"type"`
 	Reviews         []*Review      `gorm:"serializer:json"`
 	UnitSold        uint32         `json:"unit_sold" db:"unit_sold"`
 	Ads             *AdsGen        `gorm:"serializer:json" json:"ads,omitempty" db:"ads"`
