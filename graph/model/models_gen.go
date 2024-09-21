@@ -95,6 +95,18 @@ type DVADetails struct {
 	StoreName     string `json:"store_name"`
 }
 
+type Downloads struct {
+	ID        string     `json:"id"`
+	Thumbnail string     `json:"thumbnail"`
+	Price     float64    `json:"price"`
+	Discount  int        `json:"discount"`
+	UUID      string     `json:"UUID"`
+	File      string     `json:"file"`
+	Users     []*string  `json:"users"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+}
+
 type HandledProducts struct {
 	UserID           int      `json:"userId"`
 	ProductID        int      `json:"productId"`

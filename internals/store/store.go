@@ -36,6 +36,19 @@ type DVADetails struct {
 	StoreName string `json:"store_name" db:"store_name"`
 }
 
+type Downloads struct {
+	gorm.Model
+	ID        string    `json:"id" db:"id"`
+	Thumbnail string    `json:"thumbnail" db:"thumbnail"`
+	Price     float64   `json:"price" db:"price"`
+	Discount  int       `json:"discount" db:"discount"`
+	UUID      string    `json:"uuid" db:"uuid"`
+	File      string    `json:"file" db:"file"`
+	Users     []string  `gorm:"serializer:json" json:"paid_users" db:"paid_users"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
+
 type WithdrawalAccount struct {
 	BankName      string `json:"bank_name" db:"bank_name"`
 	BankCode      string `json:"bank_code" db:"bank_code"`
@@ -94,6 +107,7 @@ type TrackedProduct struct {
 	Name      string    `json:"name" db:"name"`
 	Thumbnail string    `json:"thumbnail" db:"thumbnail"`
 	Price     float64   `json:"price" db:"price"`
+	File      *string   `json:"file" db:"file"`
 	Quantity  int       `json:"quantity" db:"quantity"`
 	Discount  float64   `json:"discount" db:"discount"`
 	Status    string    `json:"status" db:"status"`

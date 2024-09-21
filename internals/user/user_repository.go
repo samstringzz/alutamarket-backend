@@ -869,3 +869,16 @@ func (r *repository) ConfirmPassword(ctx context.Context, password, userId strin
 
 	return nil
 }
+
+func (r *repository) GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error) {
+	var downloads []*store.Downloads
+
+	// Use the LIKE operator to check if the userId is contained in the users string
+	err := r.db.Where("users LIKE ?", fmt.Sprintf(`%%"%s"%%`, userId)).Find(&downloads).Error
+	if err != nil {
+		fmt.Printf("Error querying downloads: %v\n", err)
+		return nil, err
+	}
+
+	return downloads, nil
+}
