@@ -399,6 +399,7 @@ func (r *mutationResolver) UpdateStoreFollower(ctx context.Context, input *model
 		FollowerID:    uint32(input.FollowerID),
 		FollowerName:  input.FollowerName,
 		FollowerImage: input.FollowerImage,
+		StoreID:       uint32(input.StoreID),
 	}
 	resp, err := storeHandler.UpdateStoreFollowership(ctx, uint32(input.StoreID), follower, input.Action)
 	if err != nil {
@@ -2112,8 +2113,10 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 		if len(item.Followers) > 0 {
 			for _, follower := range item.Followers {
 				storeFollower := &model.StoreFollower{
-					FollowerID:   int(follower.ID),
-					FollowerName: follower.FollowerName,
+					FollowerID:    int(follower.FollowerID),
+					FollowerName:  follower.FollowerName,
+					FollowerImage: follower.FollowerImage,
+					StoreID:       int(follower.StoreID),
 				}
 				store.Followers = append(store.Followers, storeFollower)
 			}
@@ -2219,8 +2222,11 @@ func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error)
 
 	for _, follower := range resp.Followers {
 		storeFollower := &model.StoreFollower{}
-		storeFollower.FollowerID = int(follower.ID)
+		storeFollower.FollowerID = int(follower.FollowerID)
 		storeFollower.FollowerName = follower.FollowerName
+		storeFollower.FollowerImage = follower.FollowerImage
+		storeFollower.StoreID = int(follower.StoreID)
+
 		store.Followers = append(store.Followers, storeFollower)
 	}
 
@@ -2308,8 +2314,11 @@ func (r *queryResolver) StoreByName(ctx context.Context, name string) (*model.St
 	}
 	for _, follower := range resp.Followers {
 		storeFollower := &model.StoreFollower{}
-		storeFollower.FollowerID = int(follower.ID)
+		storeFollower.FollowerID = int(follower.FollowerID)
 		storeFollower.FollowerName = follower.FollowerName
+		storeFollower.FollowerImage = follower.FollowerImage
+		storeFollower.StoreID = int(follower.StoreID)
+
 		store.Followers = append(store.Followers, storeFollower)
 	}
 

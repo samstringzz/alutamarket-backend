@@ -67,7 +67,7 @@ type Store struct {
 	HasPhysicalAddress bool                 `json:"hasphysical_address" db:"has_physical_address"`
 	Address            string               `json:"address" db:"address"`
 	Transactions       []*Transactions      `gorm:"serializer:json"`
-	Followers          []*Follower          `gorm:"many2many:store_followers;" json:"store_followers"`
+	Followers          []*Follower          `gorm:"serializer:json"`
 	Orders             []*StoreOrder        `gorm:"serializer:json"`
 	Products           []Product            `gorm:"serializer:json"`
 	Wallet             float64              `json:"wallet" db:"wallet"`
