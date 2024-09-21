@@ -593,6 +593,9 @@ func (r *repository) UpdateUser(ctx context.Context, req *User) (*User, error) {
 	if req.Dob != "" {
 		existingUser.Dob = req.Dob
 	}
+	if req.Online != existingUser.Online {
+		existingUser.Online = req.Online
+	}
 	if req.AccessToken != "" {
 		existingUser.AccessToken = req.AccessToken
 	}

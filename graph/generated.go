@@ -24284,7 +24284,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "fullname", "UUID", "email", "campus", "password", "stores", "dob", "phone", "gender", "active", "usertype", "code", "avatar", "paymnetDetails"}
+	fieldsInOrder := [...]string{"id", "fullname", "UUID", "email", "campus", "password", "stores", "dob", "phone", "gender", "active", "online", "usertype", "code", "avatar", "paymnetDetails"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -24368,6 +24368,13 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.Active = data
+		case "online":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("online"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Online = data
 		case "usertype":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("usertype"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)

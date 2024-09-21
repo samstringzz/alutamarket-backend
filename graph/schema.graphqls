@@ -320,6 +320,7 @@ input UpdateUserInput {
 	phone: String
 	gender: String
 	active: Boolean
+	online: Boolean
 	usertype: String
 	code: String
 	avatar: String

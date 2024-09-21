@@ -567,6 +567,7 @@ type UpdateUserInput struct {
 	Phone          *string              `json:"phone,omitempty"`
 	Gender         *string              `json:"gender,omitempty"`
 	Active         *bool                `json:"active,omitempty"`
+	Online         *bool                `json:"online,omitempty"`
 	Usertype       *string              `json:"usertype,omitempty"`
 	Code           *string              `json:"code,omitempty"`
 	Avatar         *string              `json:"avatar,omitempty"`
