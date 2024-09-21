@@ -256,12 +256,17 @@ func (r *repository) UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOr
 }
 
 func (r *repository) UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error) {
+	// Log the incoming request
+	log.Printf("Attempting to %s store with ID %d for follower ID %d", action, storeID, follower.FollowerID)
+
+	// Fetch the store
 	existingStore, err := r.GetStore(ctx, storeID)
 	if err != nil {
+		log.Printf("Error fetching store with ID %d: %v", storeID, err)
 		return nil, err
 	}
 
-	// Check if the user is already in the followers list
+	// Check if the user is already a follower
 	userExists := false
 	var followerIndex int
 	for i, existingFollower := range existingStore.Followers {
@@ -272,27 +277,35 @@ func (r *repository) UpdateStoreFollowership(ctx context.Context, storeID uint32
 		}
 	}
 
+	// Handle the follow/unfollow action
 	switch action {
 	case "follow":
 		if userExists {
+			// log.Printf("Follower with ID %d already exists in store %d", follower.FollowerID, storeID)
 			return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "user is already a follower")
 		}
+		// log.Printf("Adding follower with ID %d to store %d", follower.FollowerID, storeID)
 		existingStore.Followers = append(existingStore.Followers, follower)
 	case "unfollow":
 		if !userExists {
+			// log.Printf("Follower with ID %d not found in store %d", follower.FollowerID, storeID)
 			return nil, errors.NewAppError(http.StatusNotFound, "NOT FOUND", "user is not a follower")
 		}
+		// log.Printf("Removing follower with ID %d from store %d", follower.FollowerID, storeID)
 		existingStore.Followers = append(existingStore.Followers[:followerIndex], existingStore.Followers[followerIndex+1:]...)
 	default:
+		// log.Printf("Invalid action: %s", action)
 		return nil, errors.NewAppError(http.StatusNotAcceptable, "INVALID", "invalid action")
 	}
 
-	// Save the changes to the store
+	// Save the updated store
 	err = r.db.WithContext(ctx).Save(&existingStore).Error
 	if err != nil {
+		// log.Printf("Error saving updated store with ID %d: %v", storeID, err)
 		return nil, err
 	}
 
+	// log.Printf("Successfully updated store %d for action %s", storeID, action)
 	return existingStore, nil
 }
 
