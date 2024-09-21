@@ -2540,6 +2540,12 @@ func (r *queryResolver) GetDVABalance(ctx context.Context, id string) (*string, 
 
 // MyDownloads is the resolver for the MyDownloads field.
 func (r *queryResolver) MyDownloads(ctx context.Context, id string) ([]*model.Downloads, error) {
+	token := ctx.Value("token").(string)
+
+	authErr := middlewares.AuthMiddleware("entry", token)
+	if authErr != nil {
+		return nil, authErr
+	}
 	userRep := app.InitializePackage(app.UserPackage)
 
 	userRepository, ok := userRep.(user.Repository)
