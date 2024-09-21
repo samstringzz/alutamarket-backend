@@ -182,7 +182,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUs
 		usr.Phone = *input.Phone
 	}
 	if input.Gender != nil {
-		usr.Phone = *input.Gender
+		usr.Gender = *input.Gender
 	}
 	if input.Dob != nil {
 		usr.Dob = *input.Dob
