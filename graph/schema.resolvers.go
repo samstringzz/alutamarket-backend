@@ -975,7 +975,7 @@ func (r *mutationResolver) CreateStore(ctx context.Context, input model.StoreInp
 func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateStoreInput) (*model.Store, error) {
 	token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("seller", token)
+	authErr := middlewares.AuthMiddleware("entry", token)
 	if authErr != nil {
 		return nil, authErr
 	}
