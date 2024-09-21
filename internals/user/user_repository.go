@@ -539,7 +539,7 @@ func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeI
 	// Toggle the follow status
 	if isFollowing {
 		// If already following, unfollow
-		newFollowers := make([]store.Follower, 0)
+		newFollowers := make([]*store.Follower, 0)
 		for _, follower := range foundStore.Followers {
 			if follower.FollowerID != userId {
 				newFollowers = append(newFollowers, follower)
@@ -548,7 +548,7 @@ func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeI
 		foundStore.Followers = newFollowers
 	} else {
 		// If not following, follow
-		foundStore.Followers = append(foundStore.Followers, store.Follower{
+		foundStore.Followers = append(foundStore.Followers, &store.Follower{
 			FollowerID:    userId,
 			FollowerName:  foundUser.Fullname,
 			FollowerImage: foundUser.Avatar,

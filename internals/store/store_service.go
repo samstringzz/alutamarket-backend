@@ -141,7 +141,7 @@ func (s *service) UpdateOrder(c context.Context, req *StoreOrder) (*StoreOrder, 
 	return resp, nil
 }
 
-func (s *service) UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error) {
+func (s *service) UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 

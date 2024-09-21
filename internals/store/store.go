@@ -67,7 +67,7 @@ type Store struct {
 	HasPhysicalAddress bool                 `json:"hasphysical_address" db:"has_physical_address"`
 	Address            string               `json:"address" db:"address"`
 	Transactions       []*Transactions      `gorm:"serializer:json"`
-	Followers          []Follower           `gorm:"serializer:json"`
+	Followers          []*Follower          `gorm:"many2many:store_followers;" json:"store_followers"`
 	Orders             []*StoreOrder        `gorm:"serializer:json"`
 	Products           []Product            `gorm:"serializer:json"`
 	Wallet             float64              `json:"wallet" db:"wallet"`
@@ -193,7 +193,7 @@ type Repository interface {
 	GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error)
 	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
-	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error)
+	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error)
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
 	WithdrawFund(ctx context.Context, req *Fund) error
 }
@@ -211,6 +211,6 @@ type Service interface {
 	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
-	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error)
+	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error)
 	WithdrawFund(ctx context.Context, req *Fund) error
 }
