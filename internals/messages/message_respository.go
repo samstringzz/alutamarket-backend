@@ -36,7 +36,6 @@ func extractUserIDFromRequest(r *http.Request) (uint32, error) {
 		return 0, fmt.Errorf("authorization header and token query parameter missing")
 	}
 
-	// The header typically looks like "Bearer <token>"
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 	// Parse the token

@@ -395,7 +395,11 @@ func (r *mutationResolver) UpdateStoreFollower(ctx context.Context, input *model
 	}
 	storeSrvc := store.NewService(storeRepository)
 	storeHandler := store.NewHandler(storeSrvc)
-	follower := store.Follower{}
+	follower := &store.Follower{
+		FollowerID:    uint32(input.FollowerID),
+		FollowerName:  input.FollowerName,
+		FollowerImage: input.FollowerImage,
+	}
 	resp, err := storeHandler.UpdateStoreFollowership(ctx, uint32(input.StoreID), follower, input.Action)
 	if err != nil {
 		return nil, err

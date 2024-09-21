@@ -255,7 +255,7 @@ func (r *repository) UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOr
 	return orderToUpdate, nil
 }
 
-func (r *repository) UpdateStoreFollowership(ctx context.Context, storeID uint32, follower Follower, action string) (*Store, error) {
+func (r *repository) UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error) {
 	existingStore, err := r.GetStore(ctx, storeID)
 	if err != nil {
 		return nil, err
