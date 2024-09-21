@@ -40,6 +40,7 @@ type Downloads struct {
 	gorm.Model
 	ID        string    `json:"id" db:"id"`
 	Thumbnail string    `json:"thumbnail" db:"thumbnail"`
+	Name      string    `json:"name" db:"name"`
 	Price     float64   `json:"price" db:"price"`
 	Discount  int       `json:"discount" db:"discount"`
 	UUID      string    `json:"uuid" db:"uuid"`

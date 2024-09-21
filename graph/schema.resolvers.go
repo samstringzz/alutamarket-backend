@@ -2570,6 +2570,7 @@ func (r *queryResolver) MyDownloads(ctx context.Context, id string) ([]*model.Do
 			UpdatedAt: &download.UpdatedAt,
 			File:      download.File,
 			UUID:      download.UUID,
+			Name:      download.Name,
 		})
 	}
 	return res, nil

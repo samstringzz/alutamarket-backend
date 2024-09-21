@@ -617,6 +617,7 @@ input UpdateProductInput {
 type Downloads {
 	id: ID!
 	thumbnail: String!
+	name: String!
 	price: Float!
 	discount: Int!
 	UUID: String!

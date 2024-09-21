@@ -98,6 +98,7 @@ type DVADetails struct {
 type Downloads struct {
 	ID        string     `json:"id"`
 	Thumbnail string     `json:"thumbnail"`
+	Name      string     `json:"name"`
 	Price     float64    `json:"price"`
 	Discount  int        `json:"discount"`
 	UUID      string     `json:"UUID"`
