@@ -178,6 +178,7 @@ type Repository interface {
 	VerifyResetLink(ctx context.Context, token string) error
 	GetBalance(ctx context.Context, userId string) error
 	ConfirmPassword(ctx context.Context, password, userId string) error
+	GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error)
 }
 
 type Service interface {
@@ -197,4 +198,5 @@ type Service interface {
 	GetBalance(ctx context.Context, userId string) error
 	ConfirmPassword(ctx context.Context, password, userId string) error
 	VerifyResetLink(ctx context.Context, token string) error
+	GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error)
 }

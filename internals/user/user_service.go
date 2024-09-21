@@ -218,3 +218,14 @@ func (s *service) ConfirmPassword(ctx context.Context, password, userId string) 
 	}
 	return nil
 }
+
+func (s *service) GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	downloads, err := s.Repository.GetMyDownloads(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	return downloads, nil
+}

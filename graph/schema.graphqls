@@ -614,6 +614,18 @@ input UpdateProductInput {
 	subcategory: Int
 	always_available: Boolean
 }
+type Downloads {
+	id: ID!
+	thumbnail: String!
+	price: Float!
+	discount: Int!
+	UUID: String!
+	file: String!
+	users: [String]!
+	created_at: Time
+	updated_at: Time
+}
+
 type Query {
 	Users(limit: Int, offset: Int): [User!]!
 	User(id: ID!): User
@@ -639,8 +651,8 @@ type Query {
 	Chats(userID: String!): [Chat]
 	Messages(chatId: String!): [Message]
 	GetDVABalance(id: String!): String
+	MyDownloads(id: String!): [Downloads]
 }
-
 type Mutation {
 	createUser(input: NewUser!): User!
 	createOrder(input: StoreOrderInput!): StoreOrder

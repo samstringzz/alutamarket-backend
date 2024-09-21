@@ -125,3 +125,11 @@ func (h *Handler) ConfirmPassword(ctx context.Context, password, userId string) 
 	}
 	return nil
 }
+
+func (h *Handler) GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error) {
+	d, err := h.Service.GetMyDownloads(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	return d, nil
+}

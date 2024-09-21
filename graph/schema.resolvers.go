@@ -2538,6 +2538,44 @@ func (r *queryResolver) GetDVABalance(ctx context.Context, id string) (*string, 
 	return nil, nil
 }
 
+// MyDownloads is the resolver for the MyDownloads field.
+func (r *queryResolver) MyDownloads(ctx context.Context, id string) ([]*model.Downloads, error) {
+	userRep := app.InitializePackage(app.UserPackage)
+
+	userRepository, ok := userRep.(user.Repository)
+	if !ok {
+		// Handle the case where the conversion failed
+		return nil, fmt.Errorf("userRep is not a user.Repository")
+	}
+	userSrvc := user.NewService(userRepository)
+	userHandler := user.NewHandler(userSrvc)
+	downloads, err := userHandler.GetMyDownloads(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	res := []*model.Downloads{}
+	for _, download := range downloads {
+		// Convert []string to []*string
+		users := make([]*string, len(download.Users))
+		for i, user := range download.Users {
+			users[i] = &user
+		}
+
+		res = append(res, &model.Downloads{
+			ID:        download.ID,
+			Thumbnail: download.Thumbnail,
+			Price:     download.Price,
+			Discount:  download.Discount,
+			CreatedAt: &download.CreatedAt,
+			UpdatedAt: &download.UpdatedAt,
+			File:      download.File,
+			UUID:      download.UUID,
+			Users:     users, // Assign the converted []*string slice here
+		})
+	}
+	return res, nil
+}
+
 // ProductSearchResults is the resolver for the productSearchResults field.
 func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
 	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))

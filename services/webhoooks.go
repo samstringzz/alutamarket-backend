@@ -205,6 +205,9 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 
 		buyerOrder := &store.Order{}
 		sellerOrder := &store.StoreOrder{}
+
+		var productsWithFiles []store.TrackedProduct
+
 		// Handle charge completion logic here
 		err := repo.db.Model(buyerOrder).Where("trt_ref", data.TxRef).Error
 		if err != nil {
@@ -229,6 +232,35 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 				return
 			}
 			sellerOrder.Active = true
+			for _, product := range buyerOrder.Products {
+				if product.File != nil {
+					productsWithFiles = append(productsWithFiles, product)
+				}
+			}
+			for _, product := range productsWithFiles {
+				// Check if the file is not nil before dereferencing
+				if product.File != nil {
+					download := &store.Downloads{
+						Thumbnail: product.Thumbnail,
+						Price:     product.Price,
+						Discount:  int(product.Discount),
+						UUID:      buyerOrder.UUID,
+						File:      *product.File, // Safely dereferencing product.File
+					}
+
+					// Initialize Users slice if it's nil
+					if download.Users == nil {
+						download.Users = make([]string, 0)
+					}
+
+					// Append the user ID
+					download.Users = append(download.Users, buyerOrder.UserID)
+
+					// Save download to database
+					repo.db.Create(download)
+				}
+			}
+
 			if err := repo.db.Save(sellerOrder).Error; err != nil {
 				http.Error(w, "Failed to update seller order", http.StatusInternalServerError)
 				return
@@ -298,6 +330,8 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 
 	buyerOrder := &store.Order{}
 	sellerOrder := &store.StoreOrder{}
+
+	var productsWithFiles []store.TrackedProduct
 	// Process the event
 	switch event {
 	case "charge.success":
@@ -318,6 +352,34 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 		buyerOrder.PaymentMethod = data.Channel
 		buyerOrder.PaymentGateway = "paystack"
 		sellerOrder.Active = true
+		for _, product := range buyerOrder.Products {
+			if product.File != nil {
+				productsWithFiles = append(productsWithFiles, product)
+			}
+		}
+		for _, product := range productsWithFiles {
+			// Check if the file is not nil before dereferencing
+			if product.File != nil {
+				download := &store.Downloads{
+					Thumbnail: product.Thumbnail,
+					Price:     product.Price,
+					Discount:  int(product.Discount),
+					UUID:      buyerOrder.UUID,
+					File:      *product.File, // Safely dereferencing product.File
+				}
+
+				// Initialize Users slice if it's nil
+				if download.Users == nil {
+					download.Users = make([]string, 0)
+				}
+
+				// Append the user ID
+				download.Users = append(download.Users, buyerOrder.UserID)
+
+				// Save download to database
+				repo.db.Create(download)
+			}
+		}
 
 		if err := repo.db.Save(buyerOrder).Error; err != nil {
 			http.Error(w, "Failed to save order", http.StatusInternalServerError)
@@ -387,6 +449,7 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 
 	buyerOrder := &store.Order{}
 	sellerOrder := &store.StoreOrder{}
+	var productsWithFiles []store.TrackedProduct
 
 	// Process the event
 	switch event {
@@ -402,6 +465,34 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 		buyerOrder.PaymentMethod = data.PaymentMethod.Type
 		buyerOrder.PaymentGateway = "squad"
 		sellerOrder.Active = true
+		for _, product := range buyerOrder.Products {
+			if product.File != nil {
+				productsWithFiles = append(productsWithFiles, product)
+			}
+		}
+		for _, product := range productsWithFiles {
+			// Check if the file is not nil before dereferencing
+			if product.File != nil {
+				download := &store.Downloads{
+					Thumbnail: product.Thumbnail,
+					Price:     product.Price,
+					Discount:  int(product.Discount),
+					UUID:      buyerOrder.UUID,
+					File:      *product.File, // Safely dereferencing product.File
+				}
+
+				// Initialize Users slice if it's nil
+				if download.Users == nil {
+					download.Users = make([]string, 0)
+				}
+
+				// Append the user ID
+				download.Users = append(download.Users, buyerOrder.UserID)
+
+				// Save download to database
+				repo.db.Create(download)
+			}
+		}
 
 		if err := repo.db.Save(buyerOrder).Error; err != nil {
 			http.Error(w, "Failed to save order", http.StatusInternalServerError)
