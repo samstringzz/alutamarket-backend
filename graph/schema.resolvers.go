@@ -2300,6 +2300,7 @@ func (r *queryResolver) StoreByName(ctx context.Context, name string) (*model.St
 		Background:         resp.Background,
 		Address:            resp.Address,
 		Phone:              resp.Phone,
+		Visitors:           resp.Visitors,
 	}
 	for _, follower := range resp.Followers {
 		storeFollower := &model.StoreFollower{}
