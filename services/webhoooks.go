@@ -243,6 +243,7 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 					download := &store.Downloads{
 						Thumbnail: product.Thumbnail,
 						Price:     product.Price,
+						Name:      product.Name,
 						Discount:  int(product.Discount),
 						UUID:      buyerOrder.UUID,
 						File:      *product.File, // Safely dereferencing product.File
@@ -362,6 +363,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 			if product.File != nil {
 				download := &store.Downloads{
 					Thumbnail: product.Thumbnail,
+					Name:      product.Name,
 					Price:     product.Price,
 					Discount:  int(product.Discount),
 					UUID:      buyerOrder.UUID,
@@ -476,6 +478,7 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 				download := &store.Downloads{
 					Thumbnail: product.Thumbnail,
 					Price:     product.Price,
+					Name:      product.Name,
 					Discount:  int(product.Discount),
 					UUID:      buyerOrder.UUID,
 					File:      *product.File, // Safely dereferencing product.File
