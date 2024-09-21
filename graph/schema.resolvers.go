@@ -2561,12 +2561,6 @@ func (r *queryResolver) MyDownloads(ctx context.Context, id string) ([]*model.Do
 	}
 	res := []*model.Downloads{}
 	for _, download := range downloads {
-		// Convert []string to []*string
-		users := make([]*string, len(download.Users))
-		for i, user := range download.Users {
-			users[i] = &user
-		}
-
 		res = append(res, &model.Downloads{
 			ID:        download.ID,
 			Thumbnail: download.Thumbnail,
@@ -2576,7 +2570,6 @@ func (r *queryResolver) MyDownloads(ctx context.Context, id string) ([]*model.Do
 			UpdatedAt: &download.UpdatedAt,
 			File:      download.File,
 			UUID:      download.UUID,
-			Users:     users, // Assign the converted []*string slice here
 		})
 	}
 	return res, nil
