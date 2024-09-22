@@ -85,7 +85,7 @@ func main() {
 	http.HandleFunc("/webhook/fw", repo.FWWebhookHandler)
 	http.HandleFunc("/webhook/ps", repo.PaystackWebhookHandler)
 	http.Handle("/upload", withCORS(http.HandlerFunc(services.UploadHandler)))
-	http.Handle("/verify-account", withCORS(http.HandlerFunc(services.VerifyAccountNumberHandler)))
+	http.Handle("/verify-account/", withCORS(http.HandlerFunc(services.VerifyAccountNumberHandler)))
 	http.Handle("/download/", withCORS(http.HandlerFunc(services.DownloadHandler)))
 
 	// Run auto migration
