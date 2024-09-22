@@ -18,7 +18,6 @@ import (
 
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
-	"github.com/Chrisentech/aluta-market-api/services"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joho/godotenv"
@@ -58,7 +57,7 @@ func (r *repository) resendOTP(ctx context.Context, phone string) error {
 	phoneWithoutPlus := strings.TrimPrefix(phone, "+")
 	// Insert the dynamic data into the template string
 	message := fmt.Sprintf(messageTemplate, otpCode)
-	_, err := services.SendSMS(phoneWithoutPlus, "N-Alert", message)
+	_, err := utils.SendSMS(phoneWithoutPlus, "N-Alert", message)
 	if err != nil {
 		return err
 	}
@@ -190,7 +189,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 	phoneWithoutPlus := strings.TrimPrefix(req.Phone, "+")
 	// Insert the dynamic data into the template string
 	message := fmt.Sprintf(messageTemplate, otpCode)
-	_, err = services.SendSMS(phoneWithoutPlus, "N-Alert", message)
+	_, err = utils.SendSMS(phoneWithoutPlus, "N-Alert", message)
 	if err != nil {
 		log.Printf("Failed to send SMS: %v", err)
 		return nil, err
@@ -230,14 +229,14 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		}
 
 		templateID := "7178d0b2-a957-410d-b24d-e812252451da"
-		err = services.SendEmail(templateID, "Welcome to Alutamarket🎉", to, contents)
+		err = utils.SendEmail(templateID, "Welcome to Alutamarket🎉", to, contents)
 		if err != nil {
 			log.Printf("Failed to send welcome email to seller: %v", err)
 			return nil, err
 		}
 	} else {
 		templateID := "633d65f7-0545-4550-9983-8b309afa3d03"
-		err := services.SendEmail(templateID, "Welcome to Alutamarket🎉", to, contents)
+		err := utils.SendEmail(templateID, "Welcome to Alutamarket🎉", to, contents)
 		if err != nil {
 			log.Printf("Failed to send welcome email: %v", err)
 			return nil, err
@@ -717,7 +716,7 @@ func (r *repository) SendPasswordResetLink(ctx context.Context, req *PasswordRes
 		"new_link": resetLink,
 	}
 	templateID := "7ee50170-1af2-44b4-a819-ab638593f08d"
-	err = services.SendEmail(templateID, "Reset Password Link", to, contents)
+	err = utils.SendEmail(templateID, "Reset Password Link", to, contents)
 	if err != nil {
 		log.Printf("Failed to send reset password link email: %v", err)
 		return err
@@ -881,4 +880,12 @@ func (r *repository) GetMyDownloads(ctx context.Context, userId string) ([]*stor
 	}
 
 	return downloads, nil
+}
+
+func PayFund(amount float32, email, accountNumber, bankCode string) error {
+	err := utils.PayFund(amount, email, accountNumber, bankCode)
+	if err != nil {
+		return err
+	}
+	return nil
 }

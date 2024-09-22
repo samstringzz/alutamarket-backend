@@ -17,7 +17,6 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
-	"github.com/Chrisentech/aluta-market-api/services"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -397,7 +396,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 
 	go func() {
 		// log.Printf("Processing payment gateway for customer %s...\n", customer.Email)
-		paymentLink, err := processPaymentGateway(input.PaymentGateway, UUID, cart.Total, redirectUrl, customer)
+		paymentLink, err := processPaymentGateway(input.PaymentGateway, UUID, cart.Total+input.Amount, redirectUrl, customer)
 		if err != nil {
 			paymentErrChan <- err
 			// log.Println("Error processing payment gateway:", err)
@@ -406,12 +405,6 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 			// log.Printf("Payment gateway processed successfully. Payment link: %s\n", paymentLink)
 		}
 	}()
-	//Pay Delivery fee
-	err := services.PayFund(float32(input.Amount), customer.Email, "3002290305", "50211")
-	if err != nil {
-		log.Println("Error in PayFund:", err)
-		return "", err
-	}
 
 	// Handle concurrent payment processing
 	var paymentLink string
