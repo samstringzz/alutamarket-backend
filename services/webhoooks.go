@@ -13,6 +13,7 @@ import (
 	"os"
 
 	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -205,6 +206,8 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 
 		buyerOrder := &store.Order{}
 		sellerOrder := &store.StoreOrder{}
+		customer := &user.User{}
+		myStore := &store.Store{}
 
 		var productsWithFiles []store.TrackedProduct
 
@@ -212,6 +215,25 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 		err := repo.db.Model(buyerOrder).Where("trt_ref", data.TxRef).Error
 		if err != nil {
 			http.Error(w, "Failed to find order", http.StatusNotFound)
+			return
+		}
+		// Fetch Store
+		err = repo.db.Model(myStore).Where("id", sellerOrder.StoreID).Error
+		if err != nil {
+			http.Error(w, "Failed to find user", http.StatusNotFound)
+			return
+		}
+
+		err = repo.db.Model(customer).Where("id", myStore.UserID).Error
+		if err != nil {
+			http.Error(w, "Failed to find user", http.StatusNotFound)
+			return
+		}
+
+		// Pay Delivery fee
+		err = user.PayFund(float32(buyerOrder.Fee), customer.Email, "3002290305", "50211")
+		if err != nil {
+			http.Error(w, "Failed to pay delivery", http.StatusNotFound)
 			return
 		}
 
@@ -331,6 +353,8 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 
 	buyerOrder := &store.Order{}
 	sellerOrder := &store.StoreOrder{}
+	customer := &user.User{}
+	myStore := &store.Store{}
 
 	var productsWithFiles []store.TrackedProduct
 	// Process the event
@@ -346,6 +370,26 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 		err = repo.db.Model(sellerOrder).Where("trt_ref", data.Reference).Error
 		if err != nil {
 			http.Error(w, "Failed to find order", http.StatusNotFound)
+			return
+		}
+
+		// Fetch Store
+		err = repo.db.Model(myStore).Where("id", sellerOrder.StoreID).Error
+		if err != nil {
+			http.Error(w, "Failed to find user", http.StatusNotFound)
+			return
+		}
+
+		err = repo.db.Model(customer).Where("id", myStore.UserID).Error
+		if err != nil {
+			http.Error(w, "Failed to find user", http.StatusNotFound)
+			return
+		}
+
+		// Pay Delivery fee
+		err = user.PayFund(float32(buyerOrder.Fee), customer.Email, "3002290305", "50211")
+		if err != nil {
+			http.Error(w, "Failed to pay delivery", http.StatusNotFound)
 			return
 		}
 		buyerOrder.TransStatus = data.Status
@@ -451,6 +495,8 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 
 	buyerOrder := &store.Order{}
 	sellerOrder := &store.StoreOrder{}
+	customer := &user.User{}
+	myStore := &store.Store{}
 	var productsWithFiles []store.TrackedProduct
 
 	// Process the event
@@ -460,6 +506,25 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 		err := repo.db.Model(buyerOrder).Where("trt_ref = ? ", data.Reference).Error
 		if err != nil {
 			http.Error(w, "Failed to find order", http.StatusNotFound)
+			return
+		}
+		// Fetch Store
+		err = repo.db.Model(myStore).Where("id", sellerOrder.StoreID).Error
+		if err != nil {
+			http.Error(w, "Failed to find user", http.StatusNotFound)
+			return
+		}
+
+		err = repo.db.Model(customer).Where("id", myStore.UserID).Error
+		if err != nil {
+			http.Error(w, "Failed to find user", http.StatusNotFound)
+			return
+		}
+
+		// Pay Delivery fee
+		err = user.PayFund(float32(buyerOrder.Fee), customer.Email, "3002290305", "50211")
+		if err != nil {
+			http.Error(w, "Failed to pay delivery", http.StatusNotFound)
 			return
 		}
 		buyerOrder.TransStatus = data.Status
