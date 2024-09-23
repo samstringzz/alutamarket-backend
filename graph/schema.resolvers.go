@@ -2148,6 +2148,20 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 			}
 		}
 
+		// Map Withradrawal account
+		if len(item.Accounts) > 0 {
+			for _, account := range item.Accounts {
+				storeAccount := &model.WithdrawAccount{
+					BankCode:      account.BankCode,
+					BankName:      account.BankName,
+					AccountNumber: account.AccountNumber,
+					AccountName:   account.AccountName,
+					BankImage:     account.BankImage,
+				}
+				store.Accounts = append(store.Accounts, storeAccount)
+			}
+		}
+
 		// Map orders
 		if len(item.Orders) > 0 {
 			for _, order := range item.Orders {
@@ -2251,6 +2265,20 @@ func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error)
 			UUID:      transaction.UUID,
 		}
 		store.Transactions = append(store.Transactions, storeTransactions)
+	}
+
+	// Map Withradrawal account
+	if len(store.Accounts) > 0 {
+		for _, account := range store.Accounts {
+			storeAccount := &model.WithdrawAccount{
+				BankCode:      account.BankCode,
+				BankName:      account.BankName,
+				AccountNumber: account.AccountNumber,
+				AccountName:   account.AccountName,
+				BankImage:     account.BankImage,
+			}
+			store.Accounts = append(store.Accounts, storeAccount)
+		}
 	}
 
 	for _, order := range store.Orders {
@@ -2361,6 +2389,20 @@ func (r *queryResolver) StoreByName(ctx context.Context, name string) (*model.St
 
 		storeOrder.Product = products
 		store.Orders = append(store.Orders, storeOrder)
+	}
+
+	// Map Withradrawal account
+	if len(store.Accounts) > 0 {
+		for _, account := range store.Accounts {
+			storeAccount := &model.WithdrawAccount{
+				BankCode:      account.BankCode,
+				BankName:      account.BankName,
+				AccountNumber: account.AccountNumber,
+				AccountName:   account.AccountName,
+				BankImage:     account.BankImage,
+			}
+			store.Accounts = append(store.Accounts, storeAccount)
+		}
 	}
 
 	for _, transaction := range store.Transactions {
