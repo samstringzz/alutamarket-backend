@@ -1023,6 +1023,15 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 	if input.Visitor != nil {
 		mod.Visitors = *input.Visitor
 	}
+	if input.Account != nil {
+		mod.Account = &store.WithdrawalAccount{
+			BankName:      input.Account.BankName,
+			BankCode:      input.Account.BankCode,
+			AccountNumber: input.Account.AccountNumber,
+			AccountName:   input.Account.AccountName,
+			BankImage:     input.Account.BankImage,
+		}
+	}
 
 	if input.Email != nil {
 		mod.Email = *input.Email

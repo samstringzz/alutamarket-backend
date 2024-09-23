@@ -126,6 +126,10 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 	if req.Visitors != "" {
 		existingStore.Visitors = append(existingStore.Visitors, req.Visitors)
 	}
+
+	if req.Account != nil {
+		existingStore.Accounts = append(existingStore.Accounts, req.Account)
+	}
 	if req.HasPhysicalAddress != existingStore.HasPhysicalAddress {
 		existingStore.HasPhysicalAddress = req.HasPhysicalAddress
 	}
