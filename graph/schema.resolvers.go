@@ -1066,6 +1066,15 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 		// Email: resp.Email,
 		Status: resp.Status,
 	}
+	for _, account := range resp.Accounts {
+		modalResp.Accounts = append(modalResp.Accounts, &model.WithdrawAccount{
+			BankName:      account.BankName,
+			BankCode:      account.BankCode,
+			AccountNumber: account.AccountNumber,
+			AccountName:   account.AccountName,
+			BankImage:     account.BankImage,
+		})
+	}
 	return modalResp, nil
 }
 
