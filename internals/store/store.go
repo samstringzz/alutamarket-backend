@@ -82,24 +82,25 @@ type Store struct {
 
 type UpdateStore struct {
 	gorm.Model
-	ID                 uint32          `gorm:"primaryKey;uniqueIndex;not null;autoIncrement"  json:"id" db:"id"`
-	Name               string          `json:"name" db:"name"`
-	UserID             uint32          `json:"user_id" db:"user_id"`
-	Link               string          `json:"link" db:"link"`
-	Description        string          `json:"description" db:"description"`
-	HasPhysicalAddress bool            `json:"hasphysical_address" db:"has_physical_address"`
-	Address            string          `json:"address" db:"address"`
-	Transactions       []*Transactions `gorm:"serializer:json"`
-	Followers          []Follower      `gorm:"serializer:json"`
-	Orders             []*StoreOrder   `gorm:"serializer:json"`
-	Products           []Product       `gorm:"serializer:json"`
-	Wallet             float64         `json:"wallet" db:"wallet"`
-	Status             bool            `json:"status" db:"status"`
-	Thumbnail          string          `json:"thumbnail" db:"thumbnail"`
-	Phone              string          `json:"phone" db:"phone"`
-	Email              string          `json:"email" db:"email"`
-	Background         string          `json:"background" db:"background"`
-	Visitors           string          `gorm:"serializer:json" json:"visitors" db:"visitors"`
+	ID                 uint32             `gorm:"primaryKey;uniqueIndex;not null;autoIncrement"  json:"id" db:"id"`
+	Name               string             `json:"name" db:"name"`
+	UserID             uint32             `json:"user_id" db:"user_id"`
+	Link               string             `json:"link" db:"link"`
+	Description        string             `json:"description" db:"description"`
+	HasPhysicalAddress bool               `json:"hasphysical_address" db:"has_physical_address"`
+	Address            string             `json:"address" db:"address"`
+	Transactions       []*Transactions    `gorm:"serializer:json"`
+	Followers          []Follower         `gorm:"serializer:json"`
+	Orders             []*StoreOrder      `gorm:"serializer:json"`
+	Account            *WithdrawalAccount `gorm:"serializer:json"`
+	Products           []Product          `gorm:"serializer:json"`
+	Wallet             float64            `json:"wallet" db:"wallet"`
+	Status             bool               `json:"status" db:"status"`
+	Thumbnail          string             `json:"thumbnail" db:"thumbnail"`
+	Phone              string             `json:"phone" db:"phone"`
+	Email              string             `json:"email" db:"email"`
+	Background         string             `json:"background" db:"background"`
+	Visitors           string             `gorm:"serializer:json" json:"visitors" db:"visitors"`
 }
 
 type TrackedProduct struct {
