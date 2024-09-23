@@ -390,24 +390,25 @@ type SplitConfig struct {
 }
 
 type Store struct {
-	ID                 string           `json:"id"`
-	Link               string           `json:"link"`
-	Name               string           `json:"name"`
-	Wallet             float64          `json:"wallet"`
-	User               int              `json:"user"`
-	Email              string           `json:"email"`
-	Description        string           `json:"description"`
-	Followers          []*StoreFollower `json:"followers,omitempty"`
-	Product            []*Product       `json:"product,omitempty"`
-	Transactions       []*Transaction   `json:"transactions,omitempty"`
-	Orders             []*StoreOrder    `json:"orders,omitempty"`
-	Address            string           `json:"address"`
-	Status             bool             `json:"status"`
-	Thumbnail          string           `json:"thumbnail"`
-	Phone              string           `json:"phone"`
-	Background         string           `json:"background"`
-	HasPhysicalAddress bool             `json:"has_physical_address"`
-	Visitors           []string         `json:"visitors"`
+	ID                 string             `json:"id"`
+	Link               string             `json:"link"`
+	Name               string             `json:"name"`
+	Wallet             float64            `json:"wallet"`
+	User               int                `json:"user"`
+	Email              string             `json:"email"`
+	Description        string             `json:"description"`
+	Followers          []*StoreFollower   `json:"followers,omitempty"`
+	Product            []*Product         `json:"product,omitempty"`
+	Transactions       []*Transaction     `json:"transactions,omitempty"`
+	Orders             []*StoreOrder      `json:"orders,omitempty"`
+	Address            string             `json:"address"`
+	Status             bool               `json:"status"`
+	Thumbnail          string             `json:"thumbnail"`
+	Phone              string             `json:"phone"`
+	Background         string             `json:"background"`
+	HasPhysicalAddress bool               `json:"has_physical_address"`
+	Visitors           []string           `json:"visitors"`
+	Accounts           []*WithdrawAccount `json:"accounts,omitempty"`
 }
 
 type StoreCustomer struct {
@@ -677,6 +678,14 @@ type Verifyotpinput struct {
 	Code     string `json:"code"`
 	Phone    string `json:"phone"`
 	Attempts int    `json:"attempts"`
+}
+
+type WithdrawAccount struct {
+	BankCode      string `json:"bank_code"`
+	BankName      string `json:"bank_name"`
+	BankImage     string `json:"bank_image"`
+	AccountNumber string `json:"account_number"`
+	AccountName   string `json:"account_name"`
 }
 
 type WithdrawAccountInput struct {

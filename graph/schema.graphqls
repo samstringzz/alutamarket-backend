@@ -122,6 +122,14 @@ type StoreOrder {
 	createdAt: Time!
 }
 
+type withdrawAccount {
+	bank_code: String!
+	bank_name: String!
+	bank_image: String!
+	account_number: String!
+	account_name: String!
+}
+
 type Store {
 	id: ID!
 	link: String!
@@ -141,6 +149,7 @@ type Store {
 	background: String!
 	has_physical_address: Boolean!
 	visitors: [String!]!
+	accounts: [withdrawAccount]
 }
 type VerifyOTP {
 	phone: String!

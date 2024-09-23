@@ -346,6 +346,7 @@ type ComplexityRoot struct {
 	}
 
 	Store struct {
+		Accounts           func(childComplexity int) int
 		Address            func(childComplexity int) int
 		Background         func(childComplexity int) int
 		Description        func(childComplexity int) int
@@ -487,6 +488,14 @@ type ComplexityRoot struct {
 		Email         func(childComplexity int) int
 		StoreID       func(childComplexity int) int
 		UserID        func(childComplexity int) int
+	}
+
+	WithdrawAccount struct {
+		AccountName   func(childComplexity int) int
+		AccountNumber func(childComplexity int) int
+		BankCode      func(childComplexity int) int
+		BankImage     func(childComplexity int) int
+		BankName      func(childComplexity int) int
 	}
 }
 
@@ -2385,6 +2394,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SplitConfig.Subaccount(childComplexity), true
 
+	case "Store.accounts":
+		if e.complexity.Store.Accounts == nil {
+			break
+		}
+
+		return e.complexity.Store.Accounts(childComplexity), true
+
 	case "Store.address":
 		if e.complexity.Store.Address == nil {
 			break
@@ -3061,6 +3077,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Fund.UserID(childComplexity), true
+
+	case "withdrawAccount.account_name":
+		if e.complexity.WithdrawAccount.AccountName == nil {
+			break
+		}
+
+		return e.complexity.WithdrawAccount.AccountName(childComplexity), true
+
+	case "withdrawAccount.account_number":
+		if e.complexity.WithdrawAccount.AccountNumber == nil {
+			break
+		}
+
+		return e.complexity.WithdrawAccount.AccountNumber(childComplexity), true
+
+	case "withdrawAccount.bank_code":
+		if e.complexity.WithdrawAccount.BankCode == nil {
+			break
+		}
+
+		return e.complexity.WithdrawAccount.BankCode(childComplexity), true
+
+	case "withdrawAccount.bank_image":
+		if e.complexity.WithdrawAccount.BankImage == nil {
+			break
+		}
+
+		return e.complexity.WithdrawAccount.BankImage(childComplexity), true
+
+	case "withdrawAccount.bank_name":
+		if e.complexity.WithdrawAccount.BankName == nil {
+			break
+		}
+
+		return e.complexity.WithdrawAccount.BankName(childComplexity), true
 
 	}
 	return 0, false
@@ -10089,6 +10140,8 @@ func (ec *executionContext) fieldContext_Mutation_updateStoreFollower(ctx contex
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
 			case "visitors":
 				return ec.fieldContext_Store_visitors(ctx, field)
+			case "accounts":
+				return ec.fieldContext_Store_accounts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -10900,6 +10953,8 @@ func (ec *executionContext) fieldContext_Mutation_createStore(ctx context.Contex
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
 			case "visitors":
 				return ec.fieldContext_Store_visitors(ctx, field)
+			case "accounts":
+				return ec.fieldContext_Store_accounts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -10993,6 +11048,8 @@ func (ec *executionContext) fieldContext_Mutation_updateStore(ctx context.Contex
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
 			case "visitors":
 				return ec.fieldContext_Store_visitors(ctx, field)
+			case "accounts":
+				return ec.fieldContext_Store_accounts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -11086,6 +11143,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteStore(ctx context.Contex
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
 			case "visitors":
 				return ec.fieldContext_Store_visitors(ctx, field)
+			case "accounts":
+				return ec.fieldContext_Store_accounts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -15195,6 +15254,8 @@ func (ec *executionContext) fieldContext_Query_Store(ctx context.Context, field 
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
 			case "visitors":
 				return ec.fieldContext_Store_visitors(ctx, field)
+			case "accounts":
+				return ec.fieldContext_Store_accounts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -15285,6 +15346,8 @@ func (ec *executionContext) fieldContext_Query_StoreByName(ctx context.Context, 
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
 			case "visitors":
 				return ec.fieldContext_Store_visitors(ctx, field)
+			case "accounts":
+				return ec.fieldContext_Store_accounts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -17911,6 +17974,59 @@ func (ec *executionContext) fieldContext_Store_visitors(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Store_accounts(ctx context.Context, field graphql.CollectedField, obj *model.Store) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Store_accounts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Accounts, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.WithdrawAccount)
+	fc.Result = res
+	return ec.marshalOwithdrawAccount2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐWithdrawAccount(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Store_accounts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Store",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "bank_code":
+				return ec.fieldContext_withdrawAccount_bank_code(ctx, field)
+			case "bank_name":
+				return ec.fieldContext_withdrawAccount_bank_name(ctx, field)
+			case "bank_image":
+				return ec.fieldContext_withdrawAccount_bank_image(ctx, field)
+			case "account_number":
+				return ec.fieldContext_withdrawAccount_account_number(ctx, field)
+			case "account_name":
+				return ec.fieldContext_withdrawAccount_account_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type withdrawAccount", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _StoreCustomer_name(ctx context.Context, field graphql.CollectedField, obj *model.StoreCustomer) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_StoreCustomer_name(ctx, field)
 	if err != nil {
@@ -18689,6 +18805,8 @@ func (ec *executionContext) fieldContext_StorePaginationData_data(_ context.Cont
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
 			case "visitors":
 				return ec.fieldContext_Store_visitors(ctx, field)
+			case "accounts":
+				return ec.fieldContext_Store_accounts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -20413,6 +20531,8 @@ func (ec *executionContext) fieldContext_User_stores(_ context.Context, field gr
 				return ec.fieldContext_Store_has_physical_address(ctx, field)
 			case "visitors":
 				return ec.fieldContext_Store_visitors(ctx, field)
+			case "accounts":
+				return ec.fieldContext_Store_accounts(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
 		},
@@ -23282,6 +23402,226 @@ func (ec *executionContext) _fund_bank_code(ctx context.Context, field graphql.C
 func (ec *executionContext) fieldContext_fund_bank_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "fund",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _withdrawAccount_bank_code(ctx context.Context, field graphql.CollectedField, obj *model.WithdrawAccount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_withdrawAccount_bank_code(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BankCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_withdrawAccount_bank_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "withdrawAccount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _withdrawAccount_bank_name(ctx context.Context, field graphql.CollectedField, obj *model.WithdrawAccount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_withdrawAccount_bank_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BankName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_withdrawAccount_bank_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "withdrawAccount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _withdrawAccount_bank_image(ctx context.Context, field graphql.CollectedField, obj *model.WithdrawAccount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_withdrawAccount_bank_image(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BankImage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_withdrawAccount_bank_image(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "withdrawAccount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _withdrawAccount_account_number(ctx context.Context, field graphql.CollectedField, obj *model.WithdrawAccount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_withdrawAccount_account_number(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountNumber, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_withdrawAccount_account_number(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "withdrawAccount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _withdrawAccount_account_name(ctx context.Context, field graphql.CollectedField, obj *model.WithdrawAccount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_withdrawAccount_account_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_withdrawAccount_account_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "withdrawAccount",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -27790,6 +28130,8 @@ func (ec *executionContext) _Store(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "accounts":
+			out.Values[i] = ec._Store_accounts(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -28960,6 +29302,65 @@ func (ec *executionContext) _fund(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "bank_code":
 			out.Values[i] = ec._fund_bank_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var withdrawAccountImplementors = []string{"withdrawAccount"}
+
+func (ec *executionContext) _withdrawAccount(ctx context.Context, sel ast.SelectionSet, obj *model.WithdrawAccount) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, withdrawAccountImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("withdrawAccount")
+		case "bank_code":
+			out.Values[i] = ec._withdrawAccount_bank_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bank_name":
+			out.Values[i] = ec._withdrawAccount_bank_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bank_image":
+			out.Values[i] = ec._withdrawAccount_bank_image(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "account_number":
+			out.Values[i] = ec._withdrawAccount_account_number(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "account_name":
+			out.Values[i] = ec._withdrawAccount_account_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -31649,6 +32050,54 @@ func (ec *executionContext) unmarshalOconfirmPasswordInput2ᚖgithubᚗcomᚋChr
 	}
 	res, err := ec.unmarshalInputconfirmPasswordInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOwithdrawAccount2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐWithdrawAccount(ctx context.Context, sel ast.SelectionSet, v []*model.WithdrawAccount) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOwithdrawAccount2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐWithdrawAccount(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOwithdrawAccount2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐWithdrawAccount(ctx context.Context, sel ast.SelectionSet, v *model.WithdrawAccount) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._withdrawAccount(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOwithdrawAccountInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐWithdrawAccountInput(ctx context.Context, v interface{}) (*model.WithdrawAccountInput, error) {
