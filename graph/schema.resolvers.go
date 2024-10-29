@@ -401,6 +401,13 @@ func (r *mutationResolver) UpdateStoreFollower(ctx context.Context, input *model
 		FollowerImage: input.FollowerImage,
 		StoreID:       uint32(input.StoreID),
 	}
+
+	userRep := app.InitializePackage(app.UserPackage)
+
+	userRepository, _ := userRep.(user.Repository)
+	userSrvc := user.NewService(userRepository)
+	userHandler := user.NewHandler(userSrvc)
+	userHandler.ToggleStoreFollowStatus(ctx, uint32(input.FollowerID), uint32(input.StoreID))
 	resp, err := storeHandler.UpdateStoreFollowership(ctx, uint32(input.StoreID), follower, input.Action)
 	if err != nil {
 		return nil, err
@@ -1021,6 +1028,7 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 	}
 
 	if input.Visitor != nil {
+
 		mod.Visitors = *input.Visitor
 	}
 	if input.Account != nil {
@@ -1446,6 +1454,7 @@ func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*
 	}
 
 	var users []*model.User
+	var followedStores []*model.Store
 
 	// Assuming resp is a slice of users
 	for _, item := range resp {
@@ -1473,11 +1482,21 @@ func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*
 			Avatar:       &item.Avatar,
 			Dob:          &item.Dob,
 			// Codeexpiry: item.Codeexpiry.Format(time.RFC3339),
+
 			Password:       "lol......what do y'need it for?",
 			PaymnetDetails: paymentDetails,
 			UUID:           item.UUID,
 		}
-
+		for _, store := range item.FollowedStores {
+			followedStore := &model.Store{
+				Name:        store.Name,
+				Description: store.Description,
+				Background:  store.Background,
+				Thumbnail:   store.Thumbnail,
+				Link:        store.Link,
+			}
+			user.Stores = append(followedStores, followedStore)
+		}
 		users = append(users, user)
 	}
 
@@ -1525,6 +1544,16 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 		UUID:           resp.UUID,
 		PaymnetDetails: paymentDetails,
 		Password:       "lol......what do y'need it for?",
+	}
+	for _, store := range resp.FollowedStores {
+		followedStore := &model.Store{
+			Name:        store.Name,
+			Description: store.Description,
+			Thumbnail:   store.Thumbnail,
+			Background:  store.Background,
+			Link:        store.Link,
+		}
+		user.Stores = append(user.Stores, followedStore)
 	}
 
 	return user, nil

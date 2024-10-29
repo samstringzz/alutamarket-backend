@@ -517,11 +517,9 @@ func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeI
 	if err := r.db.First(foundStore, storeId).Error; err != nil {
 		return err
 	}
-	// Convert userId to a string
-	userIdStr := strconv.FormatUint(uint64(userId), 10)
-	// Retrieve the user who wants to follow/unfollow the store
 
-	// Retrieve the user using the string representation of userId
+	// Retrieve the user
+	userIdStr := strconv.FormatUint(uint64(userId), 10)
 	foundUser, err := r.GetUser(ctx, userIdStr)
 	if err != nil {
 		return err
@@ -535,6 +533,7 @@ func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeI
 			break
 		}
 	}
+
 	// Toggle the follow status
 	if isFollowing {
 		// If already following, unfollow
@@ -545,6 +544,15 @@ func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeI
 			}
 		}
 		foundStore.Followers = newFollowers
+
+		// Remove the store from user's followedStores
+		newFollowedStores := make([]followedStores, 0)
+		for _, store := range foundUser.FollowedStores {
+			if store.Name != foundStore.Name { // Assuming `ID` is the identifier for the store in followedStores
+				newFollowedStores = append(newFollowedStores, store)
+			}
+		}
+		foundUser.FollowedStores = newFollowedStores
 	} else {
 		// If not following, follow
 		foundStore.Followers = append(foundStore.Followers, &store.Follower{
@@ -552,10 +560,22 @@ func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeI
 			FollowerName:  foundUser.Fullname,
 			FollowerImage: foundUser.Avatar,
 		})
+
+		// Add the store to user's followedStores
+		foundUser.FollowedStores = append(foundUser.FollowedStores, followedStores{
+			Name:        foundStore.Name,
+			Description: foundStore.Description,
+			Thumbnail:   foundStore.Thumbnail,
+			Background:  foundStore.Background,
+			Link:        foundStore.Link,
+		})
 	}
 
-	// Save the updated store with GORM
-	if err := r.db.Save(foundStore).Error; err != nil {
+	// Save the  user with GORM
+	// if err := r.db.Save(foundStore).Error; err != nil {
+	// 	return err
+	// }
+	if err := r.db.Save(foundUser).Error; err != nil {
 		return err
 	}
 
@@ -582,6 +602,9 @@ func (r *repository) UpdateUser(ctx context.Context, req *User) (*User, error) {
 	}
 	if req.Phone != "" {
 		existingUser.Phone = req.Phone
+	}
+	if req.UUID != "" {
+		existingUser.UUID = req.UUID
 	}
 	if req.Usertype != "" {
 		existingUser.Usertype = req.Usertype
@@ -863,7 +886,7 @@ func (r *repository) ConfirmPassword(ctx context.Context, password, userId strin
 		return err
 	}
 	if err := utils.CheckPassword(password, foundUser.Password); err != nil {
-		return errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid Credentials")
+		return errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Password Mismatch!!!")
 	}
 
 	return nil
