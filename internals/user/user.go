@@ -15,30 +15,38 @@ type PaymentDetails struct {
 	Info    string `json:"info" db:"info"`
 }
 
+type followedStores struct {
+	Name        string `json:"name" db:"name"`
+	Description string `json:"description" db:"description"`
+	Thumbnail   string `json:"thumbnail" db:"thumbnail"`
+	Background  string `json:"background" db:"background"`
+	Link        string `json:"link" db:"link"`
+}
+
 // type Product *product.Product
 type User struct {
 	gorm.Model
-	ID             uint32         `gorm:"primaryKey;uniqueIndex;not null;autoIncrement" json:"id" db:"id"` // Unique identifier for the user
-	Campus         string         `json:"campus" db:"campus"`                                              // Campus of the user
-	Email          string         `json:"email" db:"email"`                                                // Email address of the user
-	Password       string         `json:"password" db:"password"`                                          // Password of the user
-	Fullname       string         `json:"fullname" db:"fullname"`                                          // Full name of the user
-	UUID           string         `json:"uuid" db:"uuid"`                                                  // Full name of the user
-	Phone          string         `json:"phone" db:"phone"`                                                // Phone number of the user
-	Avatar         string         `json:"avatar" db:"avatar"`                                              // Phone number of the user
-	Usertype       string         `json:"usertype" db:"usertype"`                                          // Type of user (e.g., seller,buyer,admin)
-	Dob            string         `json:"dob" db:"dob"`                                                    // Type of user (e.g., seller,buyer,admin)
-	Gender         string         `json:"gender" db:"gender"`                                              // Type of user (e.g., seller,buyer,admin)
-	Active         *bool          `json:"active" db:"active"`
-	Twofa          *bool          `json:"twofa" db:"twofa"` // Two factor authentication
-	AccessToken    string         `json:"access_token,omitempty" db:"access_token"`
-	RefreshToken   string         `json:"refresh_token,omitempty" db:"refresh_token"`
-	FollowedStores []string       `gorm:"serializer:json" json:"followed_stores" db:"followed_stores"`
-	Code           string         `json:"code,omitempty" db:"code"` // otp code for verifications
-	Online         bool           `json:"online,omitempty" db:"online"`
-	PaymentDetails PaymentDetails `gorm:"serializer:json"`
-	Codeexpiry     time.Time      `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
-	CreatedAt      time.Time      // Set to current time if it is zero on creating
+	ID             uint32           `gorm:"primaryKey;uniqueIndex;not null;autoIncrement" json:"id" db:"id"` // Unique identifier for the user
+	Campus         string           `json:"campus" db:"campus"`                                              // Campus of the user
+	Email          string           `json:"email" db:"email"`                                                // Email address of the user
+	Password       string           `json:"password" db:"password"`                                          // Password of the user
+	Fullname       string           `json:"fullname" db:"fullname"`                                          // Full name of the user
+	UUID           string           `json:"uuid" db:"uuid"`                                                  // Full name of the user
+	Phone          string           `json:"phone" db:"phone"`                                                // Phone number of the user
+	Avatar         string           `json:"avatar" db:"avatar"`                                              // Phone number of the user
+	Usertype       string           `json:"usertype" db:"usertype"`                                          // Type of user (e.g., seller,buyer,admin)
+	Dob            string           `json:"dob" db:"dob"`                                                    // Type of user (e.g., seller,buyer,admin)
+	Gender         string           `json:"gender" db:"gender"`                                              // Type of user (e.g., seller,buyer,admin)
+	Active         *bool            `json:"active" db:"active"`
+	Twofa          *bool            `json:"twofa" db:"twofa"` // Two factor authentication
+	AccessToken    string           `json:"access_token,omitempty" db:"access_token"`
+	RefreshToken   string           `json:"refresh_token,omitempty" db:"refresh_token"`
+	FollowedStores []followedStores `gorm:"serializer:json" json:"followed_stores" db:"followed_stores"`
+	Code           string           `json:"code,omitempty" db:"code"` // otp code for verifications
+	Online         bool             `json:"online,omitempty" db:"online"`
+	PaymentDetails PaymentDetails   `gorm:"serializer:json"`
+	Codeexpiry     time.Time        `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
+	CreatedAt      time.Time        // Set to current time if it is zero on creating
 }
 
 type CreateUserReq struct {
