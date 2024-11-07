@@ -31,6 +31,32 @@ type Follower struct {
 	FollowerImage string `json:"follower_image" db:"follower_image"`
 }
 
+type InvoiceCustomer struct {
+	Email  string `json:"email" db:"email"`
+	Name   string `json:"name" db:"name"`
+	Number string `json:"number" db:"number"`
+}
+
+type InvoiceItem struct {
+	Quantity int32   `json:"quantity" db:"quantity"`
+	Name     string  `json:"name" db:"name"`
+	Price    float64 `json:"price" db:"price"`
+}
+
+type InvoiceDelivery struct {
+	Option  string  `json:"option" db:"option"`
+	Address string  `json:"address" db:"address"`
+	Fee     float64 `json:"fee" db:"fee"`
+}
+type Invoice struct {
+	gorm.Model
+	Customer        *InvoiceCustomer `gorm:"serializer:json" json:"customer" db:"customer"`
+	DueDate         string           `json:"due_date" db:"due_date"`
+	Items           []*InvoiceItem   `json:"items" db:"items"`
+	DeliveryDetails *InvoiceDelivery `json:"delivery_details" db:"delivery_details"`
+	StoreID         uint32           `json:"store_id" db:"store_id"`
+}
+
 type DVADetails struct {
 	UserID    string `json:"user_id" db:"user_id"`
 	StoreName string `json:"store_name" db:"store_name"`
@@ -183,6 +209,7 @@ type Fund struct {
 
 type Repository interface {
 	CreateStore(ctx context.Context, req *Store) (*Store, error)
+	CreateInvoice(ctx context.Context, req *Invoice) (*Invoice, error)
 	DeleteStore(ctx context.Context, id uint32) error
 	CheckStoreName(ctx context.Context, query string) error
 	UpdateStore(ctx context.Context, req *UpdateStore) (*Store, error)
@@ -197,10 +224,12 @@ type Repository interface {
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error)
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
 	WithdrawFund(ctx context.Context, req *Fund) error
+	GetInvoices(ctx context.Context, storeID uint32) ([]*Invoice, error)
 }
 
 type Service interface {
 	CreateStore(ctx context.Context, req *Store) (*Store, error)
+	CreateInvoice(ctx context.Context, req *Invoice) (*Invoice, error)
 	UpdateStore(ctx context.Context, req *UpdateStore) (*Store, error)
 	DeleteStore(ctx context.Context, id uint32) error
 	GetStoreByName(ctx context.Context, name string) (*Store, error)
@@ -214,4 +243,5 @@ type Service interface {
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error)
 	WithdrawFund(ctx context.Context, req *Fund) error
+	GetInvoices(ctx context.Context, storeID uint32) ([]*Invoice, error)
 }

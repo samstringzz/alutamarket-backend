@@ -130,6 +130,58 @@ type withdrawAccount {
 	account_name: String!
 }
 
+type InvoiceItem {
+	quantity: Int!
+	name: String!
+	price: Float!
+}
+
+input InvoiceItemInput {
+	quantity: Int!
+	name: String!
+	price: Float!
+}
+
+type InvoiceDelivery {
+	option: String!
+	address: String!
+	price: Float!
+}
+
+input InvoiceDeliveryInput {
+	option: String!
+	address: String!
+	price: Float!
+}
+
+type InvoiceCustomer {
+	email: String!
+	name: String!
+	number: String!
+}
+
+input InvoiceCustomerInput {
+	email: String!
+	name: String!
+	number: String!
+}
+
+type Invoice {
+	customer: InvoiceCustomer!
+	due_date: String!
+	items: [InvoiceItem]!
+	delivery_details: InvoiceDelivery!
+	store_id: Int!
+}
+
+input InvoiceInput {
+	customer: InvoiceCustomerInput!
+	due_date: String!
+	items: [InvoiceItemInput]!
+	delivery_details: InvoiceDeliveryInput!
+	store_id: Int!
+}
+
 type Store {
 	id: ID!
 	link: String!
@@ -661,6 +713,7 @@ type Query {
 	Chats(userID: String!): [Chat]
 	Messages(chatId: String!): [Message]
 	GetDVABalance(id: String!): String
+	MyInvoices(storeID: Int): [Invoice]
 	MyDownloads(id: String!): [Downloads]
 }
 type Mutation {
@@ -702,6 +755,7 @@ type Mutation {
 	updateUserPassword(input: passwordUpdateInput!): Boolean!
 	withdrawFund(input: fundInput!): Boolean!
 	confirmPassword(input: confirmPasswordInput): Boolean!
+	createInvoice(input: InvoiceInput!): Invoice
 }
 
 type Subscription {

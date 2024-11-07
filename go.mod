@@ -5,7 +5,7 @@ go 1.22.5
 toolchain go1.22.7
 
 require (
-	github.com/99designs/gqlgen v0.17.54
+	github.com/99designs/gqlgen v0.17.55
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
@@ -15,7 +15,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/rs/cors v1.10.0
 	github.com/sendgrid/sendgrid-go v3.12.0+incompatible
-	github.com/vektah/gqlparser/v2 v2.5.16
+	github.com/vektah/gqlparser/v2 v2.5.17
 	golang.org/x/crypto v0.27.0
 	gopkg.in/mail.v2 v2.3.1
 	gorm.io/driver/postgres v1.5.2
