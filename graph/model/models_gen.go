@@ -119,6 +119,58 @@ type HandledProducts struct {
 	ProductQuantity  *int     `json:"productQuantity,omitempty"`
 }
 
+type Invoice struct {
+	Customer        *InvoiceCustomer `json:"customer"`
+	DueDate         string           `json:"due_date"`
+	Items           []*InvoiceItem   `json:"items"`
+	DeliveryDetails *InvoiceDelivery `json:"delivery_details"`
+	StoreID         int              `json:"store_id"`
+}
+
+type InvoiceCustomer struct {
+	Email  string `json:"email"`
+	Name   string `json:"name"`
+	Number string `json:"number"`
+}
+
+type InvoiceCustomerInput struct {
+	Email  string `json:"email"`
+	Name   string `json:"name"`
+	Number string `json:"number"`
+}
+
+type InvoiceDelivery struct {
+	Option  string  `json:"option"`
+	Address string  `json:"address"`
+	Price   float64 `json:"price"`
+}
+
+type InvoiceDeliveryInput struct {
+	Option  string  `json:"option"`
+	Address string  `json:"address"`
+	Price   float64 `json:"price"`
+}
+
+type InvoiceInput struct {
+	Customer        *InvoiceCustomerInput `json:"customer"`
+	DueDate         string                `json:"due_date"`
+	Items           []*InvoiceItemInput   `json:"items"`
+	DeliveryDetails *InvoiceDeliveryInput `json:"delivery_details"`
+	StoreID         int                   `json:"store_id"`
+}
+
+type InvoiceItem struct {
+	Quantity int     `json:"quantity"`
+	Name     string  `json:"name"`
+	Price    float64 `json:"price"`
+}
+
+type InvoiceItemInput struct {
+	Quantity int     `json:"quantity"`
+	Name     string  `json:"name"`
+	Price    float64 `json:"price"`
+}
+
 type LoginReq struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`

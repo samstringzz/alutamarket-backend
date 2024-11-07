@@ -69,6 +69,17 @@ func (r *repository) CreateStore(ctx context.Context, req *Store) (*Store, error
 	return newStore, nil
 }
 
+func (r *repository) CreateInvoice(ctx context.Context, req *Invoice) (*Invoice, error) {
+	_, err := r.GetStore(ctx, req.StoreID)
+	if err != nil {
+		return nil, err
+	}
+	if err := r.db.Create(req).Error; err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
 func (r *repository) GetStore(ctx context.Context, id uint32) (*Store, error) {
 	var store *Store
 	err := r.db.Where("id = ?", id).First(&store).Error
@@ -93,6 +104,14 @@ func (r *repository) GetStores(ctx context.Context, user uint32, limit, offset i
 		return nil, err
 	}
 	return stores, nil
+}
+
+func (r *repository) GetInvoices(ctx context.Context, storeId uint32) ([]*Invoice, error) {
+	var invoice []*Invoice
+	if err := r.db.Where("store_id=?", storeId).Find(&invoice).Error; err != nil {
+		return nil, err
+	}
+	return invoice, nil
 }
 
 func (r *repository) DeleteStore(ctx context.Context, id uint32) error {

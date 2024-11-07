@@ -29,6 +29,18 @@ func (s *service) CreateStore(c context.Context, req *Store) (*Store, error) {
 	return r, nil
 }
 
+func (s *service) CreateInvoice(c context.Context, req *Invoice) (*Invoice, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	r, err := s.Repository.CreateInvoice(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return r, nil
+}
+
 func (s *service) CheckStoreName(c context.Context, query string) error {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
@@ -76,7 +88,17 @@ func (s *service) GetStores(ctx context.Context, user uint32, limit, offset int)
 
 	return r, nil
 }
+func (s *service) GetInvoices(ctx context.Context, storeId uint32) ([]*Invoice, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
 
+	r, err := s.Repository.GetInvoices(ctx, storeId)
+	if err != nil {
+		return nil, err
+	}
+
+	return r, nil
+}
 func (s *service) UpdateStore(c context.Context, req *UpdateStore) (*Store, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()

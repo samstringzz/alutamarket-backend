@@ -19,6 +19,14 @@ func (h *Handler) CreateStore(ctx context.Context, input *Store) (*Store, error)
 	}
 	return item, nil
 }
+
+func (h *Handler) CreateInvoice(ctx context.Context, input *Invoice) (*Invoice, error) {
+	item, err := h.Service.CreateInvoice(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
 func (h *Handler) GetStore(ctx context.Context, input uint32) (*Store, error) {
 	r, err := h.Service.GetStore(ctx, input)
 	if err != nil {
@@ -36,6 +44,14 @@ func (h *Handler) GetStoreByName(ctx context.Context, name string) (*Store, erro
 }
 func (h *Handler) GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error) {
 	r, err := h.Service.GetStores(ctx, user, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+func (h *Handler) GetInvoices(ctx context.Context, storeId uint32) ([]*Invoice, error) {
+	r, err := h.Service.GetInvoices(ctx, storeId)
 	if err != nil {
 		return nil, err
 	}
