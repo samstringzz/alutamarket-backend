@@ -322,6 +322,7 @@ input UpdateStoreOrderInput {
 	id: ID
 	status: String
 	store_id: String
+	customer_email: String
 }
 type PaymentDetails {
 	name: String!

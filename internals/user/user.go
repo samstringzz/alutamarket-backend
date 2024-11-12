@@ -187,6 +187,7 @@ type Repository interface {
 	GetBalance(ctx context.Context, userId string) error
 	ConfirmPassword(ctx context.Context, password, userId string) error
 	GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error)
+	SendMaintenanceMail(ctx context.Context, userId string, active bool) error
 }
 
 type Service interface {
@@ -207,4 +208,5 @@ type Service interface {
 	ConfirmPassword(ctx context.Context, password, userId string) error
 	VerifyResetLink(ctx context.Context, token string) error
 	GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error)
+	SendMaintenanceMail(ctx context.Context, userId string, active bool) error
 }

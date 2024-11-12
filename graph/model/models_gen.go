@@ -616,9 +616,10 @@ type UpdateStoreInput struct {
 }
 
 type UpdateStoreOrderInput struct {
-	ID      *string `json:"id,omitempty"`
-	Status  *string `json:"status,omitempty"`
-	StoreID *string `json:"store_id,omitempty"`
+	ID            *string `json:"id,omitempty"`
+	Status        *string `json:"status,omitempty"`
+	StoreID       *string `json:"store_id,omitempty"`
+	CustomerEmail *string `json:"customer_email,omitempty"`
 }
 
 type UpdateUserInput struct {

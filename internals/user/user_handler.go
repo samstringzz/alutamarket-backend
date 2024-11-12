@@ -133,3 +133,11 @@ func (h *Handler) GetMyDownloads(ctx context.Context, userId string) ([]*store.D
 	}
 	return d, nil
 }
+
+func (h *Handler) SendMaintenanceMail(ctx context.Context, userId string, active bool) error {
+	err := h.Service.SendMaintenanceMail(ctx, userId, active)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -11,9 +11,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
+	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -206,7 +208,8 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 
 		buyerOrder := &store.Order{}
 		sellerOrder := &store.StoreOrder{}
-		customer := &user.User{}
+		seller := &user.User{}
+		buyer := &user.User{}
 		myStore := &store.Store{}
 
 		var productsWithFiles []store.TrackedProduct
@@ -224,14 +227,20 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		err = repo.db.Model(customer).Where("id", myStore.UserID).Error
+		err = repo.db.Model(seller).Where("id", myStore.UserID).Error
+		if err != nil {
+			http.Error(w, "Failed to find user", http.StatusNotFound)
+			return
+		}
+
+		err = repo.db.Model(buyer).Where("id", buyerOrder.UserID).Error
 		if err != nil {
 			http.Error(w, "Failed to find user", http.StatusNotFound)
 			return
 		}
 
 		// Pay Delivery fee
-		err = user.PayFund(float32(buyerOrder.Fee), customer.Email, "3002290305", "50211")
+		err = user.PayFund(float32(buyerOrder.Fee), seller.Email, "3002290305", "50211")
 		if err != nil {
 			http.Error(w, "Failed to pay delivery", http.StatusNotFound)
 			return
@@ -241,6 +250,18 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 		buyerOrder.Status = "pending"
 		buyerOrder.PaymentMethod = data.PaymentType
 		buyerOrder.PaymentGateway = "flutterwave"
+		// Email credentials
+		to := []string{seller.Email}
+		contents := map[string]string{
+			"seller_name":     seller.Fullname,
+			"order_id":        sellerOrder.UUID,
+			"products_length": strconv.Itoa(len(sellerOrder.Products)),
+			"customer_name":   buyer.Fullname,
+			"customer_phone":  buyer.Phone,
+		}
+
+		templateID := "991b93a9-4661-452c-ba53-da31fdddf8f2"
+		utils.SendEmail(templateID, "New Order Alert🎉", to, contents)
 
 		if err := repo.db.Save(buyerOrder).Error; err != nil {
 			http.Error(w, "Failed to update buyer order", http.StatusInternalServerError)
@@ -353,7 +374,8 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 
 	buyerOrder := &store.Order{}
 	sellerOrder := &store.StoreOrder{}
-	customer := &user.User{}
+	seller := &user.User{}
+	buyer := &user.User{}
 	myStore := &store.Store{}
 
 	var productsWithFiles []store.TrackedProduct
@@ -380,14 +402,18 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		err = repo.db.Model(customer).Where("id", myStore.UserID).Error
+		err = repo.db.Model(seller).Where("id", myStore.UserID).Error
 		if err != nil {
 			http.Error(w, "Failed to find user", http.StatusNotFound)
 			return
 		}
-
+		err = repo.db.Model(buyer).Where("id", myStore.UserID).Error
+		if err != nil {
+			http.Error(w, "Failed to find user", http.StatusNotFound)
+			return
+		}
 		// Pay Delivery fee
-		err = user.PayFund(float32(buyerOrder.Fee), customer.Email, "3002290305", "50211")
+		err = user.PayFund(float32(buyerOrder.Fee), seller.Email, "3002290305", "50211")
 		if err != nil {
 			http.Error(w, "Failed to pay delivery", http.StatusNotFound)
 			return
@@ -426,6 +452,17 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 				repo.db.Create(download)
 			}
 		}
+		to := []string{seller.Email}
+		contents := map[string]string{
+			"seller_name":     seller.Fullname,
+			"order_id":        sellerOrder.UUID,
+			"products_length": strconv.Itoa(len(sellerOrder.Products)),
+			"customer_name":   buyer.Fullname,
+			"customer_phone":  buyer.Phone,
+		}
+
+		templateID := "991b93a9-4661-452c-ba53-da31fdddf8f2"
+		utils.SendEmail(templateID, "New Order Alert🎉", to, contents)
 
 		if err := repo.db.Save(buyerOrder).Error; err != nil {
 			http.Error(w, "Failed to save order", http.StatusInternalServerError)
@@ -495,7 +532,8 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 
 	buyerOrder := &store.Order{}
 	sellerOrder := &store.StoreOrder{}
-	customer := &user.User{}
+	seller := &user.User{}
+	buyer := &user.User{}
 	myStore := &store.Store{}
 	var productsWithFiles []store.TrackedProduct
 
@@ -515,14 +553,20 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		err = repo.db.Model(customer).Where("id", myStore.UserID).Error
+		err = repo.db.Model(seller).Where("id", myStore.UserID).Error
+		if err != nil {
+			http.Error(w, "Failed to find user", http.StatusNotFound)
+			return
+		}
+
+		err = repo.db.Model(buyer).Where("id", myStore.UserID).Error
 		if err != nil {
 			http.Error(w, "Failed to find user", http.StatusNotFound)
 			return
 		}
 
 		// Pay Delivery fee
-		err = user.PayFund(float32(buyerOrder.Fee), customer.Email, "3002290305", "50211")
+		err = user.PayFund(float32(buyerOrder.Fee), seller.Email, "3002290305", "50211")
 		if err != nil {
 			http.Error(w, "Failed to pay delivery", http.StatusNotFound)
 			return
@@ -561,6 +605,17 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 				repo.db.Create(download)
 			}
 		}
+		to := []string{seller.Email}
+		contents := map[string]string{
+			"seller_name":     seller.Fullname,
+			"order_id":        sellerOrder.UUID,
+			"products_length": strconv.Itoa(len(sellerOrder.Products)),
+			"customer_name":   buyer.Fullname,
+			"customer_phone":  buyer.Phone,
+		}
+
+		templateID := "991b93a9-4661-452c-ba53-da31fdddf8f2"
+		utils.SendEmail(templateID, "New Order Alert🎉", to, contents)
 
 		if err := repo.db.Save(buyerOrder).Error; err != nil {
 			http.Error(w, "Failed to save order", http.StatusInternalServerError)

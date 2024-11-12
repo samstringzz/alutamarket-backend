@@ -145,6 +145,7 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, input model.UpdateSt
 
 	storeHandler := store.NewHandler(storeSrvc)
 	orderInput := &store.StoreOrder{UUID: *input.ID, Status: *input.Status, StoreID: *input.StoreID}
+
 	resp, err := storeHandler.UpdateOrder(ctx, orderInput)
 	if err != nil {
 		return nil, err
@@ -1056,6 +1057,11 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 		}
 	}
 	if input.Status != nil {
+		if *input.Status == false {
+			user.NewRepository().SendMaintenanceMail(ctx, strconv.Itoa(*input.User), true)
+		} else if *input.Status == true {
+			user.NewRepository().SendMaintenanceMail(ctx, strconv.Itoa(*input.User), false)
+		}
 		mod.Status = *input.Status
 	}
 

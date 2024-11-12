@@ -229,3 +229,14 @@ func (s *service) GetMyDownloads(ctx context.Context, userId string) ([]*store.D
 	}
 	return downloads, nil
 }
+
+func (s *service) SendMaintenanceMail(ctx context.Context, userId string, active bool) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	err := s.Repository.SendMaintenanceMail(ctx, userId, active)
+	if err != nil {
+		return err
+	}
+	return nil
+}

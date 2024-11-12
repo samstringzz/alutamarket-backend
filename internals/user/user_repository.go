@@ -912,3 +912,31 @@ func PayFund(amount float32, email, accountNumber, bankCode string) error {
 	}
 	return nil
 }
+
+func (r *repository) SendMaintenanceMail(ctx context.Context, userId string, active bool) error {
+	seller, err := r.GetUser(ctx, userId)
+	// fmt.Print(seller.Email)
+
+	to := []string{seller.Email}
+	contents := map[string]string{
+		"seller_name": seller.Fullname,
+	}
+	if err != nil {
+		return err
+	}
+	if active {
+		templateID := "37ec9d6c-cfbf-481e-92ba-782fe1ccd4d1"
+		err = utils.SendEmail(templateID, "Your Store is On Hold! 🚫", to, contents)
+		if err != nil {
+			return err
+		}
+	} else {
+		templateID := "39371fe0-e830-455e-8f06-717630d3d4b9"
+		err = utils.SendEmail(templateID, "Your Store is Back in Action! 🔥", to, contents)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
