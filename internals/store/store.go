@@ -52,8 +52,8 @@ type Invoice struct {
 	gorm.Model
 	Customer        *InvoiceCustomer `gorm:"serializer:json" json:"customer" db:"customer"`
 	DueDate         string           `json:"due_date" db:"due_date"`
-	Items           []*InvoiceItem   `json:"items" db:"items"`
-	DeliveryDetails *InvoiceDelivery `json:"delivery_details" db:"delivery_details"`
+	Items           []*InvoiceItem   `gorm:"serializer:json"  json:"items" db:"items"`
+	DeliveryDetails *InvoiceDelivery `gorm:"serializer:json" json:"delivery_details" db:"delivery_details"`
 	StoreID         uint32           `json:"store_id" db:"store_id"`
 }
 
@@ -175,6 +175,7 @@ type Customer struct {
 	Phone   string `json:"phone" db:"phone"`
 	Address string `json:"address" db:"address"`
 	Info    string `json:"info" db:"info"`
+	Email   string `json:"email" db:"email"`
 }
 type StoreProduct struct {
 	Name      string  `json:"name" db:"name"`

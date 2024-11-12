@@ -268,6 +268,23 @@ func (r *repository) UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOr
 	// Update the order fields
 	orderToUpdate.Status = req.Status
 	orderToUpdate.UpdatedAt = time.Now()
+	to := []string{orderToUpdate.Customer.Email}
+	contents := map[string]string{
+		"buyer_name": orderToUpdate.Customer.Name,
+		// "order_id" :
+	}
+	//send mail for confirmed/rejected order
+	if orderToUpdate.Status == "canceled" {
+		templateID := "bb57c0b0-cb2b-4cd7-9170-f2c536a3dfe2"
+		utils.SendEmail(templateID, "Your Order was Declined", to, contents)
+
+	}
+
+	if orderToUpdate.Status == "processing" {
+		templateID := "04551de0-1db2-46bb-b48a-610b744ee3e9"
+		utils.SendEmail(templateID, "Your Order has been Confirmed", to, contents)
+
+	}
 
 	// Save the changes to the store
 	err = r.db.WithContext(ctx).Save(&existingStore).Error
