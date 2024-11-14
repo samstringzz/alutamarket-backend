@@ -215,11 +215,14 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 		var productsWithFiles []store.TrackedProduct
 
 		// Handle charge completion logic here
-		err := repo.db.Model(buyerOrder).Where("trt_ref", data.TxRef).Error
+
+		//fecth buyer order
+		err := repo.db.Model(buyerOrder).Where("uuid", data.TxRef).Error
 		if err != nil {
 			http.Error(w, "Failed to find order", http.StatusNotFound)
 			return
 		}
+
 		// Fetch Store
 		err = repo.db.Model(myStore).Where("id", sellerOrder.StoreID).Error
 		if err != nil {
@@ -364,6 +367,8 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	fmt.Printf("Response: %s\n", string(body))
+
 	// Acknowledge the webhook request early
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "Paystack Webhook received successfully")
@@ -384,12 +389,9 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 	case "charge.success":
 
 		// Handle charge success logic here
-		err := repo.db.Model(buyerOrder).Where("trt_ref = ? ", data.Reference).Error
-		if err != nil {
-			http.Error(w, "Failed to find order", http.StatusNotFound)
-			return
-		}
-		err = repo.db.Model(sellerOrder).Where("trt_ref", data.Reference).Error
+
+		//fecth buyer order
+		err := repo.db.Model(buyerOrder).Where("uuid = ? ", data.Reference).Error
 		if err != nil {
 			http.Error(w, "Failed to find order", http.StatusNotFound)
 			return

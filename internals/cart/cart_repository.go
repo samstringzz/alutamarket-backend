@@ -249,10 +249,11 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 			"email":        customer.Email,
 			"amount":       (cartTotal) * 100, // Amount should be in kobo
 			"currency":     "NGN",
+			"refrence":     UUID,
 			"callback_url": redirectUrl,
 			"metadata": map[string]interface{}{
-				"consumer_id":  customer.ID,
-				"consumer_mac": "92a3-912ba-1192a",
+				"customer": customer.ID,
+				"seller":   "",
 			},
 			"customizations": map[string]interface{}{
 				"title": "Aluta Market Checkout",
@@ -341,7 +342,7 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 
 func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, error) {
 	UUID := input.UUID
-	redirectUrl := os.Getenv("CLIENT_URL")+"/product/cart"
+	redirectUrl := os.Getenv("CLIENT_URL") + "/product/cart"
 
 	// log.Println("Starting InitiatePayment process...")
 
@@ -474,6 +475,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		UUID:      UUID,
 		Products:  storePrd,
 		Active:    false,
+		Status:    "not processed",
 		Customer: store.Customer{
 			ID:      uint32(customer.ID),
 			Name:    customer.PaymentDetails.Name,

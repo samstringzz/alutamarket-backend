@@ -184,6 +184,7 @@ type StoreProduct struct {
 	Quantity  int     `json:"quantity" db:"quantity"`
 	ID        uint32  `json:"id" db:"id"`
 }
+
 type StoreOrder struct {
 	StoreID   string          `gorm:"serializer:json" json:"store" db:"store_id"`
 	Products  []*StoreProduct `gorm:"serializer:json" json:"products" db:"products"`
