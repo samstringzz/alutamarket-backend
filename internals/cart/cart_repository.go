@@ -341,7 +341,7 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 
 func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, error) {
 	UUID := input.UUID
-	redirectUrl := "https://thealutamarket.netlify.app"
+	redirectUrl := os.Getenv("CLIENT_URL")+"/product/cart"
 
 	// log.Println("Starting InitiatePayment process...")
 
