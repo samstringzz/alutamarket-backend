@@ -205,7 +205,7 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 	switch event {
 
 	case "charge.completed":
-
+		fmt.Printf("fwdata: %+v\n", data)
 		buyerOrder := &store.Order{}
 		sellerOrder := &store.StoreOrder{}
 		seller := &user.User{}
@@ -387,6 +387,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 	// Process the event
 	switch event {
 	case "charge.success":
+		fmt.Printf("psdata: %+v\n", data)
 
 		// Handle charge success logic here
 
@@ -541,7 +542,9 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 
 	// Process the event
 	switch event {
+
 	case "payment.success":
+		fmt.Printf("sqdata: %+v\n", data)
 		// Handle charge success logic here
 		err := repo.db.Model(buyerOrder).Where("trt_ref = ? ", data.Reference).Error
 		if err != nil {

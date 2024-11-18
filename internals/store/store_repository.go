@@ -209,7 +209,9 @@ func (r *repository) CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOr
 
 func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*StoreOrder, error) {
 	var store Store
-	err := r.db.WithContext(ctx).Preload("Orders").First(&store, storeID).Error
+	err := r.db.WithContext(ctx).
+		Preload("Orders", "status != ?", "not processed"). // Apply condition to preload
+		First(&store, storeID).Error
 	if err != nil {
 		return nil, err
 	}
