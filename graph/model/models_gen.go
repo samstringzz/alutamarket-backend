@@ -285,12 +285,17 @@ type Order struct {
 }
 
 type PaymentData struct {
-	StoreID        []int    `json:"storeID,omitempty"`
-	Status         *string  `json:"status,omitempty"`
-	UserID         string   `json:"userID"`
-	Amount         *float64 `json:"amount,omitempty"`
-	UUID           *string  `json:"UUID,omitempty"`
-	PaymentGateway string   `json:"paymentGateway"`
+	StoresID       []int           `json:"storesID,omitempty"`
+	Status         *string         `json:"status,omitempty"`
+	Product        []*ProductInput `json:"product,omitempty"`
+	UserID         string          `json:"userID"`
+	Customer       *CustomerInput  `json:"customer"`
+	TrtRef         string          `json:"trtRef"`
+	Amount         *float64        `json:"amount,omitempty"`
+	UUID           *string         `json:"UUID,omitempty"`
+	PaymentGateway string          `json:"paymentGateway"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
 }
 
 type PaymentDetails struct {

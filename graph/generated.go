@@ -25377,20 +25377,20 @@ func (ec *executionContext) unmarshalInputPaymentData(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"storeID", "status", "userID", "amount", "UUID", "paymentGateway"}
+	fieldsInOrder := [...]string{"storesID", "status", "product", "userID", "customer", "trtRef", "amount", "UUID", "paymentGateway", "createdAt", "updatedAt"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "storeID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storeID"))
+		case "storesID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storesID"))
 			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.StoreID = data
+			it.StoresID = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -25398,6 +25398,13 @@ func (ec *executionContext) unmarshalInputPaymentData(ctx context.Context, obj i
 				return it, err
 			}
 			it.Status = data
+		case "product":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("product"))
+			data, err := ec.unmarshalOProductInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Product = data
 		case "userID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -25405,6 +25412,20 @@ func (ec *executionContext) unmarshalInputPaymentData(ctx context.Context, obj i
 				return it, err
 			}
 			it.UserID = data
+		case "customer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customer"))
+			data, err := ec.unmarshalNcustomerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCustomerInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Customer = data
+		case "trtRef":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trtRef"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrtRef = data
 		case "amount":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amount"))
 			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
@@ -25426,6 +25447,20 @@ func (ec *executionContext) unmarshalInputPaymentData(ctx context.Context, obj i
 				return it, err
 			}
 			it.PaymentGateway = data
+		case "createdAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
+			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAt = data
+		case "updatedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
+			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UpdatedAt = data
 		}
 	}
 
@@ -31436,6 +31471,11 @@ func (ec *executionContext) unmarshalNProductInput2githubᚗcomᚋChrisentechᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInput(ctx context.Context, v interface{}) (*model.ProductInput, error) {
+	res, err := ec.unmarshalInputProductInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNProductPaginationData2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductPaginationData(ctx context.Context, sel ast.SelectionSet, v model.ProductPaginationData) graphql.Marshaler {
 	return ec._ProductPaginationData(ctx, sel, &v)
 }
@@ -32808,6 +32848,26 @@ func (ec *executionContext) marshalOProduct2ᚖgithubᚗcomᚋChrisentechᚋalut
 		return graphql.Null
 	}
 	return ec._Product(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOProductInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInputᚄ(ctx context.Context, v interface{}) ([]*model.ProductInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.ProductInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) marshalOReview2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v []*model.Review) graphql.Marshaler {

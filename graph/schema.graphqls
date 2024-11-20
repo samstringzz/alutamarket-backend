@@ -504,12 +504,17 @@ type Account {
 }
 
 input PaymentData {
-	storeID: [Int!]
+	storesID: [Int!]
 	status: String
+	product: [ProductInput!]
 	userID: String!
+	customer: customerInput!
+	trtRef: String!
 	amount: Float
 	UUID: String
 	paymentGateway: String!
+	createdAt: Time!
+	updatedAt: Time!
 }
 
 type Transaction {
