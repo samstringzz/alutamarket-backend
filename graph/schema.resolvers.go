@@ -11,6 +11,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Chrisentech/aluta-market-api/app"
 	"github.com/Chrisentech/aluta-market-api/graph/model"
@@ -1152,8 +1153,10 @@ func (r *mutationResolver) InitializePayment(ctx context.Context, input model.Pa
 	paymentOrder := &store.Order{
 		Amount:         *input.Amount,
 		UserID:         input.UserID,
-		PaymentGateway: input.PaymentGateway,
+		PaymentGateway: *input.PaymentGateway,
 		UUID:           *input.UUID,
+		CreatedAt:      time.Now().UTC(),
+		UpdatedAt:      time.Now().UTC(),
 	}
 	resp, err := cartHandler.InitiatePayment(ctx, paymentOrder)
 	if err != nil {
