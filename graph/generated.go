@@ -25421,7 +25421,7 @@ func (ec *executionContext) unmarshalInputPaymentData(ctx context.Context, obj i
 			it.Customer = data
 		case "trtRef":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trtRef"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -25442,21 +25442,21 @@ func (ec *executionContext) unmarshalInputPaymentData(ctx context.Context, obj i
 			it.UUID = data
 		case "paymentGateway":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paymentGateway"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.PaymentGateway = data
 		case "createdAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
-			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.CreatedAt = data
 		case "updatedAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
-			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}

@@ -290,12 +290,12 @@ type PaymentData struct {
 	Product        []*ProductInput `json:"product,omitempty"`
 	UserID         string          `json:"userID"`
 	Customer       *CustomerInput  `json:"customer,omitempty"`
-	TrtRef         string          `json:"trtRef"`
+	TrtRef         *string         `json:"trtRef,omitempty"`
 	Amount         *float64        `json:"amount,omitempty"`
 	UUID           *string         `json:"UUID,omitempty"`
-	PaymentGateway string          `json:"paymentGateway"`
-	CreatedAt      time.Time       `json:"createdAt"`
-	UpdatedAt      time.Time       `json:"updatedAt"`
+	PaymentGateway *string         `json:"paymentGateway,omitempty"`
+	CreatedAt      *time.Time      `json:"createdAt,omitempty"`
+	UpdatedAt      *time.Time      `json:"updatedAt,omitempty"`
 }
 
 type PaymentDetails struct {

@@ -509,12 +509,12 @@ input PaymentData {
 	product: [ProductInput!]
 	userID: String!
 	customer: customerInput
-	trtRef: String!
+	trtRef: String
 	amount: Float
 	UUID: String
-	paymentGateway: String!
-	createdAt: Time!
-	updatedAt: Time!
+	paymentGateway: String
+	createdAt: Time
+	updatedAt: Time
 }
 
 type Transaction {
