@@ -94,7 +94,6 @@ type Store struct {
 	Address            string               `json:"address" db:"address"`
 	Transactions       []*Transactions      `gorm:"serializer:json"`
 	Followers          []*Follower          `gorm:"serializer:json"`
-	Orders             []*StoreOrder        `gorm:"serializer:json"`
 	Products           []Product            `gorm:"serializer:json"`
 	Wallet             float64              `json:"wallet" db:"wallet"`
 	Status             bool                 `json:"status" db:"status"`
@@ -137,6 +136,7 @@ type TrackedProduct struct {
 	Price     float64   `json:"price" db:"price"`
 	File      *string   `json:"file" db:"file"`
 	Quantity  int       `json:"quantity" db:"quantity"`
+	Store     string    `json:"store" db:"store"`
 	Discount  float64   `json:"discount" db:"discount"`
 	Status    string    `json:"status" db:"status"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
@@ -157,6 +157,9 @@ type Order struct {
 	Fee             float64          `json:"fee" db:"fee"`
 	Status          string           `json:"status" db:"status"` //order status
 	UserID          string           `json:"user_id" db:"user_id"`
+	Customer        Customer         `json:"customer" db:"customer"`
+	SellerID        string           `json:"seller_id" db:"seller_id"`
+	StoresID        []*string        `gorm:"serializer:json" json:"store" db:"store_id"`
 	DeliveryDetails DeliveryDetails  `gorm:"serializer:json" json:"delivery_details" db:"delivery_details"`
 	Amount          float64          `json:"amount" db:"amount"`
 	UUID            string           `json:"uuid" db:"uuid"`
@@ -218,10 +221,10 @@ type Repository interface {
 	GetStore(ctx context.Context, id uint32) (*Store, error)
 	GetStoreByName(ctx context.Context, name string) (*Store, error)
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
-	GetOrder(ctx context.Context, storeId uint32, orderId string) (*StoreOrder, error)
-	GetOrders(ctx context.Context, storeId uint32) ([]*StoreOrder, error)
+	GetOrder(ctx context.Context, storeId uint32, orderId string) (*Order, error)
+	GetOrders(ctx context.Context, storeId uint32) ([]*Order, error)
 	GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error)
-	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
+	UpdateOrder(ctx context.Context, req *Order) (*Order, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error)
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
@@ -239,8 +242,8 @@ type Service interface {
 	GetStore(ctx context.Context, id uint32) (*Store, error)
 	GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error)
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
-	GetOrders(ctx context.Context, storeId uint32) ([]*StoreOrder, error)
-	UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
+	GetOrders(ctx context.Context, storeId uint32) ([]*Order, error)
+	UpdateOrder(ctx context.Context, req *Order) (*Order, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error)

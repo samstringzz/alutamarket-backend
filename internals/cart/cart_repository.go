@@ -230,6 +230,7 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 			"meta": map[string]interface{}{
 				"consumer_id":  customer.ID,
 				"consumer_mac": "92a3-912ba-1192a",
+				"order_uuid":   UUID,
 			},
 			"customer": map[string]interface{}{
 				"email":       customer.Email,
@@ -252,8 +253,9 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 			"refrence":     UUID,
 			"callback_url": redirectUrl,
 			"metadata": map[string]interface{}{
-				"customer": customer.ID,
-				"seller":   "",
+				"customer":   customer.ID,
+				"sellers":    "",
+				"order_uuid": UUID,
 			},
 			"customizations": map[string]interface{}{
 				"title": "Aluta Market Checkout",
@@ -273,6 +275,7 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 			"email":           customer.Email,
 			"pass_charge":     true,
 			"customer_name":   customer.Fullname,
+			"order_uuid":      UUID,
 		}
 		// Serialize the request data to JSON
 		squadRequestDataBytes, err := json.Marshal(requestData)
@@ -419,15 +422,23 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	// log.Println("Payment link obtained:", paymentLink)
 
 	newOrder := &store.Order{
-		Amount:         cart.Total + input.Amount,
-		UserID:         strconv.FormatUint(uint64(cart.UserID), 10),
-		UUID:           UUID,
-		TransStatus:    "not processed",
-		Status:         "canceled",
-		Fee:            input.Amount,
-		CartID:         cart.ID,
-		CreatedAt:      time.Now().UTC(),
-		UpdatedAt:      time.Now().UTC(),
+		Amount:      cart.Total + input.Amount,
+		UserID:      strconv.FormatUint(uint64(cart.UserID), 10),
+		UUID:        UUID,
+		TransStatus: "not processed",
+		Status:      "not completed",
+		Fee:         input.Amount,
+		Coupon:      input.Coupon,
+		CartID:      cart.ID,
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
+		Customer: store.Customer{
+			ID:      uint32(customer.ID),
+			Name:    customer.PaymentDetails.Name,
+			Phone:   customer.PaymentDetails.Phone,
+			Address: customer.PaymentDetails.Address,
+			Info:    customer.PaymentDetails.Info,
+		},
 		PaymentGateway: input.PaymentGateway,
 		DeliveryDetails: store.DeliveryDetails{
 			Method:  customer.PaymentDetails.Info,
@@ -446,45 +457,15 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 			Price:     item.Product.Price,
 			Discount:  item.Product.Discount,
 			Quantity:  item.Product.Quantity,
-			Status:    "open",
+			Status:    "not",
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
+		newOrder.StoresID = append(newOrder.StoresID, &product.Store)
 		products = append(products, product)
 	}
 	newOrder.Products = products
 	newOrder.Status = "pending"
-
-	// log.Printf("Tracking products: %+v\n", products)
-
-	// Create Seller Order Logic
-	var storePrd []*store.StoreProduct
-	for _, item := range cart.Items {
-		product := &store.StoreProduct{
-			ID:        item.Product.ID,
-			Name:      item.Product.Name,
-			Thumbnail: item.Product.Thumbnail,
-			Price:     item.Product.Price,
-			Quantity:  item.Product.Quantity,
-		}
-		storePrd = append(storePrd, product)
-	}
-	req := &store.StoreOrder{
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		UUID:      UUID,
-		Products:  storePrd,
-		Active:    false,
-		Status:    "not processed",
-		Customer: store.Customer{
-			ID:      uint32(customer.ID),
-			Name:    customer.PaymentDetails.Name,
-			Phone:   customer.PaymentDetails.Phone,
-			Address: customer.PaymentDetails.Address,
-			Info:    customer.PaymentDetails.Info,
-		},
-	}
-	// log.Printf("Store order created: %+v\n", req)
 
 	// Mark the cart as inactive and process the order concurrently
 	if paymentLink != "" {
@@ -502,19 +483,6 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 			} else {
 				errChan <- nil
 				// log.Println("Cart saved successfully.")
-			}
-		}()
-
-		// Create the order concurrently
-		go func() {
-			log.Println("Creating store order...")
-			_, err := store.NewRepository().CreateOrder(ctx, req)
-			if err != nil {
-				errChan <- err
-				log.Println("Error creating store order:", err)
-			} else {
-				errChan <- nil
-				// log.Println("Store order created successfully.")
 			}
 		}()
 

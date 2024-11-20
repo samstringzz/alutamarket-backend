@@ -130,7 +130,7 @@ func (s *service) CreateOrder(c context.Context, req *StoreOrder) (*StoreOrder, 
 	return resp, nil
 }
 
-func (s *service) GetOrders(c context.Context, storeId uint32) ([]*StoreOrder, error) {
+func (s *service) GetOrders(c context.Context, storeId uint32) ([]*Order, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 
@@ -152,7 +152,7 @@ func (s *service) GetPurchasedOrders(c context.Context, userId string) ([]*Order
 	return resp, nil
 }
 
-func (s *service) UpdateOrder(c context.Context, req *StoreOrder) (*StoreOrder, error) {
+func (s *service) UpdateOrder(c context.Context, req *Order) (*Order, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 

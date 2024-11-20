@@ -86,7 +86,7 @@ func (h *Handler) CreateOrder(ctx context.Context, input *StoreOrder) (*StoreOrd
 	return item, nil
 }
 
-func (h *Handler) UpdateOrder(ctx context.Context, input *StoreOrder) (*StoreOrder, error) {
+func (h *Handler) UpdateOrder(ctx context.Context, input *Order) (*Order, error) {
 	item, err := h.Service.UpdateOrder(ctx, input)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (h *Handler) UpdateOrder(ctx context.Context, input *StoreOrder) (*StoreOrd
 	return item, nil
 }
 
-func (h *Handler) GetOrders(ctx context.Context, storeID uint32) ([]*StoreOrder, error) {
+func (h *Handler) GetOrders(ctx context.Context, storeID uint32) ([]*Order, error) {
 	item, err := h.Service.GetOrders(ctx, storeID)
 	if err != nil {
 		return nil, err

@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
+
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/errors"
@@ -188,34 +188,16 @@ func (r *repository) CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOr
 		return nil, err
 	}
 
-	// Convert []*StoreProduct to []StoreProduct
-	var products []*StoreProduct
-	products = append(products, req.Products...)
-
-	req.CreatedAt = time.Now()
-	req.UpdatedAt = time.Now()
-	req.UUID = utils.GenerateUUID()
-	req.Products = products
-	req.Status = "pending"
-	store.Orders = append(store.Orders, req)
-
-	err = r.db.WithContext(ctx).Save(&store).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
+	panic("not implementd")
 }
 
-func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*StoreOrder, error) {
-	var store Store
-	err := r.db.WithContext(ctx).
-		Preload("Orders", "status != ?", "not processed"). // Apply condition to preload
-		First(&store, storeID).Error
+func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*Order, error) {
+	var orders []*Order
+	err := r.db.WithContext(ctx).Where("store_id = ?", storeID).Find(&orders).Error
 	if err != nil {
 		return nil, err
 	}
-	return store.Orders, nil
+	return orders, nil
 }
 
 func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*Order, error) {
@@ -227,74 +209,58 @@ func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*
 	return orders, nil
 }
 
-func (r *repository) GetOrder(ctx context.Context, storeID uint32, orderID string) (*StoreOrder, error) {
+func (r *repository) GetOrder(ctx context.Context, storeID uint32, orderID string) (*Order, error) {
 	var store Store
 	err := r.db.WithContext(ctx).Preload("Orders", "id = ?", orderID).First(&store, storeID).Error
 	if err != nil {
 		return nil, err
 	}
 
-	if len(store.Orders) == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
+	panic("Not implented")
 
-	return store.Orders[0], nil
+	// if len(store.Orders) == 0 {
+	// 	return nil, gorm.ErrRecordNotFound
+	// }
+
+	// return store.Orders[0], nil
 }
 
-func (r *repository) UpdateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error) {
-	storeID, err := strconv.ParseUint(req.StoreID, 10, 16)
+func (r *repository) UpdateOrder(ctx context.Context, req *Order) (*Order, error) {
+	var existingStoreOrder *Order
+
+	err := r.db.WithContext(ctx).Where("uuid = ?", req.UUID).First(&existingStoreOrder).Error
+
 	if err != nil {
 		return nil, err
 	}
-	existingStore, err := r.GetStore(ctx, uint32(storeID))
-	if err != nil {
-		return nil, err
-	}
-	if len(existingStore.Orders) == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	// Find the order by UUID
-	var orderToUpdate *StoreOrder
-	for i, order := range existingStore.Orders {
-		if order.UUID == req.UUID {
-			orderToUpdate = existingStore.Orders[i]
-			break
-		}
-	}
-
-	if orderToUpdate == nil {
-		return nil, gorm.ErrRecordNotFound
-	}
-
 	// Update the order fields
-	orderToUpdate.Status = req.Status
-	orderToUpdate.UpdatedAt = time.Now()
-	to := []string{orderToUpdate.Customer.Email}
+	existingStoreOrder.Status = req.Status
+	existingStoreOrder.UpdatedAt = time.Now()
+	to := []string{existingStoreOrder.Customer.Email}
 	contents := map[string]string{
-		"buyer_name": orderToUpdate.Customer.Name,
+		"buyer_name": existingStoreOrder.Customer.Name,
 		// "order_id" :
 	}
 	//send mail for confirmed/rejected order
-	if orderToUpdate.Status == "canceled" {
+	if existingStoreOrder.Status == "canceled" {
 		templateID := "bb57c0b0-cb2b-4cd7-9170-f2c536a3dfe2"
 		utils.SendEmail(templateID, "Your Order was Declined", to, contents)
 
 	}
 
-	if orderToUpdate.Status == "processing" {
+	if existingStoreOrder.Status == "processing" {
 		templateID := "04551de0-1db2-46bb-b48a-610b744ee3e9"
 		utils.SendEmail(templateID, "Your Order has been Confirmed", to, contents)
 
 	}
 
-	// Save the changes to the store
-	err = r.db.WithContext(ctx).Save(&existingStore).Error
+	// Save the changes to the order
+	err = r.db.WithContext(ctx).Save(&existingStoreOrder).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return orderToUpdate, nil
+	return existingStoreOrder, nil
 }
 
 func (r *repository) UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error) {
