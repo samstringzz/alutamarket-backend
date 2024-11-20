@@ -508,7 +508,7 @@ input PaymentData {
 	status: String
 	product: [ProductInput!]
 	userID: String!
-	customer: customerInput!
+	customer: customerInput
 	trtRef: String!
 	amount: Float
 	UUID: String

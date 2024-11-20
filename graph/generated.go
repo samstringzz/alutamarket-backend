@@ -25414,7 +25414,7 @@ func (ec *executionContext) unmarshalInputPaymentData(ctx context.Context, obj i
 			it.UserID = data
 		case "customer":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customer"))
-			data, err := ec.unmarshalNcustomerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCustomerInput(ctx, v)
+			data, err := ec.unmarshalOcustomerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCustomerInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33664,6 +33664,14 @@ func (ec *executionContext) unmarshalOconfirmPasswordInput2ᚖgithubᚗcomᚋChr
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputconfirmPasswordInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOcustomerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCustomerInput(ctx context.Context, v interface{}) (*model.CustomerInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputcustomerInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
