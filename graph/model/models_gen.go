@@ -289,7 +289,7 @@ type PaymentData struct {
 	Status         *string         `json:"status,omitempty"`
 	Product        []*ProductInput `json:"product,omitempty"`
 	UserID         string          `json:"userID"`
-	Customer       *CustomerInput  `json:"customer"`
+	Customer       *CustomerInput  `json:"customer,omitempty"`
 	TrtRef         string          `json:"trtRef"`
 	Amount         *float64        `json:"amount,omitempty"`
 	UUID           *string         `json:"UUID,omitempty"`

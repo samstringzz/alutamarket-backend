@@ -144,9 +144,9 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, input model.UpdateSt
 	storeSrvc := store.NewService(storeRepository)
 
 	storeHandler := store.NewHandler(storeSrvc)
-	
-	orderInput := &store.Order{UUID: *input.ID, Status: *input.Status, }
-	orderInput.StoresID =  append(orderInput.StoresID, input.StoreID)
+
+	orderInput := &store.Order{UUID: *input.ID, Status: *input.Status}
+	orderInput.StoresID = append(orderInput.StoresID, input.StoreID)
 
 	resp, err := storeHandler.UpdateOrder(ctx, orderInput)
 	if err != nil {
