@@ -157,7 +157,7 @@ type Order struct {
 	Fee             float64          `json:"fee" db:"fee"`
 	Status          string           `json:"status" db:"status"` //order status
 	UserID          string           `json:"user_id" db:"user_id"`
-	Customer        Customer         `json:"customer" db:"customer"`
+	Customer        Customer         `gorm:"serializer:json" json:"customer" db:"customer"`
 	SellerID        string           `json:"seller_id" db:"seller_id"`
 	StoresID        []*string        `gorm:"serializer:json" json:"store" db:"store_id"`
 	DeliveryDetails DeliveryDetails  `gorm:"serializer:json" json:"delivery_details" db:"delivery_details"`
