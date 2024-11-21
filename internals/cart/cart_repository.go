@@ -607,7 +607,6 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		products = append(products, product)
 	}
 	newOrder.Products = products
-	newOrder.Status = "pending"
 
 	// Mark the cart as inactive and process the order concurrently
 	if paymentLink != "" {
@@ -624,7 +623,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 				log.Println("Error saving cart:", err)
 			} else {
 				errChan <- nil
-				// log.Println("Cart saved successfully.")
+				log.Println("Cart saved successfully.")
 			}
 		}()
 
@@ -636,12 +635,12 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 				log.Println("Error saving order to database:", err)
 			} else {
 				errChan <- nil
-				// log.Println("Order saved to database successfully.")
+				log.Println("Order saved to database successfully.")
 			}
 		}()
 
 		// Wait for all goroutines to finish and check for errors
-		for i := 0; i < 3; i++ {
+		for i := 0; i < 2; i++ {
 			if err := <-errChan; err != nil {
 				log.Println("Error encountered during final save steps:", err)
 				return "", err
@@ -649,7 +648,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		}
 	}
 
-	// log.Println("InitiatePayment process completed successfully.")
+	log.Println("InitiatePayment process completed successfully.")
 	return paymentLink, nil
 }
 
