@@ -196,6 +196,9 @@ func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32
 				if req.Quantity+item.Quantity == 0 {
 					// Remove the item from the cart when quantity becomes zero or negative
 					cart.Items = append(cart.Items[:i], cart.Items[i+1:]...)
+					for _, p := range cart.Items {
+						cart.StoresID = append(cart.StoresID, &p.Product.Store)
+					}
 					r.db.Model(prd).Update("quantity", prd.Quantity+item.Quantity)
 
 					// Check if store ID should be removed from StoresID
@@ -245,7 +248,9 @@ func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32
 			cart.Items = append(cart.Items, req)
 
 			// Add store ID to StoresID
-			cart.StoresID = append(cart.StoresID, &prd.Store)
+			for _, p := range cart.Items {
+				cart.StoresID = append(cart.StoresID, &p.Product.Store)
+			}
 		}
 		cart.UserID = user
 		cart.Active = true
