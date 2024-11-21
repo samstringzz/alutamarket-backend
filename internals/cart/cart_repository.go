@@ -68,9 +68,92 @@ func calculateTotalCartCost(data []*CartItems) float64 {
 	return total
 }
 
+// func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32) (*Cart, error) {
+// 	prd := &product.Product{}
+// 	var err2 error
+// 	if req.Product.ID == 0 && req.Product.Name == "" {
+// 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "both id and name cannot be empty")
+// 	} else if req.Product.ID == 0 {
+// 		err2 = r.db.Model(&prd).
+// 			Where("name = ?", req.Product.Name).
+// 			First(&prd).Error
+// 	} else if req.Product.Name == "" {
+// 		err2 = r.db.Model(&prd).
+// 			Where("id = ?", req.Product.ID).
+// 			First(&prd).Error
+// 	} else {
+// 		err2 = r.db.Model(&prd).
+// 			Where("name = ? OR id = ?", req.Product.Name, req.Product.ID).
+// 			First(&prd).Error
+// 	}
+// 	newQuantity := prd.Quantity + (-req.Quantity)
+
+// 	if err2 != nil {
+// 		return nil, errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Product not found")
+// 	}
+// 	if req.Quantity > prd.Quantity && !prd.AlwaysAvailbale {
+// 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Quantity Exceeded")
+// 	}
+// 	r.db.Model(prd).Update("quantity", newQuantity)
+// 	var cart *Cart
+// 	err := r.db.Where("user_id = ? AND active = ?", user, true).First(&cart).Error
+
+// 	if err == nil {
+// 		req.Product = prd
+// 		// Check if the product is already in the cart
+// 		found := false
+// 		for i, item := range cart.Items {
+// 			if req.Product.ID == item.Product.ID {
+// 				if req.Quantity+item.Quantity == 0 {
+// 					// Remove the item from the cart when quantity becomes zero or negative
+// 					cart.Items = append(cart.Items[:i], cart.Items[i+1:]...)
+// 					r.db.Model(prd).Update("quantity", prd.Quantity+item.Quantity)
+// 				} else if req.Quantity+item.Quantity < 0 && !item.Product.AlwaysAvailbale {
+// 					r.db.Model(prd).Update("quantity", prd.Quantity+req.Quantity)
+// 					return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Quantity Exceeded")
+// 				} else {
+// 					item.Quantity += req.Quantity
+// 				}
+// 				found = true
+// 				break
+// 			}
+// 		}
+
+// 		if !found && req.Quantity > 0 {
+// 			// Add the product to the cart only if the quantity is positive
+// 			cart.Items = append(cart.Items, req)
+// 		}
+
+// 		cart.Total = calculateTotalCartCost(cart.Items)
+// 		err = r.db.Save(&cart).Error
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return cart, nil
+// 	} else {
+// 		req.Product.Quantity = newQuantity
+// 		req.Product = prd
+// 		if req.Quantity > 0 {
+// 			// Add the product to the cart only if the quantity is positive
+// 			cart.Items = append(cart.Items, req)
+// 		}
+// 		cart.UserID = user
+// 		cart.Active = true
+// 		cart.Total += float64(req.Quantity) * (prd.Price - prd.Discount)
+// 		err = r.db.Save(&cart).Error
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
+
+// 	return cart, nil
+// }
+
 func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32) (*Cart, error) {
 	prd := &product.Product{}
 	var err2 error
+
+	// Validate product information
 	if req.Product.ID == 0 && req.Product.Name == "" {
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "both id and name cannot be empty")
 	} else if req.Product.ID == 0 {
@@ -86,21 +169,27 @@ func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32
 			Where("name = ? OR id = ?", req.Product.Name, req.Product.ID).
 			First(&prd).Error
 	}
-	newQuantity := prd.Quantity + (-req.Quantity)
 
 	if err2 != nil {
 		return nil, errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Product not found")
 	}
+
+	// Ensure sufficient product quantity
+	newQuantity := prd.Quantity + (-req.Quantity)
 	if req.Quantity > prd.Quantity && !prd.AlwaysAvailbale {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Quantity Exceeded")
 	}
+
+	// Update product quantity
 	r.db.Model(prd).Update("quantity", newQuantity)
+
+	// Fetch the user's cart
 	var cart *Cart
 	err := r.db.Where("user_id = ? AND active = ?", user, true).First(&cart).Error
 
 	if err == nil {
+		// Cart exists, modify it
 		req.Product = prd
-		// Check if the product is already in the cart
 		found := false
 		for i, item := range cart.Items {
 			if req.Product.ID == item.Product.ID {
@@ -108,6 +197,18 @@ func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32
 					// Remove the item from the cart when quantity becomes zero or negative
 					cart.Items = append(cart.Items[:i], cart.Items[i+1:]...)
 					r.db.Model(prd).Update("quantity", prd.Quantity+item.Quantity)
+
+					// Check if store ID should be removed from StoresID
+					storeIDStillInCart := false
+					for _, remainingItem := range cart.Items {
+						if remainingItem.Product.Store == prd.Store {
+							storeIDStillInCart = true
+							break
+						}
+					}
+					if !storeIDStillInCart {
+						removeStoreIDFromCart(cart, prd.Store)
+					}
 				} else if req.Quantity+item.Quantity < 0 && !item.Product.AlwaysAvailbale {
 					r.db.Model(prd).Update("quantity", prd.Quantity+req.Quantity)
 					return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Quantity Exceeded")
@@ -120,10 +221,16 @@ func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32
 		}
 
 		if !found && req.Quantity > 0 {
-			// Add the product to the cart only if the quantity is positive
+			// Add the product to the cart if the quantity is positive
 			cart.Items = append(cart.Items, req)
+
+			// Add store ID to StoresID if not already present
+			if !storeIDExistsInCart(cart, prd.Store) {
+				cart.StoresID = append(cart.StoresID, &prd.Store)
+			}
 		}
 
+		// Recalculate cart total
 		cart.Total = calculateTotalCartCost(cart.Items)
 		err = r.db.Save(&cart).Error
 		if err != nil {
@@ -131,11 +238,14 @@ func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32
 		}
 		return cart, nil
 	} else {
+		// Cart does not exist, create a new one
 		req.Product.Quantity = newQuantity
 		req.Product = prd
 		if req.Quantity > 0 {
-			// Add the product to the cart only if the quantity is positive
 			cart.Items = append(cart.Items, req)
+
+			// Add store ID to StoresID
+			cart.StoresID = append(cart.StoresID, &prd.Store)
 		}
 		cart.UserID = user
 		cart.Active = true
@@ -147,6 +257,32 @@ func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32
 	}
 
 	return cart, nil
+}
+
+// Helper function to check if a store ID exists in StoresID
+func storeIDExistsInCart(cart *Cart, storeID string) bool {
+
+	for _, id := range cart.StoresID {
+
+		if id == &storeID {
+			return true
+		}
+	}
+	return false
+}
+
+// Helper function to remove a store ID from StoresID
+func removeStoreIDFromCart(cart *Cart, storeID string) {
+	for i, id := range cart.StoresID {
+		// Convert *string to uint32 if necessary
+
+		// Compare converted ID with storeID
+		if id == &storeID {
+			// Remove the storeID from the array
+			cart.StoresID = append(cart.StoresID[:i], cart.StoresID[i+1:]...)
+			break
+		}
+	}
 }
 
 func (r *repository) GetCart(ctx context.Context, filter uint32) (*Cart, error) {
