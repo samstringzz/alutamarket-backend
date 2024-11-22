@@ -387,6 +387,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 	sellerOrder := &store.StoreOrder{}
 	seller := &user.User{}
 	buyer := &user.User{}
+	myStore := &store.Store{}
 
 	var productsWithFiles []store.TrackedProduct
 	// Process the event
@@ -407,7 +408,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 		uniqueStores := utils.RemoveDuplicates(order.StoresID)
 		for _, storeName := range uniqueStores {
 			// Fetch the seller corresponding to the store name
-			err := repo.db.Model(&seller).Where("name = ?", storeName).First(&seller).Error
+			err := repo.db.Model(&myStore).Where("name = ?", storeName).First(&myStore).Error
 			if err != nil {
 				http.Error(w, "Failed to find seller", http.StatusNotFound)
 				return
@@ -448,6 +449,12 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 				// Save the seller's order
 				if err := repo.db.Save(sellerOrder).Error; err != nil {
 					http.Error(w, "Failed to update seller order", http.StatusInternalServerError)
+					return
+				}
+
+				err := repo.db.Model(seller).Where("id", myStore.UserID).Error
+				if err != nil {
+					http.Error(w, "Failed to find seller", http.StatusNotFound)
 					return
 				}
 
