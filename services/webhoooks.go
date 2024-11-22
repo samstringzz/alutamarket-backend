@@ -374,10 +374,9 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	fmt.Printf("Response: %s\n", string(body))
+	fmt.Fprint(w, "Paystack Webhook received successfully")
 
 	// Acknowledge the webhook request early
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "Paystack Webhook received successfully")
 
 	// Access the event field
 	event := webhookPayload.Event
@@ -521,7 +520,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 		// Optionally handle other events or log them
 		fmt.Println("Received unhandled event:", event)
 	}
-
+	w.WriteHeader(http.StatusOK)
 	// Log the received body for debugging or further processing
 	fmt.Println("Received Webhook Body:", string(body))
 }
