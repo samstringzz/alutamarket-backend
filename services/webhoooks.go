@@ -414,7 +414,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 				return
 			}
 
-			if data.Status == "successful" {
+			if data.Status == "success" {
 				// Filter products that have associated files
 				for _, product := range order.Products {
 					if product.File != nil {
