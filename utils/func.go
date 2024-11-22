@@ -124,16 +124,16 @@ func GenerateRandomString(length int) string {
 	return sb.String()
 }
 
-func RemoveDuplicates(input []string) []string {
+func RemoveDuplicates(input []*string) []*string {
 	// Map to track seen strings
 	seen := make(map[string]bool)
-	result := []string{}
+	result := []*string{}
 
 	for _, item := range input {
-		if !seen[item] {
+		if !seen[*item] {
 			// If the item hasn't been seen, add it to the result
 			result = append(result, item)
-			seen[item] = true
+			seen[*item] = true
 		}
 	}
 

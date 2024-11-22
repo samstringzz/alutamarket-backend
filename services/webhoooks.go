@@ -118,6 +118,16 @@ type PSWebhookPayload struct {
 	} `json:"data"`
 }
 
+func ConvertTrackedToStoreProduct(tp store.TrackedProduct) *store.StoreProduct {
+	return &store.StoreProduct{
+		Name:      tp.Name,
+		Price:     tp.Price,
+		Quantity:  tp.Quantity,
+		Thumbnail: tp.Thumbnail,
+		ID:        tp.ID,
+	}
+}
+
 type FWWebhookPayload struct {
 	Event string `json:"event"`
 	Data  struct {
@@ -206,112 +216,108 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 
 	case "charge.completed":
 		fmt.Printf("fwdata: %+v\n", data)
-		buyerOrder := &store.Order{}
+		order := &store.Order{}
 		sellerOrder := &store.StoreOrder{}
 		seller := &user.User{}
 		buyer := &user.User{}
-		myStore := &store.Store{}
 
 		var productsWithFiles []store.TrackedProduct
 
 		// Handle charge completion logic here
 
-		//fecth buyer order
-		err := repo.db.Model(buyerOrder).Where("uuid", data.TxRef).Error
+		//fecth  order
+		err := repo.db.Model(order).Where("uuid", data.TxRef).Error
 		if err != nil {
 			http.Error(w, "Failed to find order", http.StatusNotFound)
 			return
 		}
 
-		// Fetch Store
-		err = repo.db.Model(myStore).Where("id", sellerOrder.StoreID).Error
-		if err != nil {
-			http.Error(w, "Failed to find user", http.StatusNotFound)
-			return
+		uniqueStores := utils.RemoveDuplicates(order.StoresID)
+		for _, storeName := range uniqueStores {
+			// Fetch the seller corresponding to the store name
+			err := repo.db.Model(&seller).Where("name = ?", storeName).First(&seller).Error
+			if err != nil {
+				http.Error(w, "Failed to find seller", http.StatusNotFound)
+				return
+			}
+
+			if data.Status == "successful" {
+				// Filter products that have associated files
+				for _, product := range order.Products {
+					if product.File != nil {
+						productsWithFiles = append(productsWithFiles, product)
+					}
+				}
+
+				// Process each product with a file
+				for _, product := range productsWithFiles {
+					download := &store.Downloads{
+						Thumbnail: product.Thumbnail,
+						Price:     product.Price,
+						Name:      product.Name,
+						Discount:  int(product.Discount),
+						UUID:      order.UUID,
+						File:      *product.File,          // Dereference the file pointer safely
+						Users:     []string{order.UserID}, // Initialize with the current user
+					}
+
+					// Save the download record to the database
+					if err := repo.db.Create(download).Error; err != nil {
+						http.Error(w, "Failed to save download", http.StatusInternalServerError)
+						return
+					}
+					storeProduct := ConvertTrackedToStoreProduct(product)
+					sellerOrder.Products = append(sellerOrder.Products, storeProduct)
+				}
+				sellerOrder.Customer = order.Customer
+				sellerOrder.Status = "pending"
+				sellerOrder.UUID = order.UUID
+				sellerOrder.Active = true
+				// Save the seller's order
+				if err := repo.db.Save(sellerOrder).Error; err != nil {
+					http.Error(w, "Failed to update seller order", http.StatusInternalServerError)
+					return
+				}
+
+				// Send email notification to the seller
+				if seller.Email != "" {
+					to := []string{seller.Email}
+					contents := map[string]string{
+						"seller_name":     seller.Fullname,
+						"order_id":        data.TxRef,
+						"products_length": strconv.Itoa(len(order.Products)),
+						"customer_name":   buyer.Fullname,
+						"customer_phone":  buyer.Phone,
+					}
+
+					templateID := "991b93a9-4661-452c-ba53-da31fdddf8f2"
+					utils.SendEmail(templateID, "New Order Alert🎉", to, contents)
+				}
+			}
 		}
 
-		err = repo.db.Model(seller).Where("id", myStore.UserID).Error
-		if err != nil {
-			http.Error(w, "Failed to find user", http.StatusNotFound)
-			return
-		}
-
-		err = repo.db.Model(buyer).Where("id", buyerOrder.UserID).Error
+		err = repo.db.Model(buyer).Where("id", order.UserID).Error
 		if err != nil {
 			http.Error(w, "Failed to find user", http.StatusNotFound)
 			return
 		}
 
 		// Pay Delivery fee
-		err = user.PayFund(float32(buyerOrder.Fee), seller.Email, "3002290305", "50211")
+		err = user.PayFund(float32(order.Fee), seller.Email, "3002290305", "50211")
 		if err != nil {
 			http.Error(w, "Failed to pay delivery", http.StatusNotFound)
 			return
 		}
 
-		buyerOrder.TransStatus = data.Status
-		buyerOrder.Status = "pending"
-		buyerOrder.PaymentMethod = data.PaymentType
-		buyerOrder.PaymentGateway = "flutterwave"
+		order.TransStatus = data.Status
+		order.Status = "pending"
+		order.PaymentMethod = data.PaymentType
+		order.PaymentGateway = "flutterwave"
 		// Email credentials
-		to := []string{seller.Email}
-		contents := map[string]string{
-			"seller_name":     seller.Fullname,
-			"order_id":        sellerOrder.UUID,
-			"products_length": strconv.Itoa(len(sellerOrder.Products)),
-			"customer_name":   buyer.Fullname,
-			"customer_phone":  buyer.Phone,
-		}
 
-		templateID := "991b93a9-4661-452c-ba53-da31fdddf8f2"
-		utils.SendEmail(templateID, "New Order Alert🎉", to, contents)
-
-		if err := repo.db.Save(buyerOrder).Error; err != nil {
+		if err := repo.db.Save(order).Error; err != nil {
 			http.Error(w, "Failed to update buyer order", http.StatusInternalServerError)
 			return
-		}
-
-		if data.Status == "successful" {
-			err = repo.db.Model(sellerOrder).Where("trt_ref", data.TxRef).Error
-			if err != nil {
-				http.Error(w, "Failed to find order", http.StatusNotFound)
-				return
-			}
-			sellerOrder.Active = true
-			for _, product := range buyerOrder.Products {
-				if product.File != nil {
-					productsWithFiles = append(productsWithFiles, product)
-				}
-			}
-			for _, product := range productsWithFiles {
-				// Check if the file is not nil before dereferencing
-				if product.File != nil {
-					download := &store.Downloads{
-						Thumbnail: product.Thumbnail,
-						Price:     product.Price,
-						Name:      product.Name,
-						Discount:  int(product.Discount),
-						UUID:      buyerOrder.UUID,
-						File:      *product.File, // Safely dereferencing product.File
-					}
-
-					// Initialize Users slice if it's nil
-					if download.Users == nil {
-						download.Users = make([]string, 0)
-					}
-
-					// Append the user ID
-					download.Users = append(download.Users, buyerOrder.UserID)
-
-					// Save download to database
-					repo.db.Create(download)
-				}
-			}
-
-			if err := repo.db.Save(sellerOrder).Error; err != nil {
-				http.Error(w, "Failed to update seller order", http.StatusInternalServerError)
-				return
-			}
 		}
 
 		fmt.Printf("Received charge completed event: %s for email: %s, Amount: %d\n", event, webhookPayload.Data.Customer.Email, int64(webhookPayload.Data.Amount))
