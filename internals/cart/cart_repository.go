@@ -391,7 +391,7 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 			"email":        customer.Email,
 			"amount":       (cartTotal) * 100, // Amount should be in kobo
 			"currency":     "NGN",
-			"refrence":     UUID,
+			"reference":    UUID,
 			"callback_url": redirectUrl,
 			"metadata": map[string]interface{}{
 				"customer":   customer.ID,
