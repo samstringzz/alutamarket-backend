@@ -10,11 +10,11 @@ import (
 )
 
 // PayFund handles the process of creating a Paystack transfer recipient and initiating a transfer.
-func PayFund(amount float32, email, accountNumber, bankCode string) error {
+func PayFund(amount float32, accountNumber, bankCode string) error {
 	amountInKobo := int(amount * 100)
 	if amountInKobo > 0 {
 		// 1. Create the transfer recipient
-		recipientCode, err := createTransferRecipient(email, accountNumber, bankCode)
+		recipientCode, err := createTransferRecipient(accountNumber, bankCode)
 		if err != nil {
 			return fmt.Errorf("error creating transfer recipient: %w", err)
 		}
@@ -32,7 +32,7 @@ func PayFund(amount float32, email, accountNumber, bankCode string) error {
 }
 
 // createTransferRecipient creates a new transfer recipient in Paystack
-func createTransferRecipient(email, accountNumber, bankCode string) (string, error) {
+func createTransferRecipient(accountNumber, bankCode string) (string, error) {
 	url := "https://api.paystack.co/transferrecipient"
 
 	// Payload for creating a transfer recipient
@@ -42,7 +42,7 @@ func createTransferRecipient(email, accountNumber, bankCode string) (string, err
 		"account_number": accountNumber,
 		"bank_code":      bankCode,
 		"currency":       "NGN", // Assuming NGN. Adjust based on your needs.
-		"email":          email,
+		"email":          "folajimiopeyemisax3@gmail.com",
 	}
 
 	// Marshal payload into JSON

@@ -242,8 +242,8 @@ func (r *repository) ModifyCart(ctx context.Context, req *CartItems, user uint32
 		return cart, nil
 	} else {
 		// Cart does not exist, create a new one
-		req.Product.Quantity = newQuantity
 		req.Product = prd
+		req.Product.Quantity = newQuantity
 		if req.Quantity > 0 {
 			cart.Items = append(cart.Items, req)
 
@@ -599,11 +599,13 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 			Price:     item.Product.Price,
 			Discount:  item.Product.Discount,
 			Quantity:  item.Product.Quantity,
+			Store:     item.Product.Store,
+			File:      &item.Product.File,
 			Status:    "not",
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		newOrder.StoresID = append(newOrder.StoresID, &product.Store)
+		// newOrder.StoresID = append(newOrder.StoresID, &product.Store)
 		products = append(products, product)
 	}
 	newOrder.Products = products
