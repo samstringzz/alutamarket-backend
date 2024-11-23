@@ -103,6 +103,7 @@ type Store struct {
 	Background         string               `json:"background" db:"background"`
 	Visitors           []string             `gorm:"serializer:json" json:"visitors" db:"visitors"`
 	Accounts           []*WithdrawalAccount `gorm:"serializer:json" json:"accounts" db:"accounts"`
+	Orders             []*StoreOrder        `gorm:"serializer:json"`
 }
 
 type UpdateStore struct {
@@ -195,7 +196,7 @@ type StoreOrder struct {
 	TransRef  string          `json:"trt_ref" db:"trt_ref"`
 	Active    bool            `json:"active" db:"active"`
 	UUID      string          `json:"uuid" db:"uuid"`
-	Customer  Customer        `json:"customer" db:"customer"`
+	Customer  Customer        `gorm:"serializer:json"  json:"customer" db:"customer"`
 	CreatedAt time.Time       `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time       `json:"updated_at" db:"updated_at"`
 }

@@ -2272,39 +2272,39 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 		}
 
 		// Map orders
-		// if len(item.Orders) > 0 {
-		// 	for _, order := range item.Orders {
-		// 		storeOrder := &model.StoreOrder{
-		// 			Status: order.Status,
-		// 			Customer: &model.StoreCustomer{
-		// 				Name:    order.Customer.Name,
-		// 				Address: order.Customer.Address,
-		// 				Phone:   order.Customer.Phone,
-		// 			},
-		// 			Active:    order.Active,
-		// 			TrtRef:    order.TransRef,
-		// 			CreatedAt: order.CreatedAt,
-		// 			UUID:      order.UUID,
-		// 			StoreID:   order.StoreID,
-		// 		}
+		if len(item.Orders) > 0 {
+			for _, order := range item.Orders {
+				storeOrder := &model.StoreOrder{
+					Status: order.Status,
+					Customer: &model.StoreCustomer{
+						Name:    order.Customer.Name,
+						Address: order.Customer.Address,
+						Phone:   order.Customer.Phone,
+					},
+					Active:    order.Active,
+					TrtRef:    order.TransRef,
+					CreatedAt: order.CreatedAt,
+					UUID:      order.UUID,
+					StoreID:   order.StoreID,
+				}
 
-		// 		// Map products within orders
-		// 		var products []*model.Product
-		// 		for _, p := range order.Products {
-		// 			product := &model.Product{
-		// 				ID:        int(p.ID), // Make sure this ID is correctly mapped
-		// 				Name:      p.Name,
-		// 				Quantity:  p.Quantity,
-		// 				Price:     p.Price,
-		// 				Thumbnail: p.Thumbnail,
-		// 			}
-		// 			products = append(products, product)
-		// 		}
+				// Map products within orders
+				var products []*model.Product
+				for _, p := range order.Products {
+					product := &model.Product{
+						ID:        int(p.ID), // Make sure this ID is correctly mapped
+						Name:      p.Name,
+						Quantity:  p.Quantity,
+						Price:     p.Price,
+						Thumbnail: p.Thumbnail,
+					}
+					products = append(products, product)
+				}
 
-		// 		storeOrder.Product = products
-		// 		store.Orders = append(store.Orders, storeOrder)
-		// 	}
-		// }
+				storeOrder.Product = products
+				store.Orders = append(store.Orders, storeOrder)
+			}
+		}
 
 		stores = append(stores, store)
 	}

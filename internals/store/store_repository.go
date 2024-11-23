@@ -358,7 +358,7 @@ func (r *repository) WithdrawFund(ctx context.Context, req *Fund) error {
 	if req.Amount > float32(store.Wallet) {
 		return errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Your Wallet amount is not within range of withdrawal amount")
 	}
-	err = utils.PayFund(req.Amount, req.Email, req.AccountNumber, req.BankCode)
+	err = utils.PayFund(req.Amount, req.AccountNumber, req.BankCode)
 	if err != nil {
 		return err
 	}

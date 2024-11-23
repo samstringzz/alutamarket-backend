@@ -905,8 +905,8 @@ func (r *repository) GetMyDownloads(ctx context.Context, userId string) ([]*stor
 	return downloads, nil
 }
 
-func PayFund(amount float32, email, accountNumber, bankCode string) error {
-	err := utils.PayFund(amount, email, accountNumber, bankCode)
+func PayFund(amount float32, accountNumber, bankCode string) error {
+	err := utils.PayFund(amount, accountNumber, bankCode)
 	if err != nil {
 		return err
 	}
