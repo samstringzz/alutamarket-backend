@@ -213,6 +213,12 @@ type Fund struct {
 	BankCode      string  `json:"bank_code" db:"bank_code"`
 }
 
+type UpdateStoreOrderInput struct {
+	StoreID uint32 `json:"store_id" db:"store_id"`
+	UUID    string `json:"id" db:"id"`
+	Status  string `json:"status" db:"status"`
+}
+
 type Repository interface {
 	CreateStore(ctx context.Context, req *Store) (*Store, error)
 	CreateInvoice(ctx context.Context, req *Invoice) (*Invoice, error)
@@ -225,7 +231,7 @@ type Repository interface {
 	GetOrder(ctx context.Context, storeId uint32, orderId string) (*Order, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*Order, error)
 	GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error)
-	UpdateOrder(ctx context.Context, req *Order) (*Order, error)
+	UpdateOrder(ctx context.Context, req *UpdateStoreOrderInput) (*Order, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error)
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
@@ -244,7 +250,7 @@ type Service interface {
 	GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error)
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*Order, error)
-	UpdateOrder(ctx context.Context, req *Order) (*Order, error)
+	UpdateOrder(ctx context.Context, req *UpdateStoreOrderInput) (*Order, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error)

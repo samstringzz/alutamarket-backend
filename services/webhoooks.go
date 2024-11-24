@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
@@ -230,6 +231,17 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 				return
 			}
 
+			// Update product statuses to "pending"
+			for i := range order.Products {
+				order.Products[i].Status = "pending"
+			}
+
+			// Save the updated products back to the database
+			// if err := repo.db.Save(&order.Products).Error; err != nil {
+			// 	fmt.Println("Failed to update product statuses:", err)
+			// 	return
+			// }
+
 			err = repo.db.Model(buyer).Where("id = ?", order.UserID).First(buyer).Error
 			if err != nil {
 				fmt.Println("Failed to find buyer:", err)
@@ -260,7 +272,7 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 				if data.Status == "successful" {
 					// Filter products that have associated files
 					for _, product := range order.Products {
-						if product.File != nil {
+						if product.File != nil && *product.File != "" {
 							productsWithFiles = append(productsWithFiles, product)
 						}
 					}
@@ -273,6 +285,7 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 							Name:      product.Name,
 							Discount:  int(product.Discount),
 							UUID:      order.UUID,
+							ID:        utils.GenerateUUID(),
 							File:      *product.File,          // Dereference the file pointer safely
 							Users:     []string{order.UserID}, // Initialize with the current user
 						}
@@ -282,28 +295,32 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 							http.Error(w, "Failed to save download", http.StatusInternalServerError)
 							return
 						}
-						storeProduct := ConvertTrackedToStoreProduct(product)
-						sellerOrder.Products = append(sellerOrder.Products, storeProduct)
+						// storeProduct := ConvertTrackedToStoreProduct(product)
+						// sellerOrder.Products = append(sellerOrder.Products, storeProduct)
 					}
+
+					sellerOrder.Products = filterProductsByStore(order.Products, *storeName)
+					sellerOrder.StoreID = strconv.Itoa(int(myStore.ID))
 					sellerOrder.Customer = order.Customer
 					sellerOrder.Status = "pending"
 					sellerOrder.UUID = order.UUID
 					sellerOrder.Active = true
-					myStore.Orders = append(myStore.Orders, sellerOrder)
+					sellerOrder.CreatedAt = time.Now() // Ensure createdAt is explicitly se
 
+					myStore.Orders = append(myStore.Orders, sellerOrder)
 					// Save the seller's store
 					if err := repo.db.Save(myStore).Error; err != nil {
 						fmt.Println("Failed to update seller order:", err)
 						continue
 					}
-					fmt.Printf("Updated Seller Order: %+v\n", sellerOrder)
+					// fmt.Printf("Updated Seller Order: %+v\n", sellerOrder)
 
 					// Send email notification to the seller
 					if seller.Email != "" {
 						to := []string{seller.Email}
 						contents := map[string]string{
 							"seller_name":     seller.Fullname,
-							"order_id":        data.TxRef,
+							"order_id":        order.UUID,
 							"products_length": strconv.Itoa(len(order.Products)),
 							"customer_name":   buyer.Fullname,
 							"customer_phone":  buyer.Phone,
@@ -315,15 +332,16 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 
 					}
 				}
+
 			}
 
 			// Pay delivery fee
-			err = user.PayFund(float32(order.Fee), "3002290305", "50211")
-			if err != nil {
-				fmt.Println("Failed to pay delivery fee:", err)
-				return
-			}
-			fmt.Println("Delivery fee paid successfully")
+			user.PayFund(float32(order.Fee), "3002290305", "50211")
+			// if err != nil {
+			// 	fmt.Println("Failed to pay delivery fee:", err)
+			// 	return
+			// }
+			// fmt.Println("Delivery fee paid successfully")
 
 			order.TransStatus = data.Status
 			order.Status = "pending"
@@ -425,6 +443,18 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 				fmt.Println("Failed to find order:", err)
 				return
 			}
+
+			// Update product statuses to "pending"
+			for i := range order.Products {
+				order.Products[i].Status = "pending"
+			}
+
+			// Save the updated products back to the database
+			if err := repo.db.Save(&order).Error; err != nil {
+				fmt.Println("Failed to update product statuses:", err)
+				return
+			}
+			fmt.Println("Product statuses updated to 'pending'")
 			// fmt.Printf("Fetched Order: %+v\n", order)
 
 			err = repo.db.Model(buyer).Where("id = ?", order.UserID).First(buyer).Error
@@ -458,13 +488,12 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 				// fmt.Printf("Fetched Seller: %+v\n", seller)
 
 				if data.Status == "success" {
-					// Filter products with associated files
+					// Filter products that have associated files
 					for _, product := range order.Products {
-						if product.File != nil {
+						if product.File != nil && *product.File != "" {
 							productsWithFiles = append(productsWithFiles, product)
 						}
 					}
-					fmt.Printf("Products with Files: %+v\n", productsWithFiles)
 
 					// Process each product with a file
 					for _, product := range productsWithFiles {
@@ -474,22 +503,27 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 							Name:      product.Name,
 							Discount:  int(product.Discount),
 							UUID:      order.UUID,
-							File:      *product.File,
-							Users:     []string{order.UserID},
+							ID:        utils.GenerateUUID(),
+							File:      *product.File,          // Dereference the file pointer safely
+							Users:     []string{order.UserID}, // Initialize with the current user
 						}
 
 						// Save the download record to the database
 						if err := repo.db.Create(download).Error; err != nil {
-							fmt.Println("Failed to save download:", err)
+							http.Error(w, "Failed to save download", http.StatusInternalServerError)
 							return
 						}
-						storeProduct := ConvertTrackedToStoreProduct(product)
-						sellerOrder.Products = append(sellerOrder.Products, storeProduct)
+						// storeProduct := ConvertTrackedToStoreProduct(product)
+						// sellerOrder.Products = append(sellerOrder.Products, storeProduct)
 					}
+
+					sellerOrder.Products = filterProductsByStore(order.Products, *storeName)
+					sellerOrder.StoreID = strconv.Itoa(int(myStore.ID))
 					sellerOrder.Customer = order.Customer
 					sellerOrder.Status = "pending"
 					sellerOrder.UUID = order.UUID
 					sellerOrder.Active = true
+					sellerOrder.CreatedAt = time.Now() // Ensure createdAt is explicitly se
 
 					myStore.Orders = append(myStore.Orders, sellerOrder)
 
@@ -498,7 +532,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 						fmt.Println("Failed to update seller order:", err)
 						continue
 					}
-					fmt.Printf("Updated Seller Order: %+v\n", sellerOrder)
+					// fmt.Printf("Updated Seller Order: %+v\n", sellerOrder)
 
 					// Send email notification to the seller
 					if seller.Email != "" {
@@ -510,28 +544,28 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 							"customer_name":   buyer.Fullname,
 							"customer_phone":  buyer.Phone,
 						}
+
 						templateID := "991b93a9-4661-452c-ba53-da31fdddf8f2"
 						utils.SendEmail(templateID, "New Order Alert🎉", to, contents)
 						fmt.Printf("Email sent to seller: %s\n", seller.Email)
+
 					}
 				}
 			}
 
 			// Pay delivery fee
-			err = user.PayFund(float32(order.Fee), "3002290305", "50211")
-			if err != nil {
-				fmt.Println("Failed to pay delivery fee:", err)
-				return
-			}
-			fmt.Println("Delivery fee paid successfully")
+			user.PayFund(float32(order.Fee), "3002290305", "50211")
+			// if err != nil {
+			// 	fmt.Println("Failed to pay delivery fee:", err)
+			// 	return
+			// }
+			// fmt.Println("Delivery fee paid successfully")
 
 			// Update order
 			order.TransStatus = data.Status
 			order.Status = "pending"
 			order.PaymentMethod = data.Channel
 			order.PaymentGateway = "paystack"
-			sellerOrder.Active = true
-
 			if err := repo.db.Save(order).Error; err != nil {
 				fmt.Println("Failed to update order:", err)
 				return
@@ -644,14 +678,13 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 				}
 				// fmt.Printf("Fetched Seller: %+v\n", seller)
 
-				if data.Status == "success" {
-					// Filter products with associated files
+				if data.Status == "successful" {
+					// Filter products that have associated files
 					for _, product := range order.Products {
-						if product.File != nil {
+						if product.File != nil && *product.File != "" {
 							productsWithFiles = append(productsWithFiles, product)
 						}
 					}
-					fmt.Printf("Products with Files: %+v\n", productsWithFiles)
 
 					// Process each product with a file
 					for _, product := range productsWithFiles {
@@ -661,33 +694,35 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 							Name:      product.Name,
 							Discount:  int(product.Discount),
 							UUID:      order.UUID,
-							File:      *product.File,
-							Users:     []string{order.UserID},
+							ID:        utils.GenerateUUID(),
+							File:      *product.File,          // Dereference the file pointer safely
+							Users:     []string{order.UserID}, // Initialize with the current user
 						}
 
 						// Save the download record to the database
 						if err := repo.db.Create(download).Error; err != nil {
-							fmt.Println("Failed to save download:", err)
+							http.Error(w, "Failed to save download", http.StatusInternalServerError)
 							return
 						}
-						storeProduct := ConvertTrackedToStoreProduct(product)
-						sellerOrder.Products = append(sellerOrder.Products, storeProduct)
+						// storeProduct := ConvertTrackedToStoreProduct(product)
+						// sellerOrder.Products = append(sellerOrder.Products, storeProduct)
 					}
+
+					sellerOrder.Products = filterProductsByStore(order.Products, *storeName)
+					sellerOrder.StoreID = strconv.Itoa(int(myStore.ID))
 					sellerOrder.Customer = order.Customer
 					sellerOrder.Status = "pending"
 					sellerOrder.UUID = order.UUID
 					sellerOrder.Active = true
+					sellerOrder.CreatedAt = time.Now() // Ensure createdAt is explicitly se
 
 					myStore.Orders = append(myStore.Orders, sellerOrder)
-
 					// Save the seller's store
 					if err := repo.db.Save(myStore).Error; err != nil {
 						fmt.Println("Failed to update seller order:", err)
 						continue
 					}
-					fmt.Printf("Updated Seller Order: %+v\n", sellerOrder)
 
-					// Send email notification to the seller
 					if seller.Email != "" {
 						to := []string{seller.Email}
 						contents := map[string]string{
@@ -697,25 +732,26 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 							"customer_name":   buyer.Fullname,
 							"customer_phone":  buyer.Phone,
 						}
+
 						templateID := "991b93a9-4661-452c-ba53-da31fdddf8f2"
 						utils.SendEmail(templateID, "New Order Alert🎉", to, contents)
 						fmt.Printf("Email sent to seller: %s\n", seller.Email)
+
 					}
 				}
 			}
 
 			// Pay delivery fee
-			err = user.PayFund(float32(order.Fee), "3002290305", "50211")
-			if err != nil {
-				fmt.Println("Failed to pay delivery fee:", err)
-				return
-			}
+			user.PayFund(float32(order.Fee), "3002290305", "50211")
+			// if err != nil {
+			// 	fmt.Println("Failed to pay delivery fee:", err)
+			// 	return
+			// }
 			// Update order
 			order.TransStatus = data.Status
 			order.Status = "pending"
 			order.PaymentMethod = data.PaymentMethod.Type
 			order.PaymentGateway = "paystack"
-			sellerOrder.Active = true
 			if err := repo.db.Save(order).Error; err != nil {
 				fmt.Println("Failed to update order:", err)
 				return
@@ -752,4 +788,18 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 		// Log the received body for debugging or further processing
 		fmt.Println("Received Webhook Body:", string(body))
 	}()
+}
+
+func filterProductsByStore(products []store.TrackedProduct, storeName string) []*store.StoreProduct {
+	var filteredProducts []*store.StoreProduct
+
+	for i, product := range products {
+		product.Quantity = products[i].Quantity
+		storeProduct := ConvertTrackedToStoreProduct(product)
+		if product.Store == storeName {
+			filteredProducts = append(filteredProducts, storeProduct)
+		}
+	}
+
+	return filteredProducts
 }

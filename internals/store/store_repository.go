@@ -225,42 +225,76 @@ func (r *repository) GetOrder(ctx context.Context, storeID uint32, orderID strin
 	// return store.Orders[0], nil
 }
 
-func (r *repository) UpdateOrder(ctx context.Context, req *Order) (*Order, error) {
-	var existingStoreOrder *Order
+func (r *repository) UpdateOrder(ctx context.Context, req *UpdateStoreOrderInput) (*Order, error) {
+	var existingOrder *Order
+	var existingStore *Store
 
-	err := r.db.WithContext(ctx).Where("uuid = ?", req.UUID).First(&existingStoreOrder).Error
+	// Fetch the store and order concurrently using goroutines
+	errChan := make(chan error, 2) // Error channel to handle errors from goroutines
 
-	if err != nil {
-		return nil, err
+	go func() {
+		errChan <- r.db.WithContext(ctx).Where("id = ?", req.StoreID).First(&existingStore).Error
+	}()
+
+	go func() {
+		errChan <- r.db.WithContext(ctx).Where("uuid = ?", req.UUID).First(&existingOrder).Error
+	}()
+
+	// Wait for both operations to finish
+	for i := 0; i < 2; i++ {
+		if err := <-errChan; err != nil {
+			return nil, err // Return the first error encountered
+		}
 	}
+
+	// Update the store's order status
+	for _, storeOrder := range existingStore.Orders {
+		if storeOrder.UUID == req.UUID {
+			storeOrder.Status = req.Status
+			storeOrder.UpdatedAt = time.Now()
+		}
+	}
+
 	// Update the order fields
-	existingStoreOrder.Status = req.Status
-	existingStoreOrder.UpdatedAt = time.Now()
-	to := []string{existingStoreOrder.Customer.Email}
-	contents := map[string]string{
-		"buyer_name": existingStoreOrder.Customer.Name,
-		// "order_id" :
+	existingOrder.Status = req.Status
+	existingOrder.UpdatedAt = time.Now()
+
+	// Send email notifications concurrently
+	go func() {
+		to := []string{existingOrder.Customer.Email}
+		contents := map[string]string{
+			"buyer_name": existingOrder.Customer.Name,
+			"order_id" :existingOrder.UUID,
+		}
+
+		if req.Status == "canceled" {
+			templateID := "bb57c0b0-cb2b-4cd7-9170-f2c536a3dfe2"
+			utils.SendEmail(templateID, "Your Order was Declined", to, contents)
+		} else if req.Status == "processing" {
+			templateID := "04551de0-1db2-46bb-b48a-610b744ee3e9"
+			utils.SendEmail(templateID, "Your Order has been Confirmed", to, contents)
+		}
+	}()
+
+	// Save changes to the database concurrently
+	saveErrChan := make(chan error, 2)
+
+	go func() {
+		saveErrChan <- r.db.WithContext(ctx).Save(&existingStore).Error
+	}()
+
+	go func() {
+		saveErrChan <- r.db.WithContext(ctx).Save(&existingOrder).Error
+	}()
+
+	// Wait for both save operations to finish
+	for i := 0; i < 2; i++ {
+		if err := <-saveErrChan; err != nil {
+			return nil, err // Return the first error encountered
+		}
 	}
-	//send mail for confirmed/rejected order
-	if existingStoreOrder.Status == "canceled" {
-		templateID := "bb57c0b0-cb2b-4cd7-9170-f2c536a3dfe2"
-		utils.SendEmail(templateID, "Your Order was Declined", to, contents)
 
-	}
-
-	if existingStoreOrder.Status == "processing" {
-		templateID := "04551de0-1db2-46bb-b48a-610b744ee3e9"
-		utils.SendEmail(templateID, "Your Order has been Confirmed", to, contents)
-
-	}
-
-	// Save the changes to the order
-	err = r.db.WithContext(ctx).Save(&existingStoreOrder).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return existingStoreOrder, nil
+	return existingOrder, nil
 }
 
 func (r *repository) UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error) {
