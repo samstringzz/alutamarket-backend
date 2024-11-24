@@ -146,8 +146,19 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, input model.UpdateSt
 
 	storeHandler := store.NewHandler(storeSrvc)
 
-	orderInput := &store.Order{UUID: *input.ID, Status: *input.Status}
-	orderInput.StoresID = append(orderInput.StoresID, input.StoreID)
+	orderInput := &store.UpdateStoreOrderInput{UUID: *input.ID, Status: *input.Status}
+	if input.StoreID != nil {
+		storeID, err := strconv.ParseUint(*input.StoreID, 10, 32)
+		if err != nil {
+			fmt.Println("Invalid StoreID:", err)
+			return nil, err
+		}
+		orderInput.StoreID = uint32(storeID)
+	} else {
+		fmt.Println("StoreID is nil")
+		return nil, nil
+	}
+	// orderInput.StoresID = append(orderInput.StoresID, input.StoreID)
 
 	resp, err := storeHandler.UpdateOrder(ctx, orderInput)
 	if err != nil {
@@ -2187,12 +2198,12 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 
 // Stores is the resolver for the Stores field.
 func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offset *int) (*model.StorePaginationData, error) {
-	token := ctx.Value("token").(string)
+	// token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("seller", token)
-	if authErr != nil {
-		return nil, authErr
-	}
+	// authErr := middlewares.AuthMiddleware("seller", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
 	storeRep := app.InitializePackage(app.StorePackage)
 
 	storeRepository, ok := storeRep.(store.Repository)
@@ -2282,7 +2293,7 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 						Phone:   order.Customer.Phone,
 					},
 					Active:    order.Active,
-					TrtRef:    order.TransRef,
+					TrtRef:    order.UUID,
 					CreatedAt: order.CreatedAt,
 					UUID:      order.UUID,
 					StoreID:   order.StoreID,
@@ -2297,6 +2308,7 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 						Quantity:  p.Quantity,
 						Price:     p.Price,
 						Thumbnail: p.Thumbnail,
+						// Store:     p.Store,
 					}
 					products = append(products, product)
 				}

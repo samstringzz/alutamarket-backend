@@ -86,7 +86,7 @@ func (h *Handler) CreateOrder(ctx context.Context, input *StoreOrder) (*StoreOrd
 	return item, nil
 }
 
-func (h *Handler) UpdateOrder(ctx context.Context, input *Order) (*Order, error) {
+func (h *Handler) UpdateOrder(ctx context.Context, input *UpdateStoreOrderInput) (*Order, error) {
 	item, err := h.Service.UpdateOrder(ctx, input)
 	if err != nil {
 		return nil, err
