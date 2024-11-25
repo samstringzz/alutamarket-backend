@@ -35,7 +35,8 @@ func Migrate() *gorm.DB {
 	// Auto-migrate models to create tables if they don't exist
 	db.AutoMigrate(&store.Store{}, &store.Invoice{}, &user.User{}, &product.Product{},
 		&cart.Cart{}, &product.Category{}, &messages.Chat{}, &product.HandledProduct{},
+		&store.Review{},
 		&messages.Message{}, &store.Order{}, &store.Downloads{}, &user.PasswordReset{}, &skynet.Skynet{})
-	
+
 	return db
 }

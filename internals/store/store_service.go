@@ -195,3 +195,23 @@ func (s *service) WithdrawFund(ctx context.Context, req *Fund) error {
 	}
 	return nil
 }
+
+func (s *service) AddReview(ctx context.Context, review *Review) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	if err := s.Repository.AddReview(ctx, review); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *service) GetReviews(ctx context.Context, filterType string, value interface{}) ([]*Review, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	result, err := s.Repository.GetReviews(ctx, filterType, value)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}

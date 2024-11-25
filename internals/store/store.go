@@ -118,6 +118,7 @@ type UpdateStore struct {
 	Transactions       []*Transactions    `gorm:"serializer:json"`
 	Followers          []Follower         `gorm:"serializer:json"`
 	Orders             []*StoreOrder      `gorm:"serializer:json"`
+	Reviews            []*Review          `gorm:"serializer:json"`
 	Account            *WithdrawalAccount `gorm:"serializer:json"`
 	Products           []Product          `gorm:"serializer:json"`
 	Wallet             float64            `json:"wallet" db:"wallet"`
@@ -184,6 +185,7 @@ type Customer struct {
 type StoreProduct struct {
 	Name      string  `json:"name" db:"name"`
 	Thumbnail string  `json:"thumbnail" db:"thumbnail"`
+	Status    string  `json:"status" db:"status"`
 	Price     float64 `json:"price" db:"price"`
 	Quantity  int     `json:"quantity" db:"quantity"`
 	ID        uint32  `json:"id" db:"id"`
@@ -200,8 +202,22 @@ type StoreOrder struct {
 	CreatedAt time.Time       `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time       `json:"updated_at" db:"updated_at"`
 }
+type Buyer struct {
+	Nickname string `json:"nickname" db:"nickname"`
+	Avatar   string `json:"avatar" db:"avatar"`
+	Comment  string `json:"comment" db:"comment"`
+}
 
 type Review struct {
+	gorm.Model
+	StoreID   uint32    `json:"store_id" db:"store_id"`
+	ProductID uint32    `json:"product_id" db:"product_id"`
+	OrderID   string    `json:"uuid" db:"uuid"`
+	Buyer     *Buyer    `gorm:"serializer:json" json:"buyer" db:"buyer"`
+	SellerID  uint32    `json:"seller_id" db:"seller_id"`
+	Rating    float64   `json:"rating" db:"rating"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type Fund struct {
@@ -237,6 +253,8 @@ type Repository interface {
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
 	WithdrawFund(ctx context.Context, req *Fund) error
 	GetInvoices(ctx context.Context, storeID uint32) ([]*Invoice, error)
+	AddReview(ctx context.Context, review *Review) error
+	GetReviews(ctx context.Context, filter string, value interface{}) ([]*Review, error)
 }
 
 type Service interface {
@@ -256,4 +274,6 @@ type Service interface {
 	UpdateStoreFollowership(ctx context.Context, storeID uint32, follower *Follower, action string) (*Store, error)
 	WithdrawFund(ctx context.Context, req *Fund) error
 	GetInvoices(ctx context.Context, storeID uint32) ([]*Invoice, error)
+	AddReview(ctx context.Context, review *Review) error
+	GetReviews(ctx context.Context, filter string, value interface{}) ([]*Review, error)
 }
