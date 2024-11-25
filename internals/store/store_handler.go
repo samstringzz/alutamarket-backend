@@ -133,3 +133,20 @@ func (h *Handler) WithdrawFund(ctx context.Context, req *Fund) error {
 	}
 	return nil
 }
+
+func (h *Handler) AddReview(ctx context.Context, req *Review) error {
+	err := h.Service.AddReview(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *Handler) GetReviews(ctx context.Context, filterType string, value interface{}) ([]*Review, error) {
+
+	result, err := h.Service.GetReviews(ctx, filterType, value)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}

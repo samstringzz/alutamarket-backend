@@ -442,14 +442,14 @@ type Variant {
 	name: String!
 	value: [VariantValue!]!
 }
-type Review {
-	rating: Float!
-	message: String!
-	image: String!
-	product_id: Int!
-	username: String!
-	id: ID
-}
+# type Review {
+# 	rating: Float!
+# 	message: String!
+# 	image: String!
+# 	product_id: Int!
+# 	username: String!
+# 	id: ID
+# }
 type Product {
 	id: Int!
 	name: String!
@@ -533,13 +533,13 @@ type LoginRes {
 	refresh_token: String!
 }
 
-input ReviewInput {
-	username: String!
-	image: String!
-	message: String!
-	rating: Float!
-	productId: Int!
-}
+# input ReviewInput {
+# 	username: String!
+# 	image: String!
+# 	message: String!
+# 	rating: Float!
+# 	productId: Int!
+# }
 input LoginReq {
 	email: String!
 	password: String!
@@ -694,6 +694,40 @@ type Downloads {
 	updated_at: Time
 }
 
+type ReviewBuyer {
+	nickname: String!
+	avatar: String!
+	comment: String!
+}
+
+input ReviewBuyerInput {
+	nickname: String!
+	avatar: String!
+	comment: String!
+}
+
+type Review {
+	store_id: Int!
+	product_id: Int!
+	order_id: Int!
+	buyer: ReviewBuyer
+	seller_id: Int!
+	rating: Float!
+	created_at: Time
+	updated_at: Time
+}
+
+input ReviewInput {
+	store_id: Int!
+	product_id: Int!
+	order_id: String!
+	buyer: ReviewBuyerInput
+	seller_id: Int!
+	rating: Float!
+	created_at: Time
+	updated_at: Time
+}
+
 type Query {
 	Users(limit: Int, offset: Int): [User!]!
 	User(id: ID!): User
@@ -705,12 +739,13 @@ type Query {
 	HandledProducts(user: Int!, type: String!): [HandledProducts!]!
 	RecommendedProducts(query: String!): [Product!]!
 	RecentlyAddedProducts(user: Int!): [Product!]!
-	ProductReviews(id: Int!, sellerStore: String!): [Review!]!
+	# ProductReviews(id: Int!, sellerStore: String!): [Review!]!
 	Cart(user: Int!): Cart!
 	SubscriptionBundle(serviceID: String!): SubscriptionBundle
 	searchProducts(query: String!): [Product!]
 	Stores(user: Int, limit: Int, offset: Int): StorePaginationData!
 	Store(id: Int!): Store
+	Reviews(id: String!, value: String!): [Review!]!
 	StoreByName(name: String!): Store
 	PurchasedOrder(user: Int!): [PurchasedOrder!]!
 	Skynets(id: String!): [Skynet!]

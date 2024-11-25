@@ -382,20 +382,37 @@ type Query struct {
 }
 
 type Review struct {
-	Rating    float64 `json:"rating"`
-	Message   string  `json:"message"`
-	Image     string  `json:"image"`
-	ProductID int     `json:"product_id"`
-	Username  string  `json:"username"`
-	ID        *string `json:"id,omitempty"`
+	StoreID   int          `json:"store_id"`
+	ProductID int          `json:"product_id"`
+	OrderID   int          `json:"order_id"`
+	Buyer     *ReviewBuyer `json:"buyer,omitempty"`
+	SellerID  int          `json:"seller_id"`
+	Rating    float64      `json:"rating"`
+	CreatedAt *time.Time   `json:"created_at,omitempty"`
+	UpdatedAt *time.Time   `json:"updated_at,omitempty"`
+}
+
+type ReviewBuyer struct {
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	Comment  string `json:"comment"`
+}
+
+type ReviewBuyerInput struct {
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	Comment  string `json:"comment"`
 }
 
 type ReviewInput struct {
-	Username  string  `json:"username"`
-	Image     string  `json:"image"`
-	Message   string  `json:"message"`
-	Rating    float64 `json:"rating"`
-	ProductID int     `json:"productId"`
+	StoreID   int               `json:"store_id"`
+	ProductID int               `json:"product_id"`
+	OrderID   string            `json:"order_id"`
+	Buyer     *ReviewBuyerInput `json:"buyer,omitempty"`
+	SellerID  int               `json:"seller_id"`
+	Rating    float64           `json:"rating"`
+	CreatedAt *time.Time        `json:"created_at,omitempty"`
+	UpdatedAt *time.Time        `json:"updated_at,omitempty"`
 }
 
 type Skynet struct {

@@ -256,7 +256,11 @@ func (r *repository) UpdateOrder(ctx context.Context, req *UpdateStoreOrderInput
 	}
 
 	// Update the order fields
-	existingOrder.Status = req.Status
+	existingOrder.Status = "In Progress"
+
+	for _, product := range filterProductsByStore(existingOrder.Products, existingStore.Name) {
+		product.Status = req.Status
+	}
 	existingOrder.UpdatedAt = time.Now()
 
 	// Send email notifications concurrently
@@ -264,7 +268,7 @@ func (r *repository) UpdateOrder(ctx context.Context, req *UpdateStoreOrderInput
 		to := []string{existingOrder.Customer.Email}
 		contents := map[string]string{
 			"buyer_name": existingOrder.Customer.Name,
-			"order_id" :existingOrder.UUID,
+			"order_id":   existingOrder.UUID,
 		}
 
 		if req.Status == "canceled" {
@@ -397,4 +401,76 @@ func (r *repository) WithdrawFund(ctx context.Context, req *Fund) error {
 		return err
 	}
 	return nil
+}
+
+// AddReview adds a new review to the database
+func (r *repository) AddReview(ctx context.Context, review *Review) error {
+	if err := r.db.WithContext(ctx).Create(review).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// storeReviews, err := repo.GetReviews(ctx, "storeID", uint32(1))
+// orderReviews, err := repo.GetReviews(ctx, "orderID", "order1
+// GetReviews fetches reviews by either storeID or orderID based on the filter type.
+func (r *repository) GetReviews(ctx context.Context, filterType string, value interface{}) ([]*Review, error) {
+	var reviews []*Review
+
+	// Determine the filter type and apply the query
+	switch filterType {
+	case "storeID":
+		storeID, ok := value.(uint32)
+		if !ok {
+			return nil, errors.NewAppError(http.StatusForbidden, "FORBIDDEN", "invalid storeID type")
+		}
+		if err := r.db.WithContext(ctx).Where("store_id = ?", storeID).Find(&reviews).Error; err != nil {
+			return nil, err
+		}
+	case "productID":
+		productID, ok := value.(uint32)
+		if !ok {
+			return nil, errors.NewAppError(http.StatusForbidden, "FORBIDDEN", "invalid storeID type")
+		}
+		if err := r.db.WithContext(ctx).Where("product_id = ?", productID).Find(&reviews).Error; err != nil {
+			return nil, err
+		}
+	case "orderID":
+		orderID, ok := value.(string)
+		if !ok {
+			return nil, errors.NewAppError(http.StatusForbidden, "FORBIDDEN", "invalid orderID type")
+		}
+		if err := r.db.WithContext(ctx).Where("order_id = ?", orderID).Find(&reviews).Error; err != nil {
+			return nil, err
+		}
+
+	default:
+		return nil, errors.NewAppError(http.StatusForbidden, "FORBIDDEN", "invalid filter type")
+	}
+
+	return reviews, nil
+}
+
+func filterProductsByStore(products []TrackedProduct, storeName string) []*StoreProduct {
+	var filteredProducts []*StoreProduct
+
+	for i, product := range products {
+		product.Quantity = products[i].Quantity
+		storeProduct := convertTrackedToStoreProduct(product)
+		if product.Store == storeName {
+			filteredProducts = append(filteredProducts, storeProduct)
+		}
+	}
+
+	return filteredProducts
+}
+
+func convertTrackedToStoreProduct(tp TrackedProduct) *StoreProduct {
+	return &StoreProduct{
+		Name:      tp.Name,
+		Price:     tp.Price,
+		Quantity:  tp.Quantity,
+		Thumbnail: tp.Thumbnail,
+		ID:        tp.ID,
+	}
 }
