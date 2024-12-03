@@ -700,6 +700,11 @@ type ReviewBuyer {
 	comment: String!
 }
 
+type ReviewProduct {
+	nickname: String!
+	avatar: String!
+	comment: String!
+}
 input ReviewBuyerInput {
 	nickname: String!
 	avatar: String!
