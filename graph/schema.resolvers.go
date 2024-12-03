@@ -331,12 +331,12 @@ func (r *mutationResolver) AddHandledProduct(ctx context.Context, userID int, pr
 
 // AddReview is the resolver for the addReview field.
 func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInput) (*model.Review, error) {
-	token := ctx.Value("token").(string)
+	// token := ctx.Value("token").(string)
 
-	authErr := middlewares.AuthMiddleware("entry", token)
-	if authErr != nil {
-		return nil, authErr
-	}
+	// authErr := middlewares.AuthMiddleware("entry", token)
+	// if authErr != nil {
+	// 	return nil, authErr
+	// }
 	storeRep := app.InitializePackage(app.StorePackage)
 
 	storeRepository, ok := storeRep.(store.Repository)
