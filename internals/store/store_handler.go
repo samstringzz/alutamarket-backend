@@ -1,6 +1,9 @@
 package store
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 type Handler struct {
 	Service
@@ -143,10 +146,30 @@ func (h *Handler) AddReview(ctx context.Context, req *Review) error {
 }
 
 func (h *Handler) GetReviews(ctx context.Context, filterType string, value interface{}) ([]*Review, error) {
-
 	result, err := h.Service.GetReviews(ctx, filterType, value)
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
+}
+
+func (h *Handler) GetDVAAccount(ctx context.Context, email string) (*DVAAccount, error) {
+	account, err := h.Service.GetDVAAccount(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	return account, nil
+}
+
+// In store/handler.go
+func (h *Handler) GetFollowedStores(ctx context.Context, userID uint32) ([]*Store, error) {
+	return h.Service.GetFollowedStores(ctx, userID)
+}
+
+func (h *Handler) GetDVABalance(ctx context.Context, id string) (float64, error) {
+	balance, err := h.Service.GetDVABalance(ctx, id)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get DVA balance: %v", err)
+	}
+	return balance, nil
 }

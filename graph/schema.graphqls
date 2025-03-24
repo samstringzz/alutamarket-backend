@@ -36,35 +36,39 @@ type MessageUser {
 	id: Int!
 	avatar: String
 	online: Boolean!
-	name: String!
+	fullname: String!
 	status: String!
 }
 
-type Message {
-	id: Int!
-	chat_id: Int!
-	sender: Int!
-	content: String!
-	users: [MessageUser]!
-	media: MediaType!
-	is_read: Boolean!
-	created_at: Time
-	updated_at: Time
+type Chat {
+  id: ID!
+  users: [User!]!
+  messages: [Message!]!
+  latest_message: Message
+  unread_count: Int!
 }
 
-type Chat {
-	id: Int
-	latest_message: Message
-	messages: [Message]
-	unread_count: Int!
-	users: [MessageUser]!
-	time: Time!
+extend type Query {
+  Chats(userID: String!): [Chat!]
+  Messages(chatId: String!): [Message!]
+}
+
+type Message {
+  id: ID!
+  chat_id: String!
+  content: String!
+  sender: String!
+  created_at: String!
+  updated_at: String
+  users: [User!]!
+  media: String
+  is_read: Boolean!
 }
 
 input MessageUserInput {
 	id: Int!
 	avatar: String
-	name: String!
+	fullname: String!
 }
 
 input MessageInput {
@@ -233,7 +237,7 @@ input ProductInput {
 	store: String!
 	status: Boolean!
 	category: Int!
-	subcategory: Int!
+	subcategory: String!
 	always_available: Boolean!
 }
 
@@ -330,27 +334,28 @@ type PaymentDetails {
 	address: String!
 	info: String!
 }
+
 type User {
-	id: ID!
-	fullname: String!
-	UUID: String!
-	email: String!
-	campus: String!
-	avatar: String
-	dob: String
-	gender: String
-	password: String!
-	phone: String!
-	usertype: String!
-	stores: [Store!]
-	active: Boolean!
-	access_token: String
-	refresh_token: String
-	twofa: Boolean!
-	online: Boolean!
-	code: String!
-	paymnetDetails: PaymentDetails
-	codeexpiry: String!
+  id: ID!
+  fullname: String!
+  UUID: String!
+  email: String!
+  campus: String!
+  avatar: String
+  dob: String
+  gender: String
+  password: String!
+  phone: String!
+  usertype: String!
+  stores: [Store!]
+  active: Boolean!
+  access_token: String
+  refresh_token: String
+  twofa: Boolean!
+  online: Boolean!
+  code: String!
+  paymentDetails: PaymentDetails
+  codeexpiry: String!
 }
 
 input NewUser {
@@ -382,15 +387,27 @@ input UpdateUserInput {
 	phone: String
 	gender: String
 	active: Boolean
-	online: Boolean
+	online: Boolean!
 	usertype: String
 	code: String
 	avatar: String
-	paymnetDetails: PaymentDetailsInput
+	paymentDetails: PaymentDetailsInput
+}
+
+type Category {
+  id: ID!
+  name: String!
+  slug: String!
+  description: String
+  image: String
+  subcategories: [SubCategory]
 }
 
 input NewCategory {
-	name: String!
+  name: String!
+  slug: String!
+  description: String
+  image: String
 }
 input NewSubCategory {
 	name: String!
@@ -409,12 +426,7 @@ input ModifyCartItemInput {
 	quantity: Int!
 	user: Int!
 }
-type Category {
-	id: ID!
-	name: String!
-	slug: String!
-	subcategories: [SubCategory!]
-}
+
 
 type SubCategory {
 	name: String!
@@ -472,7 +484,7 @@ type Product {
 }
 
 type Customer {
-	id: Int!
+	id: String!
 	first_name: String!
 	last_name: String!
 	email: String!
@@ -482,7 +494,7 @@ type Customer {
 }
 type Bank {
 	name: String!
-	id: Int!
+	id: String!
 	slug: String!
 }
 
@@ -493,8 +505,8 @@ type SplitConfig {
 type Account {
 	customer: Customer!
 	bank: Bank!
-	id: Int!
-	account_number: Int!
+	id: String!
+	account_number: String!
 	account_name: String!
 	created_at: String!
 	updated_at: String!
@@ -527,10 +539,11 @@ type Transaction {
 	category: String!
 	created_at: Time!
 }
+
 type LoginRes {
-	id: Int!
-	access_token: String!
-	refresh_token: String!
+  id: Int!
+  access_token: String!
+  refresh_token: String!
 }
 
 # input ReviewInput {
@@ -678,7 +691,7 @@ input UpdateProductInput {
 	store: String
 	status: Boolean
 	category: Int
-	subcategory: Int
+	subcategory: String
 	always_available: Boolean
 }
 type Downloads {
@@ -737,9 +750,10 @@ type Query {
 	Users(limit: Int, offset: Int): [User!]!
 	User(id: ID!): User
 	Categories: [Category!]!
+	followedStores(userId: Int!): [Store!]!
 	Category(id: Int!): Category
 	SubCategory(id: ID!): SubCategory
-	Products(store: String, limit: Int, offset: Int): ProductPaginationData!
+	Products(store: String, categorySlug: String, limit: Int, offset: Int): ProductPaginationData!
 	Product(id: Int!): Product
 	HandledProducts(user: Int!, type: String!): [HandledProducts!]!
 	RecommendedProducts(query: String!): [Product!]!
@@ -756,8 +770,6 @@ type Query {
 	Skynets(id: String!): [Skynet!]
 	Skynet(id: String!): Skynet
 	MYDVA(email: String!): Account
-	Chats(userID: String!): [Chat]
-	Messages(chatId: String!): [Message]
 	GetDVABalance(id: String!): String
 	MyInvoices(storeID: Int): [Invoice]
 	MyDownloads(id: String!): [Downloads]

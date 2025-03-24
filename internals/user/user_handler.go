@@ -55,13 +55,26 @@ func (h *Handler) ToggleStoreFollowStatus(ctx context.Context, userId, storeId u
 	return nil
 }
 
-func (h *Handler) UpdateUser(ctx context.Context, user *User) (*User, error) {
+func (h *Handler) UpdateUser(ctx context.Context, req *UpdateUserReq) (*User, error) {
+	// Convert UpdateUserReq to User for backward compatibility
+	user := &User{
+		ID:             req.ID,
+		Fullname:       req.Fullname,
+		Email:          req.Email,
+		Campus:         req.Campus,
+		Phone:          req.Phone,
+		Avatar:         req.Avatar,
+		Dob:            req.Dob,
+		PaymentDetails: req.PaymentDetails,
+	}
+
 	usr, err := h.Service.UpdateUser(ctx, user)
 	if err != nil {
 		return nil, err
 	}
 	return usr, nil
 }
+
 func (h *Handler) CreateStore(ctx context.Context, user *store.Store) (*store.Store, error) {
 	usr, err := h.Service.CreateStore(ctx, user)
 	if err != nil {

@@ -2,6 +2,7 @@ package messages
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/internals/user"
@@ -55,6 +56,18 @@ func (s *service) GetChatLists(c context.Context, req uint32) ([]*Chat, error) {
 	return chats, nil
 }
 
+func (s *service) GetChatUsers(c context.Context, chatID uint32) ([]*user.User, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	users, err := s.Repository.GetChatUsers(ctx, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (s *service) GetMessages(c context.Context, req string) ([]*Message, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
@@ -65,4 +78,9 @@ func (s *service) GetMessages(c context.Context, req string) ([]*Message, error)
 	}
 
 	return chats, nil
+}
+
+// Add WebSocketHandler implementation to service
+func (s *service) WebSocketHandler(w http.ResponseWriter, req *http.Request) {
+	s.Repository.WebSocketHandler(w, req)
 }

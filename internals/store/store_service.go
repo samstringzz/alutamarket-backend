@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -214,4 +215,30 @@ func (s *service) GetReviews(ctx context.Context, filterType string, value inter
 		return nil, err
 	}
 	return result, nil
+}
+
+func (s *service) GetDVAAccount(ctx context.Context, email string) (*DVAAccount, error) {
+	return s.Repository.GetDVAAccount(ctx, email)
+}
+
+func (s *service) GetDVABalance(ctx context.Context, id string) (float64, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	balance, err := s.Repository.GetDVABalance(ctx, id)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get DVA balance: %v", err)
+	}
+	return balance, nil
+}
+
+func (s *service) GetFollowedStores(ctx context.Context, userID uint32) ([]*Store, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	stores, err := s.Repository.GetFollowedStores(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get followed stores: %v", err)
+	}
+	return stores, nil
 }

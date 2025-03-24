@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/Chrisentech/aluta-market-api/errors"
+	"github.com/Chrisentech/aluta-market-api/graph/model"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -70,23 +71,57 @@ func (r *repository) GetProduct(ctx context.Context, id, user uint32) (*Product,
 	if err != nil {
 		return nil, err
 	}
+
+	// Check if the product is nil
+	if p == nil {
+		return nil, fmt.Errorf("product not found")
+	}
+
 	if user != 0 {
 		_, err = r.AddHandledProduct(ctx, user, id, "recently_viewed")
 		return nil, err
 	} else {
 		return p, nil
 	}
-
 }
 
 func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Product, error) {
-	category, _ := r.GetCategory(ctx, uint32(req.CategoryID))
-	subcategory := req.SubCategoryID
-	subcategoryName := ""
-	for i, item := range category.SubCategories {
-		if i+1 == int(subcategory) {
-			subcategoryName = item.Name
+	category, err := r.GetCategory(ctx, uint32(req.CategoryID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get category: %v", err)
+	}
+
+	if category == nil {
+		return nil, fmt.Errorf("category with ID %d not found", req.CategoryID)
+	}
+
+	// Verify subcategory exists in the category (check both name and slug)
+	subcategoryExists := false
+	for _, sub := range category.SubCategories {
+		// Compare both name and slug case-insensitively
+		if strings.EqualFold(sub.Name, req.SubCategoryName) ||
+			strings.EqualFold(sub.Slug, req.SubCategoryName) {
+			subcategoryExists = true
+			// Use the correct name from the database
+			req.SubCategoryName = sub.Name
+			break
 		}
+	}
+
+	if !subcategoryExists {
+		return nil, fmt.Errorf("subcategory '%s' not found in category. Available subcategories: %v",
+			req.SubCategoryName,
+			getSubcategoryNames(category.SubCategories))
+	}
+
+	// Ensure images array is not nil
+	if req.Images == nil {
+		req.Images = []string{}
+	}
+
+	// Ensure variant is properly handled
+	if req.Variant == nil {
+		req.Variant = []*VariantType{}
 	}
 	if req.Discount > req.Price {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Discount cannot exceed Product Price")
@@ -105,7 +140,7 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 		Variant:         req.Variant,
 		Store:           req.Store,
 		Category:        category.Name,
-		Subcategory:     subcategoryName,
+		Subcategory:     req.SubCategoryName,
 		AlwaysAvailbale: req.AlwaysAvailbale,
 	}
 	if err := r.db.Create(newProduct).Error; err != nil {
@@ -116,59 +151,38 @@ func (r *repository) CreateProduct(ctx context.Context, req *NewProduct) (*Produ
 	return newProduct, nil
 }
 
-func (r *repository) UpdateProduct(ctx context.Context, req *NewProduct) (*Product, error) {
-	idUint32, err := strconv.ParseUint(req.ID, 10, 32) // 10 is for base 10, 32 is the bit size
-	if err != nil {
-		// Handle conversion error
-		fmt.Println("Error converting string to uint32:", err)
-		return nil, err
+// Helper function to get subcategory names for error message
+func getSubcategoryNames(subs []SubCategory) []string {
+	names := make([]string, len(subs))
+	for i, sub := range subs {
+		names[i] = sub.Name
 	}
-	// First, check if the product exists by its ID or another unique identifier
-	existingProduct, err := r.GetProduct(ctx, uint32(idUint32), 0)
+	return names
+}
+
+func (r *repository) UpdateProduct(ctx context.Context, req *NewProduct) (*Product, error) {
+	idUint32, err := strconv.ParseUint(req.ID, 10, 32)
 	if err != nil {
+		return nil, fmt.Errorf("invalid product ID: %v", err)
+	}
+
+	// Get existing product
+	var existingProduct Product
+	if err := r.db.WithContext(ctx).Where("id = ?", idUint32).First(&existingProduct).Error; err != nil {
 		return nil, err
 	}
 
-	// Update only the fields that are present in the req
-	if req.Name != "" {
-		existingProduct.Name = req.Name
-		existingProduct.Slug = utils.GenerateSlug(req.Name)
-	}
-	if req.Description != "" {
-		existingProduct.Description = req.Description
-	}
-	if req.Quantity != 0 {
-		existingProduct.Quantity = req.Quantity
-	}
-	if len(req.Images) != 0 {
-		existingProduct.Images = append(existingProduct.Images, req.Images...)
-	}
-	if req.Discount != 0 {
-		existingProduct.Discount = req.Discount
-	}
-	// Check if Status is not nil before updating (to handle both true and false)
+	// Update status if provided
 	if req.Status != nil {
 		existingProduct.Status = *req.Status
 	}
 
-	if req.Thumbnail != "" {
-		existingProduct.Thumbnail = req.Thumbnail
-	}
-	if req.Price != 0 {
-		existingProduct.Price = req.Price
+	// Update the existing record
+	if err := r.db.WithContext(ctx).Model(&existingProduct).Where("id = ?", idUint32).Updates(&existingProduct).Error; err != nil {
+		return nil, fmt.Errorf("failed to update product: %v", err)
 	}
 
-	if len(req.Variant) != 0 {
-		existingProduct.Variant = append(existingProduct.Variant, req.Variant...)
-	}
-
-	// Update the product in the repository
-	err = r.db.Save(existingProduct).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return existingProduct, nil
+	return &existingProduct, nil
 }
 
 func (r *repository) DeleteProduct(ctx context.Context, id uint32) error {
@@ -245,28 +259,46 @@ func (r *repository) RemoveWishListedProduct(ctx context.Context, id uint32) err
 	return err
 }
 
-func (r *repository) GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, int, error) {
+func (r *repository) GetProducts(ctx context.Context, store string, categorySlug string, limit int, offset int) ([]*Product, int, error) {
 	var products []*Product
 	var totalCount int64
 
 	query := r.db
 	if store != "" {
 		query = query.Where("store = ?", store)
+	}
+	if categorySlug != "" {
+		query = query.Joins("JOIN categories ON categories.name = products.category").
+			Where("categories.slug = ?", categorySlug)
 	} else {
-		query = query.Where("status = ?", true)
-
-		// Add ORDER BY RANDOM() to randomize the result
-		query = query.Order("RANDOM()")
+		query = query.Where("status = ?", true).
+			Order("RANDOM()")
 	}
 
-	// Count the total number of records that match the query
+	// Count total records
 	if err := query.Model(&Product{}).Count(&totalCount).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Fetch the paginated products
+	// Fetch paginated products
 	if err := query.Limit(limit).Offset(offset * limit).Find(&products).Error; err != nil {
 		return nil, 0, err
+	}
+
+	// Initialize JSON fields
+	for _, p := range products {
+		if p.Images == nil {
+			p.Images = []string{}
+		}
+		if p.Variant == nil {
+			p.Variant = []*VariantType{}
+		}
+		if p.Views == nil {
+			p.Views = []uint32{}
+		}
+		if p.Reviews == nil {
+			p.Reviews = []Review{}
+		}
 	}
 
 	return products, int(totalCount), nil
@@ -274,19 +306,15 @@ func (r *repository) GetProducts(ctx context.Context, store string, limit int, o
 
 func (r *repository) GetCategories(ctx context.Context) ([]*Category, error) {
 	var categories []*Category
-	res := r.db.Find(&categories)
-	fmt.Print(res)
-	// if err != nil {
-	// 	fmt.Println("Error retrieving categories:", err)
-	// 	return nil, err
-	// }
-	// fmt.Println("Retrieved categories:", categories)
+	if err := r.db.Preload("SubCategories").Find(&categories).Error; err != nil {
+		return nil, fmt.Errorf("error retrieving categories: %v", err)
+	}
 	return categories, nil
 }
 
 func (r *repository) GetCategory(ctx context.Context, id uint32) (*Category, error) {
 	p := Category{}
-	err := r.db.Where("id = ?", id).First(&p).Error
+	err := r.db.Preload("SubCategories").Where("id = ?", id).First(&p).Error
 	if err != nil {
 		return nil, err
 	}
@@ -310,50 +338,41 @@ func filterReviewsBySeller(reviews []*Review, sellerId string) []*Review {
 }
 
 func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
-	if len(query) < 3 {
-		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "query string too short")
-	}
-	if len(query) > 100 {
-		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "query string too long")
-	}
-	if !isValidQuery(query) {
-		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "query string contains invalid characters")
+	var products []*Product
+
+	// Ensure the query string is properly formatted
+	formattedQuery := "%" + query + "%"
+
+	// Perform the search operation
+	err := r.db.Select("products.*").
+		Table("products").
+		Joins("JOIN categories ON categories.name = products.category").
+		Where("(categories.slug ILIKE ? OR products.name ILIKE ?) AND products.deleted_at IS NULL",
+			formattedQuery,
+			formattedQuery).
+		Find(&products).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to search products: %v", err)
 	}
 
-	var result []*Product
-	queryParts := strings.Split(strings.ToLower(query), "-")
-	commonWords := map[string]bool{
-		"and": true, "the": true, "is": true, "in": true, "on": true, "at": true, "to": true, "a": true, "of": true, "for": true, "with": true, "by": true, "about": true,
-	}
-
-	var queryConditions []string
-	var queryValues []interface{}
-
-	for _, part := range queryParts {
-		if _, exists := commonWords[part]; exists {
-			continue
+	// Initialize empty slices if nil
+	for _, p := range products {
+		if p.Images == nil {
+			p.Images = []string{}
 		}
-
-		part = "%" + part + "%"
-		queryConditions = append(queryConditions, "LOWER(slug) LIKE ?")
-		queryConditions = append(queryConditions, "LOWER(name) LIKE ?")
-		queryConditions = append(queryConditions, "LOWER(category) LIKE ?")
-		queryConditions = append(queryConditions, "LOWER(subcategory) LIKE ?")
-		queryConditions = append(queryConditions, "LOWER(store) LIKE ?")
-		for i := 0; i < 5; i++ {
-			queryValues = append(queryValues, part)
+		if p.Variant == nil {
+			p.Variant = []*VariantType{}
+		}
+		if p.Views == nil {
+			p.Views = []uint32{}
+		}
+		if p.Reviews == nil {
+			p.Reviews = []Review{}
 		}
 	}
 
-	if len(queryConditions) == 0 {
-		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "no valid search terms")
-	}
-
-	conditionString := strings.Join(queryConditions, " OR ")
-	if err := r.db.WithContext(ctx).Where(conditionString, queryValues...).Find(&result).Error; err != nil {
-		return nil, err
-	}
-	return result, nil
+	return products, nil
 }
 
 func (r *repository) GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error) {
@@ -365,41 +384,55 @@ func (r *repository) GetRecommendedProducts(ctx context.Context, query string) (
 	return products, nil
 }
 
+// AddReview adds a new review for a product.
 func (r *repository) AddReview(ctx context.Context, input *Review) (*Review, error) {
-	product, err := r.GetProduct(ctx, input.ProductID, 0)
+	input.ID = utils.GenerateUUID() // Generate unique ID for the review
+
+	// Save the review directly to the database
+	err := r.db.Create(input).Error
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to add review: %v", err)
 	}
 
-	input.ID = utils.GenerateUUID()
-	product.Reviews = append(product.Reviews, input)
-	err = r.db.Save(product).Error
-	if err != nil {
-		return nil, err
-	}
 	return input, nil
 }
 
+// GetProductReviews retrieves all reviews for a specific product, or all reviews for a seller's products.
 func (r *repository) GetProductReviews(ctx context.Context, productId uint32, sellerId string) ([]*Review, error) {
-	product, err := r.GetProduct(ctx, productId, 0)
-	if err != nil {
-		return nil, err
-	}
+	var reviews []*Review
 
-	resp := product.Reviews
-	if sellerId != "" {
-		reviews := make([]*Review, 0)
-		products, _, err := r.GetProducts(ctx, sellerId, 10000, 0)
+	// If we are fetching reviews for a specific product
+	if productId > 0 {
+		err := r.db.Where("product_id = ?", productId).Find(&reviews).Error
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to fetch product reviews: %v", err)
 		}
-		for _, prd := range products {
-			reviews = append(reviews, prd.Reviews...)
-		}
-		resp = reviews
+		return reviews, nil
 	}
 
-	return resp, nil
+	// If we are fetching reviews for all products of a seller
+	// In GetProductReviews function
+	if sellerId != "" {
+		var products []*Product
+		// Add empty string for categorySlug parameter
+		products, _, err := r.GetProducts(ctx, sellerId, "", 10000, 0)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch seller's products: %v", err)
+		}
+
+		productIDs := make([]uint32, len(products))
+		for i, prd := range products {
+			productIDs[i] = prd.ID
+		}
+
+		err = r.db.Where("product_id IN ?", productIDs).Find(&reviews).Error
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch reviews for seller's products: %v", err)
+		}
+		return reviews, nil
+	}
+
+	return reviews, nil
 }
 
 func (r *repository) AddSavedForLater(ctx context.Context, userId, productId uint32) (*HandledProduct, error) {
@@ -430,4 +463,81 @@ func (r *repository) GetSavedForLaterProducts(ctx context.Context, userId uint32
 		return nil, err
 	}
 	return savedForLater, nil
+}
+
+func (r *repository) Products(ctx context.Context, store *string, categorySlug *string, limit *int, offset *int) (*model.ProductPaginationData, error) {
+	storeValue := ""
+	if store != nil {
+		storeValue = *store
+	}
+
+	categorySlugValue := ""
+	if categorySlug != nil {
+		categorySlugValue = *categorySlug
+	}
+
+	limitValue := 10
+	if limit != nil {
+		limitValue = *limit
+	}
+
+	offsetValue := 0
+	if offset != nil {
+		offsetValue = *offset
+	}
+
+	products, total, err := r.GetProducts(ctx, storeValue, categorySlugValue, limitValue, offsetValue)
+	if err != nil {
+		return nil, err
+	}
+
+	modelProducts := make([]*model.Product, len(products))
+	for i, p := range products {
+		var file *string
+		if p.File != "" {
+			file = &p.File
+		}
+
+		modelProducts[i] = &model.Product{
+			ID:              int(p.ID),
+			Name:            p.Name,
+			Slug:            p.Slug,
+			Description:     p.Description,
+			Image:           p.Images, // Use the Images field directly
+			Thumbnail:       p.Thumbnail,
+			Price:           p.Price,
+			Discount:        p.Discount,
+			Status:          p.Status,
+			AlwaysAvailable: p.AlwaysAvailbale,
+			Quantity:        p.Quantity,
+			File:            file, // Handle nil case for File field
+			Store:           p.Store,
+			Category:        p.Category,
+			Subcategory:     p.Subcategory,
+			Type:            p.Type,
+		}
+	}
+
+	return &model.ProductPaginationData{
+		Data:  modelProducts,
+		Total: total,
+	}, nil
+}
+
+func (r *repository) GetHandledProductsWithDetails(ctx context.Context, userID uint32, typeArg string) ([]*HandledProduct, error) {
+	var handledProducts []*HandledProduct
+
+	// Join handled_products with products table
+	result := r.db.WithContext(ctx).
+		Table("handled_products hp").
+		Select("hp.*, p.*").
+		Joins("LEFT JOIN products p ON hp.product_id = p.id").
+		Where("hp.user_id = ? AND hp.type = ? AND hp.deleted_at IS NULL", userID, typeArg).
+		Find(&handledProducts)
+
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to fetch handled products: %v", result.Error)
+	}
+
+	return handledProducts, nil
 }

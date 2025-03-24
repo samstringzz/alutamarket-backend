@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -202,6 +203,7 @@ func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*Order, e
 
 func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*Order, error) {
 	var orders []*Order
+
 	err := r.db.Where("user_id = ?", userID).Find(&orders).Error
 	if err != nil {
 		return nil, err
@@ -223,6 +225,21 @@ func (r *repository) GetOrder(ctx context.Context, storeID uint32, orderID strin
 	// }
 
 	// return store.Orders[0], nil
+}
+
+func (r *repository) GetFollowedStores(ctx context.Context, followerID uint32) ([]*Store, error) {
+	var stores []*Store
+
+	query := `
+        SELECT * FROM stores 
+        WHERE followers::jsonb @> '[{"follower_id": %d}]'
+    `
+
+	if err := r.db.Raw(fmt.Sprintf(query, followerID)).Scan(&stores).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch followed stores: %v", err)
+	}
+
+	return stores, nil
 }
 
 func (r *repository) UpdateOrder(ctx context.Context, req *UpdateStoreOrderInput) (*Order, error) {
@@ -391,7 +408,7 @@ func (r *repository) WithdrawFund(ctx context.Context, req *Fund) error {
 		return err
 	}
 	if req.UserID != store.UserID {
-		return errors.NewAppError(http.StatusNotFound, "NOT FOUND", "Oops, An error occured in transaction")
+		return errors.NewAppError(http.StatusNotFound, "NOT_FOUND", "Oops, An error occurred in transaction")
 	}
 	if req.Amount > float32(store.Wallet) {
 		return errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Your Wallet amount is not within range of withdrawal amount")
@@ -473,4 +490,33 @@ func convertTrackedToStoreProduct(tp TrackedProduct) *StoreProduct {
 		Thumbnail: tp.Thumbnail,
 		ID:        tp.ID,
 	}
+}
+
+func (r *repository) GetDVAAccount(ctx context.Context, email string) (*DVAAccount, error) {
+	var account DVAAccount
+
+	if err := r.db.Table("dva_accounts").
+		Select("dva_accounts.id, dva_accounts.customer_id, dva_accounts.bank_id, dva_accounts.account_number, dva_accounts.account_name").
+		Preload("Customer").
+		Preload("Bank").
+		Joins("JOIN dva_customers ON dva_accounts.customer_id = dva_customers.id").
+		Joins("JOIN dva_banks ON dva_accounts.bank_id = dva_banks.id").
+		Where("dva_customers.email = ?", email).
+		First(&account).Error; err != nil {
+		return nil, err
+	}
+
+	return &account, nil
+}
+
+func (r *repository) GetDVABalance(ctx context.Context, id string) (float64, error) {
+	var balance float64
+	err := r.db.Table("dva_accounts").
+		Select("balance").
+		Where("id = ?", id).
+		Scan(&balance).Error
+	if err != nil {
+		return 0, fmt.Errorf("failed to get DVA balance: %v", err)
+	}
+	return balance, nil
 }

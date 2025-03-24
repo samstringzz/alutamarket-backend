@@ -12,8 +12,8 @@ import (
 type Account struct {
 	Customer      *Customer    `json:"customer"`
 	Bank          *Bank        `json:"bank"`
-	ID            int          `json:"id"`
-	AccountNumber int          `json:"account_number"`
+	ID            string       `json:"id"`
+	AccountNumber string       `json:"account_number"`
 	AccountName   string       `json:"account_name"`
 	CreatedAt     string       `json:"created_at"`
 	UpdatedAt     string       `json:"updated_at"`
@@ -24,7 +24,7 @@ type Account struct {
 
 type Bank struct {
 	Name string `json:"name"`
-	ID   int    `json:"id"`
+	ID   string `json:"id"`
 	Slug string `json:"slug"`
 }
 
@@ -52,16 +52,17 @@ type Category struct {
 	ID            string         `json:"id"`
 	Name          string         `json:"name"`
 	Slug          string         `json:"slug"`
+	Description   *string        `json:"description,omitempty"`
+	Image         *string        `json:"image,omitempty"`
 	Subcategories []*SubCategory `json:"subcategories,omitempty"`
 }
 
 type Chat struct {
-	ID            *int           `json:"id,omitempty"`
-	LatestMessage *Message       `json:"latest_message,omitempty"`
-	Messages      []*Message     `json:"messages,omitempty"`
-	UnreadCount   int            `json:"unread_count"`
-	Users         []*MessageUser `json:"users"`
-	Time          time.Time      `json:"time"`
+	ID            string     `json:"id"`
+	Users         []*User    `json:"users"`
+	Messages      []*Message `json:"messages"`
+	LatestMessage *Message   `json:"latest_message,omitempty"`
+	UnreadCount   int        `json:"unread_count"`
 }
 
 type ChatInput struct {
@@ -69,7 +70,7 @@ type ChatInput struct {
 }
 
 type Customer struct {
-	ID           int    `json:"id"`
+	ID           string `json:"id"`
 	FirstName    string `json:"first_name"`
 	LastName     string `json:"last_name"`
 	Email        string `json:"email"`
@@ -183,15 +184,15 @@ type LoginRes struct {
 }
 
 type Message struct {
-	ID        int            `json:"id"`
-	ChatID    int            `json:"chat_id"`
-	Sender    int            `json:"sender"`
-	Content   string         `json:"content"`
-	Users     []*MessageUser `json:"users"`
-	Media     MediaType      `json:"media"`
-	IsRead    bool           `json:"is_read"`
-	CreatedAt *time.Time     `json:"created_at,omitempty"`
-	UpdatedAt *time.Time     `json:"updated_at,omitempty"`
+	ID        string  `json:"id"`
+	ChatID    string  `json:"chat_id"`
+	Content   string  `json:"content"`
+	Sender    string  `json:"sender"`
+	CreatedAt string  `json:"created_at"`
+	UpdatedAt *string `json:"updated_at,omitempty"`
+	Users     []*User `json:"users"`
+	Media     *string `json:"media,omitempty"`
+	IsRead    bool    `json:"is_read"`
 }
 
 type MessageInput struct {
@@ -204,17 +205,17 @@ type MessageInput struct {
 }
 
 type MessageUser struct {
-	ID     int     `json:"id"`
-	Avatar *string `json:"avatar,omitempty"`
-	Online bool    `json:"online"`
-	Name   string  `json:"name"`
-	Status string  `json:"status"`
+	ID       int     `json:"id"`
+	Avatar   *string `json:"avatar,omitempty"`
+	Online   bool    `json:"online"`
+	Fullname string  `json:"fullname"`
+	Status   string  `json:"status"`
 }
 
 type MessageUserInput struct {
-	ID     int     `json:"id"`
-	Avatar *string `json:"avatar,omitempty"`
-	Name   string  `json:"name"`
+	ID       int     `json:"id"`
+	Avatar   *string `json:"avatar,omitempty"`
+	Fullname string  `json:"fullname"`
 }
 
 type ModifyCartItemInput struct {
@@ -228,7 +229,10 @@ type Mutation struct {
 }
 
 type NewCategory struct {
-	Name string `json:"name"`
+	Name        string  `json:"name"`
+	Slug        string  `json:"slug"`
+	Description *string `json:"description,omitempty"`
+	Image       *string `json:"image,omitempty"`
 }
 
 type NewReview struct {
@@ -348,7 +352,7 @@ type ProductInput struct {
 	Store           string        `json:"store"`
 	Status          bool          `json:"status"`
 	Category        int           `json:"category"`
-	Subcategory     int           `json:"subcategory"`
+	Subcategory     string        `json:"subcategory"`
 	AlwaysAvailable bool          `json:"always_available"`
 }
 
@@ -413,6 +417,12 @@ type ReviewInput struct {
 	Rating    float64           `json:"rating"`
 	CreatedAt *time.Time        `json:"created_at,omitempty"`
 	UpdatedAt *time.Time        `json:"updated_at,omitempty"`
+}
+
+type ReviewProduct struct {
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	Comment  string `json:"comment"`
 }
 
 type Skynet struct {
@@ -615,7 +625,7 @@ type UpdateProductInput struct {
 	Store           *string       `json:"store,omitempty"`
 	Status          *bool         `json:"status,omitempty"`
 	Category        *int          `json:"category,omitempty"`
-	Subcategory     *int          `json:"subcategory,omitempty"`
+	Subcategory     *string       `json:"subcategory,omitempty"`
 	AlwaysAvailable *bool         `json:"always_available,omitempty"`
 }
 
@@ -656,11 +666,11 @@ type UpdateUserInput struct {
 	Phone          *string              `json:"phone,omitempty"`
 	Gender         *string              `json:"gender,omitempty"`
 	Active         *bool                `json:"active,omitempty"`
-	Online         *bool                `json:"online,omitempty"`
+	Online         bool                 `json:"online"`
 	Usertype       *string              `json:"usertype,omitempty"`
 	Code           *string              `json:"code,omitempty"`
 	Avatar         *string              `json:"avatar,omitempty"`
-	PaymnetDetails *PaymentDetailsInput `json:"paymnetDetails,omitempty"`
+	PaymentDetails *PaymentDetailsInput `json:"paymentDetails,omitempty"`
 }
 
 type User struct {
@@ -682,7 +692,7 @@ type User struct {
 	Twofa          bool            `json:"twofa"`
 	Online         bool            `json:"online"`
 	Code           string          `json:"code"`
-	PaymnetDetails *PaymentDetails `json:"paymnetDetails,omitempty"`
+	PaymentDetails *PaymentDetails `json:"paymentDetails,omitempty"`
 	Codeexpiry     string          `json:"codeexpiry"`
 }
 
@@ -799,7 +809,7 @@ func (e MediaType) String() string {
 	return string(e)
 }
 
-func (e *MediaType) UnmarshalGQL(v interface{}) error {
+func (e *MediaType) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
@@ -840,7 +850,7 @@ func (e RoleType) String() string {
 	return string(e)
 }
 
-func (e *RoleType) UnmarshalGQL(v interface{}) error {
+func (e *RoleType) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")

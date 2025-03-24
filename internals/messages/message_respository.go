@@ -96,26 +96,73 @@ var (
 	mutex sync.Mutex
 )
 
+// Update the updateUserStatus function to be more efficient
 func (r *repository) updateUserStatus(userID uint32, online bool) error {
-	// Update the user status in the database
-	if err := r.db.Model(&user.User{}).Where("id = ?", userID).Update("online", online).Error; err != nil {
-		log.Printf("Error updating user status: %v", err)
-		return err
+	// Add index hint and optimize the update
+	result := r.db.Model(&user.User{}).
+		Where("id = ?", userID).
+		Updates(map[string]interface{}{
+			"online":     online,
+			"updated_at": time.Now(),
+		})
+
+	if result.Error != nil {
+		log.Printf("Error updating user status: %v", result.Error)
+		return result.Error
 	}
 	return nil
 }
 
-// HandleWebSocketConnection manages WebSocket connections and messages
-func (r *repository) HandleWebSocketConnection(ws *websocket.Conn, userID uint32) {
-	// Register the new client connection for the user
-	r.updateUserStatus(userID, true)
-	mutex.Lock()
-	userConnections[userID] = ws
-	clients[ws] = true
-	mutex.Unlock()
+// Modify WebSocketHandler to handle disconnections more gracefully
+func (r *repository) WebSocketHandler(w http.ResponseWriter, req *http.Request) {
+	userID, err := extractUserIDFromRequest(req)
+	if err != nil {
+		log.Printf("Failed to extract user ID: %v", err)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
+	// Configure WebSocket
+	upgrader.CheckOrigin = func(r *http.Request) bool {
+		return true // You might want to implement proper origin checking
+	}
+
+	ws, err := upgrader.Upgrade(w, req, nil)
+	if err != nil {
+		log.Printf("Failed to upgrade to websocket: %v", err)
+		return
+	}
+
+	// Set read deadline to detect stale connections
+	ws.SetReadDeadline(time.Now().Add(60 * time.Second))
+	ws.SetPongHandler(func(string) error {
+		ws.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
+	// Start ping-pong routine
+	go func() {
+		ticker := time.NewTicker(54 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
+					return
+				}
+			}
+		}
+	}()
+
+	r.HandleWebSocketConnection(ws, userID)
+}
+
+// Keep this original declaration and update it with the improved error handling
+func (r *repository) HandleWebSocketConnection(ws *websocket.Conn, userID uint32) {
 	defer func() {
-		// Unregister the client and remove the connection
+		if err := recover(); err != nil {
+			log.Printf("Recovered from panic in HandleWebSocketConnection: %v", err)
+		}
 		r.updateUserStatus(userID, false)
 		mutex.Lock()
 		delete(clients, ws)
@@ -124,21 +171,25 @@ func (r *repository) HandleWebSocketConnection(ws *websocket.Conn, userID uint32
 		ws.Close()
 	}()
 
+	r.updateUserStatus(userID, true)
+	mutex.Lock()
+	userConnections[userID] = ws
+	clients[ws] = true
+	mutex.Unlock()
+
 	for {
 		var msg Message
-		// Read the message from the WebSocket connection
 		err := ws.ReadJSON(&msg)
 		if err != nil {
-			log.Printf("Error reading message: %v", err)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+				log.Printf("Unexpected websocket error: %v", err)
+			}
 			break
 		}
 
-		// Ensure the message has the userID and chatID context
-		// msg.SenderID = userID  // Associate the sender ID
-		chatID := msg.ChatID // Extract the chatID from the message
-
-		// Broadcast the message only to users in the same chat
-		r.BroadcastMessages(chatID, msg)
+		if msg.ChatID > 0 {
+			r.BroadcastMessages(msg.ChatID, msg)
+		}
 	}
 }
 
@@ -179,39 +230,46 @@ func (r *repository) BroadcastMessages(chatID uint32, msg Message) {
 	mutex.Unlock()
 }
 
-// WebSocketHandler upgrades an HTTP request to a WebSocket connection
-func (r *repository) WebSocketHandler(w http.ResponseWriter, req *http.Request) {
-	// Extract userID from request or session
-	userID, err := extractUserIDFromRequest(req) // You need to implement this
-	if err != nil {
-		log.Printf("Failed to upgrade to websocket: %v", err)
-		return
-	}
-	ws, err := upgrader.Upgrade(w, req, nil)
-	if err != nil {
-		log.Printf("Failed to upgrade to websocket: %v", err)
-		return
-	}
-
-	// Register the new connection for the user
-	mutex.Lock()
-	userConnections[userID] = ws
-	clients[ws] = true
-	mutex.Unlock()
-
-	r.HandleWebSocketConnection(ws, userID)
-}
-
 func NewRepository() Repository {
 	dbURI := os.Getenv("DB_URI")
-	// Initialize the database connection
+	if dbURI == "" {
+		log.Fatal("DB_URI environment variable is not set")
+	}
+
 	db, err := gorm.Open(postgres.Open(dbURI), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
+
+	// Verify connection
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatal("Failed to get database instance:", err)
+	}
+
+	// Test the connection
+	err = sqlDB.Ping()
+	if err != nil {
+		log.Fatal("Failed to ping database:", err)
+	}
+
 	return &repository{
 		db: db,
 	}
+}
+
+func (r *repository) GetChatUsers(ctx context.Context, chatID uint32) ([]*user.User, error) {
+	var chat Chat
+	if err := r.db.First(&chat, chatID).Error; err != nil {
+		return nil, fmt.Errorf("chat not found: %v", err)
+	}
+
+	var users []*user.User
+	if err := r.db.Model(&chat).Association("Users").Find(&users); err != nil {
+		return nil, fmt.Errorf("failed to get chat users: %v", err)
+	}
+
+	return users, nil
 }
 
 func (r *repository) FindChatByID(chatID uint32) (*Chat, error) {
@@ -233,30 +291,12 @@ func (r *repository) SendMessage(ctx context.Context, req *Message) error {
 		return err
 	}
 
-	// Fetch users from the chat
-	var users []*user.User
-	if err := r.db.Model(&chat).Association("Users").Find(&users); err != nil {
-		log.Printf("Error fetching users from chat: %v", err)
-		return err
-	}
-	var userInfoList []*user.User
-	for _, u := range users {
-		userInfoList = append(userInfoList, &user.User{
-			ID:       u.ID,
-			Fullname: u.Fullname, // Assuming Fullname is a field in the user model
-			Avatar:   u.Avatar,   // Assuming Avatar is a field in the user model
-		})
-	}
-
-	// senderId,_:= extractUserIDFromRequest(*http.Request)
-
-	// Create a new message, assigning the fetched users to the message
+	// Create a new message
 	newMessage := Message{
 		ChatID:    req.ChatID,
 		Content:   req.Content,
 		Media:     req.Media,
 		Sender:    req.Sender,
-		Users:     userInfoList, // Automatically assigned users from the chat
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -284,28 +324,17 @@ func (r *repository) SendMessage(ctx context.Context, req *Message) error {
 func (r *repository) GetChatLists(ctx context.Context, userID uint32) ([]*Chat, error) {
 	var chats []*Chat
 
-	// Fetch chats where the user is a participant
 	err := r.db.
-		Preload("Users"). // Eager load the Messages relationship
+		Preload("Users").
+		Preload("Messages").
+		Preload("Messages.User"). // This now correctly references the User relationship
 		Preload("LatestMessage").
 		Joins("JOIN chat_users ON chat_users.chat_id = chats.id").
 		Where("chat_users.user_id = ?", userID).
-		Group("chats.id"). // Group by chat ID to ensure distinct chats
 		Find(&chats).Error
 
 	if err != nil {
-		log.Printf("Error fetching chats for user: %v", err)
-		return nil, err
-	}
-
-	// For each chat, retrieve messages
-	for _, chat := range chats {
-		messages, err := r.GetMessagesByChatID(ctx, chat.ID)
-		if err != nil {
-			log.Printf("Error fetching messages for chat %d: %v", chat.ID, err)
-			return nil, err
-		}
-		chat.Messages = messages // Assuming Chat has a Messages field
+		return nil, fmt.Errorf("failed to get chat lists: %v", err)
 	}
 
 	return chats, nil
@@ -359,11 +388,11 @@ func (r *repository) FindOrCreateChat(ctx context.Context, users []*user.User) (
 				Avatar:   u.Avatar,   // Assuming Avatar is a field in the user model
 			})
 		}
+		// In FindOrCreateChat method, replace the message creation part
 		newMessage := Message{
 			ChatID:    newChat.ID,
 			Content:   "Hello, I was surfing through your product and would like to make some enquiry/complains",
 			Sender:    users[0].ID,
-			Users:     userInfoList, // Automatically assigned users from the chat
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
@@ -398,8 +427,17 @@ func extractUserIDs(users []*user.User) []uint32 {
 func (r *repository) GetMessages(ctx context.Context, chatID string) ([]*Message, error) {
 	var messages []*Message
 
+	// Convert chatID string to uint32
+	chatIDUint, err := strconv.ParseUint(chatID, 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("invalid chat ID: %v", err)
+	}
+
 	// Query the database for messages with the specified chatID
-	if err := r.db.Where("chat_id = ?", chatID).Find(&messages).Error; err != nil {
+	if err := r.db.
+		Where("chat_id = ?", uint32(chatIDUint)).
+		Order("created_at ASC").
+		Find(&messages).Error; err != nil {
 		log.Printf("Error retrieving messages for chatID %s: %v", chatID, err)
 		return nil, err
 	}
