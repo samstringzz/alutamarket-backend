@@ -6,16 +6,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/Chrisentech/aluta-market-api/db"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/Chrisentech/aluta-market-api/graph"
 	"github.com/Chrisentech/aluta-market-api/internals/messages"
+	"github.com/Chrisentech/aluta-market-api/internals/product"
+	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/Chrisentech/aluta-market-api/services"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
+
 	// "github.com/Chrisentech/aluta-market-api/app"
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 const defaultPort = "8080"
@@ -62,10 +67,10 @@ func main() {
 
 	// Create a new CORS middleware with the desired options
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "https://www.thealutamarket.com", "https://thealutamarket.com", "https://thealutamarket.netlify.app"}, // Specify the allowed origins
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},                                                                                                                               // Specify allowed HTTP methods
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},                                                                                                                        // Specify allowed headers
-		AllowCredentials: true,                                                                                                                                                             // Allow credentials like cookies
+		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "https://www.thealutamarket.com", "https://thealutamarket.com", "https://thealutamarket.netlify.app"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
 	})
 
 	// Load environment variables from .env file
@@ -78,33 +83,93 @@ func main() {
 		port = defaultPort
 	}
 	repo := services.NewRepository()
+
+	// Initialize user components
+	userRepo := user.NewRepository()
+	userService := user.NewService(userRepo)
+	userHandler := user.NewHandler(userService)
+
+	// Initialize product components
+	productRepo := product.NewRepository()
+	productService := product.NewService(productRepo)
+	productHandler := product.NewHandler(productService)
+
+	// Initialize message components with proper error handling
 	messageRepo := messages.NewRepository()
-	// Set up WebSocket routes
-	http.HandleFunc("/ws", messageRepo.WebSocketHandler) // WebSocket route for chat and messages
-
-	http.HandleFunc("/webhook/fw", repo.FWWebhookHandler)
-	http.HandleFunc("/webhook/ps", repo.PaystackWebhookHandler)
-	http.Handle("/upload", withCORS(http.HandlerFunc(services.UploadHandler)))
-	http.Handle("/verify-account/", withCORS(http.HandlerFunc(services.VerifyAccountNumberHandler)))
-	http.Handle("/download/", withCORS(http.HandlerFunc(services.DownloadHandler)))
-
-	// Run auto migration
-	db.Migrate()
-
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
-
-	// Wrap the GraphQL handler with CORS middleware
-	wrappedHandler := c.Handler(srv)
-	http.Handle("/graphql", ExtractTokenMiddleware(wrappedHandler))
-	http.Handle("/", playground.Handler("Aluta Market playground", "/query"))
-	http.Handle("/query", ExtractTokenMiddleware(wrappedHandler))
-
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	err := http.ListenAndServe(":"+port, nil)
-	if err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	if messageRepo == nil {
+		log.Fatal("Failed to initialize message repository")
 	}
 
+	messageService := messages.NewService(messageRepo)
+if messageService == nil {
+    log.Fatal("Failed to initialize message service")
+} else {
+    log.Printf("MessageService initialized successfully: %+v", messageService)
+}
+
+messageHandler := messages.NewHandler(messageService)
+if messageHandler == nil {
+    log.Fatal("Failed to initialize message handler")
+} else {
+    log.Printf("MessageHandler initialized successfully: %+v", messageHandler)
+}
+
+	// Create resolver with all handlers using NewResolver
+	resolver := graph.NewResolver(
+		*userHandler,
+		productService,
+		productHandler,
+		messageHandler,
+
+	// Debug log to verify resolver
+	log.Printf("Resolver initialized successfully with MessageHandler: %+v", resolver.MessageHandler)
+
+	// Configure the GraphQL server
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
+		Resolvers: resolver,
+	}))
+
+	// Add WebSocket transport with proper configuration
+	srv.AddTransport(&transport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+		InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
+			// Add any WebSocket initialization logic here
+			return ctx, nil
+		},
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+		},
+	})
+
+	// Set up routes
+	router := gin.Default()
+
+	// Trust all proxies - based on your requirement
+	router.SetTrustedProxies([]string{"127.0.0.1"})
+
+	// WebSocket endpoint
+	router.GET("/ws", func(c *gin.Context) {
+		if messageHandler == nil {
+			log.Println("messageHandler is NIL when trying to handle WebSocket connection!")
+		} else {
+			log.Println("messageHandler is properly initialized, proceeding to handle WebSocket connection.")
+			messageHandler.WebSocketHandler(c.Writer, c.Request)
+		}
+	})
+	
+
+	// GraphQL endpoint
+	router.POST("/graphql", gin.WrapH(srv))
+
+	// Start server
+	log.Printf("Server is running on http://localhost:%s/", port)
+	if err := router.Run(":" + port); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
 }
 
 // go get github.com/99designs/gqlgen

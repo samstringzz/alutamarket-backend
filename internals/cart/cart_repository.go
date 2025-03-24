@@ -18,6 +18,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/joho/godotenv"
+	"github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -389,7 +390,7 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 	case "paystack":
 		requestData = map[string]interface{}{
 			"email":        customer.Email,
-			"amount":       (cartTotal) * 100, // Amount should be in kobo
+			"amount":       (cartTotal) * 100,
 			"currency":     "NGN",
 			"reference":    UUID,
 			"callback_url": redirectUrl,
@@ -398,13 +399,22 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 				"sellers":    "",
 				"order_uuid": UUID,
 			},
-			"customizations": map[string]interface{}{
-				"title": "Aluta Market Checkout",
-				"logo":  "https://res.cloudinary.com/folajimidev/image/upload/v1697737213/logo_xesoiu.png",
-			},
 		}
 
-		req, err = http.NewRequest("POST", "https://api.paystack.co/transaction/initialize", nil)
+		// Create new request with proper body
+		requestDataBytes, err := json.Marshal(requestData)
+		if err != nil {
+			return "", err
+		}
+
+		req, err = http.NewRequest("POST", "https://api.paystack.co/transaction/initialize", bytes.NewBuffer(requestDataBytes))
+		if err != nil {
+			return "", err
+		}
+
+		// Set proper Authorization header
+		req.Header.Set("Authorization", "Bearer "+gatewayKey)
+		req.Header.Set("Content-Type", "application/json")
 
 	case "squad":
 		requestData = map[string]interface{}{
@@ -484,6 +494,7 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 	return paymentLink, nil
 }
 
+// In the InitiatePayment function, modify how storeIDs is handled
 func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, error) {
 	UUID := input.UUID
 	redirectUrl := os.Getenv("CLIENT_URL") + "/product/cart"
@@ -560,7 +571,13 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		return "", err
 	}
 
-	// log.Println("Payment link obtained:", paymentLink)
+	// Convert store IDs to proper PostgreSQL array format
+	var storeIDs pq.StringArray
+	for _, store := range cart.StoresID {
+		if store != nil {
+			storeIDs = append(storeIDs, *store)
+		}
+	}
 
 	newOrder := &store.Order{
 		Amount:      cart.Total + input.Amount,
@@ -571,11 +588,11 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		Fee:         input.Amount,
 		Coupon:      input.Coupon,
 		CartID:      cart.ID,
-		StoresID:    cart.StoresID,
+		StoresID:    storeIDs, // Use the properly formatted array
 		CreatedAt:   time.Now().UTC(),
 		UpdatedAt:   time.Now().UTC(),
 		Customer: store.Customer{
-			ID:      uint32(customer.ID),
+			ID:      strconv.FormatUint(uint64(customer.ID), 10),
 			Name:    customer.PaymentDetails.Name,
 			Phone:   customer.PaymentDetails.Phone,
 			Address: customer.PaymentDetails.Address,

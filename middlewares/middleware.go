@@ -7,6 +7,7 @@ import (
 
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin" // Add this import
 )
 
 func AuthMiddleware(requiredRole string, tokenString string) *errors.AppError {
@@ -60,4 +61,31 @@ func BasicAuthMiddleware(username, password string, next http.Handler) http.Hand
 		// If the credentials are valid, proceed to the next handler
 		next.ServeHTTP(w, r)
 	})
+}
+
+// Update the import in router.go to use this ErrorHandler
+func ErrorHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+
+		if len(c.Errors) > 0 {
+			err := c.Errors.Last()
+
+			var statusCode int
+			var message string
+
+			if appErr, ok := err.Err.(*errors.AppError); ok {
+				statusCode = appErr.StatusCode
+				message = appErr.Message
+			} else {
+				statusCode = http.StatusInternalServerError
+				message = "Internal Server Error"
+			}
+
+			c.JSON(statusCode, gin.H{
+				"error": message,
+			})
+			return
+		}
+	}
 }

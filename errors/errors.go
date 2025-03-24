@@ -1,24 +1,22 @@
 package errors
 
-import (
-	"fmt"
-)
+import "fmt"
 
 type AppError struct {
-	Status  int    `json:"status"`
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	StatusCode int    `json:"status_code"`
+	Status     string `json:"status"`
+	Message    string `json:"message"`
 }
 
+// Add Error method to implement the error interface
 func (e *AppError) Error() string {
-	errorJSON := fmt.Sprintf(`{"message": "%s", "status": %d, "code": "%s"}`, e.Message, e.Status, e.Code)
-	return errorJSON
+	return fmt.Sprintf("[%s] %s", e.Status, e.Message)
 }
 
-func NewAppError(status int, code string, message string) *AppError {
+func NewAppError(statusCode int, status string, message string) *AppError {
 	return &AppError{
-		Status:  status,
-		Code:    code,
-		Message: message,
+		StatusCode: statusCode,
+		Status:     status,
+		Message:    message,
 	}
 }

@@ -60,12 +60,8 @@ func (h *Handler) GetCategory(ctx context.Context, id uint32) (*Category, error)
 	return item, nil
 }
 
-func (h *Handler) GetProducts(ctx context.Context, store string, limit int, offset int) ([]*Product, int, error) {
-	item, count, err := h.Service.GetProducts(ctx, store, limit, offset)
-	if err != nil {
-		return nil, 0, err
-	}
-	return item, count, nil
+func (h *Handler) GetProducts(ctx context.Context, store string, categorySlug string, limit int, offset int) ([]*Product, int, error) {
+    return h.Service.GetProducts(ctx, store, categorySlug, limit, offset)
 }
 func (h *Handler) GetCategories(ctx context.Context) ([]*Category, error) {
 	item, err := h.Service.GetCategories(ctx)
@@ -104,12 +100,13 @@ func (h *Handler) GetRecommendedProducts(ctx context.Context, query string) ([]*
 	return item, nil
 }
 
+// Add this method if it's not already present
 func (h *Handler) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
-	item, err := h.Service.SearchProducts(ctx, query)
+	products, err := h.Service.SearchProducts(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-	return item, nil
+	return products, nil
 }
 
 func (h *Handler) GetProductReviews(ctx context.Context, productId uint32, sellerId string) ([]*Review, error) {

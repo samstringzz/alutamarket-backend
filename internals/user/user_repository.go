@@ -144,7 +144,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 	fmt.Printf("The generated OTP is %s\n", otpCode)
 
 	var count int64
-	codeExpiry := time.Now().Add(5 * time.Minute) // An expiry time of 5 minutes
+	codeExpiry := time.Now().Add(5 * time.Minute)
 	tx.Model(&User{}).Where("email = ? OR phone = ?", req.Email, req.Phone).Count(&count)
 	if count > 0 {
 		log.Printf("User already exists: email=%s, phone=%s", req.Email, req.Phone)
@@ -152,13 +152,15 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "User already exists")
 	}
 
-	err := utils.AddEmailSubscriber(req.Email)
-	if err != nil {
-		log.Printf("Failed to add email subscriber: %v", err)
-		return nil, err
-	}
+	// Make email subscription optional
+	_ = utils.AddEmailSubscriber(req.Email) // Ignore any subscription errors
 
+	// Generate UUID for the new user
+	uuid := utils.GenerateUUID()
+
+	defaultDob := time.Now().Format("2006-01-02")
 	newUser := &User{
+		UUID:       uuid,
 		Campus:     req.Campus,
 		Email:      req.Email,
 		Password:   req.Password,
@@ -170,7 +172,10 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		Code:       otpCode,
 		Codeexpiry: codeExpiry,
 		Avatar:     "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
+		Dob:        defaultDob,
+		Gender:     "unspecified",
 	}
+	// Create user first
 	if err := tx.Create(newUser).Error; err != nil {
 		log.Printf("Failed to create new user: %v", err)
 		tx.Rollback()
@@ -183,18 +188,17 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		"otp_code": otpCode,
 	}
 
-	// Define the template string with a placeholder for the passcode
+	// Try to send SMS, but don't fail if SMS fails
 	messageTemplate := "Hello Comrade, your Alutamarket VIP passcode is: %s. Make haste, the party is waiting."
-	// Remove the plus sign from the phone number
 	phoneWithoutPlus := strings.TrimPrefix(req.Phone, "+")
-	// Insert the dynamic data into the template string
 	message := fmt.Sprintf(messageTemplate, otpCode)
-	_, err = utils.SendSMS(phoneWithoutPlus, "N-Alert", message)
-	if err != nil {
-		log.Printf("Failed to send SMS: %v", err)
-		return nil, err
+
+	if _, err := utils.SendSMS(phoneWithoutPlus, "N-Alert", message); err != nil {
+		// Log the error but continue with user creation
+		log.Printf("Warning: SMS sending failed: %v. Continuing with registration...", err)
 	}
 
+	// Continue with email sending regardless of SMS status
 	if req.Usertype == "seller" {
 		createdStore := &store.Store{
 			Name:               req.StoreName,
@@ -236,14 +240,13 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 		}
 	} else {
 		templateID := "633d65f7-0545-4550-9983-8b309afa3d03"
-		err := utils.SendEmail(templateID, "Welcome to Alutamarket🎉", to, contents)
-		if err != nil {
-			log.Printf("Failed to send welcome email: %v", err)
-			return nil, err
+		if err := utils.SendEmail(templateID, "Welcome to Alutamarket🎉", to, contents); err != nil {
+			log.Printf("Warning: Email sending failed: %v", err)
+			// Continue with registration even if email fails
 		}
 	}
 
-	// Commit the transaction if everything succeeded
+	// Commit the transaction
 	if err := tx.Commit().Error; err != nil {
 		log.Printf("Failed to commit transaction: %v", err)
 		tx.Rollback()
@@ -405,18 +408,23 @@ func (r *repository) VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*LoginUs
 func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRes, error) {
 	var user User
 
+	// First find the user by email
 	if err := r.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
 		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
 	}
+
+	// Check password
 	if err := utils.CheckPassword(req.Password, user.Password); err != nil {
 		return nil, errors.NewAppError(http.StatusUnauthorized, "UNAUTHORIZED", "Invalid Credentials")
 	}
-	if err := r.db.Where("active = ?", true).First(&user).Error; err != nil {
+
+	// Check if user is active - Remove the additional query and just check the user's active status
+	if !*user.Active {
 		r.resendOTP(ctx, user.Phone)
 		return nil, errors.NewAppError(http.StatusExpectationFailed, user.Phone, "Your account is suspended/not verified")
 	}
 
-	// Generate a new refresh token
+	// Generate refresh token
 	refreshClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, MyJWTClaims{
 		ID:       strconv.Itoa(int(user.ID)),
 		Fullname: user.Fullname,
@@ -425,20 +433,15 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 		Phone:    user.Phone,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    strconv.Itoa(int(user.ID)),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)), // Example: Refresh token expires in 7 days
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
 		},
 	})
 	refreshSS, err := refreshClaims.SignedString([]byte(os.Getenv("REFRESH_SECRET_KEY")))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "Failed to generate refresh token")
 	}
 
-	// Store the refresh token in the database (you may need to add a field for this)
-	if err := r.db.Model(&user).Update("refresh_token", refreshSS).Error; err != nil {
-		return nil, err
-	}
-
-	// Generate the access token
+	// Generate access token
 	accessClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, MyJWTClaims{
 		ID:       strconv.Itoa(int(user.ID)),
 		Fullname: user.Fullname,
@@ -452,35 +455,42 @@ func (r *repository) Login(ctx context.Context, req *LoginUserReq) (*LoginUserRe
 	})
 	accessSS, err := accessClaims.SignedString([]byte(os.Getenv("SECRET_KEY")))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "Failed to generate access token")
 	}
-	r.db.Model(&user).Updates(User{RefreshToken: refreshSS, AccessToken: accessSS})
-	if *user.Twofa {
-		//send otp
+
+	// Update user tokens in a single query
+	if err := r.db.Model(&user).Updates(map[string]interface{}{
+		"refresh_token": refreshSS,
+		"access_token":  accessSS,
+	}).Error; err != nil {
+		return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "Failed to update user tokens")
+	}
+
+	// Handle 2FA if enabled
+	if user.Twofa != nil && *user.Twofa {
 		otpCode := utils.GenerateOTP()
-		r.db.Model(&user).Update("code", otpCode)
-		return nil, errors.NewAppError(http.StatusProxyAuthRequired, "ACTION REQUIRED", "This account is 2-FA protected,enter Otp to continue")
+		if err := r.db.Model(&user).Update("code", otpCode).Error; err != nil {
+			return nil, errors.NewAppError(http.StatusInternalServerError, "INTERNAL SERVER ERROR", "Failed to update OTP code")
+		}
+		return nil, errors.NewAppError(http.StatusProxyAuthRequired, "ACTION REQUIRED", "This account is 2-FA protected, enter OTP to continue")
 	}
 
-	// if err != nil {
-
-	// 	return nil, err
-	// }
-
-	// Set a cookie for the access token with an expiration time matching the token's expiration
+	// Set access token cookie
 	accessCookie := http.Cookie{
 		Name:     "access_token",
 		Value:    accessSS,
-		Expires:  time.Now().Add(24 * time.Hour), // Set the expiration to match the token's expiration
+		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
-		Secure:   false, // Set to true if your server uses HTTPS
+		Secure:   false,
 		SameSite: http.SameSiteStrictMode,
 	}
-
-	// Add the access token cookie to the context
 	SetAccessTokenCookie(ctx, &accessCookie)
 
-	return &LoginUserRes{AccessToken: accessSS, RefreshToken: refreshSS, ID: user.ID}, nil
+	return &LoginUserRes{
+		AccessToken:  accessSS,
+		RefreshToken: refreshSS,
+		ID:           user.ID,
+	}, nil
 }
 
 func (r *repository) GetUsers(ctx context.Context) ([]*User, error) {
@@ -493,13 +503,61 @@ func (r *repository) GetUsers(ctx context.Context) ([]*User, error) {
 
 func (r *repository) GetUser(ctx context.Context, filter string) (*User, error) {
 	var user User
-	// query := r.db.Where("active = true")
-	query := r.db.Where("id = ?", filter)
 
-	if err := query.First(&user).Error; err != nil {
-		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
+	// Create a base query
+	query := r.db.Model(&User{})
+
+	// Try to find user by ID first if the filter looks like a number
+	if _, err := strconv.ParseUint(filter, 10, 64); err == nil {
+		if err := query.Where("id = ?", filter).First(&user).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
+			}
+			return nil, err
+		}
+	} else {
+		// If not found by ID or filter is not a number, try email or phone
+		if err := query.Where("email = ? OR phone = ?", filter, filter).First(&user).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "User does not exist")
+			}
+			return nil, err
+		}
 	}
+
+	// Set default values for nil fields
+	if user.Active == nil {
+		user.Active = boolPtr(false)
+	}
+	if user.Twofa == nil {
+		user.Twofa = boolPtr(false)
+	}
+	if user.PaymentDetails == (PaymentDetails{}) {
+		user.PaymentDetails = PaymentDetails{}
+	}
+
 	return &user, nil
+}
+
+// Helper function to initialize user fields
+func initializeUserFields(user *User) (*User, error) {
+	if user == nil {
+		return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Invalid user data")
+	}
+
+	if user.Active == nil {
+		user.Active = boolPtr(false)
+	}
+	if user.Twofa == nil {
+		user.Twofa = boolPtr(false)
+	}
+
+	// Ensure PaymentDetails is initialized
+	if user.PaymentDetails == (PaymentDetails{}) {
+		user.PaymentDetails = PaymentDetails{}
+	}
+
+	return user, nil
 }
 
 func (r *repository) TwoFa(ctx context.Context, req *User) (bool, error) {

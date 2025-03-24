@@ -2,6 +2,8 @@ package messages
 
 import (
 	"context"
+	"log"
+	"net/http"
 
 	"github.com/Chrisentech/aluta-market-api/internals/user"
 )
@@ -10,10 +12,14 @@ type Handler struct {
 	Service
 }
 
-func NewHandler(s Service) *Handler {
-	return &Handler{
-		Service: s,
+func NewMessageHandler(s Service) *Handler {
+	if s == nil {
+		log.Println("MessageService passed to NewMessageHandler is nil!")
+		return nil
 	}
+	handler := &Handler{Service: s}
+	log.Printf("Message Handler created successfully: %+v", handler)
+	return handler
 }
 
 func (h *Handler) FindOrCreateChat(ctx context.Context, users []*user.User) (*Chat, error) {
@@ -32,6 +38,15 @@ func (h *Handler) SendMessage(ctx context.Context, req *Message) error {
 	return nil
 }
 
+// Add this method to Handler
+func (h *Handler) GetChatUsers(ctx context.Context, chatID uint32) ([]*user.User, error) {
+	users, err := h.Service.GetChatUsers(ctx, chatID)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 func (h *Handler) GetChatLists(ctx context.Context, userID uint32) ([]*Chat, error) {
 	chats, err := h.Service.GetChatLists(ctx, userID)
 	if err != nil {
@@ -46,4 +61,9 @@ func (h *Handler) GetMessages(ctx context.Context, chatId string) ([]*Message, e
 		return nil, err
 	}
 	return messages, nil
+}
+
+// Add WebSocketHandler method to Handler
+func (h *Handler) WebSocketHandler(w http.ResponseWriter, req *http.Request) {
+	h.Service.WebSocketHandler(w, req)
 }

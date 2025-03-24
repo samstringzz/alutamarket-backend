@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/internals/product"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
 type Transactions struct {
 	gorm.Model
 	StoreID   string    `json:"store_id" db:"store_id"`
-	Status    string    `json:"status" db:"status"` //pending,approved,canceled
+	Status    string    `json:"status" db:"status"`
 	User      string    `json:"user" db:"user"`
 	Amount    float64   `json:"amount" db:"amount"`
 	UUID      string    `json:"uuid" db:"uuid"`
@@ -87,6 +88,7 @@ type Store struct {
 	gorm.Model
 	ID                 uint32               `gorm:"primaryKey;uniqueIndex;not null;autoIncrement"  json:"id" db:"id"`
 	Name               string               `json:"name" db:"name"`
+	Customers          []Customer           `json:"customers" gorm:"foreignKey:ID"`
 	UserID             uint32               `json:"user_id" db:"user_id"`
 	Link               string               `json:"link" db:"link"`
 	Description        string               `json:"description" db:"description"`
@@ -153,35 +155,35 @@ type DeliveryDetails struct {
 // Purchased Orders
 type Order struct {
 	gorm.Model
-	// StoresID       string  `gorm:"serializer:json" json:"store" db:"store_id"`
 	CartID          uint32           `json:"cart_id" db:"cart_id"`
 	Coupon          string           `json:"coupon,omitempty" db:"coupon"`
 	Fee             float64          `json:"fee" db:"fee"`
-	Status          string           `json:"status" db:"status"` //order status
-	UserID          string           `json:"user_id" db:"user_id"`
+	Status          string           `json:"status" db:"status"`   //order status
+	UserID          string           `json:"user_id" db:"user_id"` // Keep as string
 	Customer        Customer         `gorm:"serializer:json" json:"customer" db:"customer"`
 	SellerID        string           `json:"seller_id" db:"seller_id"`
-	StoresID        []*string        `gorm:"serializer:json" json:"store" db:"store_id"`
+	StoresID        pq.StringArray   `gorm:"type:text[]" json:"store" db:"store_id"`
 	DeliveryDetails DeliveryDetails  `gorm:"serializer:json" json:"delivery_details" db:"delivery_details"`
 	Amount          float64          `json:"amount" db:"amount"`
 	UUID            string           `json:"uuid" db:"uuid"`
 	PaymentGateway  string           `json:"payment_gateway" db:"payment_gateway"`
 	PaymentMethod   string           `json:"payment_method" db:"payment_method"`
 	TransRef        string           `json:"trt_ref" db:"trt_ref"`
-	TransStatus     string           `json:"txt_status" db:"txt_status"` //Transaction status
+	TransStatus     string           `json:"txt_status" db:"txt_status"`
 	Products        []TrackedProduct `gorm:"serializer:json" json:"products" db:"products"`
 	CreatedAt       time.Time        `json:"created_at" db:"created_at"`
 	UpdatedAt       time.Time        `json:"updated_at" db:"updated_at"`
 }
 
 type Customer struct {
-	ID      uint32 `json:"id" db:"id"`
+	ID      string `json:"id" db:"id"`
 	Name    string `json:"name" db:"name"`
 	Phone   string `json:"phone" db:"phone"`
 	Address string `json:"address" db:"address"`
 	Info    string `json:"info" db:"info"`
 	Email   string `json:"email" db:"email"`
 }
+
 type StoreProduct struct {
 	Name      string  `json:"name" db:"name"`
 	Thumbnail string  `json:"thumbnail" db:"thumbnail"`
@@ -235,6 +237,29 @@ type UpdateStoreOrderInput struct {
 	Status  string `json:"status" db:"status"`
 }
 
+type DVACustomer struct {
+	ID        string `json:"id" gorm:"primaryKey;type:uuid"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+}
+
+type DVABank struct {
+	ID   string `json:"id" gorm:"primaryKey;type:uuid"`
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+}
+
+type DVAAccount struct {
+	ID            string      `json:"id" gorm:"primaryKey;type:uuid"`
+	CustomerID    string      `json:"customer_id" gorm:"column:customer_id;type:uuid"`
+	BankID        string      `json:"bank_id" gorm:"column:bank_id;type:uuid"`
+	Customer      DVACustomer `json:"customer" gorm:"foreignKey:CustomerID"`
+	Bank          DVABank     `json:"bank" gorm:"foreignKey:BankID"`
+	AccountNumber string      `json:"account_number"`
+	AccountName   string      `json:"account_name"`
+}
+
 type Repository interface {
 	CreateStore(ctx context.Context, req *Store) (*Store, error)
 	CreateInvoice(ctx context.Context, req *Invoice) (*Invoice, error)
@@ -246,6 +271,8 @@ type Repository interface {
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetOrder(ctx context.Context, storeId uint32, orderId string) (*Order, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*Order, error)
+	GetDVAAccount(ctx context.Context, email string) (*DVAAccount, error)
+	GetDVABalance(ctx context.Context, id string) (float64, error)
 	GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error)
 	UpdateOrder(ctx context.Context, req *UpdateStoreOrderInput) (*Order, error)
 	GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error)
@@ -253,6 +280,7 @@ type Repository interface {
 	CreateTransactions(ctx context.Context, req *Transactions) (*Transactions, error)
 	WithdrawFund(ctx context.Context, req *Fund) error
 	GetInvoices(ctx context.Context, storeID uint32) ([]*Invoice, error)
+	GetFollowedStores(ctx context.Context, userID uint32) ([]*Store, error)
 	AddReview(ctx context.Context, review *Review) error
 	GetReviews(ctx context.Context, filter string, value interface{}) ([]*Review, error)
 }
@@ -276,4 +304,7 @@ type Service interface {
 	GetInvoices(ctx context.Context, storeID uint32) ([]*Invoice, error)
 	AddReview(ctx context.Context, review *Review) error
 	GetReviews(ctx context.Context, filter string, value interface{}) ([]*Review, error)
+	GetDVAAccount(ctx context.Context, email string) (*DVAAccount, error)
+	GetDVABalance(ctx context.Context, id string) (float64, error)
+	GetFollowedStores(ctx context.Context, userID uint32) ([]*Store, error)
 }

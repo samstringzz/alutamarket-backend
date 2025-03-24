@@ -4,18 +4,26 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/Chrisentech/aluta-market-api/internals/product"
 )
 
 type service struct {
 	Repository
-	timeout time.Duration
+	productService product.Service
+	timeout        time.Duration
 }
 
 func NewService(repository Repository) Service {
 	return &service{
-		repository,
-		time.Duration(5) * time.Second,
+		Repository:     repository,
+		productService: product.NewService(product.NewRepository()),
+		timeout:        time.Duration(5) * time.Second,
 	}
+}
+
+func (s *service) GetProduct(ctx context.Context, productId uint32) (*product.Product, error) {
+	return s.productService.GetProduct(ctx, productId, 0)
 }
 
 func (s *service) ModifyCart(c context.Context, req *CartItems, user uint32) (*Cart, error) {

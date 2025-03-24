@@ -9,10 +9,10 @@ import (
 )
 
 type PaymentDetails struct {
-	Name    string `json:"name" db:"name"`
-	Phone   string `json:"phone" db:"phone"`
-	Address string `json:"address" db:"address"`
-	Info    string `json:"info" db:"info"`
+	Name    string `json:"Name" db:"name"`
+	Phone   string `json:"Phone" db:"phone"`
+	Address string `json:"Address" db:"address"`
+	Info    string `json:"Info" db:"info"`
 }
 
 type followedStores struct {
@@ -49,26 +49,47 @@ type User struct {
 	CreatedAt      time.Time        // Set to current time if it is zero on creating
 }
 
+// Add this type definition after the User struct
+type UpdateUserReq struct {
+	ID             uint32         `json:"id"`
+	Fullname       string         `json:"fullname,omitempty"`
+	Email          string         `json:"email,omitempty"`
+	Campus         string         `json:"campus,omitempty"`
+	Phone          string         `json:"phone,omitempty"`
+	Avatar         string         `json:"avatar,omitempty"`
+	Dob            string         `json:"dob,omitempty"`
+	PaymentDetails PaymentDetails `json:"payment_details,omitempty"`
+}
+
 type CreateUserReq struct {
 	// ID                 uint32    `gorm:"primaryKey;uniqueIndex;not null;autoIncrement" json:"id" db:"id"` // Unique identifier for the user
-	Campus             string    `json:"campus" db:"campus"`     // Campus of the user
-	Email              string    `json:"email" db:"email"`       // Email address of the user
-	Password           string    `json:"password" db:"password"` // Password of the user
-	Fullname           string    `json:"fullname" db:"fullname"`
-	Phone              string    `json:"phone" db:"phone"`                     // Phone number of the user
-	Usertype           string    `json:"usertype" db:"usertype"`               // Type of user (e.g., seller,buyer,admin)
-	Active             bool      `json:"active" db:"active"`                   // For accesibility of user,
-	Twofa              bool      `json:"twofa" db:"twofa"`                     // Two factor authentication
-	Code               string    `json:"code,omitempty" db:"code"`             // otp code for verifications
-	Codeexpiry         time.Time `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
-	StoreName          string    `json:"store_name" db:"name"`
-	StoreEmail         string    `json:"store_email" db:"name"`
-	StoreUser          uint32    `json:"user" db:"user_id"`
-	StoreLink          string    `json:"link" db:"link"`
-	StorePhone         string    `json:"store_phone" db:"store_phone"`
-	Description        string    `json:"description" db:"description"`
-	StoreAddress       string    `json:"address" db:"store_address"`
-	HasPhysicalAddress bool      `json:"has_physical_address" db:"has_physical_address"`
+	Campus             string         `json:"campus" db:"campus"`     // Campus of the user
+	Email              string         `json:"email" db:"email"`       // Email address of the user
+	Password           string         `json:"password" db:"password"` // Password of the user
+	Fullname           string         `json:"fullname" db:"fullname"`
+	Phone              string         `json:"phone" db:"phone"`                     // Phone number of the user
+	Usertype           string         `json:"usertype" db:"usertype"`               // Type of user (e.g., seller,buyer,admin)
+	Active             bool           `json:"active" db:"active"`                   // For accesibility of user,
+	Twofa              bool           `json:"twofa" db:"twofa"`                     // Two factor authentication
+	UUID               string         `json:"uuid" db:"uuid"`                       // Add UUID field
+	Avatar             string         `json:"avatar" db:"avatar"`                   // Add Avatar field
+	Online             bool           `json:"online" db:"online"`                   // Add Online field
+	FollowedStores     []string       `json:"followed_stores" db:"followed_stores"` // Add FollowedStores field
+	Code               string         `json:"code,omitempty" db:"code"`             // otp code for verifications
+	Codeexpiry         time.Time      `json:"codeexpiry,omitempty" db:"codeexpiry"` // Expiry time for otpCode
+	StoreName          string         `json:"store_name" db:"name"`
+	StoreEmail         string         `json:"store_email" db:"name"`
+	StoreUser          uint32         `json:"user" db:"user_id"`
+	StoreLink          string         `json:"link" db:"link"`
+	StorePhone         string         `json:"store_phone" db:"store_phone"`
+	Description        string         `json:"description" db:"description"`
+	StoreAddress       string         `json:"address" db:"store_address"`
+	HasPhysicalAddress bool           `json:"has_physical_address" db:"has_physical_address"`
+	Dob                *string        `json:"dob" db:"dob"`       // Add date of birth field
+	Gender             string         `json:"gender" db:"gender"` // Add gender field
+	PaymentDetails     PaymentDetails `json:"payment_details"`
+	CreatedAt          time.Time      `json:"created_at" db:"created_at"` // Add created_at field
+	UpdatedAt          time.Time      `json:"updated_at" db:"updated_at"` // Add updated_at field
 }
 
 type CreateUserRes struct {
@@ -94,7 +115,7 @@ type LoginUserRes struct {
 }
 
 type Customer struct {
-	ID           int    `json:"id"`
+	ID           string `json:"id"`
 	FirstName    string `json:"first_name"`
 	LastName     string `json:"last_name"`
 	Email        string `json:"email"`
@@ -106,7 +127,7 @@ type Customer struct {
 
 type Bank struct {
 	Name string `json:"name"`
-	ID   int    `json:"id"`
+	ID   string `json:"id"`
 	Slug string `json:"slug"`
 }
 
@@ -122,7 +143,7 @@ type SplitConfig struct {
 }
 
 type Account struct {
-	ID            int         `json:"id"`
+	ID            string      `json:"id"`
 	AccountNumber string      `json:"account_number"`
 	AccountName   string      `json:"account_name"`
 	CreatedAt     string      `json:"created_at"`

@@ -2,6 +2,7 @@ package product
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -95,15 +96,11 @@ func (s *service) GetProduct(c context.Context, productId, userId uint32) (*Prod
 	return r, nil
 }
 
-func (s *service) GetProducts(c context.Context, store string, limit int, offset int) ([]*Product, int, error) {
-	ctx, cancel := context.WithTimeout(c, s.timeout)
+func (s *service) GetProducts(ctx context.Context, store string, categorySlug string, limit int, offset int) ([]*Product, int, error) {
+	c, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
-	r, count, err := s.Repository.GetProducts(ctx, store, limit, offset)
-	if err != nil {
-		return nil, 0, err
-	}
 
-	return r, count, nil
+	return s.Repository.GetProducts(c, store, categorySlug, limit, offset)
 }
 
 func (s *service) UpdateProduct(c context.Context, req *NewProduct) (*Product, error) {
@@ -162,14 +159,18 @@ func (s *service) GetRecommendedProducts(ctx context.Context, query string) ([]*
 	}
 	return prd, nil
 }
+
+// SearchProducts implements the search functionality in the service layer
 func (s *service) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
-	prd, err := s.Repository.SearchProducts(ctx, query)
+
+	products, err := s.Repository.SearchProducts(ctx, query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to search products: %v", err)
 	}
-	return prd, nil
+
+	return products, nil
 }
 
 // func (s *service) AddRecentlyViewedProducts(ctx context.Context, userId,productId uint32)error{

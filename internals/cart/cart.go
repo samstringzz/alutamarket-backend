@@ -44,4 +44,5 @@ type Service interface {
 	GetCart(ctx context.Context, user uint32) (*Cart, error)
 	MakePayment(ctx context.Context, w http.ResponseWriter, r *http.Request)
 	InitiatePayment(ctx context.Context, req Order) (string, error)
+	GetProduct(ctx context.Context, productId uint32) (*product.Product, error)
 }

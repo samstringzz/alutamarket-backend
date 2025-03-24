@@ -2,6 +2,7 @@ package cart
 
 import (
 	"context"
+	"fmt"
 )
 
 type Handler struct {
@@ -15,10 +16,31 @@ func NewHandler(s Service) *Handler {
 }
 
 func (h *Handler) ModifyCart(ctx context.Context, input *CartItems, user uint32) (*Cart, error) {
+	// First, validate the product quantity
+	product, err := h.Service.GetProduct(ctx, input.Product.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get product: %v", err)
+	}
+
+	// Check if product exists and has enough quantity
+	if product == nil {
+		return nil, fmt.Errorf("product not found")
+	}
+
+	// For adding items to cart
+	if input.Quantity > 0 {
+		if !product.AlwaysAvailbale && product.Quantity < input.Quantity {
+			return nil, fmt.Errorf("insufficient product quantity. Available: %d, Requested: %d",
+				product.Quantity, input.Quantity)
+		}
+	}
+
+	// Proceed with cart modification
 	item, err := h.Service.ModifyCart(ctx, input, user)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to modify cart: %v", err)
 	}
+
 	return item, nil
 }
 
