@@ -101,18 +101,18 @@ func main() {
 	}
 
 	messageService := messages.NewService(messageRepo)
-if messageService == nil {
-    log.Fatal("Failed to initialize message service")
-} else {
-    log.Printf("MessageService initialized successfully: %+v", messageService)
-}
+	if messageService == nil {
+		log.Fatal("Failed to initialize message service")
+	} else {
+		log.Printf("MessageService initialized successfully: %+v", messageService)
+	}
 
-messageHandler := messages.NewHandler(messageService)
-if messageHandler == nil {
-    log.Fatal("Failed to initialize message handler")
-} else {
-    log.Printf("MessageHandler initialized successfully: %+v", messageHandler)
-}
+	messageHandler := messages.NewHandler(messageService)
+	if messageHandler == nil {
+		log.Fatal("Failed to initialize message handler")
+	} else {
+		log.Printf("MessageHandler initialized successfully: %+v", messageHandler)
+	}
 
 	// Create resolver with all handlers using NewResolver
 	resolver := graph.NewResolver(
@@ -120,6 +120,7 @@ if messageHandler == nil {
 		productService,
 		productHandler,
 		messageHandler,
+	)
 
 	// Debug log to verify resolver
 	log.Printf("Resolver initialized successfully with MessageHandler: %+v", resolver.MessageHandler)
@@ -160,7 +161,6 @@ if messageHandler == nil {
 			messageHandler.WebSocketHandler(c.Writer, c.Request)
 		}
 	})
-	
 
 	// GraphQL endpoint
 	router.POST("/graphql", gin.WrapH(srv))
