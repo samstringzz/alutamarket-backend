@@ -5,8 +5,18 @@ services:
     buildCommand: go build -o main .
     startCommand: ./main
     envVars:
+      - key: DB_HOST
+        value: db.xtveecfkozofkexhhjxt.supabase.co
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        value: postgres
+      - key: DB_USER
+        value: postgres
+      - key: DB_PASSWORD
+        value: "#weareALUTA001"
       - key: DATABASE_URL
-        value: postgres://postgres:#weareALUTA001@db.xtveecfkozofkexhhjxt.supabase.co:5432/postgres?sslmode=require
+        value: postgresql://postgres:%23weareALUTA001@db.xtveecfkozofkexhhjxt.supabase.co:5432/postgres?sslmode=require
       - key: PORT
         value: 8080
       - key: SECRET_KEY
