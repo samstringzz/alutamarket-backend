@@ -14,7 +14,6 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/messages"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
-	"github.com/Chrisentech/aluta-market-api/services"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
@@ -56,8 +55,6 @@ func withCORS(next http.Handler) http.Handler {
 func main() {
 
 	const uploadPath = "./uploads/"
-	// Start broadcasting messages to connected clients
-	// go messages.BroadcastMessages()
 
 	// Create upload directory if it doesn't exist
 	if err := os.MkdirAll(uploadPath, os.ModePerm); err != nil {
@@ -82,7 +79,6 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
-	repo := services.NewRepository()
 
 	// Initialize user components
 	userRepo := user.NewRepository()
@@ -171,6 +167,3 @@ func main() {
 		log.Fatal("Failed to start server:", err)
 	}
 }
-
-// go get github.com/99designs/gqlgen
-// go run github.com/99designs/gqlgen generate
