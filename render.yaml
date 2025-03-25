@@ -6,18 +6,16 @@ services:
     startCommand: ./main
     envVars:
       - key: DATABASE_URL
-        value: postgresql://postgres:#weareALUTA001@db.xtveecfkozofkexhhjxt.supabase.co:5432/postgres
+        value: postgres://postgres:#weareALUTA001@db.xtveecfkozofkexhhjxt.supabase.co:5432/postgres?sslmode=require
       - key: PORT
         value: 8080
       - key: SECRET_KEY
         value: 2LzVCRlQg94mjLp8pMYPDqGv1BaVN2Cizn3GF/7kt10=
       - key: REFRESH_SECRET_KEY
         value: Qrk+hzGAZ/ENR6Up/VQ6dEwbMjbN8ir0naffcmpdUxc=
+      - key: DOMAIN
+        value: https://aluta-market-api.onrender.com
+      - key: ENVIRONMENT
+        value: production
     healthCheckPath: /health
     autoDeploy: true
-
-databases:
-  - name: aluta_market_db
-    databaseName: postgres
-    user: postgres
-    plan: free
