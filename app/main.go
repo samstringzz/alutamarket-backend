@@ -48,16 +48,36 @@ func handleWebSocket(c *gin.Context) {
 func Start() {
 	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+		log.Printf("Warning: Error loading .env file: %v", err)
+		// Continue as env vars might be set in the system
 	}
 
-	// Initialize repositories and handlers
-	userRepo := InitializePackage(UserPackage).(user.Repository)
-	userSrvc := user.NewService(userRepo)
+	// Initialize repositories and handlers with error checking
+	userRepo := InitializePackage(UserPackage)
+	if userRepo == nil {
+		log.Fatal("Failed to initialize user repository - database connection failed")
+	}
+
+	userRepository, ok := userRepo.(user.Repository)
+	if !ok {
+		log.Fatal("Failed to convert user repository interface")
+	}
+
+	userSrvc := user.NewService(userRepository)
 	userHandler := user.NewHandler(userSrvc)
 
-	productRepo := InitializePackage(ProductPackage).(product.Repository)
-	productSrvc := product.NewService(productRepo)
+	// Fix product repository type assertion
+	productRepo := InitializePackage(ProductPackage)
+	if productRepo == nil {
+		log.Fatal("Failed to initialize product repository")
+	}
+
+	productRepository, ok := productRepo.(product.Repository)
+	if !ok {
+		log.Fatal("Failed to convert product repository interface")
+	}
+
+	productSrvc := product.NewService(productRepository)
 	productHandler := product.NewHandler(productSrvc)
 
 	// Initialize message handler
