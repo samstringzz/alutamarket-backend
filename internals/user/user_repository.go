@@ -75,9 +75,29 @@ func NewRepository() Repository {
 		)
 	}
 
-	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
+	// Add retry logic
+	maxRetries := 5
+	var db *gorm.DB
+	var err error
+
+	for i := 0; i < maxRetries; i++ {
+		db, err = gorm.Open(postgres.Open(dbURL), &gorm.Config{})
+		if err == nil {
+			break
+		}
+		log.Printf("Attempt %d: Error connecting to database: %v", i+1, err)
+		time.Sleep(time.Second * 5) // Wait 5 seconds before retrying
+	}
+
 	if err != nil {
-		log.Printf("Error opening database: %v", err)
+		log.Printf("Final error opening database: %v", err)
+		return nil
+	}
+
+	// Test the connection
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Printf("Error getting underlying SQL DB: %v", err)
 		return nil
 	}
 
