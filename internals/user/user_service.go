@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"gorm.io/gorm"
 
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
@@ -239,4 +240,8 @@ func (s *service) SendMaintenanceMail(ctx context.Context, userId string, active
 		return err
 	}
 	return nil
+}
+
+func (s *service) GetDB() *gorm.DB {
+	return s.Repository.GetDB()
 }

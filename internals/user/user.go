@@ -209,6 +209,7 @@ type Repository interface {
 	ConfirmPassword(ctx context.Context, password, userId string) error
 	GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error)
 	SendMaintenanceMail(ctx context.Context, userId string, active bool) error
+	GetDB() *gorm.DB
 }
 
 type Service interface {
@@ -230,4 +231,5 @@ type Service interface {
 	VerifyResetLink(ctx context.Context, token string) error
 	GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error)
 	SendMaintenanceMail(ctx context.Context, userId string, active bool) error
+	GetDB() *gorm.DB
 }

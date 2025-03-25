@@ -86,6 +86,33 @@ func InitRouter(userHandler *user.Handler, productHandler *product.Handler, prod
 		messageHandler.WebSocketHandler(c.Writer, c.Request)
 	})
 
+	// Add database health check endpoint
+	r.GET("/health/db", func(c *gin.Context) {
+		db := userHandler.GetDB()
+		sqlDB, err := db.DB()
+		if err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status":  "error",
+				"message": "Failed to get database instance",
+			})
+			return
+		}
+
+		err = sqlDB.Ping()
+		if err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status":  "error",
+				"message": "Database connection failed",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "ok",
+			"message": "Database is connected and active",
+		})
+	})
+
 	return r
 }
 
