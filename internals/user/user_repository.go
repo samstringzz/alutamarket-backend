@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -76,36 +77,39 @@ func NewRepository() Repository {
 		)
 	}
 
-	// Add retry logic
-	maxRetries := 5
-	var db *gorm.DB
-	var err error
-
-	for i := 0; i < maxRetries; i++ {
-		db, err = gorm.Open(postgres.Open(dbURL), &gorm.Config{})
-		if err == nil {
-			break
-		}
-		log.Printf("Attempt %d: Error connecting to database: %v", i+1, err)
-		time.Sleep(time.Second * 5) // Wait 5 seconds before retrying
-	}
-
+	// Test direct connection first
+	sqlDB, err := sql.Open("postgres", dbURL)
 	if err != nil {
-		log.Printf("Final error opening database: %v", err)
+		log.Printf("Error creating database connection: %v", err)
+		return nil
+	}
+	defer sqlDB.Close()
+
+	// Test the connection
+	err = sqlDB.Ping()
+	if err != nil {
+		log.Printf("Error pinging database: %v", err)
+		return nil
+	}
+	log.Printf("Successfully connected to database")
+
+	// Now proceed with GORM connection
+	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
+	if err != nil {
+		log.Printf("Error opening database with GORM: %v", err)
 		return nil
 	}
 
-	// Test the connection
-	sqlDB, err := db.DB()
+	// Configure connection pool
+	gormDB, err := db.DB()
 	if err != nil {
 		log.Printf("Error getting underlying SQL DB: %v", err)
 		return nil
 	}
 
-	// Configure connection pool
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	gormDB.SetMaxIdleConns(10)
+	gormDB.SetMaxOpenConns(100)
+	gormDB.SetConnMaxLifetime(time.Hour)
 
 	return &repository{db: db}
 }

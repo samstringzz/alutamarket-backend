@@ -73,6 +73,11 @@ func Start() {
 	// Initialize router with all required services and handlers
 	r := router.InitRouter(userHandler, productHandler, productSrvc, messageHandler)
 
+	// Add a health check endpoint
+	r.GET("/health", func(c *gin.Context) {
+		c.String(http.StatusOK, "OK")
+	})
+
 	// Get port from env or use default
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -83,4 +88,5 @@ func Start() {
 	if err := r.Run("0.0.0.0:" + port); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
+
 }
