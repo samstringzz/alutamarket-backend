@@ -4,6 +4,10 @@ services:
     env: go
     buildCommand: go build -o main .
     startCommand: ./main
+    healthCheckPath: /health
+    healthCheckTimeout: 100
+    autoDeploy: true
+    numInstances: 1
     envVars:
       - key: DB_HOST
         value: db.xtveecfkozofkexhhjxt.supabase.co
@@ -27,6 +31,3 @@ services:
         value: https://aluta-market-api.onrender.com
       - key: ENVIRONMENT
         value: production
-    healthCheckPath: /health
-    healthCheckTimeout: 300
-    autoDeploy: true
