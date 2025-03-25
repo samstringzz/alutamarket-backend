@@ -8,7 +8,7 @@ services:
       - key: DB_HOST
         value: db.xtveecfkozofkexhhjxt.supabase.co
       - key: DB_PORT
-        value: 5432
+        value: "5432"
       - key: DB_NAME
         value: postgres
       - key: DB_USER
@@ -18,7 +18,7 @@ services:
       - key: DATABASE_URL
         value: postgresql://postgres:%23weareALUTA001@db.xtveecfkozofkexhhjxt.supabase.co:5432/postgres?sslmode=require
       - key: PORT
-        value: 8080
+        value: "8080"
       - key: SECRET_KEY
         value: 2LzVCRlQg94mjLp8pMYPDqGv1BaVN2Cizn3GF/7kt10=
       - key: REFRESH_SECRET_KEY
