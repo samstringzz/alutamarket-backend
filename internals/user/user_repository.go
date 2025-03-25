@@ -81,6 +81,11 @@ func NewRepository() Repository {
 		return nil
 	}
 
+	// Configure connection pool
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
 	return &repository{db: db}
 }
 
