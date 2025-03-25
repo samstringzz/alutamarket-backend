@@ -65,33 +65,21 @@ func (r *repository) resendOTP(ctx context.Context, phone string) error {
 func NewRepository() Repository {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		log.Printf("DATABASE_URL is not set")
-		return nil
+		log.Printf("DATABASE_URL not found, using individual connection parameters")
+		dbURL = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=require",
+			os.Getenv("DB_HOST"),
+			os.Getenv("DB_PORT"),
+			os.Getenv("DB_USER"),
+			os.Getenv("DB_PASSWORD"),
+			os.Getenv("DB_NAME"),
+		)
 	}
 
-	// Configure the database connection
-	config := &gorm.Config{
-		PrepareStmt: true,
-	}
-
-	// Open database connection
-	db, err := gorm.Open(postgres.Open(dbURL), config)
+	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
 		log.Printf("Error opening database: %v", err)
 		return nil
 	}
-
-	// Configure connection pool
-	sqlDB, err := db.DB()
-	if err != nil {
-		log.Printf("Error getting underlying sql.DB: %v", err)
-		return nil
-	}
-
-	// Set connection pool settings
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxLifetime(time.Hour)
 
 	return &repository{db: db}
 }
