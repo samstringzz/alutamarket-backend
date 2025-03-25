@@ -6,14 +6,12 @@ services:
     startCommand: ./main
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: aluta_market_db
-          property: connectionString
+        value: postgresql://postgres:#weareALUTA001@db.xtveecfkozofkexhhjxt.supabase.co:5432/postgres
       - key: PORT
         value: 8080
-      - key: SECRET_KEY
+      - key: 2LzVCRlQg94mjLp8pMYPDqGv1BaVN2Cizn3GF/7kt10=
         sync: false
-      - key: REFRESH_SECRET_KEY
+      - key: Qrk+hzGAZ/ENR6Up/VQ6dEwbMjbN8ir0naffcmpdUxc=
         sync: false
     healthCheckPath: /health
     autoDeploy: true
