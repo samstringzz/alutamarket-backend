@@ -52,18 +52,16 @@ func withCORS(next http.Handler) http.Handler {
 	})
 }
 
-func main() {
-
+func InitServer() error {
 	const uploadPath = "./uploads/"
 
 	// Create upload directory if it doesn't exist
 	if err := os.MkdirAll(uploadPath, os.ModePerm); err != nil {
-		fmt.Println("Error creating upload directory:", err)
-		return
+		return fmt.Errorf("error creating upload directory: %v", err)
 	}
 
 	// Create a new CORS middleware with the desired options
-	c := cors.New(cors.Options{
+	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "https://www.thealutamarket.com", "https://thealutamarket.com", "https://thealutamarket.netlify.app"},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
@@ -72,7 +70,7 @@ func main() {
 
 	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+		return fmt.Errorf("error loading .env file: %v", err)
 	}
 
 	port := os.Getenv("PORT")
@@ -93,21 +91,17 @@ func main() {
 	// Initialize message components with proper error handling
 	messageRepo := messages.NewRepository()
 	if messageRepo == nil {
-		log.Fatal("Failed to initialize message repository")
+		return fmt.Errorf("failed to initialize message repository")
 	}
 
 	messageService := messages.NewService(messageRepo)
 	if messageService == nil {
-		log.Fatal("Failed to initialize message service")
-	} else {
-		log.Printf("MessageService initialized successfully: %+v", messageService)
+		return fmt.Errorf("failed to initialize message service")
 	}
 
-	messageHandler := messages.NewHandler(messageService)
+	messageHandler := messages.NewMessageHandler(messageService)
 	if messageHandler == nil {
-		log.Fatal("Failed to initialize message handler")
-	} else {
-		log.Printf("MessageHandler initialized successfully: %+v", messageHandler)
+		return fmt.Errorf("failed to initialize message handler")
 	}
 
 	// Create resolver with all handlers using NewResolver
@@ -129,10 +123,7 @@ func main() {
 	// Add WebSocket transport with proper configuration
 	srv.AddTransport(&transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
-		InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
-			// Add any WebSocket initialization logic here
-			return ctx, nil
-		},
+		// Remove InitFunc since it's not being used
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return true
@@ -144,6 +135,13 @@ func main() {
 
 	// Set up routes
 	router := gin.Default()
+
+	// Apply CORS middleware
+	router.Use(func(c *gin.Context) {
+		corsMiddleware.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			c.Next()
+		})).ServeHTTP(c.Writer, c.Request)
+	})
 
 	// Trust all proxies - based on your requirement
 	router.SetTrustedProxies([]string{"127.0.0.1"})
@@ -163,7 +161,5 @@ func main() {
 
 	// Start server
 	log.Printf("Server is running on http://localhost:%s/", port)
-	if err := router.Run(":" + port); err != nil {
-		log.Fatal("Failed to start server:", err)
-	}
+	return router.Run(":" + port)
 }
