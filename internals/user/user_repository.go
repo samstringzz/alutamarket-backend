@@ -1032,3 +1032,8 @@ func (r *repository) SendMaintenanceMail(ctx context.Context, userId string, act
 
 	return nil
 }
+
+// Add this method to your repository struct
+func (r *repository) GetDB() *gorm.DB {
+	return r.db
+}

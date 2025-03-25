@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"gorm.io/gorm"
 )
 
 type Handler struct {
@@ -153,4 +154,9 @@ func (h *Handler) SendMaintenanceMail(ctx context.Context, userId string, active
 		return err
 	}
 	return nil
+}
+
+// Add this method to your Handler struct
+func (h *Handler) GetDB() *gorm.DB {
+	return h.Service.GetDB()
 }
