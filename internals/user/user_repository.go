@@ -20,6 +20,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -62,20 +63,37 @@ func (r *repository) resendOTP(ctx context.Context, phone string) error {
 	return nil
 }
 func NewRepository() Repository {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		// Fallback to constructing URL from individual parameters
+		dbURL = fmt.Sprintf("postgresql://%s:%s@%s:%s/%s",
+			os.Getenv("DB_USER"),
+			os.Getenv("DB_PASSWORD"),
+			os.Getenv("DB_HOST"),
+			os.Getenv("DB_PORT"),
+			os.Getenv("DB_NAME"),
+		)
 	}
-	dbURI := os.Getenv("DB_URI")
 
-	// Initialize the database connection
-	db, err := gorm.Open(postgres.Open(dbURI), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		log.Printf("Error opening database: %v", err)
+		return nil
 	}
 
-	return &repository{
-		db: db,
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Printf("Error getting underlying sql.DB: %v", err)
+		return nil
 	}
+
+	// Test the connection
+	if err := sqlDB.Ping(); err != nil {
+		log.Printf("Error connecting to the database: %v", err)
+		return nil
+	}
+
+	return &repository{db: db}
 }
 
 func (r *repository) GetUserByEmailOrPhone(ctx context.Context, identifier string) (*User, error) {
