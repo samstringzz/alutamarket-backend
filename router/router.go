@@ -27,7 +27,12 @@ func InitRouter(userHandler *user.Handler, productHandler *product.Handler, prod
 
 	// CORS middleware configuration
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:5173", "http://localhost:3000"} // Add your frontend URL
+	config.AllowOrigins = []string{
+		"http://localhost:5173",
+		"http://localhost:3000",
+		"https://aluta-market-api-zns8.onrender.com",
+		"https://*.onrender.com",
+	}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{
 		"Origin",
