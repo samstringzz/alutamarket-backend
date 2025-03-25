@@ -255,8 +255,8 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 				myStore := &store.Store{} // Ensure a clean struct
 				seller := &user.User{}
 				// Fetch the store corresponding to the store name
-				if storeName != nil {
-					err := repo.db.Model(&myStore).Where("name = ?", *storeName).First(&myStore).Error
+				if storeName != "" {
+					err := repo.db.Model(&myStore).Where("name = ?", storeName).First(&myStore).Error
 					if err != nil {
 						fmt.Println("Failed to find store:", err)
 					}
@@ -299,7 +299,7 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 						// sellerOrder.Products = append(sellerOrder.Products, storeProduct)
 					}
 
-					sellerOrder.Products = filterProductsByStore(order.Products, *storeName)
+					sellerOrder.Products = filterProductsByStore(order.Products, storeName)
 					sellerOrder.StoreID = strconv.Itoa(int(myStore.ID))
 					sellerOrder.Customer = order.Customer
 					sellerOrder.Status = "pending"
@@ -471,8 +471,8 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 				myStore := &store.Store{} // Ensure a clean struct
 				seller := &user.User{}
 				// Fetch the store details
-				if storeName != nil {
-					err := repo.db.Model(&myStore).Where("name = ?", *storeName).First(&myStore).Error
+				if storeName != "" {
+					err := repo.db.Model(&myStore).Where("name = ?", storeName).First(&myStore).Error
 					if err != nil {
 						fmt.Println("Failed to find store:", err)
 					}
@@ -517,7 +517,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 						// sellerOrder.Products = append(sellerOrder.Products, storeProduct)
 					}
 
-					sellerOrder.Products = filterProductsByStore(order.Products, *storeName)
+					sellerOrder.Products = filterProductsByStore(order.Products, storeName)
 					sellerOrder.StoreID = strconv.Itoa(int(myStore.ID))
 					sellerOrder.Customer = order.Customer
 					sellerOrder.Status = "pending"
@@ -662,8 +662,8 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 				myStore := &store.Store{} // Ensure a clean struct
 				seller := &user.User{}
 				// Fetch the store details
-				if storeName != nil {
-					err := repo.db.Model(&myStore).Where("name = ?", *storeName).First(&myStore).Error
+				if storeName != "" {
+					err := repo.db.Model(&myStore).Where("name = ?", storeName).First(&myStore).Error
 					if err != nil {
 						fmt.Println("Failed to find store:", err)
 					}
@@ -708,7 +708,7 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 						// sellerOrder.Products = append(sellerOrder.Products, storeProduct)
 					}
 
-					sellerOrder.Products = filterProductsByStore(order.Products, *storeName)
+					sellerOrder.Products = filterProductsByStore(order.Products, storeName)
 					sellerOrder.StoreID = strconv.Itoa(int(myStore.ID))
 					sellerOrder.Customer = order.Customer
 					sellerOrder.Status = "pending"
