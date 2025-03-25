@@ -249,7 +249,7 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 			}
 
 			// Fetch Stores
-			uniqueStores := utils.RemoveDuplicates(order.StoresID)
+			uniqueStores := utils.RemoveDuplicatesStringArray([]string(order.StoresID))
 
 			for _, storeName := range uniqueStores {
 				myStore := &store.Store{} // Ensure a clean struct
@@ -465,7 +465,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 			// fmt.Printf("Fetched Buyer: %+v\n", buyer)
 
 			// Fetch Stores
-			uniqueStores := utils.RemoveDuplicates(order.StoresID)
+			uniqueStores := utils.RemoveDuplicatesStringArray([]string(order.StoresID))
 
 			for _, storeName := range uniqueStores {
 				myStore := &store.Store{} // Ensure a clean struct
@@ -656,7 +656,7 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 				return
 			}
 			// Fetch Stores
-			uniqueStores := utils.RemoveDuplicates(order.StoresID)
+			uniqueStores := utils.RemoveDuplicatesStringArray([]string(order.StoresID))
 
 			for _, storeName := range uniqueStores {
 				myStore := &store.Store{} // Ensure a clean struct
