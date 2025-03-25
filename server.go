@@ -161,5 +161,13 @@ func InitServer() error {
 
 	// Start server
 	log.Printf("Server is running on http://localhost:%s/", port)
-	return router.Run(":" + port)
+	// Add health check endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "healthy",
+		})
+	})
+
+	// Bind to 0.0.0.0 to accept connections from any source
+	return router.Run("0.0.0.0:" + port)
 }
