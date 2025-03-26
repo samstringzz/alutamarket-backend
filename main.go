@@ -1,7 +1,19 @@
 package main
 
-import "github.com/Chrisentech/aluta-market-api/app"
+import (
+	"log"
+
+	"github.com/joho/godotenv"
+)
 
 func main() {
-	app.Start()
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: Error loading .env file: %v", err)
+	}
+
+	// Initialize and start the server
+	if err := InitServer(); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
 }
