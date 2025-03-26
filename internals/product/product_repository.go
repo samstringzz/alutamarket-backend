@@ -270,25 +270,44 @@ func (r *repository) GetProducts(ctx context.Context, store string, categorySlug
 	var products []*Product
 	var totalCount int64
 
-	query := r.db
+	// Create base query with indexes
+	query := r.db.
+		Select("DISTINCT products.*").
+		Table("products").
+		Where("products.deleted_at IS NULL")
+
 	if store != "" {
+		// Add index on store column if not exists
+		r.db.Exec("CREATE INDEX IF NOT EXISTS idx_products_store ON products(store)")
 		query = query.Where("store = ?", store)
 	}
+
 	if categorySlug != "" {
-		query = query.Joins("JOIN categories ON categories.name = products.category").
+		// Add indexes for category-related columns if not exists
+		r.db.Exec("CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug)")
+		r.db.Exec("CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)")
+
+		query = query.
+			Joins("JOIN categories ON categories.name = products.category").
 			Where("categories.slug = ?", categorySlug)
 	} else {
+		// Add index on status column if not exists
+		r.db.Exec("CREATE INDEX IF NOT EXISTS idx_products_status ON products(status)")
 		query = query.Where("status = ?", true).
 			Order("RANDOM()")
 	}
 
-	// Count total records
-	if err := query.Model(&Product{}).Count(&totalCount).Error; err != nil {
+	// Use separate query for count to improve performance
+	countQuery := query
+	if err := countQuery.Count(&totalCount).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Fetch paginated products
-	if err := query.Limit(limit).Offset(offset * limit).Find(&products).Error; err != nil {
+	// Add pagination with optimized query
+	if err := query.
+		Limit(limit).
+		Offset(offset * limit).
+		Find(&products).Error; err != nil {
 		return nil, 0, err
 	}
 
