@@ -80,10 +80,21 @@ func InitServer() error {
 		port = defaultPort
 	}
 
-	// Initialize user components
+	// Initialize user components with proper error handling
 	userRepo := user.NewRepository()
+	if userRepo == nil {
+		return fmt.Errorf("failed to initialize user repository")
+	}
+
 	userService := user.NewService(userRepo)
+	if userService == nil {
+		return fmt.Errorf("failed to initialize user service")
+	}
+
 	userHandler := user.NewHandler(userService)
+	if userHandler == nil {
+		return fmt.Errorf("failed to initialize user handler")
+	}
 
 	// Initialize product components
 	productRepo := product.NewRepository()
