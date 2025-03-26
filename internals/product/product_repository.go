@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/graph/model"
@@ -27,14 +28,33 @@ func NewRepository() Repository {
 		log.Fatal("DATABASE_URL environment variable not set")
 	}
 
-	// Configure PostgreSQL connection using Supabase connection string
+	// Configure PostgreSQL connection with connection pool settings
 	db, err := gorm.Open(postgres.New(postgres.Config{
-		DSN: dbURL,
-	}), &gorm.Config{})
+		DSN:                  dbURL,
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{
+		PrepareStmt: true,
+	})
 
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
+
+	// Retry connection up to 5 times
+	if err := utils.RetryConnection(db, 5); err != nil {
+		log.Fatal("Failed to establish database connection after retries:", err)
+	}
+
+	// Configure connection pool
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatal("Failed to get database instance:", err)
+	}
+
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(50)
+	sqlDB.SetConnMaxLifetime(time.Hour)
+	sqlDB.SetConnMaxIdleTime(30 * time.Minute)
 
 	return &repository{
 		db: db,
