@@ -19,7 +19,6 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/Chrisentech/aluta-market-api/utils"
-	"github.com/google/uuid"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -880,6 +879,18 @@ func (r *mutationResolver) VerifySmartCard(ctx context.Context, input model.Smar
 
 // CreateChat is the resolver for the createChat field.
 func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput) (*model.Chat, error) {
+	// Recover from panics
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Recovered from panic in CreateChat: %v", r)
+		}
+	}()
+
+	// Check if MessageHandler is initialized
+	if r.MessageHandler == nil {
+		r.MessageHandler = messages.NewMessageHandler(messages.NewService(messages.NewRepository()))
+	}
+
 	// Input validation
 	if len(input.Users) == 0 {
 		return nil, fmt.Errorf("at least one user is required")
@@ -887,16 +898,26 @@ func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput
 
 	var users []*user.User
 	for _, u := range input.Users {
+		if u == nil {
+			continue
+		}
+
 		var avatar string
 		if u.Avatar != nil {
 			avatar = *u.Avatar
 		}
 
+		// Get existing user to preserve their UUID
+		existingUser, err := r.UserHandler.GetUser(ctx, strconv.Itoa(u.ID))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user data: %v", err)
+		}
+
 		users = append(users, &user.User{
 			ID:       uint32(u.ID),
+			UUID:     existingUser.UUID, // Use existing UUID
 			Fullname: u.Fullname,
 			Avatar:   avatar,
-			UUID:     uuid.New().String(),
 		})
 	}
 
@@ -908,11 +929,12 @@ func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput
 	}
 
 	var messageUsers []*model.User
-	for _, u := range input.Users {
+	for _, u := range users {
 		messageUser := &model.User{
-			ID:       strconv.Itoa(u.ID),
+			ID:       strconv.Itoa(int(u.ID)),
+			UUID:     u.UUID,
 			Fullname: u.Fullname,
-			Avatar:   u.Avatar,
+			Avatar:   &u.Avatar,
 		}
 		messageUsers = append(messageUsers, messageUser)
 	}
