@@ -45,6 +45,12 @@ func handleWebSocket(c *gin.Context) {
 	}
 }
 
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found")
+	}
+}
+
 func Start() {
 	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/Chrisentech/aluta-market-api/graph"
 	"github.com/Chrisentech/aluta-market-api/internals/messages"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
@@ -143,8 +144,19 @@ func InitServer() error {
 		})).ServeHTTP(c.Writer, c.Request)
 	})
 
-	// Trust all proxies - based on your requirement
-	router.SetTrustedProxies([]string{"127.0.0.1"})
+	// Add root endpoint
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "running",
+			"message": "Aluta Market API is running",
+		})
+	})
+
+	// Add GraphQL playground endpoint
+	router.GET("/graphql", gin.WrapH(playground.Handler("GraphQL Playground", "/graphql")))
+
+	// GraphQL endpoint for queries/mutations
+	router.POST("/graphql", gin.WrapH(srv))
 
 	// WebSocket endpoint
 	router.GET("/ws", func(c *gin.Context) {
@@ -156,12 +168,7 @@ func InitServer() error {
 		}
 	})
 
-	// GraphQL endpoint
-	router.POST("/graphql", gin.WrapH(srv))
-
-	// Start server
-	log.Printf("Server is running on http://localhost:%s/", port)
-	// Add health check endpoint
+	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "healthy",

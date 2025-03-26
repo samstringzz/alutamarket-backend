@@ -22,13 +22,20 @@ type repository struct {
 }
 
 func NewRepository() Repository {
-	dbURI := os.Getenv("DB_URI")
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatal("DATABASE_URL environment variable not set")
+	}
 
-	// Initialize the database connection
-	db, err := gorm.Open(postgres.Open(dbURI), &gorm.Config{})
+	// Configure PostgreSQL connection using Supabase connection string
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN: dbURL,
+	}), &gorm.Config{})
+
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
+
 	return &repository{
 		db: db,
 	}

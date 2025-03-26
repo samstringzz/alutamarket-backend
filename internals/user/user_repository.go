@@ -64,11 +64,11 @@ func (r *repository) resendOTP(ctx context.Context, phone string) error {
 	return nil
 }
 func NewRepository() Repository {
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
+	dbURI := os.Getenv("DATABASE_URL")
+	if dbURI == "" {
 		log.Printf("DATABASE_URL not found, using individual connection parameters")
 		password := strings.ReplaceAll(os.Getenv("DB_PASSWORD"), "#", "%23")
-		dbURL = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
+		dbURI = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
 			os.Getenv("DB_USER"),
 			password,
 			os.Getenv("DB_HOST"),
@@ -78,7 +78,7 @@ func NewRepository() Repository {
 	}
 
 	// Test direct connection first
-	sqlDB, err := sql.Open("postgres", dbURL)
+	sqlDB, err := sql.Open("postgres", dbURI)
 	if err != nil {
 		log.Printf("Error creating database connection: %v", err)
 		return nil
@@ -94,7 +94,7 @@ func NewRepository() Repository {
 	log.Printf("Successfully connected to database")
 
 	// Now proceed with GORM connection
-	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dbURI), &gorm.Config{})
 	if err != nil {
 		log.Printf("Error opening database with GORM: %v", err)
 		return nil
