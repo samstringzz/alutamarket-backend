@@ -898,9 +898,10 @@ func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput
 		})
 	}
 
-	// Create chat without UUID
+	// Create chat with basic fields
 	chat, err := r.MessageHandler.FindOrCreateChat(ctx, users)
 	if err != nil {
+		log.Printf("Chat creation error: %v", err)
 		return nil, fmt.Errorf("failed to create chat: %v", err)
 	}
 
