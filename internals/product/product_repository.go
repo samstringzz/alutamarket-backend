@@ -270,44 +270,40 @@ func (r *repository) GetProducts(ctx context.Context, store string, categorySlug
 	var products []*Product
 	var totalCount int64
 
-	// Create base query with indexes
+	// Create base query
 	query := r.db.
-		Select("DISTINCT products.*").
 		Table("products").
 		Where("products.deleted_at IS NULL")
 
 	if store != "" {
-		// Add index on store column if not exists
-		r.db.Exec("CREATE INDEX IF NOT EXISTS idx_products_store ON products(store)")
 		query = query.Where("store = ?", store)
 	}
 
 	if categorySlug != "" {
-		// Add indexes for category-related columns if not exists
-		r.db.Exec("CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug)")
-		r.db.Exec("CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)")
-
 		query = query.
 			Joins("JOIN categories ON categories.name = products.category").
 			Where("categories.slug = ?", categorySlug)
 	} else {
-		// Add index on status column if not exists
-		r.db.Exec("CREATE INDEX IF NOT EXISTS idx_products_status ON products(status)")
-		query = query.Where("status = ?", true).
-			Order("RANDOM()")
+		// For random ordering, use a different approach
+		query = query.Where("status = ?", true)
+		if limit > 0 {
+			query = query.Order("random()").Limit(limit)
+		}
 	}
 
-	// Use separate query for count to improve performance
+	// Count total records before pagination
 	countQuery := query
 	if err := countQuery.Count(&totalCount).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Add pagination with optimized query
-	if err := query.
-		Limit(limit).
-		Offset(offset * limit).
-		Find(&products).Error; err != nil {
+	// Apply pagination if not already limited by random selection
+	if categorySlug != "" || store != "" {
+		query = query.Limit(limit).Offset(offset * limit)
+	}
+
+	// Execute the final query
+	if err := query.Find(&products).Error; err != nil {
 		return nil, 0, err
 	}
 
