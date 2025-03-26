@@ -362,16 +362,17 @@ func filterReviewsBySeller(reviews []*Review, sellerId string) []*Review {
 func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
 	var products []*Product
 
-	// Ensure the query string is properly formatted
-	formattedQuery := "%" + query + "%"
+	// Sanitize and optimize the search query
+	formattedQuery := "%" + strings.ToLower(strings.TrimSpace(query)) + "%"
 
-	// Modify the query to handle potential null categories
-	err := r.db.Select("DISTINCT products.*").
+	// Use more efficient query with indexes
+	err := r.db.Select("DISTINCT ON (products.id) products.*").
 		Table("products").
-		Joins("LEFT JOIN categories ON categories.name = products.category").
-		Where("(COALESCE(categories.slug, '') ILIKE ? OR products.name ILIKE ?) AND products.deleted_at IS NULL",
-			formattedQuery,
-			formattedQuery).
+		Joins("LEFT JOIN categories ON LOWER(categories.name) = LOWER(products.category)").
+		Where("products.deleted_at IS NULL").
+		Where("LOWER(products.name) ILIKE ? OR LOWER(products.category) ILIKE ? OR LOWER(COALESCE(categories.slug, '')) ILIKE ?",
+			formattedQuery, formattedQuery, formattedQuery).
+		Order("products.id, products.created_at DESC").
 		Find(&products).Error
 
 	if err != nil {
@@ -379,23 +380,15 @@ func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Produ
 		return nil, fmt.Errorf("failed to search products: %v", err)
 	}
 
-	// Initialize empty slices if nil
+	// Batch initialize slices for better performance
 	for _, p := range products {
 		if p == nil {
 			continue
 		}
-		if p.Images == nil {
-			p.Images = []string{}
-		}
-		if p.Variant == nil {
-			p.Variant = []*VariantType{}
-		}
-		if p.Views == nil {
-			p.Views = []uint32{}
-		}
-		if p.Reviews == nil {
-			p.Reviews = []Review{}
-		}
+		p.Images = make([]string, 0, 5) // Preallocate with capacity
+		p.Variant = make([]*VariantType, 0, 3)
+		p.Views = make([]uint32, 0, 10)
+		p.Reviews = make([]Review, 0, 5)
 	}
 
 	return products, nil
