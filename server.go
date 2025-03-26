@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -122,12 +123,16 @@ func InitServer() error {
 	}))
 
 	// Add WebSocket transport with proper configuration
+	// Configure the GraphQL server with secure WebSocket
 	srv.AddTransport(&transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
-		// Remove InitFunc since it's not being used
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
-				return true
+				origin := r.Header.Get("Origin")
+				return origin == "https://www.thealutamarket.com" ||
+					origin == "https://thealutamarket.com" ||
+					origin == "https://alutamarket.vercel.app" ||
+					strings.HasPrefix(origin, "http://localhost")
 			},
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
