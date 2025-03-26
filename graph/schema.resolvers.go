@@ -19,6 +19,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/Chrisentech/aluta-market-api/utils"
+	"github.com/google/uuid"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -895,13 +896,14 @@ func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput
 			ID:       uint32(u.ID),
 			Fullname: u.Fullname,
 			Avatar:   avatar,
+			UUID:     uuid.New().String(),
 		})
 	}
 
 	// Create chat with basic fields
 	chat, err := r.MessageHandler.FindOrCreateChat(ctx, users)
 	if err != nil {
-		log.Printf("Chat creation error: %v", err)
+		log.Printf("Chat creation error details: %+v", err)
 		return nil, fmt.Errorf("failed to create chat: %v", err)
 	}
 
