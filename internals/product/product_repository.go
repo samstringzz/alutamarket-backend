@@ -365,21 +365,25 @@ func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Produ
 	// Ensure the query string is properly formatted
 	formattedQuery := "%" + query + "%"
 
-	// Perform the search operation
-	err := r.db.Select("products.*").
+	// Modify the query to handle potential null categories
+	err := r.db.Select("DISTINCT products.*").
 		Table("products").
-		Joins("JOIN categories ON categories.name = products.category").
-		Where("(categories.slug ILIKE ? OR products.name ILIKE ?) AND products.deleted_at IS NULL",
+		Joins("LEFT JOIN categories ON categories.name = products.category").
+		Where("(COALESCE(categories.slug, '') ILIKE ? OR products.name ILIKE ?) AND products.deleted_at IS NULL",
 			formattedQuery,
 			formattedQuery).
 		Find(&products).Error
 
 	if err != nil {
+		log.Printf("Search products error: %v", err)
 		return nil, fmt.Errorf("failed to search products: %v", err)
 	}
 
 	// Initialize empty slices if nil
 	for _, p := range products {
+		if p == nil {
+			continue
+		}
 		if p.Images == nil {
 			p.Images = []string{}
 		}
