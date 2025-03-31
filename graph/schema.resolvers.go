@@ -187,7 +187,30 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUs
 
 // CreateVerifyOtp is the resolver for the createVerifyOTP field.
 func (r *mutationResolver) CreateVerifyOtp(ctx context.Context, input model.NewVerifyOtp) (*model.LoginRes, error) {
-	panic(fmt.Errorf("not implemented: CreateVerifyOtp - createVerifyOTP"))
+	// Create verification request
+	verifyReq := &user.VerifyOTPReq{
+		Code:     input.Code,
+		Phone:    input.Phone,
+		Attempts: input.Attempts,
+	}
+
+	// Handle optional email field
+	if input.Email != nil {
+		verifyReq.Email = *input.Email
+	}
+
+	// Call user handler to verify OTP
+	result, err := r.UserHandler.VerifyOTP(ctx, verifyReq)
+	if err != nil {
+		return nil, fmt.Errorf("OTP verification failed: %v", err)
+	}
+
+	// Convert response to GraphQL model
+	return &model.LoginRes{
+		ID:           int(result.ID),
+		AccessToken:  result.AccessToken,
+		RefreshToken: result.RefreshToken,
+	}, nil
 }
 
 // LoginUser is the resolver for the loginUser field.
