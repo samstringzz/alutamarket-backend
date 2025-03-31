@@ -238,22 +238,28 @@ type UpdateStoreOrderInput struct {
 }
 
 type DVACustomer struct {
-	ID        string `json:"id" gorm:"primaryKey;type:uuid"`
+	ID        uint64 `json:"id" gorm:"primaryKey;type:uuid"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 }
 
+type PaystackBank struct {
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+}
+
 type DVABank struct {
-	ID   string `json:"id" gorm:"primaryKey;type:uuid"`
+	ID   uint64 `json:"id" gorm:"primaryKey"`
 	Name string `json:"name"`
 	Slug string `json:"slug"`
 }
 
 type DVAAccount struct {
-	ID            string      `json:"id" gorm:"primaryKey;type:uuid"`
-	CustomerID    string      `json:"customer_id" gorm:"column:customer_id;type:uuid"`
-	BankID        string      `json:"bank_id" gorm:"column:bank_id;type:uuid"`
+	ID            uint64      `json:"id" gorm:"primaryKey;type:uuid"`
+	CustomerID    uint64      `json:"customer_id" gorm:"column:customer_id;type:uuid"`
+	BankID        uint64      `json:"bank_id" gorm:"column:bank_id;type:uuid"`
 	Customer      DVACustomer `json:"customer" gorm:"foreignKey:CustomerID"`
 	Bank          DVABank     `json:"bank" gorm:"foreignKey:BankID"`
 	AccountNumber string      `json:"account_number"`

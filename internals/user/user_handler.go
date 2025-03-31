@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"gorm.io/gorm"
@@ -157,6 +159,27 @@ func (h *Handler) SendMaintenanceMail(ctx context.Context, userId string, active
 }
 
 // Add this method to your Handler struct
+func (h *Handler) GetDVAAccount(ctx context.Context, userID uint32) (*DVAAccount, error) {
+	// Get user details first
+	userIDStr := strconv.FormatUint(uint64(userID), 10)
+	user, err := h.GetUser(ctx, userIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %v", err)
+	}
+
+	// Get DVA account using the user's email
+	account, err := h.GetMyDVA(ctx, user.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get DVA account: %v", err)
+	}
+
+	return &DVAAccount{
+		AccountNumber: account.AccountNumber,
+		BankName:      account.Bank.Name,
+		AccountName:   account.AccountName,
+	}, nil
+}
+
 func (h *Handler) GetDB() *gorm.DB {
 	return h.Service.GetDB()
 }

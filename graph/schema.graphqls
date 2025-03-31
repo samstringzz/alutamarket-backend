@@ -48,9 +48,62 @@ type Chat {
   unread_count: Int!
 }
 
+type PaystackDVAResponse {
+  status: Boolean!
+  message: String!
+  data: PaystackDVAData!
+}
+
+type PaystackDVAData {
+  customer: PaystackCustomer!
+  accountName: String!
+  accountNumber: String!
+  bank: PaystackBank!
+}
+
+type PaystackCustomer {
+  id: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  customerCode: String!
+  phone: String!
+  riskAction: String!
+}
+
+type PaystackBank {
+  name: String!
+  id: String!
+  slug: String!
+}
+
+type DVAAccount {
+    id: ID!
+    accountName: String!
+    accountNumber: String!
+    bankName: String!
+    customer: Customer!
+    bank: Bank!
+}
+
+type PaystackAccountData {
+    accountNumber: String!
+    bankName: String!
+    accountName: String!
+    customerCode: String!
+    createdAt: String!
+}
+
+type Bank {
+  id: ID!
+  name: String!
+  slug: String!
+}
+
 extend type Query {
   Chats(userID: String!): [Chat!]
   Messages(chatId: String!): [Message!]
+  getDVAAccount(userID: ID!): DVAAccount
 }
 
 type Message {
@@ -268,9 +321,10 @@ input StoreOrderInput {
 }
 
 input DVAAccountInput {
-	user_id: String!
-	store_name: String!
+    userID: ID!
+    storeName: String!
 }
+
 input SkynetInput {
 	amount: Int!
 	user_id: Int!
@@ -392,6 +446,9 @@ input UpdateUserInput {
 	code: String
 	avatar: String
 	paymentDetails: PaymentDetailsInput
+	store_name: String      
+  	store_email: String     
+  	has_physical_address: Boolean  
 }
 
 type Category {
@@ -484,7 +541,7 @@ type Product {
 }
 
 type Customer {
-	id: String!
+	id: ID!
 	first_name: String!
 	last_name: String!
 	email: String!
@@ -492,27 +549,30 @@ type Customer {
 	phone: String!
 	risk_action: String!
 }
-type Bank {
-	name: String!
-	id: String!
-	slug: String!
-}
 
 type SplitConfig {
 	Subaccount: String!
 }
 
 type Account {
-	customer: Customer!
-	bank: Bank!
-	id: String!
-	account_number: String!
-	account_name: String!
-	created_at: String!
-	updated_at: String!
-	split_config: SplitConfig!
-	active: Boolean!
-	assigned: Boolean!
+  customer: Customer!
+  bank: Bank!
+  id: String!
+  account_number: String!
+  account_name: String!
+  created_at: String!
+  updated_at: String!
+  split_config: SplitConfig!
+  active: Boolean!
+  assigned: Boolean!
+}
+
+type PaystackAccount {
+    accountNumber: String!
+    bankName: String!
+    accountName: String!
+    customerCode: String!
+    createdAt: String!
 }
 
 input PaymentData {
@@ -814,6 +874,7 @@ type Mutation {
 	withdrawFund(input: fundInput!): Boolean!
 	confirmPassword(input: confirmPasswordInput): Boolean!
 	createInvoice(input: InvoiceInput!): Invoice
+	createPaystackAccount(email: String!, bvn: String!): PaystackAccount
 }
 
 type Subscription {

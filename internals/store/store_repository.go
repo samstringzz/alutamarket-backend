@@ -493,6 +493,8 @@ func convertTrackedToStoreProduct(tp TrackedProduct) *StoreProduct {
 }
 
 func (r *repository) GetDVAAccount(ctx context.Context, email string) (*DVAAccount, error) {
+	log.Printf("GetDVAAccount called with email: %s", email) // Log when the function is called
+
 	var account DVAAccount
 
 	if err := r.db.Table("dva_accounts").
@@ -503,8 +505,11 @@ func (r *repository) GetDVAAccount(ctx context.Context, email string) (*DVAAccou
 		Joins("JOIN dva_banks ON dva_accounts.bank_id = dva_banks.id").
 		Where("dva_customers.email = ?", email).
 		First(&account).Error; err != nil {
+		log.Printf("Error fetching DVA account: %v", err) // Log any errors
 		return nil, err
 	}
+
+	log.Printf("Retrieved DVA account: %+v", account) // Log the retrieved account
 
 	return &account, nil
 }

@@ -23,6 +23,16 @@ type followedStores struct {
 	Link        string `json:"link" db:"link"`
 }
 
+// Add this struct
+type DVAAccount struct {
+	ID            int
+	AccountName   string
+	AccountNumber string
+	BankName      string
+	Customer      *Customer
+	Bank          *Bank
+}
+
 // type Product *product.Product
 type User struct {
 	gorm.Model
@@ -51,14 +61,17 @@ type User struct {
 
 // Add this type definition after the User struct
 type UpdateUserReq struct {
-	ID             uint32         `json:"id"`
-	Fullname       string         `json:"fullname,omitempty"`
-	Email          string         `json:"email,omitempty"`
-	Campus         string         `json:"campus,omitempty"`
-	Phone          string         `json:"phone,omitempty"`
-	Avatar         string         `json:"avatar,omitempty"`
-	Dob            string         `json:"dob,omitempty"`
-	PaymentDetails PaymentDetails `json:"payment_details,omitempty"`
+	ID                 uint32         `json:"id"`
+	Fullname           string         `json:"fullname,omitempty"`
+	Email              string         `json:"email,omitempty"`
+	Campus             string         `json:"campus,omitempty"`
+	Phone              string         `json:"phone,omitempty"`
+	Avatar             string         `json:"avatar,omitempty"`
+	Dob                string         `json:"dob,omitempty"`
+	PaymentDetails     PaymentDetails `json:"payment_details,omitempty"`
+	StoreName          string         `json:"store_name,omitempty"`
+	StoreEmail         string         `json:"store_email,omitempty"`
+	HasPhysicalAddress bool           `json:"has_physical_address,omitempty"`
 }
 
 type CreateUserReq struct {
@@ -115,7 +128,7 @@ type LoginUserRes struct {
 }
 
 type Customer struct {
-	ID           string `json:"id"`
+	ID           int    `json:"id"`
 	FirstName    string `json:"first_name"`
 	LastName     string `json:"last_name"`
 	Email        string `json:"email"`
@@ -127,7 +140,7 @@ type Customer struct {
 
 type Bank struct {
 	Name string `json:"name"`
-	ID   string `json:"id"`
+	ID   int    `json:"id"`
 	Slug string `json:"slug"`
 }
 
@@ -143,7 +156,7 @@ type SplitConfig struct {
 }
 
 type Account struct {
-	ID            string      `json:"id"`
+	ID            int         `json:"id"`
 	AccountNumber string      `json:"account_number"`
 	AccountName   string      `json:"account_name"`
 	CreatedAt     string      `json:"created_at"`
@@ -156,9 +169,14 @@ type Account struct {
 }
 
 type DVADetails struct {
-	User       User   `json:"user"`
-	StoreName  string `json:"store_name" db:"store_name"`
-	StoreEmail string `json:"store_email" db:"store_email"`
+	User          User   `json:"user"`
+	StoreName     string `json:"store_name" db:"store_name"`
+	StoreEmail    string `json:"store_email" db:"store_email"`
+	AccountNumber string `json:"account_number" db:"account_number"`
+	BankName      string `json:"bank_name" db:"bank_name"`
+	CustomerCode  string `json:"customer_code" db:"customer_code"`
+	AccountName   string `json:"account_name" db:"account_name"`
+	PaystackData  string `json:"paystack_data" db:"paystack_data"`
 }
 
 // Transaction model
