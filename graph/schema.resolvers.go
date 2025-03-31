@@ -54,6 +54,17 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		UpdatedAt: time.Now(),
 	}
 
+	// Handle store details if provided and usertype is seller
+	if input.Stores != nil && input.Usertype == "seller" {
+		createUserReq.StoreName = input.Stores.Name
+		createUserReq.StoreEmail = input.Email
+		createUserReq.StorePhone = input.Stores.Phone
+		createUserReq.StoreLink = input.Stores.Link
+		createUserReq.Description = input.Stores.Description
+		createUserReq.StoreAddress = input.Stores.Address
+		createUserReq.HasPhysicalAddress = input.Stores.HasPhysicalAddress
+	}
+
 	// Add detailed request logging
 	fmt.Printf("Creating user with request: %+v\n", createUserReq)
 
@@ -78,7 +89,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	}
 
 	// Convert user service response to GraphQL model
-	return &model.User{
+	userResponse := &model.User{
 		ID:           strconv.FormatInt(int64(userData.ID), 10),
 		Fullname:     userData.Fullname,
 		Email:        userData.Email,
@@ -88,7 +99,40 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		Active:       active,
 		AccessToken:  &userData.AccessToken,
 		RefreshToken: &userData.RefreshToken,
-	}, nil
+	}
+
+	// If user is a seller, fetch their store
+	if userData.Usertype == "seller" {
+		storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+		userStore, err := storeHandler.GetStore(ctx, userData.ID)
+		if err == nil && userStore != nil {
+			userResponse.Stores = []*model.Store{{
+				ID:                 strconv.Itoa(int(userStore.ID)),
+				Name:               userStore.Name,
+				Link:               userStore.Link,
+				Description:        userStore.Description,
+				Address:            userStore.Address,
+				Phone:              userStore.Phone,
+				HasPhysicalAddress: userStore.HasPhysicalAddress,
+				Thumbnail:          userStore.Thumbnail,
+				Background:         userStore.Background,
+				Status:             userStore.Status,
+				User:               int(userStore.UserID),
+			}}
+
+			// Create DVA account
+			dvaDetails := &user.DVADetails{
+				User:      *userData,
+				StoreName: createUserReq.StoreName,
+			}
+
+			_, err := r.UserHandler.CreateDVAAccount(ctx, dvaDetails)
+			if err != nil {
+				log.Printf("Warning: Failed to create DVA account: %v", err)
+			}
+		}
+	}
+	return userResponse, nil
 }
 
 // CreateOrder is the resolver for the createOrder field.
@@ -138,6 +182,17 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUs
 	if input.Dob != nil {
 		updateReq.Dob = *input.Dob
 	}
+	// Add store-related fields
+	if input.StoreName != nil {
+		updateReq.StoreName = *input.StoreName
+	}
+	if input.StoreEmail != nil {
+		updateReq.StoreEmail = *input.StoreEmail
+	}
+	if input.HasPhysicalAddress != nil {
+		updateReq.HasPhysicalAddress = *input.HasPhysicalAddress
+	}
+
 	if input.PaymentDetails != nil {
 		updateReq.PaymentDetails = user.PaymentDetails{
 			Name:    input.PaymentDetails.Name,
@@ -154,35 +209,56 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUs
 	}
 
 	// Convert user service response to GraphQL model
-	user := &model.User{
-		ID:       strconv.FormatInt(int64(result.ID), 10),
-		UUID:     result.UUID,
-		Fullname: result.Fullname,
-		Email:    result.Email,
-		Phone:    result.Phone,
-		Campus:   result.Campus,
-		Usertype: result.Usertype,
-		Online:   result.Online,
-		Active:   *result.Active,
+	userResponse := &model.User{
+		ID:           strconv.FormatInt(int64(result.ID), 10),
+		UUID:         result.UUID,
+		Fullname:     result.Fullname,
+		Email:        result.Email,
+		Phone:        result.Phone,
+		Campus:       result.Campus,
+		Usertype:     result.Usertype,
+		Active:       *result.Active,
+		AccessToken:  &result.AccessToken,
+		RefreshToken: &result.RefreshToken,
+		Online:       result.Online,
 	}
 
-	// Handle optional fields
-	if result.Avatar != "" {
-		user.Avatar = &result.Avatar
-	}
-	if result.Dob != "" {
-		user.Dob = &result.Dob
-	}
-	if result.PaymentDetails.Name != "" {
-		user.PaymentDetails = &model.PaymentDetails{
-			Name:    result.PaymentDetails.Name,
-			Phone:   result.PaymentDetails.Phone,
-			Address: result.PaymentDetails.Address,
-			Info:    result.PaymentDetails.Info,
+	// If user is a seller, create and fetch their store
+	if result.Usertype == "seller" && input.Stores != nil {
+		storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+
+		// Create store with input details
+		storeInput := &store.Store{
+			Name:               input.Stores.Name,
+			Link:               input.Stores.Link,
+			UserID:             result.ID,
+			Description:        input.Stores.Description,
+			Address:            input.Stores.Address,
+			Phone:              input.Stores.Phone,
+			HasPhysicalAddress: input.Stores.HasPhysicalAddress,
+			Email:              result.Email,
+			Status:             true,
+		}
+
+		createdStore, err := storeHandler.CreateStore(ctx, storeInput)
+		if err == nil && createdStore != nil {
+			userResponse.Stores = []*model.Store{{
+				ID:                 strconv.Itoa(int(createdStore.ID)),
+				Name:               createdStore.Name,
+				Link:               createdStore.Link,
+				Description:        createdStore.Description,
+				Address:            createdStore.Address,
+				Phone:              createdStore.Phone,
+				HasPhysicalAddress: createdStore.HasPhysicalAddress,
+				Thumbnail:          createdStore.Thumbnail,
+				Background:         createdStore.Background,
+				Status:             createdStore.Status,
+				User:               int(createdStore.UserID),
+			}}
 		}
 	}
 
-	return user, nil
+	return userResponse, nil
 }
 
 // CreateVerifyOtp is the resolver for the createVerifyOTP field.
@@ -866,9 +942,33 @@ func (r *mutationResolver) DeleteStore(ctx context.Context, storeID int) (*model
 	panic(fmt.Errorf("not implemented: DeleteStore - deleteStore"))
 }
 
-// CreateDVAAccount is the resolver for the createDVAAccount field.
+// Update the CreateDVAAccount resolver
 func (r *mutationResolver) CreateDVAAccount(ctx context.Context, input model.DVAAccountInput) (string, error) {
-	panic(fmt.Errorf("not implemented: CreateDVAAccount - createDVAAccount"))
+	// Get existing user
+	existingUser, err := r.UserHandler.GetUser(ctx, input.UserID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get user details: %v", err)
+	}
+
+	// Only proceed if user is a seller
+	if existingUser.Usertype != "seller" {
+		return "", fmt.Errorf("only sellers can create DVA accounts")
+	}
+
+	// Create DVA details
+	dvaDetails := &user.DVADetails{
+		User:       *existingUser,
+		StoreName:  input.StoreName,
+		StoreEmail: existingUser.Email,
+	}
+
+	// Create DVA account using UserHandler
+	accountID, err := r.UserHandler.CreateDVAAccount(ctx, dvaDetails)
+	if err != nil {
+		return "", fmt.Errorf("failed to create DVA account: %v", err)
+	}
+
+	return accountID, nil
 }
 
 // InitializePayment is the resolver for the initializePayment field.
@@ -1769,12 +1869,12 @@ func (r *queryResolver) Mydva(ctx context.Context, email string) (*model.Account
 
 	return &model.Account{
 		Customer: &model.Customer{
-			ID:        account.Customer.ID,
+			ID:        int(account.Customer.ID),
 			FirstName: account.Customer.FirstName,
 			LastName:  account.Customer.LastName,
 		},
 		Bank: &model.Bank{
-			ID:   account.Bank.ID,
+			ID:   int(account.Bank.ID),
 			Name: account.Bank.Name,
 			Slug: account.Bank.Slug,
 		},
@@ -1807,33 +1907,6 @@ func (r *queryResolver) MyInvoices(ctx context.Context, storeID *int) ([]*model.
 // MyDownloads is the resolver for the MyDownloads field.
 func (r *queryResolver) MyDownloads(ctx context.Context, id string) ([]*model.Downloads, error) {
 	panic(fmt.Errorf("not implemented: MyDownloads - MyDownloads"))
-}
-
-// Add this resolver for Message type
-func (r *messageResolver) Users(ctx context.Context, obj *model.Message) ([]*model.User, error) {
-	// Get users associated with the message's chat
-	chatID, err := strconv.ParseUint(obj.ChatID, 10, 32)
-	if err != nil {
-		return nil, fmt.Errorf("invalid chat ID: %v", err)
-	}
-
-	users, err := r.MessageHandler.GetChatUsers(ctx, uint32(chatID))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get chat users: %v", err)
-	}
-
-	var messageUsers []*model.User
-	for _, u := range users {
-		messageUser := &model.User{
-			ID:       strconv.FormatUint(uint64(u.ID), 10),
-			Fullname: u.Fullname,
-			Avatar:   &u.Avatar,
-			Online:   u.Online,
-		}
-		messageUsers = append(messageUsers, messageUser)
-	}
-
-	return messageUsers, nil
 }
 
 // Add/Update the Chats query resolver
@@ -1936,6 +2009,43 @@ func (r *queryResolver) Messages(ctx context.Context, chatID string) ([]*model.M
 	return result, nil
 }
 
+func (r *queryResolver) GetDVAAccount(ctx context.Context, userID string) (*model.DVAAccount, error) {
+	// Convert string ID to uint32
+	id, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID: %v", err)
+	}
+
+	// Get DVA account details
+	dvaAccount, err := r.UserHandler.GetDVAAccount(ctx, uint32(id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get DVA account: %v", err)
+	}
+
+	// Check if dvaAccount or its nested fields are nil
+	if dvaAccount == nil || dvaAccount.Customer == nil || dvaAccount.Bank == nil {
+		return nil, fmt.Errorf("DVA account or related fields are nil")
+	}
+
+	// Convert to GraphQL model
+	return &model.DVAAccount{
+		ID:            strconv.Itoa(dvaAccount.ID), // Convert int to string
+		AccountName:   dvaAccount.AccountName,
+		AccountNumber: dvaAccount.AccountNumber,
+		BankName:      dvaAccount.Bank.Name,
+		Customer: &model.Customer{
+			ID:        int(dvaAccount.Customer.ID),
+			FirstName: dvaAccount.Customer.FirstName,
+			LastName:  dvaAccount.Customer.LastName,
+		},
+		Bank: &model.Bank{
+			ID:   int(dvaAccount.Bank.ID),
+			Name: dvaAccount.Bank.Name,
+			Slug: dvaAccount.Bank.Slug,
+		},
+	}, nil
+}
+
 // ProductSearchResults is the resolver for the productSearchResults field.
 func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
 	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
@@ -1949,12 +2059,7 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 // Subscription returns SubscriptionResolver implementation.
 func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
-func (r *Resolver) Message() MessageResolver           { return &messageResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-type messageResolver struct{ *Resolver }
-type MessageResolver interface {
-	Users(ctx context.Context, obj *model.Message) ([]*model.User, error)
-}

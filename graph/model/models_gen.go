@@ -12,7 +12,7 @@ import (
 type Account struct {
 	Customer      *Customer    `json:"customer"`
 	Bank          *Bank        `json:"bank"`
-	ID            string       `json:"id"`
+	ID            uint64       `json:"id"`
 	AccountNumber string       `json:"account_number"`
 	AccountName   string       `json:"account_name"`
 	CreatedAt     string       `json:"created_at"`
@@ -23,8 +23,8 @@ type Account struct {
 }
 
 type Bank struct {
+	ID   int    `json:"id"`
 	Name string `json:"name"`
-	ID   string `json:"id"`
 	Slug string `json:"slug"`
 }
 
@@ -70,13 +70,22 @@ type ChatInput struct {
 }
 
 type Customer struct {
-	ID           string `json:"id"`
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
+	ID           int `json:"id"`
+	FirstName    string `json:"firstName"`
+	LastName     string `json:"lastName"`
 	Email        string `json:"email"`
 	CustomerCode string `json:"customer_code"`
 	Phone        string `json:"phone"`
 	RiskAction   string `json:"risk_action"`
+}
+
+type DVAAccount struct {
+    ID            string    `json:"id"`
+    AccountName   string    `json:"accountName"`
+    AccountNumber string    `json:"accountNumber"`
+    BankName      string    `json:"bankName"`
+    Customer      *Customer `json:"customer"`
+    Bank          *Bank     `json:"bank"`
 }
 
 type DVAAccountInput struct {
@@ -314,6 +323,35 @@ type PaymentDetailsInput struct {
 	Phone   string `json:"phone"`
 	Address string `json:"address"`
 	Info    string `json:"info"`
+}
+
+type PaystackBank struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
+	Slug string `json:"slug"`
+}
+
+type PaystackCustomer struct {
+	ID           string `json:"id"`
+	FirstName    string `json:"firstName"`
+	LastName     string `json:"lastName"`
+	Email        string `json:"email"`
+	CustomerCode string `json:"customerCode"`
+	Phone        string `json:"phone"`
+	RiskAction   string `json:"riskAction"`
+}
+
+type PaystackDVAData struct {
+	Customer      *PaystackCustomer `json:"customer"`
+	AccountName   string            `json:"accountName"`
+	AccountNumber string            `json:"accountNumber"`
+	Bank          *PaystackBank     `json:"bank"`
+}
+
+type PaystackDVAResponse struct {
+	Status  bool             `json:"status"`
+	Message string           `json:"message"`
+	Data    *PaystackDVAData `json:"data"`
 }
 
 type Product struct {
@@ -655,22 +693,25 @@ type UpdateStoreOrderInput struct {
 }
 
 type UpdateUserInput struct {
-	ID             *string              `json:"id,omitempty"`
-	Fullname       *string              `json:"fullname,omitempty"`
-	UUID           *string              `json:"UUID,omitempty"`
-	Email          *string              `json:"email,omitempty"`
-	Campus         *string              `json:"campus,omitempty"`
-	Password       *string              `json:"password,omitempty"`
-	Stores         *StoreInput          `json:"stores,omitempty"`
-	Dob            *string              `json:"dob,omitempty"`
-	Phone          *string              `json:"phone,omitempty"`
-	Gender         *string              `json:"gender,omitempty"`
-	Active         *bool                `json:"active,omitempty"`
-	Online         bool                 `json:"online"`
-	Usertype       *string              `json:"usertype,omitempty"`
-	Code           *string              `json:"code,omitempty"`
-	Avatar         *string              `json:"avatar,omitempty"`
-	PaymentDetails *PaymentDetailsInput `json:"paymentDetails,omitempty"`
+	ID                 *string              `json:"id,omitempty"`
+	Fullname           *string              `json:"fullname,omitempty"`
+	UUID               *string              `json:"UUID,omitempty"`
+	Email              *string              `json:"email,omitempty"`
+	Campus             *string              `json:"campus,omitempty"`
+	Password           *string              `json:"password,omitempty"`
+	Stores             *StoreInput          `json:"stores,omitempty"`
+	Dob                *string              `json:"dob,omitempty"`
+	Phone              *string              `json:"phone,omitempty"`
+	Gender             *string              `json:"gender,omitempty"`
+	Active             *bool                `json:"active,omitempty"`
+	Online             bool                 `json:"online"`
+	Usertype           *string              `json:"usertype,omitempty"`
+	Code               *string              `json:"code,omitempty"`
+	Avatar             *string              `json:"avatar,omitempty"`
+	PaymentDetails     *PaymentDetailsInput `json:"paymentDetails,omitempty"`
+	StoreName          *string              `json:"store_name,omitempty"`
+	StoreEmail         *string              `json:"store_email,omitempty"`
+	HasPhysicalAddress *bool                `json:"has_physical_address,omitempty"`
 }
 
 type User struct {
