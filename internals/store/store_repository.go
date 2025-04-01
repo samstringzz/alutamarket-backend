@@ -2,7 +2,9 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -493,25 +495,125 @@ func convertTrackedToStoreProduct(tp TrackedProduct) *StoreProduct {
 }
 
 func (r *repository) GetDVAAccount(ctx context.Context, email string) (*DVAAccount, error) {
-	log.Printf("GetDVAAccount called with email: %s", email) // Log when the function is called
-
 	var account DVAAccount
 
-	if err := r.db.Table("dva_accounts").
+	// First try to get from local database
+	err := r.db.Table("dva_accounts").
 		Select("dva_accounts.id, dva_accounts.customer_id, dva_accounts.bank_id, dva_accounts.account_number, dva_accounts.account_name").
 		Preload("Customer").
 		Preload("Bank").
 		Joins("JOIN dva_customers ON dva_accounts.customer_id = dva_customers.id").
 		Joins("JOIN dva_banks ON dva_accounts.bank_id = dva_banks.id").
 		Where("dva_customers.email = ?", email).
-		First(&account).Error; err != nil {
-		log.Printf("Error fetching DVA account: %v", err) // Log any errors
+		First(&account).Error
+
+	if err != nil {
+		// If not found in database, check Paystack
+		paystackAccount, paystackErr := r.getPaystackDVAAccount(email)
+		if paystackErr != nil {
+			return nil, fmt.Errorf("account not found in database or Paystack: %v", paystackErr)
+		}
+
+		// Create string IDs with prefixes and random strings
+		timestamp := time.Now().Unix()
+		account = DVAAccount{
+			ID:            fmt.Sprintf("DVA_%d_%s", timestamp, utils.GenerateRandomString(8)),
+			AccountNumber: paystackAccount.AccountNumber,
+			AccountName:   paystackAccount.AccountName,
+			Customer: DVACustomer{
+				ID:    fmt.Sprintf("CUST_%d_%s", timestamp, utils.GenerateRandomString(8)),
+				Email: email,
+			},
+			Bank: DVABank{
+				ID:   fmt.Sprintf("BANK_%d_%s", timestamp, utils.GenerateRandomString(8)),
+				Name: paystackAccount.Bank.Name,
+				Slug: "wema-bank",
+			},
+		}
+
+		// Save to database
+		if err := r.db.Create(&account).Error; err != nil {
+			return nil, fmt.Errorf("failed to save Paystack account to database: %v", err)
+		}
+	}
+
+	return &account, nil
+}
+
+func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, error) {
+	url := "https://api.paystack.co/dedicated_account"
+	method := "GET"
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("Retrieved DVA account: %+v", account) // Log the retrieved account
+	// Add query parameters
+	q := req.URL.Query()
+	q.Add("email", email)
+	req.URL.RawQuery = q.Encode()
 
-	return &account, nil
+	req.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("Paystack API error: %s", string(bodyBytes))
+	}
+
+	var response struct {
+		Status  bool   `json:"status"`
+		Message string `json:"message"`
+		Data    []struct {
+			AccountNumber string `json:"account_number"`
+			AccountName   string `json:"account_name"`
+			Bank          struct {
+				Name string `json:"name"`
+			} `json:"bank"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+
+	if !response.Status {
+		return nil, fmt.Errorf("Paystack error: %s", response.Message)
+	}
+
+	// Check if there are any accounts returned
+	if len(response.Data) == 0 {
+		return nil, fmt.Errorf("no DVA account found for email: %s", email)
+	}
+
+	// Return the first account (assuming it's the most relevant one)
+	account := &PaystackDVAResponse{
+		AccountNumber: response.Data[0].AccountNumber,
+		AccountName:   response.Data[0].AccountName,
+		Bank: struct {
+			Name string `json:"name"`
+		}{
+			Name: response.Data[0].Bank.Name,
+		},
+	}
+
+	return account, nil
+}
+
+type PaystackDVAResponse struct {
+	AccountNumber string `json:"account_number"`
+	AccountName   string `json:"account_name"`
+	Bank          struct {
+		Name string `json:"name"`
+	} `json:"bank"`
 }
 
 func (r *repository) GetDVABalance(ctx context.Context, id string) (float64, error) {
@@ -524,3 +626,4 @@ func (r *repository) GetDVABalance(ctx context.Context, id string) (float64, err
 		return 0, fmt.Errorf("failed to get DVA balance: %v", err)
 	}
 	return balance, nil
+}

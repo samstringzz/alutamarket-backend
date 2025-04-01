@@ -12,7 +12,7 @@ import (
 type Account struct {
 	Customer      *Customer    `json:"customer"`
 	Bank          *Bank        `json:"bank"`
-	ID            uint64       `json:"id"`
+	ID            string       `json:"id"`
 	AccountNumber string       `json:"account_number"`
 	AccountName   string       `json:"account_name"`
 	CreatedAt     string       `json:"created_at"`
@@ -23,7 +23,7 @@ type Account struct {
 }
 
 type Bank struct {
-	ID   int    `json:"id"`
+	ID   string `json:"id"`
 	Name string `json:"name"`
 	Slug string `json:"slug"`
 }
@@ -70,27 +70,40 @@ type ChatInput struct {
 }
 
 type Customer struct {
-	ID           int `json:"id"`
-	FirstName    string `json:"firstName"`
-	LastName     string `json:"lastName"`
+	ID        string `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+}
+
+type DVAAccount struct {
+	ID            string    `json:"id"`
+	AccountName   string    `json:"accountName"`
+	AccountNumber string    `json:"accountNumber"`
+	BankName      string    `json:"bankName"`
+	Customer      *Customer `json:"customer"`
+	Bank          *Bank     `json:"bank"`
+}
+
+type DVAAccountInput struct {
+	UserID    string `json:"userID"`
+	StoreName string `json:"storeName"`
+}
+
+type DVABank struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+}
+
+type DVACustomer struct {
+	ID           string `json:"id"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
 	Email        string `json:"email"`
 	CustomerCode string `json:"customer_code"`
 	Phone        string `json:"phone"`
 	RiskAction   string `json:"risk_action"`
-}
-
-type DVAAccount struct {
-    ID            string    `json:"id"`
-    AccountName   string    `json:"accountName"`
-    AccountNumber string    `json:"accountNumber"`
-    BankName      string    `json:"bankName"`
-    Customer      *Customer `json:"customer"`
-    Bank          *Bank     `json:"bank"`
-}
-
-type DVAAccountInput struct {
-	UserID    string `json:"user_id"`
-	StoreName string `json:"store_name"`
 }
 
 type DVADetails struct {
@@ -323,6 +336,22 @@ type PaymentDetailsInput struct {
 	Phone   string `json:"phone"`
 	Address string `json:"address"`
 	Info    string `json:"info"`
+}
+
+type PaystackAccount struct {
+	AccountNumber string `json:"accountNumber"`
+	BankName      string `json:"bankName"`
+	AccountName   string `json:"accountName"`
+	CustomerCode  string `json:"customerCode"`
+	CreatedAt     string `json:"createdAt"`
+}
+
+type PaystackAccountData struct {
+	AccountNumber string `json:"accountNumber"`
+	BankName      string `json:"bankName"`
+	AccountName   string `json:"accountName"`
+	CustomerCode  string `json:"customerCode"`
+	CreatedAt     string `json:"createdAt"`
 }
 
 type PaystackBank struct {

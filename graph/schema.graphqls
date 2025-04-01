@@ -94,6 +94,12 @@ type PaystackAccountData {
     createdAt: String!
 }
 
+type DVABank {
+  id: ID!
+  name: String!
+  slug: String!
+}
+
 type Bank {
   id: ID!
   name: String!
@@ -541,6 +547,13 @@ type Product {
 }
 
 type Customer {
+  id: String!
+  first_name: String!
+  last_name: String!
+  email: String!
+}
+
+type DVACustomer {
 	id: ID!
 	first_name: String!
 	last_name: String!

@@ -1154,6 +1154,11 @@ func (r *mutationResolver) CreateInvoice(ctx context.Context, input model.Invoic
 	panic(fmt.Errorf("not implemented: CreateInvoice - createInvoice"))
 }
 
+// CreatePaystackAccount is the resolver for the createPaystackAccount field.
+func (r *mutationResolver) CreatePaystackAccount(ctx context.Context, email string, bvn string) (*model.PaystackAccount, error) {
+	panic(fmt.Errorf("not implemented: CreatePaystackAccount - createPaystackAccount"))
+}
+
 // Users is the resolver for the Users field.
 func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error) {
 	panic(fmt.Errorf("not implemented: Users - Users"))
@@ -1867,18 +1872,36 @@ func (r *queryResolver) Mydva(ctx context.Context, email string) (*model.Account
 		return nil, fmt.Errorf("failed to fetch DVA account: %v", err)
 	}
 
+	// Convert string ID to uint64
+	id, err := strconv.ParseUint(account.ID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid account ID: %v", err)
+	}
+
+	// Convert customer ID to int
+	customerID, err := strconv.Atoi(account.Customer.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid customer ID: %v", err)
+	}
+
+	// Convert bank ID to int
+	bankID, err := strconv.Atoi(account.Bank.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid bank ID: %v", err)
+	}
+
 	return &model.Account{
 		Customer: &model.Customer{
-			ID:        int(account.Customer.ID),
-			FirstName: account.Customer.FirstName,
-			LastName:  account.Customer.LastName,
+			ID:        strconv.Itoa(customerID),
+			FirstName: account.Customer.Email,
+			LastName:  "",
 		},
 		Bank: &model.Bank{
-			ID:   int(account.Bank.ID),
+			ID:   strconv.Itoa(bankID), // Use the converted bankID here
 			Name: account.Bank.Name,
 			Slug: account.Bank.Slug,
 		},
-		ID:            account.ID,
+		ID:            strconv.FormatUint(id, 10),
 		AccountNumber: account.AccountNumber,
 		AccountName:   account.AccountName,
 	}, nil
@@ -2009,37 +2032,32 @@ func (r *queryResolver) Messages(ctx context.Context, chatID string) ([]*model.M
 	return result, nil
 }
 
+// GetDVAAccount is the resolver for the GetDVAAccount field.
 func (r *queryResolver) GetDVAAccount(ctx context.Context, userID string) (*model.DVAAccount, error) {
-	// Convert string ID to uint32
-	id, err := strconv.ParseUint(userID, 10, 32)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user ID: %v", err)
-	}
-
-	// Get DVA account details
-	dvaAccount, err := r.UserHandler.GetDVAAccount(ctx, uint32(id))
+	// Get DVA account details using the userID string directly
+	dvaAccount, err := r.UserHandler.GetDVAAccount(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DVA account: %v", err)
 	}
 
 	// Check if dvaAccount or its nested fields are nil
-	if dvaAccount == nil || dvaAccount.Customer == nil || dvaAccount.Bank == nil {
-		return nil, fmt.Errorf("DVA account or related fields are nil")
+	if dvaAccount == nil {
+		return nil, fmt.Errorf("DVA account not found")
 	}
 
 	// Convert to GraphQL model
 	return &model.DVAAccount{
-		ID:            strconv.Itoa(dvaAccount.ID), // Convert int to string
+		ID:            dvaAccount.ID,
 		AccountName:   dvaAccount.AccountName,
 		AccountNumber: dvaAccount.AccountNumber,
-		BankName:      dvaAccount.Bank.Name,
 		Customer: &model.Customer{
-			ID:        int(dvaAccount.Customer.ID),
-			FirstName: dvaAccount.Customer.FirstName,
-			LastName:  dvaAccount.Customer.LastName,
+			ID:        dvaAccount.Customer.ID,
+			Email:     dvaAccount.Customer.Email,
+			FirstName: "",
+			LastName:  "",
 		},
-		Bank: &model.Bank{
-			ID:   int(dvaAccount.Bank.ID),
+		Bank: &model.Bank{ // Changed from DVABank to Bank
+			ID:   dvaAccount.Bank.ID,
 			Name: dvaAccount.Bank.Name,
 			Slug: dvaAccount.Bank.Slug,
 		},

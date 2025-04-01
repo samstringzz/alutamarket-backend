@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/internals/store"
@@ -15,13 +16,15 @@ import (
 
 type service struct {
 	Repository
-	timeout time.Duration
+	timeout        time.Duration
+	PaystackClient PaystackClient
 }
 
 func NewService(repository Repository) Service {
 	return &service{
-		repository,
-		time.Duration(5) * time.Second,
+		Repository:     repository,
+		timeout:        time.Duration(5) * time.Second,
+		PaystackClient: NewPaystackClient(os.Getenv("PAYSTACK_SECRET_KEY")),
 	}
 }
 
