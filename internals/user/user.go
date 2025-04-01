@@ -25,12 +25,24 @@ type followedStores struct {
 
 // Add this struct
 type DVAAccount struct {
-	ID            int
-	AccountName   string
-	AccountNumber string
-	BankName      string
-	Customer      *Customer
-	Bank          *Bank
+	ID            string      `json:"id" gorm:"type:varchar(100);primary_key"`
+	AccountName   string      `json:"account_name" gorm:"type:varchar(100)"`
+	AccountNumber string      `json:"account_number" gorm:"type:varchar(20)"`
+	CustomerID    string      `json:"customer_id" gorm:"type:varchar(100)"`
+	BankID        string      `json:"bank_id" gorm:"type:varchar(100)"`
+	Customer      DVACustomer `json:"customer" gorm:"foreignKey:CustomerID"`
+	Bank          DVABank     `json:"bank" gorm:"foreignKey:BankID"`
+}
+
+type DVACustomer struct {
+	ID    string `json:"id" gorm:"type:varchar(100);primary_key"`
+	Email string `json:"email" gorm:"type:varchar(100)"`
+}
+
+type DVABank struct {
+	ID   string `json:"id" gorm:"type:varchar(100);primary_key"`
+	Name string `json:"name" gorm:"type:varchar(100)"`
+	Slug string `json:"slug" gorm:"type:varchar(50)"`
 }
 
 // type Product *product.Product

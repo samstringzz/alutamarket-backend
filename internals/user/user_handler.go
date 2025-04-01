@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"gorm.io/gorm"
@@ -159,24 +158,27 @@ func (h *Handler) SendMaintenanceMail(ctx context.Context, userId string, active
 }
 
 // Add this method to your Handler struct
-func (h *Handler) GetDVAAccount(ctx context.Context, userID uint32) (*DVAAccount, error) {
-	// Get user details first
-	userIDStr := strconv.FormatUint(uint64(userID), 10)
-	user, err := h.GetUser(ctx, userIDStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %v", err)
-	}
-
-	// Get DVA account using the user's email
-	account, err := h.GetMyDVA(ctx, user.Email)
+func (h *Handler) GetDVAAccount(ctx context.Context, email string) (*DVAAccount, error) {
+	// Get DVA account directly using email
+	account, err := h.GetMyDVA(ctx, email)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DVA account: %v", err)
 	}
 
+	// Convert to DVAAccount type with proper type conversions
 	return &DVAAccount{
+		ID:            fmt.Sprintf("%d", account.ID),
 		AccountNumber: account.AccountNumber,
-		BankName:      account.Bank.Name,
 		AccountName:   account.AccountName,
+		Customer: DVACustomer{
+			ID:    fmt.Sprintf("%d", account.Customer.ID),
+			Email: account.Customer.Email,
+		},
+		Bank: DVABank{
+			ID:   fmt.Sprintf("%d", account.Bank.ID),
+			Name: account.Bank.Name,
+			Slug: account.Bank.Slug,
+		},
 	}, nil
 }
 

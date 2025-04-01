@@ -237,33 +237,32 @@ type UpdateStoreOrderInput struct {
 	Status  string `json:"status" db:"status"`
 }
 
-type DVACustomer struct {
-	ID        uint64 `json:"id" gorm:"primaryKey;type:uuid"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-}
-
 type PaystackBank struct {
 	ID   uint64 `json:"id"`
 	Name string `json:"name"`
 	Slug string `json:"slug"`
 }
 
-type DVABank struct {
-	ID   uint64 `json:"id" gorm:"primaryKey"`
-	Name string `json:"name"`
-	Slug string `json:"slug"`
-}
-
+// Add these structs after the PaymentDetails struct
 type DVAAccount struct {
-	ID            uint64      `json:"id" gorm:"primaryKey;type:uuid"`
-	CustomerID    uint64      `json:"customer_id" gorm:"column:customer_id;type:uuid"`
-	BankID        uint64      `json:"bank_id" gorm:"column:bank_id;type:uuid"`
+	ID            string      `json:"id" gorm:"type:varchar(100);primary_key"`
+	AccountName   string      `json:"account_name" gorm:"type:varchar(100)"`
+	AccountNumber string      `json:"account_number" gorm:"type:varchar(20)"`
+	CustomerID    string      `json:"customer_id" gorm:"type:varchar(100)"`
+	BankID        string      `json:"bank_id" gorm:"type:varchar(100)"`
 	Customer      DVACustomer `json:"customer" gorm:"foreignKey:CustomerID"`
 	Bank          DVABank     `json:"bank" gorm:"foreignKey:BankID"`
-	AccountNumber string      `json:"account_number"`
-	AccountName   string      `json:"account_name"`
+}
+
+type DVACustomer struct {
+	ID    string `json:"id" gorm:"type:varchar(100);primary_key"`
+	Email string `json:"email" gorm:"type:varchar(100)"`
+}
+
+type DVABank struct {
+	ID   string `json:"id" gorm:"type:varchar(100);primary_key"`
+	Name string `json:"name" gorm:"type:varchar(100)"`
+	Slug string `json:"slug" gorm:"type:varchar(50)"`
 }
 
 type Repository interface {
