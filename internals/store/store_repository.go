@@ -524,4 +524,3 @@ func (r *repository) GetDVABalance(ctx context.Context, id string) (float64, err
 		return 0, fmt.Errorf("failed to get DVA balance: %v", err)
 	}
 	return balance, nil
-}
