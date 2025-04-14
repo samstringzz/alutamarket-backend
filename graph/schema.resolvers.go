@@ -1908,16 +1908,14 @@ func (r *queryResolver) Mydva(ctx context.Context, email string) (*model.Account
 }
 
 // GetDVABalance is the resolver for the GetDVABalance field.
-func (r *queryResolver) GetDVABalance(ctx context.Context, id string) (*string, error) {
+func (r *queryResolver) GetDVABalance(ctx context.Context, accountNumber string) (*string, error) {
 	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
 
-	// Get DVA balance from the store handler
-	balance, err := storeHandler.GetDVABalance(ctx, id)
+	balance, err := storeHandler.GetDVABalance(ctx, accountNumber)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch DVA balance: %v", err)
 	}
 
-	// Convert balance to string
 	balanceStr := strconv.FormatFloat(balance, 'f', 2, 64)
 	return &balanceStr, nil
 }
