@@ -155,24 +155,26 @@ type DeliveryDetails struct {
 // Purchased Orders
 type Order struct {
 	gorm.Model
-	CartID          uint32           `json:"cart_id" db:"cart_id"`
-	Coupon          string           `json:"coupon,omitempty" db:"coupon"`
-	Fee             float64          `json:"fee" db:"fee"`
-	Status          string           `json:"status" db:"status"`
-	UserID          string           `json:"user_id" db:"user_id" gorm:"index"`
-	Customer        Customer         `gorm:"serializer:json" json:"customer" db:"customer"`
-	SellerID        string           `json:"seller_id" db:"seller_id"`
-	StoresID        pq.StringArray   `gorm:"type:text[]" json:"store" db:"store_id"`
-	DeliveryDetails DeliveryDetails  `gorm:"serializer:json" json:"delivery_details" db:"delivery_details"`
-	Amount          float64          `json:"amount" db:"amount"`
-	UUID            string           `json:"uuid" db:"uuid"`
-	PaymentGateway  string           `json:"payment_gateway" db:"payment_gateway"`
-	PaymentMethod   string           `json:"payment_method" db:"payment_method"`
-	TransRef        string           `json:"trt_ref" db:"trt_ref"`
-	TransStatus     string           `json:"txt_status" db:"txt_status"`
-	Products        []TrackedProduct `gorm:"serializer:json" json:"products" db:"products"`
-	CreatedAt       time.Time        `json:"created_at" db:"created_at" gorm:"index"`
-	UpdatedAt       time.Time        `json:"updated_at" db:"updated_at"`
+	CartID              uint32           `json:"cart_id" db:"cart_id"`
+	Coupon              string           `json:"coupon,omitempty" db:"coupon"`
+	Fee                 string           `json:"fee" db:"fee"`
+	Status              string           `json:"status" db:"status"`
+	UserID              string           `json:"user_id" db:"user_id" gorm:"index"`
+	CustomerJSON        string           `json:"customer" db:"customer" gorm:"column:customer"`
+	Customer            *Customer        `json:"-" gorm:"-"`
+	SellerID            string           `json:"seller_id" db:"seller_id"`
+	StoresID            pq.StringArray   `gorm:"type:text[]" json:"stores_id" db:"stores_id"`
+	DeliveryDetailsJSON string           `json:"delivery_details" db:"delivery_details" gorm:"column:delivery_details"`
+	DeliveryDetails     *DeliveryDetails `json:"-" gorm:"-"`
+	Amount              string           `json:"amount" db:"amount"`
+	UUID                string           `json:"uuid" db:"uuid"`
+	PaymentGateway      string           `json:"payment_gateway" db:"payment_gateway"`
+	PaymentMethod       string           `json:"payment_method" db:"payment_method"`
+	TransRef            string           `json:"trans_ref" db:"trans_ref"`
+	TransStatus         string           `json:"trans_status" db:"trans_status"`
+	CreatedAt           time.Time        `json:"created_at"`
+	UpdatedAt           time.Time        `json:"updated_at"`
+	Products            []TrackedProduct `gorm:"serializer:json" json:"products" db:"products"`
 }
 
 type Customer struct {
