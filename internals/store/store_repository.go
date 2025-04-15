@@ -205,11 +205,6 @@ func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*
 
 	var orders []*Order
 
-	// Add indexes if not exists
-	if err := r.db.AutoMigrate(&Order{}); err != nil {
-		return nil, fmt.Errorf("failed to ensure indexes: %v", err)
-	}
-
 	// Query orders with proper type conversion
 	query := r.db.WithContext(ctx).
 		Select("id, cart_id, uuid, amount, status, payment_gateway, payment_method, trans_ref, trans_status, user_id, created_at").
