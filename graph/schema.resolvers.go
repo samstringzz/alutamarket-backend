@@ -1802,14 +1802,16 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 	// Pass the user ID directly as integer
 	orders, err := storeHandler.GetPurchasedOrders(ctx, fmt.Sprintf("%d", user))
 	if err != nil {
-		// Ignore the constraint error since it's not critical
+		if strings.Contains(err.Error(), "<!DOCTYPE") {
+			// Return empty array instead of error for HTML response
+			return []*model.PurchasedOrder{}, nil
+		}
+		// Handle other errors
 		if strings.Contains(err.Error(), "constraint \"uni_orders_uuid\" of relation \"orders\" does not exist") {
 			// Continue processing as this error can be ignored
-		} else if strings.Contains(err.Error(), "<!DOCTYPE") {
-			return nil, fmt.Errorf("server error: invalid response format")
-		} else {
-			return nil, fmt.Errorf("failed to fetch purchased orders: %v", err)
+			return []*model.PurchasedOrder{}, nil
 		}
+		return nil, fmt.Errorf("failed to fetch purchased orders: %v", err)
 	}
 
 	if orders == nil {
