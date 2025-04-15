@@ -200,9 +200,7 @@ func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*
 
 	// Query orders with proper type conversion and preload relations
 	query := r.db.WithContext(ctx).
-		Preload("Products").
-		Preload("DeliveryDetails").
-		Where("CAST(user_id AS TEXT) = ?", userID).
+		Where("user_id = ?", userID).
 		Order("created_at DESC")
 
 	if err := query.Find(&orders).Error; err != nil {
@@ -210,6 +208,27 @@ func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*
 			return []*Order{}, nil
 		}
 		return nil, fmt.Errorf("failed to fetch orders: %v", err)
+	}
+
+	// Unmarshal JSON fields for each order
+	for _, order := range orders {
+		// Unmarshal delivery details
+		if order.DeliveryDetailsJSON != "" {
+			var details DeliveryDetails
+			if err := json.Unmarshal([]byte(order.DeliveryDetailsJSON), &details); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal delivery details: %v", err)
+			}
+			order.DeliveryDetails = &details
+		}
+
+		// Unmarshal customer details
+		if order.CustomerJSON != "" {
+			var customer Customer
+			if err := json.Unmarshal([]byte(order.CustomerJSON), &customer); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal customer: %v", err)
+			}
+			order.Customer = &customer
+		}
 	}
 
 	return orders, nil

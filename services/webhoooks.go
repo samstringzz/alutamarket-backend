@@ -301,7 +301,7 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 
 					sellerOrder.Products = filterProductsByStore(order.Products, storeName)
 					sellerOrder.StoreID = strconv.Itoa(int(myStore.ID))
-					sellerOrder.Customer = order.Customer
+					sellerOrder.Customer = *order.Customer
 					sellerOrder.Status = "pending"
 					sellerOrder.UUID = order.UUID
 					sellerOrder.Active = true
@@ -336,7 +336,8 @@ func (repo *repository) FWWebhookHandler(w http.ResponseWriter, r *http.Request)
 			}
 
 			// Pay delivery fee
-			user.PayFund(float32(order.Fee), "3002290305", "50211")
+			orderFee, _ := strconv.ParseFloat(order.Fee, 32)
+			user.PayFund(float32(orderFee), "3002290305", "50211")
 			// if err != nil {
 			// 	fmt.Println("Failed to pay delivery fee:", err)
 			// 	return
@@ -519,7 +520,7 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 
 					sellerOrder.Products = filterProductsByStore(order.Products, storeName)
 					sellerOrder.StoreID = strconv.Itoa(int(myStore.ID))
-					sellerOrder.Customer = order.Customer
+					sellerOrder.Customer = *order.Customer
 					sellerOrder.Status = "pending"
 					sellerOrder.UUID = order.UUID
 					sellerOrder.Active = true
@@ -554,7 +555,8 @@ func (repo *repository) PaystackWebhookHandler(w http.ResponseWriter, r *http.Re
 			}
 
 			// Pay delivery fee
-			user.PayFund(float32(order.Fee), "3002290305", "50211")
+			orderFee, _ := strconv.ParseFloat(order.Fee, 32)
+			user.PayFund(float32(orderFee), "3002290305", "50211")
 			// if err != nil {
 			// 	fmt.Println("Failed to pay delivery fee:", err)
 			// 	return
@@ -710,7 +712,7 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 
 					sellerOrder.Products = filterProductsByStore(order.Products, storeName)
 					sellerOrder.StoreID = strconv.Itoa(int(myStore.ID))
-					sellerOrder.Customer = order.Customer
+					sellerOrder.Customer = *order.Customer
 					sellerOrder.Status = "pending"
 					sellerOrder.UUID = order.UUID
 					sellerOrder.Active = true
@@ -742,7 +744,8 @@ func (repo *repository) SquadWebhookHandler(w http.ResponseWriter, r *http.Reque
 			}
 
 			// Pay delivery fee
-			user.PayFund(float32(order.Fee), "3002290305", "50211")
+			orderFee, _ := strconv.ParseFloat(order.Fee, 32)
+			user.PayFund(float32(orderFee), "3002290305", "50211")
 			// if err != nil {
 			// 	fmt.Println("Failed to pay delivery fee:", err)
 			// 	return

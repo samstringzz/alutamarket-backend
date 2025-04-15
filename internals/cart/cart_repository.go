@@ -540,15 +540,22 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	paymentLinkChan := make(chan string)
 	paymentErrChan := make(chan error)
 
+	// Convert input.Amount from string to float64 for calculations
+	amount, err := strconv.ParseFloat(input.Amount, 64)
+	if err != nil {
+		return "", fmt.Errorf("invalid amount: %v", err)
+	}
+
+	// Calculate total amount
+	totalAmount := cart.Total + amount
+
+	// Payment gateway processing
 	go func() {
-		// log.Printf("Processing payment gateway for customer %s...\n", customer.Email)
-		paymentLink, err := processPaymentGateway(input.PaymentGateway, UUID, cart.Total+input.Amount, redirectUrl, customer)
+		paymentLink, err := processPaymentGateway(input.PaymentGateway, UUID, totalAmount, redirectUrl, customer)
 		if err != nil {
 			paymentErrChan <- err
-			// log.Println("Error processing payment gateway:", err)
 		} else {
 			paymentLinkChan <- paymentLink
-			// log.Printf("Payment gateway processed successfully. Payment link: %s\n", paymentLink)
 		}
 	}()
 
@@ -561,16 +568,24 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		return "", err
 	}
 
-	// Convert store IDs to proper PostgreSQL array format
-	var storeIDs pq.StringArray
-	for _, store := range cart.StoresID {
-		if store != nil {
-			storeIDs = append(storeIDs, *store)
+	// log.Println("Payment link obtained:", paymentLink)
+
+	// Convert total amount back to string for the order
+	totalAmountStr := strconv.FormatFloat(totalAmount, 'f', 2, 64)
+
+	// Convert []*string to pq.StringArray
+	var storeIDsArray pq.StringArray
+	for _, storeID := range cart.StoresID {
+		if storeID != nil {
+			storeIDsArray = append(storeIDsArray, *storeID)
 		}
 	}
 
+	// Convert amount string to float64 for DeliveryDetails
+	feeAmount, _ := strconv.ParseFloat(input.Amount, 64)
+
 	newOrder := &store.Order{
-		Amount:      cart.Total + input.Amount,
+		Amount:      totalAmountStr,
 		UserID:      strconv.FormatUint(uint64(cart.UserID), 10),
 		UUID:        UUID,
 		TransStatus: "not paid",
@@ -578,10 +593,10 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		Fee:         input.Amount,
 		Coupon:      input.Coupon,
 		CartID:      cart.ID,
-		StoresID:    storeIDs, // Use the properly formatted array
+		StoresID:    storeIDsArray, // Use converted array
 		CreatedAt:   time.Now().UTC(),
 		UpdatedAt:   time.Now().UTC(),
-		Customer: store.Customer{
+		Customer: &store.Customer{
 			ID:      strconv.FormatUint(uint64(customer.ID), 10),
 			Name:    customer.PaymentDetails.Name,
 			Phone:   customer.PaymentDetails.Phone,
@@ -590,10 +605,10 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 			Email:   customer.Email,
 		},
 		PaymentGateway: input.PaymentGateway,
-		DeliveryDetails: store.DeliveryDetails{
+		DeliveryDetails: &store.DeliveryDetails{ // Add & to create pointer
 			Method:  customer.PaymentDetails.Info,
 			Address: customer.PaymentDetails.Address,
-			Fee:     input.Amount,
+			Fee:     feeAmount, // Use converted float64 value
 		},
 	}
 	// log.Printf("New order created: %+v\n", newOrder)
@@ -621,7 +636,9 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	// Mark the cart as inactive and process the order concurrently
 	if paymentLink != "" {
 		cart.Active = false
-		cart.Total += input.Amount
+		// Convert input.Amount to float64 before adding to cart.Total
+		amountFloat, _ := strconv.ParseFloat(input.Amount, 64)
+		cart.Total += amountFloat
 
 		errChan = make(chan error, 3)
 
@@ -658,7 +675,6 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		}
 	}
 
-	log.Println("InitiatePayment process completed successfully.")
 	return paymentLink, nil
 }
 
@@ -727,7 +743,9 @@ func (r *repository) MakePayment(ctx context.Context, w http.ResponseWriter, req
 			}
 			cart, _ := r.GetCart(ctx, order.CartID)
 			for _, item := range cart.Items {
-				priceDifference := item.Product.Price - order.Fee
+				// Convert order.Fee from string to float64
+				orderFee, _ := strconv.ParseFloat(order.Fee, 64)
+				priceDifference := item.Product.Price - orderFee
 				result, _ := store.NewRepository().GetStoreByName(ctx, item.Product.Store)
 				//Credit individual Store from the particular transaction
 

@@ -975,12 +975,14 @@ func (r *mutationResolver) CreateDVAAccount(ctx context.Context, input model.DVA
 func (r *mutationResolver) InitializePayment(ctx context.Context, input model.PaymentData) (*string, error) {
 	cartHandler := cart.NewHandler(cart.NewService(cart.NewRepository()))
 
+	amountStr := strconv.FormatFloat(*input.Amount, 'f', 2, 64)
+
 	// Create order with required fields
 	order := store.Order{
 		UserID:         input.UserID,
 		UUID:           *input.UUID,
 		PaymentGateway: *input.PaymentGateway,
-		Amount:         *input.Amount,
+		Amount:         amountStr,
 		Status:         "pending",
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
@@ -1846,7 +1848,7 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 
 		// Convert delivery details with nil check
 		var deliveryDetails *model.DeliveryDetails
-		if order.DeliveryDetails != (store.DeliveryDetails{}) {
+		if order.DeliveryDetails != nil {
 			deliveryDetails = &model.DeliveryDetails{
 				Method:  order.DeliveryDetails.Method,
 				Address: order.DeliveryDetails.Address,
@@ -1854,13 +1856,17 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 			}
 		}
 
+		// Convert string values to float64
+		fee, _ := strconv.ParseFloat(order.Fee, 64)
+		amount, _ := strconv.ParseFloat(order.Amount, 64)
+
 		purchasedOrder := &model.PurchasedOrder{
 			CartID:          int(order.CartID),
 			Coupon:          order.Coupon,
-			Fee:             order.Fee,
+			Fee:             fee,
 			Status:          order.Status,
 			UserID:          order.UserID,
-			Amount:          order.Amount,
+			Amount:          amount,
 			UUID:            order.UUID,
 			PaymentGateway:  order.PaymentGateway,
 			PaymentMethod:   order.PaymentMethod,
