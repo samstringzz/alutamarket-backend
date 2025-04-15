@@ -1802,33 +1802,51 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 	// Convert user ID to string
 	userID := strconv.FormatUint(uint64(user), 10)
 
-	// Get purchased orders
+	// Get purchased orders with error handling
 	orders, err := storeHandler.GetPurchasedOrders(ctx, userID)
 	if err != nil {
+		// Check if response contains HTML
+		if strings.Contains(err.Error(), "<!DOCTYPE") {
+			return nil, fmt.Errorf("server error: invalid response format")
+		}
 		return nil, fmt.Errorf("failed to fetch purchased orders: %v", err)
+	}
+
+	// Handle nil orders
+	if orders == nil {
+		return []*model.PurchasedOrder{}, nil
 	}
 
 	// Rest of the conversion code remains the same
 	var purchasedOrders []*model.PurchasedOrder
 	for _, order := range orders {
-		// Convert tracked products
-		var products []*model.TrackedProduct
-		for _, p := range order.Products {
-			products = append(products, &model.TrackedProduct{
-				ID:        int(p.ID),
-				Name:      p.Name,
-				Price:     p.Price,
-				Thumbnail: p.Thumbnail,
-				Discount:  p.Discount,
-				Status:    p.Status,
-			})
+		if order == nil {
+			continue
 		}
 
-		// Convert delivery details
-		deliveryDetails := &model.DeliveryDetails{
-			Method:  order.DeliveryDetails.Method,
-			Address: order.DeliveryDetails.Address,
-			Fee:     order.DeliveryDetails.Fee,
+		// Convert tracked products with nil check
+		var products []*model.TrackedProduct
+		if order.Products != nil {
+			for _, p := range order.Products {
+				products = append(products, &model.TrackedProduct{
+					ID:        int(p.ID),
+					Name:      p.Name,
+					Price:     p.Price,
+					Thumbnail: p.Thumbnail,
+					Discount:  p.Discount,
+					Status:    p.Status,
+				})
+			}
+		}
+
+		// Convert delivery details with nil check
+		var deliveryDetails *model.DeliveryDetails
+		if order.DeliveryDetails != (store.DeliveryDetails{}) {
+			deliveryDetails = &model.DeliveryDetails{
+				Method:  order.DeliveryDetails.Method,
+				Address: order.DeliveryDetails.Address,
+				Fee:     order.DeliveryDetails.Fee,
+			}
 		}
 
 		purchasedOrder := &model.PurchasedOrder{
