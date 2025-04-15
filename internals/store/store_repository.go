@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/database"
@@ -197,18 +196,12 @@ func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*Order, e
 }
 
 func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*Order, error) {
-	// Convert string userID to uint32
-	uid, err := strconv.ParseUint(userID, 10, 32)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user ID: %v", err)
-	}
-
 	var orders []*Order
 
-	// Query orders with proper type conversion
+	// Query orders with proper type conversion, cast user_id to text for comparison
 	query := r.db.WithContext(ctx).
 		Select("id, cart_id, uuid, amount, status, payment_gateway, payment_method, trans_ref, trans_status, user_id, created_at").
-		Where("user_id = ?", uint32(uid)).
+		Where("CAST(user_id AS TEXT) = ?", userID).
 		Order("created_at DESC")
 
 	if err := query.Find(&orders).Error; err != nil {
