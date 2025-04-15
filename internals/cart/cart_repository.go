@@ -13,13 +13,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Chrisentech/aluta-market-api/database"
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
-	"github.com/joho/godotenv"
 	"github.com/lib/pq"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -45,20 +44,11 @@ type VerifyResponse struct {
 }
 
 func NewRepository() Repository {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
-	}
-	dbURI := os.Getenv("DB_URI")
-
-	// Initialize the database
-	db, err := gorm.Open(postgres.Open(dbURI), &gorm.Config{})
-	if err != nil {
-		panic(err)
-	}
 	return &repository{
-		db: db,
+		db: database.GetDB(),
 	}
 }
+
 func calculateTotalCartCost(data []*CartItems) float64 {
 	var total float64
 

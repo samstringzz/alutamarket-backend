@@ -5,14 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
+	"github.com/Chrisentech/aluta-market-api/database"
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/utils"
 
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -21,14 +20,8 @@ type repository struct {
 }
 
 func NewRepository() Repository {
-	dbURI := os.Getenv("DB_URI")
-	// Initialize the database connection
-	db, err := gorm.Open(postgres.Open(dbURI), &gorm.Config{})
-	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
-	}
 	return &repository{
-		db: db,
+		db: database.GetDB(), // Use the database manager
 	}
 }
 

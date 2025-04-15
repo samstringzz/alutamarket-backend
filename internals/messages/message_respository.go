@@ -12,10 +12,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Chrisentech/aluta-market-api/database"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/websocket"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -231,30 +231,8 @@ func (r *repository) BroadcastMessages(chatID uint32, msg Message) {
 }
 
 func NewRepository() Repository {
-	dbURI := os.Getenv("DB_URI")
-	if dbURI == "" {
-		log.Fatal("DB_URI environment variable is not set")
-	}
-
-	db, err := gorm.Open(postgres.Open(dbURI), &gorm.Config{})
-	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
-	}
-
-	// Verify connection
-	sqlDB, err := db.DB()
-	if err != nil {
-		log.Fatal("Failed to get database instance:", err)
-	}
-
-	// Test the connection
-	err = sqlDB.Ping()
-	if err != nil {
-		log.Fatal("Failed to ping database:", err)
-	}
-
 	return &repository{
-		db: db,
+		db: database.GetDB(),
 	}
 }
 

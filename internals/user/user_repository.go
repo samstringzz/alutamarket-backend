@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -17,11 +16,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Chrisentech/aluta-market-api/database"
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -64,54 +63,9 @@ func (r *repository) resendOTP(ctx context.Context, phone string) error {
 	return nil
 }
 func NewRepository() Repository {
-	dbURI := os.Getenv("DATABASE_URL")
-	if dbURI == "" {
-		log.Printf("DATABASE_URL not found, using individual connection parameters")
-		password := strings.ReplaceAll(os.Getenv("DB_PASSWORD"), "#", "%23")
-		dbURI = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=require",
-			os.Getenv("DB_USER"),
-			password,
-			os.Getenv("DB_HOST"),
-			os.Getenv("DB_PORT"),
-			os.Getenv("DB_NAME"),
-		)
+	return &repository{
+		db: database.GetDB(), // Use the database manager
 	}
-
-	// Test direct connection first
-	sqlDB, err := sql.Open("postgres", dbURI)
-	if err != nil {
-		log.Printf("Error creating database connection: %v", err)
-		return nil
-	}
-	defer sqlDB.Close()
-
-	// Test the connection
-	err = sqlDB.Ping()
-	if err != nil {
-		log.Printf("Error pinging database: %v", err)
-		return nil
-	}
-	log.Printf("Successfully connected to database")
-
-	// Now proceed with GORM connection
-	db, err := gorm.Open(postgres.Open(dbURI), &gorm.Config{})
-	if err != nil {
-		log.Printf("Error opening database with GORM: %v", err)
-		return nil
-	}
-
-	// Configure connection pool
-	gormDB, err := db.DB()
-	if err != nil {
-		log.Printf("Error getting underlying SQL DB: %v", err)
-		return nil
-	}
-
-	gormDB.SetMaxIdleConns(10)
-	gormDB.SetMaxOpenConns(100)
-	gormDB.SetConnMaxLifetime(time.Hour)
-
-	return &repository{db: db}
 }
 
 func (r *repository) GetUserByEmailOrPhone(ctx context.Context, identifier string) (*User, error) {
