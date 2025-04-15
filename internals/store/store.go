@@ -158,8 +158,8 @@ type Order struct {
 	CartID          uint32           `json:"cart_id" db:"cart_id"`
 	Coupon          string           `json:"coupon,omitempty" db:"coupon"`
 	Fee             float64          `json:"fee" db:"fee"`
-	Status          string           `json:"status" db:"status"`   //order status
-	UserID          string           `json:"user_id" db:"user_id"` // Keep as string
+	Status          string           `json:"status" db:"status"`
+	UserID          string           `json:"user_id" db:"user_id" gorm:"index"`
 	Customer        Customer         `gorm:"serializer:json" json:"customer" db:"customer"`
 	SellerID        string           `json:"seller_id" db:"seller_id"`
 	StoresID        pq.StringArray   `gorm:"type:text[]" json:"store" db:"store_id"`
@@ -171,7 +171,7 @@ type Order struct {
 	TransRef        string           `json:"trt_ref" db:"trt_ref"`
 	TransStatus     string           `json:"txt_status" db:"txt_status"`
 	Products        []TrackedProduct `gorm:"serializer:json" json:"products" db:"products"`
-	CreatedAt       time.Time        `json:"created_at" db:"created_at"`
+	CreatedAt       time.Time        `json:"created_at" db:"created_at" gorm:"index"`
 	UpdatedAt       time.Time        `json:"updated_at" db:"updated_at"`
 }
 

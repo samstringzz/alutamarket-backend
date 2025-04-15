@@ -206,10 +206,38 @@ func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*Order, e
 func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*Order, error) {
 	var orders []*Order
 
-	err := r.db.Where("user_id = ?", userID).Find(&orders).Error
-	if err != nil {
+	// Add indexes if not exists
+	if err := r.db.AutoMigrate(&Order{}); err != nil {
 		return nil, err
 	}
+
+	// Optimize query with specific field selection and indexing
+	query := r.db.WithContext(ctx).
+		Select("id, cart_id, uuid, amount, status, payment_gateway, payment_method, trans_ref, trans_status, user_id, created_at").
+		Where("user_id = ?", userID).
+		Order("created_at DESC")
+
+	// Use pagination to limit results
+	limit := 50
+	if err := query.Limit(limit).Find(&orders).Error; err != nil {
+		return nil, err
+	}
+
+	// Eager load related data in separate queries
+	for _, order := range orders {
+		// Load products with specific fields
+		if err := r.db.Model(order).
+			Select("products.id, products.name, products.price, products.thumbnail, products.discount, products.status").
+			Association("Products").Find(&order.Products); err != nil {
+			return nil, err
+		}
+
+		// Load delivery details
+		if err := r.db.Model(order).Association("DeliveryDetails").Find(&order.DeliveryDetails); err != nil {
+			return nil, err
+		}
+	}
+
 	return orders, nil
 }
 
