@@ -1799,8 +1799,8 @@ func (r *queryResolver) StoreByName(ctx context.Context, name string) (*model.St
 func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.PurchasedOrder, error) {
 	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
 
-	// Convert user ID to string since that's what our repository expects
-	userID := strconv.Itoa(user)
+	// Convert user ID to string
+	userID := strconv.FormatUint(uint64(user), 10)
 
 	// Get purchased orders
 	orders, err := storeHandler.GetPurchasedOrders(ctx, userID)
@@ -1808,7 +1808,7 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 		return nil, fmt.Errorf("failed to fetch purchased orders: %v", err)
 	}
 
-	// Convert to GraphQL model
+	// Rest of the conversion code remains the same
 	var purchasedOrders []*model.PurchasedOrder
 	for _, order := range orders {
 		// Convert tracked products

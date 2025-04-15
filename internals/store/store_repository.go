@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/database"
@@ -196,37 +197,41 @@ func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*Order, e
 }
 
 func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*Order, error) {
+	// Convert string userID to uint32
+	uid, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID: %v", err)
+	}
+
 	var orders []*Order
 
 	// Add indexes if not exists
 	if err := r.db.AutoMigrate(&Order{}); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to ensure indexes: %v", err)
 	}
 
-	// Optimize query with specific field selection and indexing
+	// Query orders with proper type conversion
 	query := r.db.WithContext(ctx).
 		Select("id, cart_id, uuid, amount, status, payment_gateway, payment_method, trans_ref, trans_status, user_id, created_at").
-		Where("user_id = ?", userID).
+		Where("user_id = ?", uint32(uid)).
 		Order("created_at DESC")
 
-	// Use pagination to limit results
-	limit := 50
-	if err := query.Limit(limit).Find(&orders).Error; err != nil {
-		return nil, err
+	if err := query.Find(&orders).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch orders: %v", err)
 	}
 
-	// Eager load related data in separate queries
+	// Load related data for each order
 	for _, order := range orders {
-		// Load products with specific fields
+		// Load products
 		if err := r.db.Model(order).
 			Select("products.id, products.name, products.price, products.thumbnail, products.discount, products.status").
 			Association("Products").Find(&order.Products); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to load products: %v", err)
 		}
 
 		// Load delivery details
 		if err := r.db.Model(order).Association("DeliveryDetails").Find(&order.DeliveryDetails); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to load delivery details: %v", err)
 		}
 	}
 
