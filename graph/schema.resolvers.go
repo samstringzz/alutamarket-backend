@@ -1799,20 +1799,15 @@ func (r *queryResolver) StoreByName(ctx context.Context, name string) (*model.St
 func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.PurchasedOrder, error) {
 	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
 
-	// Use the integer directly since user_id in the database is integer
-	userID := user
-
-	// Get purchased orders with error handling
-	orders, err := storeHandler.GetPurchasedOrders(ctx, strconv.Itoa(userID))
+	// Pass the user ID directly as integer
+	orders, err := storeHandler.GetPurchasedOrders(ctx, fmt.Sprintf("%d", user))
 	if err != nil {
-		// Check if response contains HTML
 		if strings.Contains(err.Error(), "<!DOCTYPE") {
 			return nil, fmt.Errorf("server error: invalid response format")
 		}
 		return nil, fmt.Errorf("failed to fetch purchased orders: %v", err)
 	}
 
-	// Handle nil orders
 	if orders == nil {
 		return []*model.PurchasedOrder{}, nil
 	}
