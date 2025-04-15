@@ -198,29 +198,18 @@ func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*Order, e
 func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*Order, error) {
 	var orders []*Order
 
-	// Query orders with proper type conversion, cast user_id to text for comparison
+	// Query orders with proper type conversion and preload relations
 	query := r.db.WithContext(ctx).
-		Select("id, cart_id, uuid, amount, status, payment_gateway, payment_method, trans_ref, trans_status, user_id, created_at").
+		Preload("Products").
+		Preload("DeliveryDetails").
 		Where("CAST(user_id AS TEXT) = ?", userID).
 		Order("created_at DESC")
 
 	if err := query.Find(&orders).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return []*Order{}, nil
+		}
 		return nil, fmt.Errorf("failed to fetch orders: %v", err)
-	}
-
-	// Load related data for each order
-	for _, order := range orders {
-		// Load products
-		if err := r.db.Model(order).
-			Select("products.id, products.name, products.price, products.thumbnail, products.discount, products.status").
-			Association("Products").Find(&order.Products); err != nil {
-			return nil, fmt.Errorf("failed to load products: %v", err)
-		}
-
-		// Load delivery details
-		if err := r.db.Model(order).Association("DeliveryDetails").Find(&order.DeliveryDetails); err != nil {
-			return nil, fmt.Errorf("failed to load delivery details: %v", err)
-		}
 	}
 
 	return orders, nil

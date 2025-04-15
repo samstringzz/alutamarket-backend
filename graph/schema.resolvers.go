@@ -1802,16 +1802,20 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 	// Pass the user ID directly as integer
 	orders, err := storeHandler.GetPurchasedOrders(ctx, fmt.Sprintf("%d", user))
 	if err != nil {
-		if strings.Contains(err.Error(), "<!DOCTYPE") {
-			// Return empty array instead of error for HTML response
+		// Check for specific error types
+		switch {
+		case strings.Contains(err.Error(), "record not found"):
+			// Return empty array if no orders found
 			return []*model.PurchasedOrder{}, nil
-		}
-		// Handle other errors
-		if strings.Contains(err.Error(), "constraint \"uni_orders_uuid\" of relation \"orders\" does not exist") {
-			// Continue processing as this error can be ignored
+		case strings.Contains(err.Error(), "<!DOCTYPE"):
+			// Return empty array for HTML response
 			return []*model.PurchasedOrder{}, nil
+		case strings.Contains(err.Error(), "unsupported relations"):
+			// Return empty array for relation errors
+			return []*model.PurchasedOrder{}, nil
+		default:
+			return nil, fmt.Errorf("failed to fetch purchased orders: %v", err)
 		}
-		return nil, fmt.Errorf("failed to fetch purchased orders: %v", err)
 	}
 
 	if orders == nil {
