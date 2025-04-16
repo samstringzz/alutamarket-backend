@@ -278,6 +278,7 @@ type Repository interface {
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetOrder(ctx context.Context, storeId uint32, orderId string) (*Order, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*Order, error)
+	GetOrdersByStore(ctx context.Context, storeName string) ([]*Order, error)
 	GetDVAAccount(ctx context.Context, email string) (*DVAAccount, error)
 	GetDVABalance(ctx context.Context, id string) (float64, error)
 	GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error)
@@ -300,6 +301,7 @@ type Service interface {
 	GetStoreByName(ctx context.Context, name string) (*Store, error)
 	CheckStoreName(ctx context.Context, query string) error
 	GetStore(ctx context.Context, id uint32) (*Store, error)
+	GetOrdersByStore(ctx context.Context, storeName string) ([]*Order, error)
 	GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error)
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*Order, error)

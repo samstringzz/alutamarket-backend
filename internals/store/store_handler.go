@@ -105,6 +105,10 @@ func (h *Handler) GetOrders(ctx context.Context, storeID uint32) ([]*Order, erro
 	return item, nil
 }
 
+func (h *Handler) GetOrdersByStore(ctx context.Context, storeName string) ([]*Order, error) {
+	return h.Service.GetOrdersByStore(ctx, storeName)
+}
+
 func (h *Handler) GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error) {
 	item, err := h.Service.GetPurchasedOrders(ctx, userId)
 	if err != nil {
