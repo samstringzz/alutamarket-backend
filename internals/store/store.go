@@ -275,6 +275,7 @@ type Repository interface {
 	UpdateStore(ctx context.Context, req *UpdateStore) (*Store, error)
 	GetStore(ctx context.Context, id uint32) (*Store, error)
 	GetStoreByName(ctx context.Context, name string) (*Store, error)
+	UpdateOrderStatus(ctx context.Context, uuid string, status, transStatus string) error
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetOrder(ctx context.Context, storeId uint32, orderId string) (*Order, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*Order, error)
@@ -303,6 +304,7 @@ type Service interface {
 	GetStore(ctx context.Context, id uint32) (*Store, error)
 	GetOrdersByStore(ctx context.Context, storeName string) ([]*Order, error)
 	GetPurchasedOrders(ctx context.Context, userId string) ([]*Order, error)
+	UpdateOrderStatus(ctx context.Context, uuid string, status, transStatus string) error
 	CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error)
 	GetOrders(ctx context.Context, storeId uint32) ([]*Order, error)
 	UpdateOrder(ctx context.Context, req *UpdateStoreOrderInput) (*Order, error)

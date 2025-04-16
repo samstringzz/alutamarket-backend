@@ -1327,7 +1327,6 @@ func (r *queryResolver) FollowedStores(ctx context.Context, userID int) ([]*mode
 }
 
 // SellerOrders is the resolver for the SellerOrders field.
-// SellerOrders is the resolver for the SellerOrders field.
 func (r *queryResolver) SellerOrders(ctx context.Context, storeName string) ([]*model.Order, error) {
 	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
 
@@ -1338,6 +1337,21 @@ func (r *queryResolver) SellerOrders(ctx context.Context, storeName string) ([]*
 
 	var result []*model.Order
 	for _, order := range orders {
+		// Verify transaction status with Paystack if needed
+		if order.PaymentGateway == "paystack" && order.Status != "completed" {
+			verificationResponse, err := utils.VerifyPaystackTransaction(order.UUID)
+			if err == nil && verificationResponse.Status {
+				if verificationResponse.Data.Status == "success" {
+					// Update order status in database
+					err = storeHandler.UpdateOrderStatus(ctx, order.UUID, "completed", "paid")
+					if err == nil {
+						order.Status = "completed"
+						order.TransStatus = "paid"
+					}
+				}
+			}
+		}
+
 		// Convert products
 		var products []*model.Product
 		for _, p := range order.Products {
