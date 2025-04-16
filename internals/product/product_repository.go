@@ -512,13 +512,13 @@ func (r *repository) Products(ctx context.Context, store *string, categorySlug *
 			Price:           p.Price,
 			Discount:        p.Discount,
 			Status:          p.Status,
-			AlwaysAvailable: p.AlwaysAvailbale,
+			AlwaysAvailable: &p.AlwaysAvailbale,
 			Quantity:        p.Quantity,
-			File:            file, // Handle nil case for File field
+			File:            file,
 			Store:           p.Store,
 			Category:        p.Category,
 			Subcategory:     p.Subcategory,
-			Type:            p.Type,
+			Type:            &p.Type,
 		}
 	}
 

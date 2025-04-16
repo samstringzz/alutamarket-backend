@@ -600,7 +600,7 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.Produc
 		Store:           createdProduct.Store,
 		Category:        createdProduct.Category,
 		Subcategory:     createdProduct.Subcategory,
-		AlwaysAvailable: createdProduct.AlwaysAvailbale,
+		AlwaysAvailable: &createdProduct.AlwaysAvailbale,
 	}, nil
 }
 
@@ -637,8 +637,8 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.Updat
 		Store:           updatedProduct.Store,
 		Category:        updatedProduct.Category,
 		Subcategory:     updatedProduct.Subcategory,
-		AlwaysAvailable: updatedProduct.AlwaysAvailbale,
-		Type:            updatedProduct.Type,
+		AlwaysAvailable: &updatedProduct.AlwaysAvailbale,
+		Type:            &updatedProduct.Type,
 	}, nil
 }
 
@@ -677,8 +677,8 @@ func (r *mutationResolver) DeleteProduct(ctx context.Context, productID int) (*m
 		Store:           product.Store,
 		Category:        product.Category,
 		Subcategory:     product.Subcategory,
-		AlwaysAvailable: product.AlwaysAvailbale,
-		Type:            product.Type,
+		AlwaysAvailable: &product.AlwaysAvailbale,
+		Type:            &product.Type,
 	}, nil
 }
 
@@ -1326,6 +1326,58 @@ func (r *queryResolver) FollowedStores(ctx context.Context, userID int) ([]*mode
 	return modelStores, nil
 }
 
+// SellerOrders is the resolver for the SellerOrders field.
+// SellerOrders is the resolver for the SellerOrders field.
+func (r *queryResolver) SellerOrders(ctx context.Context, storeName string) ([]*model.Order, error) {
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+
+	orders, err := storeHandler.GetOrdersByStore(ctx, storeName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch orders: %v", err)
+	}
+
+	var result []*model.Order
+	for _, order := range orders {
+		// Convert products
+		var products []*model.Product
+		for _, p := range order.Products {
+			products = append(products, &model.Product{
+				ID:        int(p.ID),
+				Name:      p.Name,
+				Price:     p.Price,
+				Thumbnail: p.Thumbnail,
+				Status:    p.Status == "active",
+			})
+		}
+
+		// Convert delivery details
+		var deliveryDetails *model.DeliveryDetails
+		if order.DeliveryDetails != nil {
+			deliveryDetails = &model.DeliveryDetails{
+				Method:  order.DeliveryDetails.Method,
+				Address: order.DeliveryDetails.Address,
+				Fee:     order.DeliveryDetails.Fee,
+			}
+		}
+
+		result = append(result, &model.Order{
+			CartID:          int(order.CartID),
+			UUID:            order.UUID,
+			Amount:          order.Amount,
+			Status:          order.Status,
+			PaymentGateway:  order.PaymentGateway,
+			PaymentMethod:   order.PaymentMethod,
+			TransRef:        order.TransRef,
+			TransStatus:     order.TransStatus,
+			Products:        products,
+			DeliveryDetails: deliveryDetails,
+			TextRef:         &order.TransRef,
+		})
+	}
+
+	return result, nil
+}
+
 // Category is the resolver for the Category field.
 func (r *queryResolver) Category(ctx context.Context, id int) (*model.Category, error) {
 	categoryID := uint32(id)
@@ -1425,7 +1477,7 @@ func (r *queryResolver) Products(ctx context.Context, store *string, categorySlu
 			Store:           p.Store,
 			Category:        p.Category,
 			Subcategory:     p.Subcategory,
-			AlwaysAvailable: p.AlwaysAvailbale,
+			AlwaysAvailable: &p.AlwaysAvailbale,
 		})
 	}
 
@@ -1458,7 +1510,7 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 		Name:            p.Name,
 		Slug:            p.Slug,
 		Description:     p.Description,
-		Type:            p.Type,
+		Type:            &p.Type,
 		Price:           p.Price,
 		Discount:        p.Discount,
 		Status:          p.Status,
@@ -1469,7 +1521,7 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 		Store:           p.Store,
 		Category:        p.Category,
 		Subcategory:     p.Subcategory,
-		AlwaysAvailable: p.AlwaysAvailbale,
+		AlwaysAvailable: &p.AlwaysAvailbale,
 	}, nil
 }
 
@@ -1621,7 +1673,7 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 			Store:           p.Store,
 			Category:        p.Category,
 			Subcategory:     p.Subcategory,
-			AlwaysAvailable: p.AlwaysAvailbale,
+			AlwaysAvailable: &p.AlwaysAvailbale,
 		})
 	}
 

@@ -118,6 +118,12 @@ type DVADetails struct {
 	StoreName     string `json:"store_name"`
 }
 
+type DeliveryDetails struct {
+	Method  string  `json:"method"`
+	Address string  `json:"address"`
+	Fee     float64 `json:"fee"`
+}
+
 type Downloads struct {
 	ID        string     `json:"id"`
 	Thumbnail string     `json:"thumbnail"`
@@ -301,13 +307,23 @@ type NewVerifyOtp struct {
 }
 
 type Order struct {
-	ID            int     `json:"id"`
-	Customer      string  `json:"customer"`
-	CustomerEmail string  `json:"customer_email"`
-	Price         float64 `json:"price"`
-	Status        string  `json:"status"`
-	Date          string  `json:"date"`
-	StoreID       string  `json:"store_id"`
+	ID              int              `json:"id"`
+	Customer        string           `json:"customer"`
+	CustomerEmail   string           `json:"customer_email"`
+	Price           float64          `json:"price"`
+	Status          string           `json:"status"`
+	Date            string           `json:"date"`
+	StoreID         string           `json:"store_id"`
+	CartID          int              `json:"cartID"`
+	UUID            string           `json:"uuid"`
+	Amount          string           `json:"amount"`
+	PaymentGateway  string           `json:"paymentGateway"`
+	PaymentMethod   string           `json:"paymentMethod"`
+	TransRef        string           `json:"transRef"`
+	TransStatus     string           `json:"transStatus"`
+	Products        []*Product       `json:"products,omitempty"`
+	DeliveryDetails *DeliveryDetails `json:"deliveryDetails,omitempty"`
+	TextRef         *string          `json:"textRef,omitempty"`
 }
 
 type PaymentData struct {
@@ -384,24 +400,22 @@ type PaystackDVAResponse struct {
 }
 
 type Product struct {
-	ID              int        `json:"id"`
-	Name            string     `json:"name"`
-	Slug            string     `json:"slug"`
-	Description     string     `json:"description"`
-	Type            string     `json:"type"`
-	Price           float64    `json:"price"`
-	Discount        float64    `json:"discount"`
-	Status          bool       `json:"status"`
-	Quantity        int        `json:"quantity"`
-	Thumbnail       string     `json:"thumbnail"`
-	Image           []string   `json:"image"`
-	File            *string    `json:"file,omitempty"`
-	Variant         []*Variant `json:"variant,omitempty"`
-	Review          []*Review  `json:"review,omitempty"`
-	Store           string     `json:"store"`
-	Category        string     `json:"category"`
-	Subcategory     string     `json:"subcategory"`
-	AlwaysAvailable bool       `json:"always_available"`
+	ID              int      `json:"id"`
+	Name            string   `json:"name"`
+	Price           float64  `json:"price"`
+	Description     string   `json:"description"`
+	Discount        float64  `json:"discount"`
+	Image           []string `json:"image,omitempty"`
+	Slug            string   `json:"slug"`
+	Quantity        int      `json:"quantity"`
+	Status          bool     `json:"status"`
+	Thumbnail       string   `json:"thumbnail"`
+	Store           string   `json:"store"`
+	Category        string   `json:"category"`
+	Subcategory     string   `json:"subcategory"`
+	AlwaysAvailable *bool    `json:"alwaysAvailable,omitempty"`
+	Type            *string  `json:"type,omitempty"`
+	File            *string  `json:"file,omitempty"`
 }
 
 type ProductInput struct {
@@ -445,7 +459,7 @@ type PurchasedOrder struct {
 	TransRef        string            `json:"transRef"`
 	TransStatus     string            `json:"transStatus"`
 	Products        []*TrackedProduct `json:"products"`
-	DeliveryDetails *DeliveryDetails  `json:"deliveryDetails"`
+	DeliveryDetails *DeliveryDetails  `json:"DeliveryDetails"`
 	TextRef         string            `json:"textRef"`
 }
 
@@ -792,12 +806,6 @@ type CustomerInput struct {
 	Name    string `json:"name"`
 	Phone   string `json:"phone"`
 	Address string `json:"address"`
-}
-
-type DeliveryDetails struct {
-	Method  string  `json:"method"`
-	Address string  `json:"address"`
-	Fee     float64 `json:"fee"`
 }
 
 type Fund struct {

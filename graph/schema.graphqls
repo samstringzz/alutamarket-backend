@@ -31,6 +31,16 @@ type Order {
 	status: String!
 	date: String!
 	store_id: String!
+	cartID: Int!
+	uuid: String!
+    amount: String!
+	paymentGateway: String!
+    paymentMethod: String!
+    transRef: String!
+    transStatus: String!
+    products: [Product!]
+    deliveryDetails: DeliveryDetails
+    textRef: String
 }
 type MessageUser {
 	id: Int!
@@ -526,24 +536,22 @@ type Variant {
 # 	id: ID
 # }
 type Product {
-	id: Int!
-	name: String!
-	slug: String!
-	description: String!
-	type: String!
-	price: Float!
-	discount: Float!
-	status: Boolean!
-	quantity: Int!
-	thumbnail: String!
-	image: [String!]!
-	file: String
-	variant: [Variant]
-	review: [Review]
-	store: String!
-	category: String!
-	subcategory: String!
-	always_available: Boolean!
+    id: Int!
+    name: String!
+    price: Float!
+    description: String!
+    discount: Float!
+    image: [String!]
+    slug: String!
+    quantity: Int!
+    status: Boolean!
+    thumbnail: String!
+    store: String!
+    category: String!
+    subcategory: String!
+    alwaysAvailable: Boolean
+    type: String
+    file: String
 }
 
 type Customer {
@@ -682,7 +690,7 @@ type TrackedProduct {
 	discount: Float!
 	status: String!
 }
-type deliveryDetails {
+type DeliveryDetails {
 	method: String!
 	address: String!
 	fee: Float!
@@ -700,7 +708,7 @@ type PurchasedOrder {
 	transRef: String!
 	transStatus: String!
 	products: [TrackedProduct]!
-	deliveryDetails: deliveryDetails!
+	DeliveryDetails: DeliveryDetails!
 	textRef: String!
 }
 input SmartCardInput {
@@ -824,6 +832,7 @@ type Query {
 	User(id: ID!): User
 	Categories: [Category!]!
 	followedStores(userId: Int!): [Store!]!
+	SellerOrders(storeName: String!): [Order!]
 	Category(id: Int!): Category
 	SubCategory(id: ID!): SubCategory
 	Products(store: String, categorySlug: String, limit: Int, offset: Int): ProductPaginationData!

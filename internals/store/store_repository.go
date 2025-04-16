@@ -195,6 +195,42 @@ func (r *repository) GetOrders(ctx context.Context, storeID uint32) ([]*Order, e
 	return orders, nil
 }
 
+func (r *repository) GetOrdersByStore(ctx context.Context, storeName string) ([]*Order, error) {
+	var orders []*Order
+
+	// Query orders where the store name exists in the stores_id array
+	err := r.db.
+		Where("? = ANY(stores_id)", storeName).
+		Find(&orders).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch orders: %v", err)
+	}
+
+	// Unmarshal JSON fields for each order
+	for _, order := range orders {
+		// Unmarshal delivery details
+		if order.DeliveryDetailsJSON != "" {
+			var details DeliveryDetails
+			if err := json.Unmarshal([]byte(order.DeliveryDetailsJSON), &details); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal delivery details: %v", err)
+			}
+			order.DeliveryDetails = &details
+		}
+
+		// Unmarshal customer details
+		if order.CustomerJSON != "" {
+			var customer Customer
+			if err := json.Unmarshal([]byte(order.CustomerJSON), &customer); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal customer: %v", err)
+			}
+			order.Customer = &customer
+		}
+	}
+
+	return orders, nil
+}
+
 func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*Order, error) {
 	var orders []*Order
 
