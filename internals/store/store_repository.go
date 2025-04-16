@@ -270,6 +270,25 @@ func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*
 	return orders, nil
 }
 
+func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status, transStatus string) error {
+	result := r.db.WithContext(ctx).Model(&Order{}).
+		Where("uuid = ?", uuid).
+		Updates(map[string]interface{}{
+			"status":       status,
+			"trans_status": transStatus,
+		})
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to update order status: %v", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("no order found with UUID: %s", uuid)
+	}
+
+	return nil
+}
+
 func (r *repository) GetOrder(ctx context.Context, storeID uint32, orderID string) (*Order, error) {
 	var store Store
 	err := r.db.WithContext(ctx).Preload("Orders", "id = ?", orderID).First(&store, storeID).Error
