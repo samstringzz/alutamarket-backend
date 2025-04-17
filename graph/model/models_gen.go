@@ -54,6 +54,7 @@ type Category struct {
 	Slug          string         `json:"slug"`
 	Description   *string        `json:"description,omitempty"`
 	Image         *string        `json:"image,omitempty"`
+	Type          string         `json:"type" db:"type"`
 	Subcategories []*SubCategory `json:"subcategories,omitempty"`
 }
 
