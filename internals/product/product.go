@@ -26,6 +26,7 @@ type Category struct {
 	ID            int           `json:"id" db:"id"`
 	Name          string        `json:"name" db:"name"`
 	Slug          string        `json:"slug" db:"slug"`
+	Type          string        `json:"type" db:"type"`
 	SubCategories []SubCategory `gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE;" json:"subcategories"`
 }
 

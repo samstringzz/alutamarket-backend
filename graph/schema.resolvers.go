@@ -1246,6 +1246,7 @@ func (r *queryResolver) Categories(ctx context.Context) ([]*model.Category, erro
 			ID:            strconv.FormatUint(uint64(cat.ID), 10),
 			Name:          cat.Name,
 			Slug:          cat.Slug,
+			Type:          cat.Type,
 			Subcategories: subCategories,
 		})
 	}
@@ -1393,6 +1394,7 @@ func (r *queryResolver) SellerOrders(ctx context.Context, storeName string) ([]*
 }
 
 // Category is the resolver for the Category field.
+// Category is the resolver for the Category field.
 func (r *queryResolver) Category(ctx context.Context, id int) (*model.Category, error) {
 	categoryID := uint32(id)
 	category, err := r.ProductHandler.GetCategory(ctx, categoryID)
@@ -1418,6 +1420,7 @@ func (r *queryResolver) Category(ctx context.Context, id int) (*model.Category, 
 		ID:            strconv.FormatUint(uint64(category.ID), 10),
 		Name:          category.Name,
 		Slug:          category.Slug,
+		Type:          category.Type,
 		Subcategories: subCategories,
 	}, nil
 }

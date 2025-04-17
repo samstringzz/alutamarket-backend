@@ -473,6 +473,7 @@ type Category {
   slug: String!
   description: String
   image: String
+  type: String!  # "physical", "digital", or "service"
   subcategories: [SubCategory]
 }
 
