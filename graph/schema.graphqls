@@ -861,7 +861,7 @@ type Mutation {
 	createUser(input: NewUser!): User!
 	createOrder(input: StoreOrderInput!): StoreOrder
 	updateOrder(input: UpdateStoreOrderInput!): StoreOrder
-	updateOrderStatus(orderID: Int!, status: String!): Order!
+	updateOrderStatus(orderUUID: String!, status: String!): Order!
 	updateUser(input: UpdateUserInput): User!
 	createVerifyOTP(input: NewVerifyOTP!): LoginRes!
 	loginUser(input: LoginReq!): LoginRes!
