@@ -145,6 +145,24 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, input model.UpdateSt
 	panic(fmt.Errorf("not implemented: UpdateOrder - updateOrder"))
 }
 
+// UpdateStatus resolver for the orders.
+func (r *mutationResolver) UpdateOrderStatus(ctx context.Context, orderUUID string, status string) (*model.Order, error) {
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+
+	// Update the order status
+	err := storeHandler.UpdateOrderStatus(ctx, orderUUID, status, "paid")
+	if err != nil {
+		return nil, fmt.Errorf("failed to update order status: %v", err)
+	}
+
+	// Return a basic success response
+	return &model.Order{
+		UUID:        orderUUID,
+		Status:      status,
+		TransStatus: "paid",
+	}, nil
+}
+
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUserInput) (*model.User, error) {
 	// Check if ID is provided
@@ -1391,71 +1409,6 @@ func (r *queryResolver) SellerOrders(ctx context.Context, storeName string) ([]*
 	}
 
 	return result, nil
-}
-
-// UpdateStatus resolver for the orders.
-func (r *mutationResolver) UpdateOrderStatus(ctx context.Context, orderUUID string, status string) (*model.Order, error) {
-	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
-
-	// Update the order status
-	err := storeHandler.UpdateOrderStatus(ctx, orderUUID, status, "")
-	if err != nil {
-		return nil, fmt.Errorf("failed to update order status: %v", err)
-	}
-
-	// Fetch the updated order
-	orders, err := storeHandler.GetOrdersByStore(ctx, "")
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch updated order: %v", err)
-	}
-
-	// Find the updated order
-	var updatedOrder *store.Order
-	for _, order := range orders {
-		if order.UUID == orderUUID {
-			updatedOrder = order
-			break
-		}
-	}
-
-	if updatedOrder == nil {
-		return nil, fmt.Errorf("order not found after update")
-	}
-
-	// Convert to GraphQL model
-	var products []*model.Product
-	for _, p := range updatedOrder.Products {
-		products = append(products, &model.Product{
-			ID:        int(p.ID),
-			Name:      p.Name,
-			Price:     p.Price,
-			Thumbnail: p.Thumbnail,
-			Status:    p.Status == "active",
-		})
-	}
-
-	var deliveryDetails *model.DeliveryDetails
-	if updatedOrder.DeliveryDetails != nil {
-		deliveryDetails = &model.DeliveryDetails{
-			Method:  updatedOrder.DeliveryDetails.Method,
-			Address: updatedOrder.DeliveryDetails.Address,
-			Fee:     updatedOrder.DeliveryDetails.Fee,
-		}
-	}
-
-	return &model.Order{
-		CartID:          int(updatedOrder.CartID),
-		UUID:            updatedOrder.UUID,
-		Amount:          updatedOrder.Amount,
-		Status:          updatedOrder.Status,
-		PaymentGateway:  updatedOrder.PaymentGateway,
-		PaymentMethod:   updatedOrder.PaymentMethod,
-		TransRef:        updatedOrder.TransRef,
-		TransStatus:     updatedOrder.TransStatus,
-		Products:        products,
-		DeliveryDetails: deliveryDetails,
-		TextRef:         &updatedOrder.TransRef,
-	}, nil
 }
 
 // Category is the resolver for the Category field.

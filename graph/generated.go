@@ -262,6 +262,7 @@ type ComplexityRoot struct {
 		SendMessage             func(childComplexity int, input model.MessageInput) int
 		ToggleStoreFollowStatus func(childComplexity int, user int, store int) int
 		UpdateOrder             func(childComplexity int, input model.UpdateStoreOrderInput) int
+		UpdateOrderStatus       func(childComplexity int, orderUUID string, status string) int
 		UpdateProduct           func(childComplexity int, input *model.UpdateProductInput) int
 		UpdateStore             func(childComplexity int, input *model.UpdateStoreInput) int
 		UpdateStoreFollower     func(childComplexity int, input *model.StoreFollowerInput) int
@@ -626,6 +627,7 @@ type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.NewUser) (*model.User, error)
 	CreateOrder(ctx context.Context, input model.StoreOrderInput) (*model.StoreOrder, error)
 	UpdateOrder(ctx context.Context, input model.UpdateStoreOrderInput) (*model.StoreOrder, error)
+	UpdateOrderStatus(ctx context.Context, orderUUID string, status string) (*model.Order, error)
 	UpdateUser(ctx context.Context, input *model.UpdateUserInput) (*model.User, error)
 	CreateVerifyOtp(ctx context.Context, input model.NewVerifyOtp) (*model.LoginRes, error)
 	LoginUser(ctx context.Context, input model.LoginReq) (*model.LoginRes, error)
@@ -1868,6 +1870,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateOrder(childComplexity, args["input"].(model.UpdateStoreOrderInput)), true
+
+	case "Mutation.updateOrderStatus":
+		if e.complexity.Mutation.UpdateOrderStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateOrderStatus_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateOrderStatus(childComplexity, args["orderUUID"].(string), args["status"].(string)), true
 
 	case "Mutation.updateProduct":
 		if e.complexity.Mutation.UpdateProduct == nil {
@@ -4867,6 +4881,57 @@ func (ec *executionContext) field_Mutation_toggleStoreFollowStatus_argsStore(
 	}
 
 	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateOrderStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_updateOrderStatus_argsOrderUUID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderUUID"] = arg0
+	arg1, err := ec.field_Mutation_updateOrderStatus_argsStatus(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["status"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateOrderStatus_argsOrderUUID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["orderUUID"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderUUID"))
+	if tmp, ok := rawArgs["orderUUID"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateOrderStatus_argsStatus(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["status"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+	if tmp, ok := rawArgs["status"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -11833,6 +11898,97 @@ func (ec *executionContext) fieldContext_Mutation_updateOrder(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateOrderStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateOrderStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateOrderStatus(rctx, fc.Args["orderUUID"].(string), fc.Args["status"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Order)
+	fc.Result = res
+	return ec.marshalNOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrder(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateOrderStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Order_id(ctx, field)
+			case "customer":
+				return ec.fieldContext_Order_customer(ctx, field)
+			case "customer_email":
+				return ec.fieldContext_Order_customer_email(ctx, field)
+			case "price":
+				return ec.fieldContext_Order_price(ctx, field)
+			case "status":
+				return ec.fieldContext_Order_status(ctx, field)
+			case "date":
+				return ec.fieldContext_Order_date(ctx, field)
+			case "store_id":
+				return ec.fieldContext_Order_store_id(ctx, field)
+			case "cartID":
+				return ec.fieldContext_Order_cartID(ctx, field)
+			case "uuid":
+				return ec.fieldContext_Order_uuid(ctx, field)
+			case "amount":
+				return ec.fieldContext_Order_amount(ctx, field)
+			case "paymentGateway":
+				return ec.fieldContext_Order_paymentGateway(ctx, field)
+			case "paymentMethod":
+				return ec.fieldContext_Order_paymentMethod(ctx, field)
+			case "transRef":
+				return ec.fieldContext_Order_transRef(ctx, field)
+			case "transStatus":
+				return ec.fieldContext_Order_transStatus(ctx, field)
+			case "products":
+				return ec.fieldContext_Order_products(ctx, field)
+			case "deliveryDetails":
+				return ec.fieldContext_Order_deliveryDetails(ctx, field)
+			case "textRef":
+				return ec.fieldContext_Order_textRef(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Order", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateOrderStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -31938,6 +32094,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateOrder(ctx, field)
 			})
+		case "updateOrderStatus":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateOrderStatus(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "updateUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateUser(ctx, field)
@@ -35831,6 +35994,10 @@ func (ec *executionContext) unmarshalNNewVariantValue2ᚖgithubᚗcomᚋChrisent
 func (ec *executionContext) unmarshalNNewVerifyOTP2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVerifyOtp(ctx context.Context, v any) (model.NewVerifyOtp, error) {
 	res, err := ec.unmarshalInputNewVerifyOTP(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrder2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v model.Order) graphql.Marshaler {
+	return ec._Order(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v *model.Order) graphql.Marshaler {
