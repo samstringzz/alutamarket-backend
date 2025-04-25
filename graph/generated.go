@@ -170,6 +170,11 @@ type ComplexityRoot struct {
 		Users     func(childComplexity int) int
 	}
 
+	EmailSubscriptionResponse struct {
+		Message func(childComplexity int) int
+		Success func(childComplexity int) int
+	}
+
 	HandledProducts struct {
 		ProductDiscount  func(childComplexity int) int
 		ProductID        func(childComplexity int) int
@@ -234,6 +239,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AddEmailSubscriber      func(childComplexity int, email string) int
 		AddHandledProduct       func(childComplexity int, userID int, productID int, typeArg string) int
 		AddReview               func(childComplexity int, input model.ReviewInput) int
 		CheckStoreName          func(childComplexity int, input string) int
@@ -629,6 +635,7 @@ type MutationResolver interface {
 	UpdateOrder(ctx context.Context, input model.UpdateStoreOrderInput) (*model.StoreOrder, error)
 	UpdateOrderStatus(ctx context.Context, orderUUID string, status string) (*model.Order, error)
 	UpdateUser(ctx context.Context, input *model.UpdateUserInput) (*model.User, error)
+	AddEmailSubscriber(ctx context.Context, email string) (*model.EmailSubscriptionResponse, error)
 	CreateVerifyOtp(ctx context.Context, input model.NewVerifyOtp) (*model.LoginRes, error)
 	LoginUser(ctx context.Context, input model.LoginReq) (*model.LoginRes, error)
 	AddHandledProduct(ctx context.Context, userID int, productID int, typeArg string) (*model.HandledProducts, error)
@@ -1262,6 +1269,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Downloads.Users(childComplexity), true
 
+	case "EmailSubscriptionResponse.message":
+		if e.complexity.EmailSubscriptionResponse.Message == nil {
+			break
+		}
+
+		return e.complexity.EmailSubscriptionResponse.Message(childComplexity), true
+
+	case "EmailSubscriptionResponse.success":
+		if e.complexity.EmailSubscriptionResponse.Success == nil {
+			break
+		}
+
+		return e.complexity.EmailSubscriptionResponse.Success(childComplexity), true
+
 	case "HandledProducts.productDiscount":
 		if e.complexity.HandledProducts.ProductDiscount == nil {
 			break
@@ -1534,6 +1555,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MessageUser.Status(childComplexity), true
+
+	case "Mutation.addEmailSubscriber":
+		if e.complexity.Mutation.AddEmailSubscriber == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addEmailSubscriber_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddEmailSubscriber(childComplexity, args["email"].(string)), true
 
 	case "Mutation.addHandledProduct":
 		if e.complexity.Mutation.AddHandledProduct == nil {
@@ -4012,6 +4045,34 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_addEmailSubscriber_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_addEmailSubscriber_argsEmail(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["email"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_addEmailSubscriber_argsEmail(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["email"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+	if tmp, ok := rawArgs["email"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
 
 func (ec *executionContext) field_Mutation_addHandledProduct_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -9912,6 +9973,91 @@ func (ec *executionContext) fieldContext_Downloads_updated_at(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _EmailSubscriptionResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.EmailSubscriptionResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EmailSubscriptionResponse_success(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Success, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EmailSubscriptionResponse_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EmailSubscriptionResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EmailSubscriptionResponse_message(ctx context.Context, field graphql.CollectedField, obj *model.EmailSubscriptionResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EmailSubscriptionResponse_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EmailSubscriptionResponse_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EmailSubscriptionResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _HandledProducts_userId(ctx context.Context, field graphql.CollectedField, obj *model.HandledProducts) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_HandledProducts_userId(ctx, field)
 	if err != nil {
@@ -12086,6 +12232,67 @@ func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_addEmailSubscriber(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_addEmailSubscriber(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddEmailSubscriber(rctx, fc.Args["email"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.EmailSubscriptionResponse)
+	fc.Result = res
+	return ec.marshalNEmailSubscriptionResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐEmailSubscriptionResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_addEmailSubscriber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_EmailSubscriptionResponse_success(ctx, field)
+			case "message":
+				return ec.fieldContext_EmailSubscriptionResponse_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EmailSubscriptionResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addEmailSubscriber_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -31620,6 +31827,47 @@ func (ec *executionContext) _Downloads(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var emailSubscriptionResponseImplementors = []string{"EmailSubscriptionResponse"}
+
+func (ec *executionContext) _EmailSubscriptionResponse(ctx context.Context, sel ast.SelectionSet, obj *model.EmailSubscriptionResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, emailSubscriptionResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EmailSubscriptionResponse")
+		case "success":
+			out.Values[i] = ec._EmailSubscriptionResponse_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._EmailSubscriptionResponse_message(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var handledProductsImplementors = []string{"HandledProducts"}
 
 func (ec *executionContext) _HandledProducts(ctx context.Context, sel ast.SelectionSet, obj *model.HandledProducts) graphql.Marshaler {
@@ -32104,6 +32352,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateUser(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "addEmailSubscriber":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addEmailSubscriber(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -35666,6 +35921,20 @@ func (ec *executionContext) marshalNDeliveryDetails2ᚖgithubᚗcomᚋChrisentec
 		return graphql.Null
 	}
 	return ec._DeliveryDetails(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEmailSubscriptionResponse2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐEmailSubscriptionResponse(ctx context.Context, sel ast.SelectionSet, v model.EmailSubscriptionResponse) graphql.Marshaler {
+	return ec._EmailSubscriptionResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEmailSubscriptionResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐEmailSubscriptionResponse(ctx context.Context, sel ast.SelectionSet, v *model.EmailSubscriptionResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EmailSubscriptionResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v any) (float64, error) {

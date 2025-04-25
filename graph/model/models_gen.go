@@ -138,6 +138,11 @@ type Downloads struct {
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }
 
+type EmailSubscriptionResponse struct {
+	Success bool    `json:"success"`
+	Message *string `json:"message,omitempty"`
+}
+
 type HandledProducts struct {
 	UserID           int      `json:"userId"`
 	ProductID        int      `json:"productId"`

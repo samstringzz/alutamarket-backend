@@ -119,6 +119,7 @@ type Bank {
 extend type Query {
   Chats(userID: String!): [Chat!]
   Messages(chatId: String!): [Message!]
+  subscribers: [Subscriber!]!
   getDVAAccount(userID: ID!): DVAAccount
 }
 
@@ -857,12 +858,29 @@ type Query {
 	MyInvoices(storeID: Int): [Invoice]
 	MyDownloads(id: String!): [Downloads]
 }
+
+type EmailSubscriptionResponse {
+    success: Boolean!
+    message: String
+}
+
+type Subscriber {
+    id: ID!
+    email: String!
+    active: Boolean!
+    created_at: Time!
+    updated_at: Time!
+}
+
 type Mutation {
 	createUser(input: NewUser!): User!
 	createOrder(input: StoreOrderInput!): StoreOrder
 	updateOrder(input: UpdateStoreOrderInput!): StoreOrder
 	updateOrderStatus(orderUUID: String!, status: String!): Order!
 	updateUser(input: UpdateUserInput): User!
+	addEmailSubscriber(email: String!): EmailSubscriptionResponse!
+	subscribeEmail(email: String!): Subscriber!
+    unsubscribeEmail(email: String!): Boolean!
 	createVerifyOTP(input: NewVerifyOTP!): LoginRes!
 	loginUser(input: LoginReq!): LoginRes!
 	addHandledProduct(
