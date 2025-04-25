@@ -57,6 +57,7 @@ func (h *Handler) ToggleStoreFollowStatus(ctx context.Context, userId, storeId u
 	return nil
 }
 
+
 func (h *Handler) UpdateUser(ctx context.Context, req *UpdateUserReq) (*User, error) {
 	// Convert UpdateUserReq to User for backward compatibility
 	user := &User{

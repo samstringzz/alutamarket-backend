@@ -19,6 +19,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/Chrisentech/aluta-market-api/utils"
+	"github.com/Chrisentech/aluta-market-api/internals/subscriber"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -277,6 +278,39 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUs
 	}
 
 	return userResponse, nil
+}
+
+// AddEmailSubscriber is the resolver for the addEmailSubscriber field.
+func (r *mutationResolver) AddEmailSubscriber(ctx context.Context, email string) (*model.EmailSubscriptionResponse, error) {
+    // Create subscriber service and repository
+    subscriberRepo := subscriber.NewRepository()
+    subscriberService := subscriber.NewService(subscriberRepo)
+    
+    // First add to OneSignal
+    err := utils.AddEmailSubscriber(email)
+    if err != nil {
+        errMsg := fmt.Sprintf("Failed to add subscriber to OneSignal: %v", err)
+        return &model.EmailSubscriptionResponse{
+            Success: false,
+            Message: &errMsg,
+        }, nil
+    }
+
+    // Then add to database
+    _, err = subscriberService.CreateSubscriber(email)
+    if err != nil {
+        errMsg := fmt.Sprintf("Failed to add subscriber to database: %v", err)
+        return &model.EmailSubscriptionResponse{
+            Success: false,
+            Message: &errMsg,
+        }, nil
+    }
+
+    successMsg := "Successfully subscribed to email notifications"
+    return &model.EmailSubscriptionResponse{
+        Success: true,
+        Message: &successMsg,
+    }, nil
 }
 
 // CreateVerifyOtp is the resolver for the createVerifyOTP field.
