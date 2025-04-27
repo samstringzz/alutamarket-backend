@@ -64,7 +64,7 @@ func InitServer() error {
 
 	// Create a new CORS middleware with the desired options
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "https://www.thealutamarket.com", "https://thealutamarket.com", "https://alutamarket.vercel.app", "https://aluta-market-api-zns8.onrender.com/graphql"},
+		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "https://www.alutamarket.com", "https://alutamarket.com", "https://alutamarket.vercel.app", "http://alutaa-market.vercel.app", "https://aluta-market-api-zns8.onrender.com/graphql"},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -140,9 +140,10 @@ func InitServer() error {
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
-				return origin == "https://www.thealutamarket.com" ||
-					origin == "https://thealutamarket.com" ||
+				return origin == "https://www.alutamarket.com" ||
+					origin == "https://alutamarket.com" ||
 					origin == "https://alutamarket.vercel.app" ||
+					origin == "https://alutaa-market.vercel.app" ||
 					strings.HasPrefix(origin, "http://localhost")
 			},
 			ReadBufferSize:  1024,

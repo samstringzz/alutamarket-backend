@@ -42,7 +42,7 @@ func SendVerificationMail(userName string, code string) {
 	}
 
 	m := mail.NewMessage()
-	m.SetHeader("From", "Contact@thealutamarket.com")
+	m.SetHeader("From", "Contact@alutamarket.com")
 	m.SetHeader("To", "folajimiopeyemisax13@gmail.com")
 	m.SetHeader("Subject", "Verification Code from Alutamarket")
 	m.SetBody("text/html", body.String())
