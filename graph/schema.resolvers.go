@@ -12,14 +12,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Chrisentech/aluta-market-api/database"
 	"github.com/Chrisentech/aluta-market-api/graph/model"
 	"github.com/Chrisentech/aluta-market-api/internals/cart"
 	"github.com/Chrisentech/aluta-market-api/internals/messages"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"github.com/Chrisentech/aluta-market-api/internals/subscriber"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/Chrisentech/aluta-market-api/utils"
-	"github.com/Chrisentech/aluta-market-api/internals/subscriber"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -282,35 +283,35 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input *model.UpdateUs
 
 // AddEmailSubscriber is the resolver for the addEmailSubscriber field.
 func (r *mutationResolver) AddEmailSubscriber(ctx context.Context, email string) (*model.EmailSubscriptionResponse, error) {
-    // Create subscriber service and repository
-    subscriberRepo := subscriber.NewRepository()
-    subscriberService := subscriber.NewService(subscriberRepo)
-    
-    // First add to OneSignal
-    err := utils.AddEmailSubscriber(email)
-    if err != nil {
-        errMsg := fmt.Sprintf("Failed to add subscriber to OneSignal: %v", err)
-        return &model.EmailSubscriptionResponse{
-            Success: false,
-            Message: &errMsg,
-        }, nil
-    }
+	// Create subscriber service and repository
+	subscriberRepo := subscriber.NewRepository()
+	subscriberService := subscriber.NewService(subscriberRepo)
 
-    // Then add to database
-    _, err = subscriberService.CreateSubscriber(email)
-    if err != nil {
-        errMsg := fmt.Sprintf("Failed to add subscriber to database: %v", err)
-        return &model.EmailSubscriptionResponse{
-            Success: false,
-            Message: &errMsg,
-        }, nil
-    }
+	// First add to OneSignal
+	err := utils.AddEmailSubscriber(email)
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to add subscriber to OneSignal: %v", err)
+		return &model.EmailSubscriptionResponse{
+			Success: false,
+			Message: &errMsg,
+		}, nil
+	}
 
-    successMsg := "Successfully subscribed to email notifications"
-    return &model.EmailSubscriptionResponse{
-        Success: true,
-        Message: &successMsg,
-    }, nil
+	// Then add to database
+	_, err = subscriberService.CreateSubscriber(email)
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to add subscriber to database: %v", err)
+		return &model.EmailSubscriptionResponse{
+			Success: false,
+			Message: &errMsg,
+		}, nil
+	}
+
+	successMsg := "Successfully subscribed to email notifications"
+	return &model.EmailSubscriptionResponse{
+		Success: true,
+		Message: &successMsg,
+	}, nil
 }
 
 // CreateVerifyOtp is the resolver for the createVerifyOTP field.
@@ -1854,7 +1855,46 @@ func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error)
 
 // Reviews is the resolver for the Reviews field.
 func (r *queryResolver) Reviews(ctx context.Context, id string, value string) ([]*model.Review, error) {
-	panic(fmt.Errorf("not implemented: Reviews - Reviews"))
+	// Create a database connection
+	db := database.GetDB()
+	if db == nil {
+		return nil, fmt.Errorf("database connection failed")
+	}
+
+	var reviews []*model.Review
+
+	// Determine what type of reviews to fetch based on the value parameter
+	switch value {
+	case "product":
+		// Fetch reviews for a specific product
+		productID, err := strconv.Atoi(id)
+		if err != nil {
+			return nil, fmt.Errorf("invalid product ID: %v", err)
+		}
+
+		if err := db.Where("product_id = ?", productID).Find(&reviews).Error; err != nil {
+			return nil, fmt.Errorf("error fetching product reviews: %v", err)
+		}
+	case "store":
+		// Fetch reviews for a specific store
+		storeID, err := strconv.Atoi(id)
+		if err != nil {
+			return nil, fmt.Errorf("invalid store ID: %v", err)
+		}
+
+		if err := db.Where("store_id = ?", storeID).Find(&reviews).Error; err != nil {
+			return nil, fmt.Errorf("error fetching store reviews: %v", err)
+		}
+	case "order":
+		// Fetch reviews for a specific order
+		if err := db.Where("order_id = ?", id).Find(&reviews).Error; err != nil {
+			return nil, fmt.Errorf("error fetching order reviews: %v", err)
+		}
+	default:
+		return nil, fmt.Errorf("invalid value parameter: %s", value)
+	}
+
+	return reviews, nil
 }
 
 // StoreByName is the resolver for the StoreByName field.

@@ -389,16 +389,11 @@ func (r *repository) GetRecommendedProducts(ctx context.Context, query string) (
 }
 
 // AddReview adds a new review for a product.
-func (r *repository) AddReview(ctx context.Context, input *Review) (*Review, error) {
-	input.ID = utils.GenerateUUID() // Generate unique ID for the review
-
-	// Save the review directly to the database
-	err := r.db.Create(input).Error
-	if err != nil {
-		return nil, fmt.Errorf("failed to add review: %v", err)
+func (r *repository) AddReview(ctx context.Context, review *Review) (*Review, error) {
+	if err := r.db.Create(review).Error; err != nil {
+		return nil, err
 	}
-
-	return input, nil
+	return review, nil
 }
 
 // GetProductReviews retrieves all reviews for a specific product, or all reviews for a seller's products.
