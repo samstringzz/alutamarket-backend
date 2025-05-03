@@ -471,6 +471,7 @@ func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInpu
 		ProductID int       `json:"product_id"`
 		OrderID   string    `json:"order_id"`
 		SellerID  int       `json:"seller_id"`
+		BuyerID   int       `json:"buyer_id"`
 		Rating    float64   `json:"rating"`
 		Message   string    `json:"message"`
 		CreatedAt time.Time `json:"created_at"`
@@ -480,8 +481,9 @@ func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInpu
 	}{
 		StoreID:   input.StoreID,
 		ProductID: input.ProductID,
-		OrderID:   input.OrderID, // Now this will work as both are strings
+		OrderID:   input.OrderID,
 		SellerID:  input.SellerID,
+		BuyerID:   input.BuyerID,
 		Rating:    input.Rating,
 		Message:   input.Buyer.Comment,
 		CreatedAt: *review.CreatedAt,

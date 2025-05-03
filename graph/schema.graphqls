@@ -819,6 +819,7 @@ input ReviewInput {
 	order_id: String!
 	buyer: ReviewBuyerInput
 	seller_id: Int!
+	buyer_id: Int!
 	rating: Float!
 	created_at: Time
 	updated_at: Time
