@@ -437,7 +437,41 @@ func (r *mutationResolver) AddHandledProduct(ctx context.Context, userID int, pr
 
 // AddReview is the resolver for the addReview field.
 func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInput) (*model.Review, error) {
-	panic(fmt.Errorf("not implemented: AddReview - addReview"))
+	// Create a new database connection
+	db := database.GetDB()
+
+	// Convert order_id from string to int
+	orderID, err := strconv.Atoi(input.OrderID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid order ID format: %v", err)
+	}
+
+	// Get current time
+	now := time.Now()
+
+	// Create the review
+	review := &model.Review{
+		StoreID:   input.StoreID,
+		ProductID: input.ProductID,
+		OrderID:   orderID,
+		SellerID:  input.SellerID,
+		Rating:    input.Rating,
+		CreatedAt: &now,
+		UpdatedAt: &now,
+		Buyer: &model.ReviewBuyer{
+			Avatar:   input.Buyer.Avatar,
+			Comment:  input.Buyer.Comment,
+			Nickname: input.Buyer.Nickname,
+		},
+	}
+
+	// Save to database
+	result := db.Create(review)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to create review: %v", result.Error)
+	}
+
+	return review, nil
 }
 
 // CheckStoreName is the resolver for the checkStoreName field.
@@ -1927,8 +1961,9 @@ func (r *queryResolver) Reviews(ctx context.Context, id string, value string) ([
 			CreatedAt: &r.CreatedAt,
 			UpdatedAt: &r.UpdatedAt,
 			Buyer: &model.ReviewBuyer{
-				Avatar:  r.Avatar,
-				Comment: r.Message,
+				Nickname: r.Nickname,
+				Avatar:   r.Avatar,
+				Comment:  r.Message,
 			},
 		}
 		reviews = append(reviews, review)
