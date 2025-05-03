@@ -385,6 +385,7 @@ type ComplexityRoot struct {
 		Amount          func(childComplexity int) int
 		CartID          func(childComplexity int) int
 		Coupon          func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
 		DeliveryDetails func(childComplexity int) int
 		Fee             func(childComplexity int) int
 		PaymentGateway  func(childComplexity int) int
@@ -2562,6 +2563,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PurchasedOrder.Coupon(childComplexity), true
+
+	case "PurchasedOrder.created_at":
+		if e.complexity.PurchasedOrder.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.PurchasedOrder.CreatedAt(childComplexity), true
 
 	case "PurchasedOrder.DeliveryDetails":
 		if e.complexity.PurchasedOrder.DeliveryDetails == nil {
@@ -18577,6 +18585,50 @@ func (ec *executionContext) fieldContext_PurchasedOrder_textRef(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _PurchasedOrder_created_at(ctx context.Context, field graphql.CollectedField, obj *model.PurchasedOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PurchasedOrder_created_at(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PurchasedOrder_created_at(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PurchasedOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_Users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_Users(ctx, field)
 	if err != nil {
@@ -20153,6 +20205,8 @@ func (ec *executionContext) fieldContext_Query_PurchasedOrder(ctx context.Contex
 				return ec.fieldContext_PurchasedOrder_DeliveryDetails(ctx, field)
 			case "textRef":
 				return ec.fieldContext_PurchasedOrder_textRef(ctx, field)
+			case "created_at":
+				return ec.fieldContext_PurchasedOrder_created_at(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PurchasedOrder", field.Name)
 		},
@@ -33994,6 +34048,11 @@ func (ec *executionContext) _PurchasedOrder(ctx context.Context, sel ast.Selecti
 			}
 		case "textRef":
 			out.Values[i] = ec._PurchasedOrder_textRef(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "created_at":
+			out.Values[i] = ec._PurchasedOrder_created_at(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

@@ -467,6 +467,7 @@ type PurchasedOrder struct {
 	Products        []*TrackedProduct `json:"products"`
 	DeliveryDetails *DeliveryDetails  `json:"DeliveryDetails"`
 	TextRef         string            `json:"textRef"`
+	CreatedAt       time.Time         `json:"created_at"`
 }
 
 type Query struct {
