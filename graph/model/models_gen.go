@@ -475,7 +475,7 @@ type Query struct {
 type Review struct {
 	StoreID   int          `json:"store_id"`
 	ProductID int          `json:"product_id"`
-	OrderID   int          `json:"order_id"`
+	OrderID   string       `json:"order_id"`
 	Buyer     *ReviewBuyer `json:"buyer,omitempty"`
 	SellerID  int          `json:"seller_id"`
 	Message   *string      `json:"message,omitempty"`
