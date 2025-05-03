@@ -813,6 +813,7 @@ type Review {
 	order_id: Int!
 	buyer: ReviewBuyer
 	seller_id: Int!
+	comment: String 
 	rating: Float!
 	created_at: Time
 	updated_at: Time
