@@ -529,14 +529,7 @@ type Variant {
 	name: String!
 	value: [VariantValue!]!
 }
-# type Review {
-# 	rating: Float!
-# 	message: String!
-# 	image: String!
-# 	product_id: Int!
-# 	username: String!
-# 	id: ID
-# }
+
 type Product {
     id: Int!
     name: String!
@@ -813,7 +806,8 @@ type Review {
 	order_id: Int!
 	buyer: ReviewBuyer
 	seller_id: Int!
-	comment: String 
+	message: String 
+	username: String!
 	rating: Float!
 	created_at: Time
 	updated_at: Time
