@@ -784,7 +784,6 @@ type Downloads {
 }
 
 type ReviewBuyer {
-	nickname: String!
 	avatar: String!
 	comment: String!
 }
