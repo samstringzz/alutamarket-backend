@@ -478,6 +478,7 @@ func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInpu
 		UpdatedAt time.Time `json:"updated_at"`
 		Nickname  string    `json:"nickname"`
 		Avatar    string    `json:"avatar"`
+		Username  string    `json:"username"`
 	}{
 		StoreID:   input.StoreID,
 		ProductID: input.ProductID,
@@ -490,6 +491,7 @@ func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInpu
 		UpdatedAt: *review.UpdatedAt,
 		Nickname:  input.Buyer.Nickname,
 		Avatar:    input.Buyer.Avatar,
+		Username:  input.Buyer.Nickname,
 	})
 
 	if result.Error != nil {
