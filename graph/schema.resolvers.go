@@ -1927,9 +1927,8 @@ func (r *queryResolver) Reviews(ctx context.Context, id string, value string) ([
 			CreatedAt: &r.CreatedAt,
 			UpdatedAt: &r.UpdatedAt,
 			Buyer: &model.ReviewBuyer{
-				Nickname: r.Nickname,
-				Avatar:   r.Avatar,
-				Comment:  r.Message,
+				Avatar:  r.Avatar,
+				Comment: r.Message,
 			},
 		}
 		reviews = append(reviews, review)
