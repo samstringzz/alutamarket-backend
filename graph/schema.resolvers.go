@@ -437,36 +437,59 @@ func (r *mutationResolver) AddHandledProduct(ctx context.Context, userID int, pr
 
 // AddReview is the resolver for the addReview field.
 func (r *mutationResolver) AddReview(ctx context.Context, input model.ReviewInput) (*model.Review, error) {
-	// Create a new database connection
 	db := database.GetDB()
-
-	// Convert order_id from string to int
-	orderID, err := strconv.Atoi(input.OrderID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid order ID format: %v", err)
+	if db == nil {
+		return nil, fmt.Errorf("database connection failed")
 	}
 
-	// Get current time
 	now := time.Now()
 
-	// Create the review
+	// Create the review in the database
 	review := &model.Review{
 		StoreID:   input.StoreID,
 		ProductID: input.ProductID,
-		OrderID:   orderID,
+		OrderID:   input.OrderID,
 		SellerID:  input.SellerID,
 		Rating:    input.Rating,
 		CreatedAt: &now,
 		UpdatedAt: &now,
-		Buyer: &model.ReviewBuyer{
-			Avatar:   input.Buyer.Avatar,
-			Comment:  input.Buyer.Comment,
-			Nickname: input.Buyer.Nickname,
-		},
 	}
 
-	// Save to database
-	result := db.Create(review)
+	if input.Buyer != nil {
+		review.Buyer = &model.ReviewBuyer{
+			Nickname: input.Buyer.Nickname,
+			Avatar:   input.Buyer.Avatar,
+			Comment:  input.Buyer.Comment,
+		}
+		// Set the message from buyer's comment
+		review.Message = &input.Buyer.Comment
+	}
+
+	// Insert the review into the database
+	result := db.Table("reviews").Create(&struct {
+		StoreID   int       `json:"store_id"`
+		ProductID int       `json:"product_id"`
+		OrderID   string    `json:"order_id"`
+		SellerID  int       `json:"seller_id"`
+		Rating    float64   `json:"rating"`
+		Message   string    `json:"message"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Nickname  string    `json:"nickname"`
+		Avatar    string    `json:"avatar"`
+	}{
+		StoreID:   input.StoreID,
+		ProductID: input.ProductID,
+		OrderID:   input.OrderID, // Now this will work as both are strings
+		SellerID:  input.SellerID,
+		Rating:    input.Rating,
+		Message:   input.Buyer.Comment,
+		CreatedAt: *review.CreatedAt,
+		UpdatedAt: *review.UpdatedAt,
+		Nickname:  input.Buyer.Nickname,
+		Avatar:    input.Buyer.Avatar,
+	})
+
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to create review: %v", result.Error)
 	}
@@ -1910,7 +1933,7 @@ func (r *queryResolver) Reviews(ctx context.Context, id string, value string) ([
 	type dbReview struct {
 		StoreID   int       `json:"store_id"`
 		ProductID int       `json:"product_id"`
-		OrderID   int       `json:"order_id"`
+		OrderID   string    `json:"order_id"`
 		SellerID  int       `json:"seller_id"`
 		Rating    float64   `json:"rating"`
 		Message   string    `json:"message"`

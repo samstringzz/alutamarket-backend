@@ -803,7 +803,7 @@ input ReviewBuyerInput {
 type Review {
 	store_id: Int!
 	product_id: Int!
-	order_id: Int!
+	order_id: String!
 	buyer: ReviewBuyer
 	seller_id: Int!
 	message: String 
