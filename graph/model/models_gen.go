@@ -503,6 +503,7 @@ type ReviewInput struct {
 	OrderID   string            `json:"order_id"`
 	Buyer     *ReviewBuyerInput `json:"buyer,omitempty"`
 	SellerID  int               `json:"seller_id"`
+	BuyerID   int               `json:"buyer_id"`
 	Rating    float64           `json:"rating"`
 	CreatedAt *time.Time        `json:"created_at,omitempty"`
 	UpdatedAt *time.Time        `json:"updated_at,omitempty"`

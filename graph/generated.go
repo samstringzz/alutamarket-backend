@@ -30327,7 +30327,7 @@ func (ec *executionContext) unmarshalInputReviewInput(ctx context.Context, obj a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"store_id", "product_id", "order_id", "buyer", "seller_id", "rating", "created_at", "updated_at"}
+	fieldsInOrder := [...]string{"store_id", "product_id", "order_id", "buyer", "seller_id", "buyer_id", "rating", "created_at", "updated_at"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -30369,6 +30369,13 @@ func (ec *executionContext) unmarshalInputReviewInput(ctx context.Context, obj a
 				return it, err
 			}
 			it.SellerID = data
+		case "buyer_id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("buyer_id"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BuyerID = data
 		case "rating":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rating"))
 			data, err := ec.unmarshalNFloat2float64(ctx, v)
