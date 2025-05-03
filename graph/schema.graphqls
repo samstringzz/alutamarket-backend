@@ -705,6 +705,7 @@ type PurchasedOrder {
 	products: [TrackedProduct]!
 	DeliveryDetails: DeliveryDetails!
 	textRef: String!
+	created_at: Time!
 }
 input SmartCardInput {
 	service_id: String!

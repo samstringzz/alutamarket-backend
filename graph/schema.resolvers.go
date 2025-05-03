@@ -2135,6 +2135,7 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 			TransRef:        order.TransRef,
 			TransStatus:     order.TransStatus,
 			Products:        products,
+			CreatedAt:       order.CreatedAt,
 			DeliveryDetails: deliveryDetails,
 			TextRef:         order.TransRef,
 		}
