@@ -478,6 +478,8 @@ type Review struct {
 	OrderID   int          `json:"order_id"`
 	Buyer     *ReviewBuyer `json:"buyer,omitempty"`
 	SellerID  int          `json:"seller_id"`
+	Message   *string      `json:"message,omitempty"`
+	Username  string       `json:"username"`
 	Rating    float64      `json:"rating"`
 	CreatedAt *time.Time   `json:"created_at,omitempty"`
 	UpdatedAt *time.Time   `json:"updated_at,omitempty"`
@@ -656,6 +658,14 @@ type SubCategory struct {
 	Name     string `json:"name"`
 	Slug     string `json:"slug"`
 	Category int    `json:"category"`
+}
+
+type Subscriber struct {
+	ID        string    `json:"id"`
+	Email     string    `json:"email"`
+	Active    bool      `json:"active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Subscription struct {

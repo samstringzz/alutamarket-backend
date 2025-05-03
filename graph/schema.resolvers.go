@@ -314,6 +314,16 @@ func (r *mutationResolver) AddEmailSubscriber(ctx context.Context, email string)
 	}, nil
 }
 
+// SubscribeEmail is the resolver for the subscribeEmail field.
+func (r *mutationResolver) SubscribeEmail(ctx context.Context, email string) (*model.Subscriber, error) {
+	panic(fmt.Errorf("not implemented: SubscribeEmail - subscribeEmail"))
+}
+
+// UnsubscribeEmail is the resolver for the unsubscribeEmail field.
+func (r *mutationResolver) UnsubscribeEmail(ctx context.Context, email string) (bool, error) {
+	panic(fmt.Errorf("not implemented: UnsubscribeEmail - unsubscribeEmail"))
+}
+
 // CreateVerifyOtp is the resolver for the createVerifyOTP field.
 func (r *mutationResolver) CreateVerifyOtp(ctx context.Context, input model.NewVerifyOtp) (*model.LoginRes, error) {
 	// Create verification request
@@ -1855,7 +1865,6 @@ func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error)
 
 // Reviews is the resolver for the Reviews field.
 func (r *queryResolver) Reviews(ctx context.Context, id string, value string) ([]*model.Review, error) {
-	// Create a database connection
 	db := database.GetDB()
 	if db == nil {
 		return nil, fmt.Errorf("database connection failed")
@@ -1863,35 +1872,67 @@ func (r *queryResolver) Reviews(ctx context.Context, id string, value string) ([
 
 	var reviews []*model.Review
 
-	// Determine what type of reviews to fetch based on the value parameter
+	// Common struct for all review types
+	type dbReview struct {
+		StoreID   int       `json:"store_id"`
+		ProductID int       `json:"product_id"`
+		OrderID   int       `json:"order_id"`
+		SellerID  int       `json:"seller_id"`
+		Rating    float64   `json:"rating"`
+		Message   string    `json:"message"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Nickname  string    `json:"nickname"`
+		Avatar    string    `json:"avatar"`
+	}
+
+	// Convert ID based on type
+	numericID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid %s ID: %v", value, err)
+	}
+
+	// Build query based on type
+	query := db.Table("reviews").
+		Select("reviews.*, users.nickname, users.avatar").
+		Joins("LEFT JOIN users ON reviews.buyer_id = users.id")
+
+	// Add type-specific where clause
 	switch value {
 	case "product":
-		// Fetch reviews for a specific product
-		productID, err := strconv.Atoi(id)
-		if err != nil {
-			return nil, fmt.Errorf("invalid product ID: %v", err)
-		}
-
-		if err := db.Where("product_id = ?", productID).Find(&reviews).Error; err != nil {
-			return nil, fmt.Errorf("error fetching product reviews: %v", err)
-		}
+		query = query.Where("reviews.product_id = ?", numericID)
 	case "store":
-		// Fetch reviews for a specific store
-		storeID, err := strconv.Atoi(id)
-		if err != nil {
-			return nil, fmt.Errorf("invalid store ID: %v", err)
-		}
-
-		if err := db.Where("store_id = ?", storeID).Find(&reviews).Error; err != nil {
-			return nil, fmt.Errorf("error fetching store reviews: %v", err)
-		}
+		query = query.Where("reviews.store_id = ?", numericID)
 	case "order":
-		// Fetch reviews for a specific order
-		if err := db.Where("order_id = ?", id).Find(&reviews).Error; err != nil {
-			return nil, fmt.Errorf("error fetching order reviews: %v", err)
-		}
+		query = query.Where("reviews.order_id = ?", numericID)
 	default:
 		return nil, fmt.Errorf("invalid value parameter: %s", value)
+	}
+
+	// Execute query
+	var dbReviews []dbReview
+	if err := query.Scan(&dbReviews).Error; err != nil {
+		return nil, fmt.Errorf("error fetching %s reviews: %v", value, err)
+	}
+
+	// Convert to model.Review objects
+	for _, r := range dbReviews {
+		review := &model.Review{
+			StoreID:   r.StoreID,
+			ProductID: r.ProductID,
+			OrderID:   r.OrderID,
+			SellerID:  r.SellerID,
+			Rating:    r.Rating,
+			Message:   &r.Message,
+			CreatedAt: &r.CreatedAt,
+			UpdatedAt: &r.UpdatedAt,
+			Buyer: &model.ReviewBuyer{
+				Nickname: r.Nickname,
+				Avatar:   r.Avatar,
+				Comment:  r.Message,
+			},
+		}
+		reviews = append(reviews, review)
 	}
 
 	return reviews, nil
@@ -2217,6 +2258,11 @@ func (r *queryResolver) Messages(ctx context.Context, chatID string) ([]*model.M
 	}
 
 	return result, nil
+}
+
+// Subscribers is the resolver for the subscribers field.
+func (r *queryResolver) Subscribers(ctx context.Context) ([]*model.Subscriber, error) {
+	panic(fmt.Errorf("not implemented: Subscribers - subscribers"))
 }
 
 // GetDVAAccount is the resolver for the GetDVAAccount field.

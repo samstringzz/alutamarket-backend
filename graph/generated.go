@@ -266,7 +266,9 @@ type ComplexityRoot struct {
 		RemoveAllCart           func(childComplexity int, cartID int) int
 		RemoveHandledProduct    func(childComplexity int, prd int, typeArg *string) int
 		SendMessage             func(childComplexity int, input model.MessageInput) int
+		SubscribeEmail          func(childComplexity int, email string) int
 		ToggleStoreFollowStatus func(childComplexity int, user int, store int) int
+		UnsubscribeEmail        func(childComplexity int, email string) int
 		UpdateOrder             func(childComplexity int, input model.UpdateStoreOrderInput) int
 		UpdateOrderStatus       func(childComplexity int, orderUUID string, status string) int
 		UpdateProduct           func(childComplexity int, input *model.UpdateProductInput) int
@@ -423,6 +425,7 @@ type ComplexityRoot struct {
 		StoreByName           func(childComplexity int, name string) int
 		Stores                func(childComplexity int, user *int, limit *int, offset *int) int
 		SubCategory           func(childComplexity int, id string) int
+		Subscribers           func(childComplexity int) int
 		SubscriptionBundle    func(childComplexity int, serviceID string) int
 		User                  func(childComplexity int, id string) int
 		Users                 func(childComplexity int, limit *int, offset *int) int
@@ -431,12 +434,14 @@ type ComplexityRoot struct {
 	Review struct {
 		Buyer     func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
+		Message   func(childComplexity int) int
 		OrderID   func(childComplexity int) int
 		ProductID func(childComplexity int) int
 		Rating    func(childComplexity int) int
 		SellerID  func(childComplexity int) int
 		StoreID   func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
+		Username  func(childComplexity int) int
 	}
 
 	ReviewBuyer struct {
@@ -540,6 +545,14 @@ type ComplexityRoot struct {
 		Slug     func(childComplexity int) int
 	}
 
+	Subscriber struct {
+		Active    func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		Email     func(childComplexity int) int
+		ID        func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+	}
+
 	Subscription struct {
 		ProductSearchResults func(childComplexity int, query string) int
 	}
@@ -636,6 +649,8 @@ type MutationResolver interface {
 	UpdateOrderStatus(ctx context.Context, orderUUID string, status string) (*model.Order, error)
 	UpdateUser(ctx context.Context, input *model.UpdateUserInput) (*model.User, error)
 	AddEmailSubscriber(ctx context.Context, email string) (*model.EmailSubscriptionResponse, error)
+	SubscribeEmail(ctx context.Context, email string) (*model.Subscriber, error)
+	UnsubscribeEmail(ctx context.Context, email string) (bool, error)
 	CreateVerifyOtp(ctx context.Context, input model.NewVerifyOtp) (*model.LoginRes, error)
 	LoginUser(ctx context.Context, input model.LoginReq) (*model.LoginRes, error)
 	AddHandledProduct(ctx context.Context, userID int, productID int, typeArg string) (*model.HandledProducts, error)
@@ -698,6 +713,7 @@ type QueryResolver interface {
 	MyDownloads(ctx context.Context, id string) ([]*model.Downloads, error)
 	Chats(ctx context.Context, userID string) ([]*model.Chat, error)
 	Messages(ctx context.Context, chatID string) ([]*model.Message, error)
+	Subscribers(ctx context.Context) ([]*model.Subscriber, error)
 	GetDVAAccount(ctx context.Context, userID string) (*model.DVAAccount, error)
 }
 type SubscriptionResolver interface {
@@ -1880,6 +1896,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SendMessage(childComplexity, args["input"].(model.MessageInput)), true
 
+	case "Mutation.subscribeEmail":
+		if e.complexity.Mutation.SubscribeEmail == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_subscribeEmail_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SubscribeEmail(childComplexity, args["email"].(string)), true
+
 	case "Mutation.toggleStoreFollowStatus":
 		if e.complexity.Mutation.ToggleStoreFollowStatus == nil {
 			break
@@ -1891,6 +1919,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ToggleStoreFollowStatus(childComplexity, args["user"].(int), args["store"].(int)), true
+
+	case "Mutation.unsubscribeEmail":
+		if e.complexity.Mutation.UnsubscribeEmail == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unsubscribeEmail_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UnsubscribeEmail(childComplexity, args["email"].(string)), true
 
 	case "Mutation.updateOrder":
 		if e.complexity.Mutation.UpdateOrder == nil {
@@ -2907,6 +2947,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.SubCategory(childComplexity, args["id"].(string)), true
 
+	case "Query.subscribers":
+		if e.complexity.Query.Subscribers == nil {
+			break
+		}
+
+		return e.complexity.Query.Subscribers(childComplexity), true
+
 	case "Query.SubscriptionBundle":
 		if e.complexity.Query.SubscriptionBundle == nil {
 			break
@@ -2957,6 +3004,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Review.CreatedAt(childComplexity), true
 
+	case "Review.message":
+		if e.complexity.Review.Message == nil {
+			break
+		}
+
+		return e.complexity.Review.Message(childComplexity), true
+
 	case "Review.order_id":
 		if e.complexity.Review.OrderID == nil {
 			break
@@ -2998,6 +3052,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Review.UpdatedAt(childComplexity), true
+
+	case "Review.username":
+		if e.complexity.Review.Username == nil {
+			break
+		}
+
+		return e.complexity.Review.Username(childComplexity), true
 
 	case "ReviewBuyer.avatar":
 		if e.complexity.ReviewBuyer.Avatar == nil {
@@ -3453,6 +3514,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SubCategory.Slug(childComplexity), true
+
+	case "Subscriber.active":
+		if e.complexity.Subscriber.Active == nil {
+			break
+		}
+
+		return e.complexity.Subscriber.Active(childComplexity), true
+
+	case "Subscriber.created_at":
+		if e.complexity.Subscriber.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Subscriber.CreatedAt(childComplexity), true
+
+	case "Subscriber.email":
+		if e.complexity.Subscriber.Email == nil {
+			break
+		}
+
+		return e.complexity.Subscriber.Email(childComplexity), true
+
+	case "Subscriber.id":
+		if e.complexity.Subscriber.ID == nil {
+			break
+		}
+
+		return e.complexity.Subscriber.ID(childComplexity), true
+
+	case "Subscriber.updated_at":
+		if e.complexity.Subscriber.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Subscriber.UpdatedAt(childComplexity), true
 
 	case "Subscription.productSearchResults":
 		if e.complexity.Subscription.ProductSearchResults == nil {
@@ -4894,6 +4990,34 @@ func (ec *executionContext) field_Mutation_sendMessage_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_subscribeEmail_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_subscribeEmail_argsEmail(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["email"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_subscribeEmail_argsEmail(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["email"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+	if tmp, ok := rawArgs["email"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_toggleStoreFollowStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4942,6 +5066,34 @@ func (ec *executionContext) field_Mutation_toggleStoreFollowStatus_argsStore(
 	}
 
 	var zeroVal int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_unsubscribeEmail_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_unsubscribeEmail_argsEmail(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["email"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_unsubscribeEmail_argsEmail(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["email"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+	if tmp, ok := rawArgs["email"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -12299,6 +12451,128 @@ func (ec *executionContext) fieldContext_Mutation_addEmailSubscriber(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_subscribeEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_subscribeEmail(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SubscribeEmail(rctx, fc.Args["email"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Subscriber)
+	fc.Result = res
+	return ec.marshalNSubscriber2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriber(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_subscribeEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Subscriber_id(ctx, field)
+			case "email":
+				return ec.fieldContext_Subscriber_email(ctx, field)
+			case "active":
+				return ec.fieldContext_Subscriber_active(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Subscriber_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Subscriber_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Subscriber", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_subscribeEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unsubscribeEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_unsubscribeEmail(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UnsubscribeEmail(rctx, fc.Args["email"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_unsubscribeEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_unsubscribeEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createVerifyOTP(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createVerifyOTP(ctx, field)
 	if err != nil {
@@ -12547,6 +12821,10 @@ func (ec *executionContext) fieldContext_Mutation_addReview(ctx context.Context,
 				return ec.fieldContext_Review_buyer(ctx, field)
 			case "seller_id":
 				return ec.fieldContext_Review_seller_id(ctx, field)
+			case "message":
+				return ec.fieldContext_Review_message(ctx, field)
+			case "username":
+				return ec.fieldContext_Review_username(ctx, field)
 			case "rating":
 				return ec.fieldContext_Review_rating(ctx, field)
 			case "created_at":
@@ -19688,6 +19966,10 @@ func (ec *executionContext) fieldContext_Query_Reviews(ctx context.Context, fiel
 				return ec.fieldContext_Review_buyer(ctx, field)
 			case "seller_id":
 				return ec.fieldContext_Review_seller_id(ctx, field)
+			case "message":
+				return ec.fieldContext_Review_message(ctx, field)
+			case "username":
+				return ec.fieldContext_Review_username(ctx, field)
 			case "rating":
 				return ec.fieldContext_Review_rating(ctx, field)
 			case "created_at":
@@ -20425,6 +20707,62 @@ func (ec *executionContext) fieldContext_Query_Messages(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_subscribers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_subscribers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Subscribers(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Subscriber)
+	fc.Result = res
+	return ec.marshalNSubscriber2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriberᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_subscribers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Subscriber_id(ctx, field)
+			case "email":
+				return ec.fieldContext_Subscriber_email(ctx, field)
+			case "active":
+				return ec.fieldContext_Subscriber_active(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Subscriber_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Subscriber_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Subscriber", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_getDVAAccount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_getDVAAccount(ctx, field)
 	if err != nil {
@@ -20842,6 +21180,91 @@ func (ec *executionContext) fieldContext_Review_seller_id(_ context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Review_message(ctx context.Context, field graphql.CollectedField, obj *model.Review) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Review_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Review_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Review",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Review_username(ctx context.Context, field graphql.CollectedField, obj *model.Review) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Review_username(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Username, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Review_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Review",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -23987,6 +24410,226 @@ func (ec *executionContext) fieldContext_SubCategory_category(_ context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscriber_id(ctx context.Context, field graphql.CollectedField, obj *model.Subscriber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscriber_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Subscriber_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscriber_email(ctx context.Context, field graphql.CollectedField, obj *model.Subscriber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscriber_email(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Email, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Subscriber_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscriber_active(ctx context.Context, field graphql.CollectedField, obj *model.Subscriber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscriber_active(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Active, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Subscriber_active(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscriber_created_at(ctx context.Context, field graphql.CollectedField, obj *model.Subscriber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscriber_created_at(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Subscriber_created_at(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscriber_updated_at(ctx context.Context, field graphql.CollectedField, obj *model.Subscriber) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscriber_updated_at(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Subscriber_updated_at(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscriber",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -32363,6 +33006,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "subscribeEmail":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_subscribeEmail(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unsubscribeEmail":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unsubscribeEmail(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createVerifyOTP":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createVerifyOTP(ctx, field)
@@ -33940,6 +34597,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "subscribers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_subscribers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "getDVAAccount":
 			field := field
 
@@ -34020,6 +34699,13 @@ func (ec *executionContext) _Review(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Review_buyer(ctx, field, obj)
 		case "seller_id":
 			out.Values[i] = ec._Review_seller_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._Review_message(ctx, field, obj)
+		case "username":
+			out.Values[i] = ec._Review_username(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -34729,6 +35415,65 @@ func (ec *executionContext) _SubCategory(ctx context.Context, sel ast.SelectionS
 			}
 		case "category":
 			out.Values[i] = ec._SubCategory_category(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var subscriberImplementors = []string{"Subscriber"}
+
+func (ec *executionContext) _Subscriber(ctx context.Context, sel ast.SelectionSet, obj *model.Subscriber) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriberImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Subscriber")
+		case "id":
+			out.Values[i] = ec._Subscriber_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._Subscriber_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "active":
+			out.Values[i] = ec._Subscriber_active(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "created_at":
+			out.Values[i] = ec._Subscriber_created_at(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updated_at":
+			out.Values[i] = ec._Subscriber_updated_at(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -36741,6 +37486,64 @@ func (ec *executionContext) marshalNSubCategory2ᚖgithubᚗcomᚋChrisentechᚋ
 		return graphql.Null
 	}
 	return ec._SubCategory(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSubscriber2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriber(ctx context.Context, sel ast.SelectionSet, v model.Subscriber) graphql.Marshaler {
+	return ec._Subscriber(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSubscriber2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Subscriber) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSubscriber2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriber(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSubscriber2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriber(ctx context.Context, sel ast.SelectionSet, v *model.Subscriber) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Subscriber(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
