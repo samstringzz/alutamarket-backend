@@ -1002,7 +1002,7 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 
 	// Handle visitor update if provided
 	if input.Visitor != nil {
-		storeInput.Visitors = *input.Visitor
+		storeInput.Visitors = strings.Join([]string{*input.Visitor}, ",")
 	}
 
 	// Update store
