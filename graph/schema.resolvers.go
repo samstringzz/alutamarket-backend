@@ -1002,9 +1002,15 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 
 	// Handle visitor update if provided
 	if input.Visitor != nil {
-		// Convert *string to []string if necessary
-		visitorSlice := []string{*input.Visitor}
-		storeInput.Visitors = strings.Join(visitorSlice, ",")
+		var visitors []string
+		for _, v := range input.Visitor {
+			if v != nil {
+				visitors = append(visitors, *v)
+			}
+		}
+
+		// Convert visitors to a single string (e.g., comma-separated)
+		storeInput.Visitors = strings.Join(visitors, ",")
 	}
 
 	// Update store

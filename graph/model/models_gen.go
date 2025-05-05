@@ -742,7 +742,7 @@ type UpdateStoreInput struct {
 	Email              *string               `json:"email,omitempty"`
 	Thumbnail          *string               `json:"thumbnail,omitempty"`
 	Background         *string               `json:"background,omitempty"`
-	Visitor            *string               `json:"visitor,omitempty"`
+	Visitor            []*string             `json:"visitor,omitempty"`
 	Account            *WithdrawAccountInput `json:"account,omitempty"`
 }
 
