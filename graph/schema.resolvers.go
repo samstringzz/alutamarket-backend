@@ -981,40 +981,68 @@ func (r *mutationResolver) CreateStore(ctx context.Context, input model.StoreInp
 func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateStoreInput) (*model.Store, error) {
 	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
 
-	// Convert *string ID to uint32
+	// Check if ID is provided
 	if input.ID == nil {
 		return nil, fmt.Errorf("store ID is required")
 	}
-	storeID, err := strconv.ParseUint(*input.ID, 10, 32)
+
+	// Convert string ID to uint32
+	id, err := strconv.ParseUint(*input.ID, 10, 32)
 	if err != nil {
 		return nil, fmt.Errorf("invalid store ID: %v", err)
 	}
 
-	// Create store update input
-	storeInput := &store.UpdateStore{
-		ID: uint32(storeID),
+	// Create store update struct
+	updateStore := &store.UpdateStore{
+		ID: uint32(id),
 	}
 
-	// Handle thumbnail update if provided
+	// Handle optional fields
+	if input.Name != nil {
+		updateStore.Name = *input.Name
+	}
+	if input.Link != nil {
+		updateStore.Link = *input.Link
+	}
+	if input.Description != nil {
+		updateStore.Description = *input.Description
+	}
+	if input.Address != nil {
+		updateStore.Address = *input.Address
+	}
+	if input.Phone != nil {
+		updateStore.Phone = *input.Phone
+	}
+	if input.Email != nil {
+		updateStore.Email = *input.Email
+	}
 	if input.Thumbnail != nil {
-		storeInput.Thumbnail = *input.Thumbnail
+		updateStore.Thumbnail = *input.Thumbnail
+	}
+	if input.Background != nil {
+		updateStore.Background = *input.Background
+	}
+	if input.HasPhysicalAddress != nil {
+		updateStore.HasPhysicalAddress = *input.HasPhysicalAddress
+	}
+	if input.Status != nil {
+		updateStore.Status = *input.Status
 	}
 
-	// Handle visitor update if provided
-	if input.Visitor != nil {
-		var visitors []string
+	// Handle visitor array - convert to single string
+	if input.Visitor != nil && len(input.Visitor) > 0 {
+		visitorStrings := make([]string, 0, len(input.Visitor))
 		for _, v := range input.Visitor {
 			if v != nil {
-				visitors = append(visitors, *v)
+				visitorStrings = append(visitorStrings, *v)
 			}
 		}
-
-		// Convert visitors to a single string (e.g., comma-separated)
-		storeInput.Visitors = strings.Join(visitors, ",")
+		// Join the visitors into a single string with a separator
+		updateStore.Visitors = strings.Join(visitorStrings, ",")
 	}
 
-	// Update store
-	updatedStore, err := storeHandler.UpdateStore(ctx, storeInput)
+	// Update the store
+	updatedStore, err := storeHandler.UpdateStore(ctx, updateStore)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update store: %v", err)
 	}
