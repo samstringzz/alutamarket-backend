@@ -137,8 +137,8 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 	if req.Description != "" {
 		existingStore.Description = req.Description
 	}
-	if req.Visitors != "" {
-		existingStore.Visitors = append(existingStore.Visitors, req.Visitors)
+	if len(req.Visitors) > 0 {
+		existingStore.Visitors = append(existingStore.Visitors, req.Visitors...)
 	}
 
 	if req.Account != nil {

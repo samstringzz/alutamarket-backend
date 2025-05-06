@@ -129,7 +129,7 @@ type UpdateStore struct {
 	Phone              string             `json:"phone" db:"phone"`
 	Email              string             `json:"email" db:"email"`
 	Background         string             `json:"background" db:"background"`
-	Visitors           string             `gorm:"serializer:json" json:"visitors" db:"visitors"`
+	Visitors           []string           `gorm:"serializer:json" json:"visitors" db:"visitors"`
 }
 
 type TrackedProduct struct {
