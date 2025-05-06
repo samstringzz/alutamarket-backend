@@ -1031,14 +1031,19 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 
 	// Handle visitor array - convert to single string
 	if input.Visitor != nil && len(input.Visitor) > 0 {
+		// Create a slice to store the dereferenced strings
 		visitorStrings := make([]string, 0, len(input.Visitor))
+
+		// Loop through each pointer in input.Visitor
 		for _, v := range input.Visitor {
 			if v != nil {
+				// Dereference the pointer to get the actual string value
 				visitorStrings = append(visitorStrings, *v)
 			}
 		}
-		// Join the visitors into a single string with a separator
-		updateStore.Visitors = strings.Join(visitorStrings, ",")
+
+		// Join the slice into a single comma-separated string
+		updateStore.Visitors = strings.Join(visitorStrings, ",") // Join into a string
 	}
 
 	// Update the store
