@@ -422,6 +422,7 @@ type Product struct {
 	AlwaysAvailable *bool    `json:"alwaysAvailable,omitempty"`
 	Type            *string  `json:"type,omitempty"`
 	File            *string  `json:"file,omitempty"`
+	UnitsSold       int      `json:"unitsSold"`
 }
 
 type ProductInput struct {

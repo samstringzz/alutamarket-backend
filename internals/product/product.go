@@ -172,7 +172,7 @@ type Product struct {
 	Category        string         `json:"category"`
 	Subcategory     string         `json:"subcategory"`
 	Type            string         `json:"type"`
-	UnitSold        int            `json:"unit_sold"`
+	UnitsSold       int            `json:"units_sold"`
 	Variant         []*VariantType `json:"variant" gorm:"type:jsonb;serializer:json"`
 	Views           Uint32Array    `json:"views" gorm:"type:integer[]"`
 	Reviews         []Review       `json:"reviews" gorm:"type:jsonb;serializer:json"`

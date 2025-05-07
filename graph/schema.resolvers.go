@@ -1715,6 +1715,7 @@ func (r *queryResolver) Product(ctx context.Context, id int) (*model.Product, er
 		Category:        p.Category,
 		Subcategory:     p.Subcategory,
 		AlwaysAvailable: &p.AlwaysAvailbale,
+		UnitsSold:       p.UnitsSold,
 	}, nil
 }
 
@@ -1927,6 +1928,7 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 				Thumbnail:   p.Thumbnail,
 				Store:       p.Store,
 				Category:    p.Category,
+				UnitsSold:   p.UnitsSold,
 				Subcategory: p.Subcategory,
 			})
 		}
