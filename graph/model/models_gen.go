@@ -70,6 +70,13 @@ type ChatInput struct {
 	Users []*MessageUserInput `json:"users,omitempty"`
 }
 
+type ContactFormInput struct {
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phoneNumber"`
+	Message     string `json:"message"`
+}
+
 type Customer struct {
 	ID        string `json:"id"`
 	FirstName string `json:"first_name"`

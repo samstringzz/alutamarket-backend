@@ -266,6 +266,7 @@ type ComplexityRoot struct {
 		RemoveAllCart           func(childComplexity int, cartID int) int
 		RemoveHandledProduct    func(childComplexity int, prd int, typeArg *string) int
 		SendMessage             func(childComplexity int, input model.MessageInput) int
+		SubmitContactForm       func(childComplexity int, input model.ContactFormInput) int
 		SubscribeEmail          func(childComplexity int, email string) int
 		ToggleStoreFollowStatus func(childComplexity int, user int, store int) int
 		UnsubscribeEmail        func(childComplexity int, email string) int
@@ -685,6 +686,7 @@ type MutationResolver interface {
 	ConfirmPassword(ctx context.Context, input *model.ConfirmPasswordInput) (bool, error)
 	CreateInvoice(ctx context.Context, input model.InvoiceInput) (*model.Invoice, error)
 	CreatePaystackAccount(ctx context.Context, email string, bvn string) (*model.PaystackAccount, error)
+	SubmitContactForm(ctx context.Context, input model.ContactFormInput) (string, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error)
@@ -1897,6 +1899,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.SendMessage(childComplexity, args["input"].(model.MessageInput)), true
+
+	case "Mutation.submitContactForm":
+		if e.complexity.Mutation.SubmitContactForm == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_submitContactForm_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SubmitContactForm(childComplexity, args["input"].(model.ContactFormInput)), true
 
 	case "Mutation.subscribeEmail":
 		if e.complexity.Mutation.SubscribeEmail == nil {
@@ -3986,6 +4000,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputChatInput,
+		ec.unmarshalInputContactFormInput,
 		ec.unmarshalInputDVAAccountInput,
 		ec.unmarshalInputInvoiceCustomerInput,
 		ec.unmarshalInputInvoiceDeliveryInput,
@@ -5003,6 +5018,34 @@ func (ec *executionContext) field_Mutation_sendMessage_argsInput(
 	}
 
 	var zeroVal model.MessageInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_submitContactForm_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_submitContactForm_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_submitContactForm_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (model.ContactFormInput, error) {
+	if _, ok := rawArgs["input"]; !ok {
+		var zeroVal model.ContactFormInput
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNContactFormInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐContactFormInput(ctx, tmp)
+	}
+
+	var zeroVal model.ContactFormInput
 	return zeroVal, nil
 }
 
@@ -14788,6 +14831,61 @@ func (ec *executionContext) fieldContext_Mutation_createPaystackAccount(ctx cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createPaystackAccount_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_submitContactForm(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_submitContactForm(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SubmitContactForm(rctx, fc.Args["input"].(model.ContactFormInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_submitContactForm(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_submitContactForm_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -29394,6 +29492,54 @@ func (ec *executionContext) unmarshalInputChatInput(ctx context.Context, obj any
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputContactFormInput(ctx context.Context, obj any) (model.ContactFormInput, error) {
+	var it model.ContactFormInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "email", "phoneNumber", "message"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
+		case "phoneNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phoneNumber"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PhoneNumber = data
+		case "message":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Message = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDVAAccountInput(ctx context.Context, obj any) (model.DVAAccountInput, error) {
 	var it model.DVAAccountInput
 	asMap := map[string]any{}
@@ -33356,6 +33502,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createPaystackAccount(ctx, field)
 			})
+		case "submitContactForm":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_submitContactForm(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -36789,6 +36942,11 @@ func (ec *executionContext) marshalNChat2ᚖgithubᚗcomᚋChrisentechᚋaluta�
 
 func (ec *executionContext) unmarshalNChatInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐChatInput(ctx context.Context, v any) (model.ChatInput, error) {
 	res, err := ec.unmarshalInputChatInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNContactFormInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐContactFormInput(ctx context.Context, v any) (model.ContactFormInput, error) {
+	res, err := ec.unmarshalInputContactFormInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

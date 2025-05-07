@@ -557,6 +557,17 @@ type Customer {
   email: String!
 }
 
+input ContactFormInput {
+  name: String!
+  email: String!
+  phoneNumber: String!
+  message: String!
+}
+
+extend type Mutation {
+  submitContactForm(input: ContactFormInput!): String!
+}
+
 type DVACustomer {
 	id: ID!
 	first_name: String!
