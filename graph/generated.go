@@ -370,6 +370,7 @@ type ComplexityRoot struct {
 		Subcategory     func(childComplexity int) int
 		Thumbnail       func(childComplexity int) int
 		Type            func(childComplexity int) int
+		UnitsSold       func(childComplexity int) int
 	}
 
 	ProductPaginationData struct {
@@ -2500,6 +2501,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Product.Type(childComplexity), true
+
+	case "Product.unitsSold":
+		if e.complexity.Product.UnitsSold == nil {
+			break
+		}
+
+		return e.complexity.Product.UnitsSold(childComplexity), true
 
 	case "ProductPaginationData.current_page":
 		if e.complexity.ProductPaginationData.CurrentPage == nil {
@@ -7616,6 +7624,8 @@ func (ec *executionContext) fieldContext_CartItem_product(_ context.Context, fie
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -13331,6 +13341,8 @@ func (ec *executionContext) fieldContext_Mutation_createProduct(ctx context.Cont
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -13420,6 +13432,8 @@ func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Cont
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -13561,6 +13575,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteProduct(ctx context.Cont
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -15462,6 +15478,8 @@ func (ec *executionContext) fieldContext_Order_products(_ context.Context, field
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -17649,6 +17667,50 @@ func (ec *executionContext) fieldContext_Product_file(_ context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _Product_unitsSold(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_unitsSold(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UnitsSold, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_unitsSold(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ProductPaginationData_data(ctx context.Context, field graphql.CollectedField, obj *model.ProductPaginationData) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ProductPaginationData_data(ctx, field)
 	if err != nil {
@@ -17720,6 +17782,8 @@ func (ec *executionContext) fieldContext_ProductPaginationData_data(_ context.Co
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -19328,6 +19392,8 @@ func (ec *executionContext) fieldContext_Query_Product(ctx context.Context, fiel
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -19490,6 +19556,8 @@ func (ec *executionContext) fieldContext_Query_RecommendedProducts(ctx context.C
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -19579,6 +19647,8 @@ func (ec *executionContext) fieldContext_Query_RecentlyAddedProducts(ctx context
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -19794,6 +19864,8 @@ func (ec *executionContext) fieldContext_Query_searchProducts(ctx context.Contex
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -22936,6 +23008,8 @@ func (ec *executionContext) fieldContext_Store_product(_ context.Context, field 
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -23842,6 +23916,8 @@ func (ec *executionContext) fieldContext_StoreOrder_product(_ context.Context, f
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -24771,6 +24847,8 @@ func (ec *executionContext) fieldContext_Subscription_productSearchResults(ctx c
 				return ec.fieldContext_Product_type(ctx, field)
 			case "file":
 				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -33883,6 +33961,11 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Product_type(ctx, field, obj)
 		case "file":
 			out.Values[i] = ec._Product_file(ctx, field, obj)
+		case "unitsSold":
+			out.Values[i] = ec._Product_unitsSold(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
