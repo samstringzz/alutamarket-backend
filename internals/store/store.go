@@ -292,6 +292,8 @@ type Repository interface {
 	GetFollowedStores(ctx context.Context, userID uint32) ([]*Store, error)
 	AddReview(ctx context.Context, review *Review) error
 	GetReviews(ctx context.Context, filter string, value interface{}) ([]*Review, error)
+	GetOrderByUUID(ctx context.Context, uuid string) (*Order, error)
+	UpdateProductUnitsSold(ctx context.Context, productID uint32) error
 }
 
 type Service interface {
@@ -318,4 +320,6 @@ type Service interface {
 	GetDVAAccount(ctx context.Context, email string) (*DVAAccount, error)
 	GetDVABalance(ctx context.Context, id string) (float64, error)
 	GetFollowedStores(ctx context.Context, userID uint32) ([]*Store, error)
+	GetOrderByUUID(ctx context.Context, uuid string) (*Order, error)
+	UpdateProductUnitsSold(ctx context.Context, productID uint32) error
 }

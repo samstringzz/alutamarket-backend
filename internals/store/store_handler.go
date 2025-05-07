@@ -177,3 +177,11 @@ func (h *Handler) GetDVABalance(ctx context.Context, id string) (float64, error)
 	}
 	return balance, nil
 }
+
+func (h *Handler) GetOrderByUUID(ctx context.Context, uuid string) (*Order, error) {
+	return h.Service.GetOrderByUUID(ctx, uuid)
+}
+
+func (h *Handler) UpdateProductUnitsSold(ctx context.Context, productID uint32) error {
+	return h.Service.UpdateProductUnitsSold(ctx, productID)
+}

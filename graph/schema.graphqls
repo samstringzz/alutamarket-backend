@@ -547,6 +547,7 @@ type Product {
     alwaysAvailable: Boolean
     type: String
     file: String
+	unitsSold: Int!
 }
 
 type Customer {
