@@ -590,7 +590,7 @@ type Store struct {
 	Phone              string             `json:"phone"`
 	Background         string             `json:"background"`
 	HasPhysicalAddress bool               `json:"has_physical_address"`
-	Visitors           []int           `json:"visitors"`
+	Visitors           []string           `json:"visitors"`
 	Accounts           []*WithdrawAccount `json:"accounts,omitempty"`
 }
 
@@ -750,7 +750,7 @@ type UpdateStoreInput struct {
 	Email              *string               `json:"email,omitempty"`
 	Thumbnail          *string               `json:"thumbnail,omitempty"`
 	Background         *string               `json:"background,omitempty"`
-	Visitor            []*int                `json:"visitor,omitempty"`
+	Visitor            []*string                `json:"visitor,omitempty"`
 	Account            *WithdrawAccountInput `json:"account,omitempty"`
 }
 

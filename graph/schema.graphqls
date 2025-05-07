@@ -274,7 +274,7 @@ type Store {
 	phone: String!
 	background: String!
 	has_physical_address: Boolean!
-	visitors: [Int!]!
+	visitors: [String!]!
 	accounts: [withdrawAccount]
 }
 type VerifyOTP {
@@ -389,7 +389,7 @@ input UpdateStoreInput {
 	email: String
 	thumbnail: String
 	background: String
-	visitor: [Int]
+	visitor: [String]
 	account: withdrawAccountInput
 }
 
