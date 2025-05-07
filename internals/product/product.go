@@ -77,7 +77,8 @@ type NewProduct struct {
 	Variant         []*VariantType `gorm:"serializer:json" json:"variant,omitempty" db:"variant"`
 	Store           string         `json:"store" db:"store"`
 	CategoryID      uint8          `json:"category" db:"category_id"`
-	SubCategoryName string         `json:"subcategory" db:"sub_category_name"`
+	SubCategoryID   uint8          `json:"subcategory" db:"subcategory_id"`
+	SubCategoryName string         `json:"subcategory_name" db:"sub_category_name"`
 	AlwaysAvailbale bool           `json:"always_available" db:"always_available"`
 }
 

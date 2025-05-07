@@ -748,39 +748,57 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.Produc
 
 // UpdateProduct is the resolver for the updateProduct field.
 func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.UpdateProductInput) (*model.Product, error) {
-	// Convert the input ID to uint32
-	productID := input.ID
+	productHandler := product.NewHandler(product.NewService(product.NewRepository()))
 
-	// Create NewProduct struct with the update data
-	updateData := &product.NewProduct{
-		ID:     productID,
-		Status: input.Status,
+	// Convert string ID to uint32
+	productID, err := strconv.ParseUint(input.ID, 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("invalid product ID: %v", err)
+	}
+
+	// Create update request
+	updateReq := &product.NewProduct{
+		ID:              strconv.FormatUint(uint64(productID), 10),
+		Name:            *input.Name,
+		Description:     *input.Description,
+		Price:           *input.Price,
+		Discount:        *input.Discount,
+		Thumbnail:       *input.Thumbnail,
+		Images:          input.Image,
+		Quantity:        *input.Quantity,
+		Store:           *input.Store,
+		Status:          input.Status,
+		CategoryID:      uint8(*input.Category),
+		SubCategoryID:   0,
+		File:            *input.File,
+		AlwaysAvailbale: *input.AlwaysAvailable,
 	}
 
 	// Call the product handler to update the product
-	updatedProduct, err := r.ProductHandler.UpdateProduct(ctx, updateData)
+	updatedProduct, err := productHandler.UpdateProduct(ctx, updateReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update product: %v", err)
 	}
 
-	// Convert the updated product to the GraphQL model type
+	// Convert to GraphQL model
 	return &model.Product{
 		ID:              int(updatedProduct.ID),
 		Name:            updatedProduct.Name,
-		Slug:            updatedProduct.Slug,
-		Description:     updatedProduct.Description,
 		Price:           updatedProduct.Price,
+		Description:     updatedProduct.Description,
 		Discount:        updatedProduct.Discount,
-		Status:          updatedProduct.Status,
-		Quantity:        updatedProduct.Quantity,
-		Thumbnail:       updatedProduct.Thumbnail,
 		Image:           updatedProduct.Images,
-		File:            &updatedProduct.File,
+		Slug:            updatedProduct.Slug,
+		Quantity:        updatedProduct.Quantity,
+		Status:          updatedProduct.Status,
+		Thumbnail:       updatedProduct.Thumbnail,
 		Store:           updatedProduct.Store,
 		Category:        updatedProduct.Category,
 		Subcategory:     updatedProduct.Subcategory,
-		AlwaysAvailable: &updatedProduct.AlwaysAvailbale,
+		File:            &updatedProduct.File,
 		Type:            &updatedProduct.Type,
+		AlwaysAvailable: &updatedProduct.AlwaysAvailbale,
+		UnitsSold:       updatedProduct.UnitsSold,
 	}, nil
 }
 
