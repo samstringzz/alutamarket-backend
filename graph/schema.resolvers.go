@@ -151,10 +151,28 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, input model.UpdateSt
 func (r *mutationResolver) UpdateOrderStatus(ctx context.Context, orderUUID string, status string) (*model.Order, error) {
 	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
 
+	// Get the order details first to access the products
+	order, err := storeHandler.GetOrderByUUID(ctx, orderUUID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get order details: %v", err)
+	}
+
 	// Update the order status
-	err := storeHandler.UpdateOrderStatus(ctx, orderUUID, status, "paid")
+	err = storeHandler.UpdateOrderStatus(ctx, orderUUID, status, "paid")
 	if err != nil {
 		return nil, fmt.Errorf("failed to update order status: %v", err)
+	}
+
+	// If the status is being updated to "completed" or "delivered", update the units sold
+	if status == "completed" || status == "delivered" {
+		// Update units sold for each product in the order
+		for _, product := range order.Products {
+			err = storeHandler.UpdateProductUnitsSold(ctx, product.ID)
+			if err != nil {
+				log.Printf("Error updating units sold for product %d: %v", product.ID, err)
+				continue
+			}
+		}
 	}
 
 	// Return a basic success response

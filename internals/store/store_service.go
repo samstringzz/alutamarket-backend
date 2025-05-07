@@ -256,3 +256,17 @@ func (s *service) GetFollowedStores(ctx context.Context, userID uint32) ([]*Stor
 	}
 	return stores, nil
 }
+
+func (s *service) GetOrderByUUID(ctx context.Context, uuid string) (*Order, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	return s.Repository.GetOrderByUUID(ctx, uuid)
+}
+
+func (s *service) UpdateProductUnitsSold(ctx context.Context, productID uint32) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	return s.Repository.UpdateProductUnitsSold(ctx, productID)
+}

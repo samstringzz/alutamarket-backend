@@ -748,3 +748,18 @@ func (r *repository) GetDVABalance(ctx context.Context, accountNumber string) (f
 
 	return balance, nil
 }
+
+func (r *repository) GetOrderByUUID(ctx context.Context, uuid string) (*Order, error) {
+	var order Order
+	result := r.db.Where("uuid = ?", uuid).Preload("Products").First(&order)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &order, nil
+}
+
+func (r *repository) UpdateProductUnitsSold(ctx context.Context, productID uint32) error {
+	result := r.db.Model(&Product{}).Where("id = ?", productID).
+		UpdateColumn("units_sold", gorm.Expr("units_sold + ?", 1))
+	return result.Error
+}
