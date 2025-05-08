@@ -2406,13 +2406,13 @@ func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
 			active = *u.Active
 		}
 
-		// Convert string to pointer for Dob field
+		// Convert string to pointer for Dob fields
 		var dobPtr *string
 		if u.Dob != "" {
 			dobPtr = &u.Dob
 		}
 
-		// Convert string to pointer for Gender field
+		// Convert string to pointer for Gender fields
 		var genderPtr *string
 		if u.Gender != "" {
 			genderPtr = &u.Gender
