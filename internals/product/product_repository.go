@@ -164,12 +164,55 @@ func (r *repository) UpdateProduct(ctx context.Context, req *NewProduct) (*Produ
 		return nil, err
 	}
 
-	// Update status if provided
+	// Update all provided fields
+	if req.Name != "" {
+		existingProduct.Name = req.Name
+		existingProduct.Slug = utils.GenerateSlug(req.Name)
+	}
+	if req.Description != "" {
+		existingProduct.Description = req.Description
+	}
+	if len(req.Images) > 0 {
+		existingProduct.Images = req.Images
+	}
+	if req.Thumbnail != "" {
+		existingProduct.Thumbnail = req.Thumbnail
+	}
+	if req.Price != 0 {
+		existingProduct.Price = req.Price
+	}
+	if req.Discount != 0 {
+		// Validate discount doesn't exceed price
+		if req.Discount > existingProduct.Price {
+			return nil, errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Product Discount cannot exceed Product Price")
+		}
+		existingProduct.Discount = req.Discount
+	}
 	if req.Status != nil {
 		existingProduct.Status = *req.Status
 	}
+	if req.Quantity != 0 {
+		existingProduct.Quantity = req.Quantity
+	}
+	if req.File != "" {
+		existingProduct.File = req.File
+	}
+	if req.Store != "" {
+		existingProduct.Store = req.Store
+	}
+	if req.CategoryID != 0 {
+		// Get category to validate and get its name
+		category, err := r.GetCategory(ctx, uint32(req.CategoryID))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get category: %v", err)
+		}
+		existingProduct.Category = category.Name
+	}
+	if req.SubCategoryName != "" {
+		existingProduct.Subcategory = req.SubCategoryName
+	}
 
-	// Update the existing record
+	// Update the existing record with all changes
 	if err := r.db.WithContext(ctx).Model(&existingProduct).Where("id = ?", idUint32).Updates(&existingProduct).Error; err != nil {
 		return nil, fmt.Errorf("failed to update product: %v", err)
 	}
