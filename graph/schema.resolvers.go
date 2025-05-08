@@ -1215,6 +1215,80 @@ func (r *mutationResolver) VerifySmartCard(ctx context.Context, input model.Smar
 	panic(fmt.Errorf("not implemented: VerifySmartCard - verifySmartCard"))
 }
 
+// GetUsers is the resolver for the getUsers field.
+func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
+	users, err := r.UserHandler.GetUsers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch users: %v", err)
+	}
+
+	var userResponses []*model.User
+	for _, u := range users {
+		active := true
+		if u.Active != nil {
+			active = *u.Active
+		}
+
+		// Convert string to pointer for Dob field
+		var dobPtr *string
+		if u.Dob != "" {
+			dobPtr = &u.Dob
+		}
+
+		// Convert string to pointer for Gender field
+		var genderPtr *string
+		if u.Gender != "" {
+			genderPtr = &u.Gender
+		}
+
+		// Convert string to pointer for Avatar field
+		var avatarPtr *string
+		if u.Avatar != "" {
+			avatarPtr = &u.Avatar
+		}
+
+		userResponse := &model.User{
+			ID:       strconv.FormatInt(int64(u.ID), 10),
+			UUID:     u.UUID,
+			Fullname: u.Fullname,
+			Email:    u.Email,
+			Phone:    u.Phone,
+			Campus:   u.Campus,
+			Usertype: u.Usertype,
+			Active:   active,
+			Avatar:   avatarPtr,
+			Dob:      dobPtr,
+			Gender:   genderPtr,
+			Online:   u.Online,
+		}
+
+		// If user is a seller, fetch their store
+		if u.Usertype == "seller" {
+			storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+			userStore, err := storeHandler.GetStore(ctx, u.ID)
+			if err == nil && userStore != nil {
+				userResponse.Stores = []*model.Store{{
+					ID:                 strconv.Itoa(int(userStore.ID)),
+					Name:               userStore.Name,
+					Link:               userStore.Link,
+					Description:        userStore.Description,
+					Address:            userStore.Address,
+					Phone:              userStore.Phone,
+					HasPhysicalAddress: userStore.HasPhysicalAddress,
+					Thumbnail:          userStore.Thumbnail,
+					Background:         userStore.Background,
+					Status:             userStore.Status,
+					User:               int(userStore.UserID),
+				}}
+			}
+		}
+
+		userResponses = append(userResponses, userResponse)
+	}
+
+	return userResponses, nil
+}
+
 // CreateChat is the resolver for the createChat field.
 func (r *mutationResolver) CreateChat(ctx context.Context, input model.ChatInput) (*model.Chat, error) {
 	// Recover from panics
