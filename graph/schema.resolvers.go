@@ -1454,9 +1454,9 @@ func (r *mutationResolver) SubmitContactForm(ctx context.Context, input model.Co
 }
 
 // Users is the resolver for the Users field.
-// Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) ([]*model.User, error) {
 	userHandler := user.NewHandler(user.NewService(user.NewRepository()))
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
 
 	// Get all users
 	users, err := userHandler.GetUsers(ctx)
@@ -1520,10 +1520,21 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) ([]*
 
 		// If user is a seller, fetch their store
 		if u.Usertype == "seller" {
-			storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+			// Get the store for this seller
 			userStore, err := storeHandler.GetStore(ctx, u.ID)
 			if err == nil && userStore != nil {
-				userResponse.Stores = []*model.Store{{
+				// Convert followers to GraphQL model
+				var followers []*model.StoreFollower
+				for _, f := range userStore.Followers {
+					followers = append(followers, &model.StoreFollower{
+						FollowerID:    int(f.FollowerID),
+						FollowerName:  f.FollowerName,
+						StoreID:       int(f.StoreID),
+						FollowerImage: f.FollowerImage,
+					})
+				}
+
+				storeModel := &model.Store{
 					ID:                 strconv.Itoa(int(userStore.ID)),
 					Name:               userStore.Name,
 					Link:               userStore.Link,
@@ -1536,7 +1547,9 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) ([]*
 					Status:             userStore.Status,
 					User:               int(userStore.UserID),
 					Wallet:             float64(userStore.Wallet),
-				}}
+					Followers:          followers,
+				}
+				userResponse.Stores = []*model.Store{storeModel}
 			}
 		}
 
