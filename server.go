@@ -64,7 +64,7 @@ func InitServer() error {
 
 	// Create a new CORS middleware with the desired options
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "https://www.alutamarket.com", "https://alutamarket.com", "https://alutamarket.vercel.app", "https://alutaa-market.vercel.app", "https://aluta-market-api-zns8.onrender.com/graphql"},
+		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "https://www.alutamarket.com", "https://alutamarket.com", "https://alutamarket.vercel.app", "https://alutaa-market.vercel.app", "https://aluta-market-api-zns8.onrender.com/graphql"},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
