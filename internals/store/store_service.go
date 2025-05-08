@@ -270,3 +270,14 @@ func (s *service) UpdateProductUnitsSold(ctx context.Context, productID uint32) 
 
 	return s.Repository.UpdateProductUnitsSold(ctx, productID)
 }
+
+func (s *service) GetAllStores(ctx context.Context, limit, offset int) ([]*Store, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	stores, err := s.Repository.GetAllStores(ctx, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all stores: %v", err)
+	}
+	return stores, nil
+}

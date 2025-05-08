@@ -294,6 +294,7 @@ type Repository interface {
 	GetReviews(ctx context.Context, filter string, value interface{}) ([]*Review, error)
 	GetOrderByUUID(ctx context.Context, uuid string) (*Order, error)
 	UpdateProductUnitsSold(ctx context.Context, productID uint32) error
+	GetAllStores(ctx context.Context, limit, offset int) ([]*Store, error)
 }
 
 type Service interface {
