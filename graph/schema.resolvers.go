@@ -2570,7 +2570,6 @@ func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
 	return userResponses, nil
 }
 
-// AllStores is the resolver for the allStores field.
 func (r *queryResolver) AllStores(ctx context.Context, limit *int, offset *int) (*model.StorePaginationData, error) {
 	// Convert nullable parameters to concrete values
 	limitValue := 100
@@ -2582,19 +2581,25 @@ func (r *queryResolver) AllStores(ctx context.Context, limit *int, offset *int) 
 		offsetValue = *offset
 	}
 
-	// Get all stores from repository
+	// Get all stores from repository with debug logging
 	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
-	stores, err := storeHandler.GetStores(ctx, 0, limitValue, offsetValue) // Pass 0 for userID to fetch all stores
+	stores, err := storeHandler.GetStores(ctx, 0, limitValue, offsetValue)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch stores: %v", err)
 	}
+
+	// Add debug logging
+	log.Printf("Retrieved %d stores from database", len(stores))
 
 	// Convert to GraphQL model
 	var modelStores []*model.Store
 	for _, s := range stores {
 		if s == nil {
+			log.Printf("Skipping nil store")
 			continue
 		}
+
+		log.Printf("Processing store: ID=%d, Name=%s", s.ID, s.Name)
 
 		// Convert followers
 		var followers []*model.StoreFollower
@@ -2641,7 +2646,7 @@ func (r *queryResolver) AllStores(ctx context.Context, limit *int, offset *int) 
 		}
 
 		modelStore := &model.Store{
-			ID:                 strconv.Itoa(int(s.ID)), // Convert ID to string
+			ID:                 strconv.Itoa(int(s.ID)),
 			Link:               s.Link,
 			Name:               s.Name,
 			User:               int(s.UserID),
@@ -2652,14 +2657,17 @@ func (r *queryResolver) AllStores(ctx context.Context, limit *int, offset *int) 
 			Address:            s.Address,
 			Status:             s.Status,
 			HasPhysicalAddress: s.HasPhysicalAddress,
-			Wallet:             float64(s.Wallet), // Convert Wallet to float64
+			Wallet:             float64(s.Wallet),
 			Visitors:           s.Visitors,
 			Followers:          followers,
 			Product:            products,
 			Accounts:           accounts,
 		}
 		modelStores = append(modelStores, modelStore)
+		log.Printf("Added store to response: ID=%s, Name=%s", modelStore.ID, modelStore.Name)
 	}
+
+	log.Printf("Returning %d stores in response", len(modelStores))
 
 	return &model.StorePaginationData{
 		Data:        modelStores,
