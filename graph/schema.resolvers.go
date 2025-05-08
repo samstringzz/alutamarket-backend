@@ -805,13 +805,13 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.Updat
 		updateReq.AlwaysAvailbale = *input.AlwaysAvailable
 	}
 
-	// Call the product handler to update the product
+	// Call the product handler to update the product and use the result
 	updatedProduct, err := productHandler.UpdateProduct(ctx, updateReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update product: %v", err)
 	}
 
-	// Convert to GraphQL model
+	// Return the updated product data
 	return &model.Product{
 		ID:              int(updatedProduct.ID),
 		Name:            updatedProduct.Name,
