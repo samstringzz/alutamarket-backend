@@ -20976,11 +20976,14 @@ func (ec *executionContext) _Query_allStores(ctx context.Context, field graphql.
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.StorePaginationData)
 	fc.Result = res
-	return ec.marshalOStorePaginationData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStorePaginationData(ctx, field.Selections, res)
+	return ec.marshalNStorePaginationData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStorePaginationData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_allStores(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -35108,13 +35111,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "allStores":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_allStores(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -39442,13 +39448,6 @@ func (ec *executionContext) marshalOStoreOrder2ᚖgithubᚗcomᚋChrisentechᚋa
 		return graphql.Null
 	}
 	return ec._StoreOrder(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOStorePaginationData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStorePaginationData(ctx context.Context, sel ast.SelectionSet, v *model.StorePaginationData) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._StorePaginationData(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOStoreProductInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreProductInput(ctx context.Context, v any) ([]*model.StoreProductInput, error) {

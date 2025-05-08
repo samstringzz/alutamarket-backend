@@ -867,7 +867,7 @@ type Query {
 	MyInvoices(storeID: Int): [Invoice]
 	MyDownloads(id: String!): [Downloads]
 	getUsers: [User!]!
-	allStores(limit: Int, offset: Int): StorePaginationData
+	allStores(limit: Int, offset: Int): StorePaginationData!
 }
 
 type EmailSubscriptionResponse {
