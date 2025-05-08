@@ -402,6 +402,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		AllStores             func(childComplexity int, limit *int, offset *int) int
 		Cart                  func(childComplexity int, user int) int
 		Categories            func(childComplexity int) int
 		Category              func(childComplexity int, id int) int
@@ -717,6 +718,7 @@ type QueryResolver interface {
 	MyInvoices(ctx context.Context, storeID *int) ([]*model.Invoice, error)
 	MyDownloads(ctx context.Context, id string) ([]*model.Downloads, error)
 	GetUsers(ctx context.Context) ([]*model.User, error)
+	AllStores(ctx context.Context, limit *int, offset *int) (*model.StorePaginationData, error)
 	Chats(ctx context.Context, userID string) ([]*model.Chat, error)
 	Messages(ctx context.Context, chatID string) ([]*model.Message, error)
 	Subscribers(ctx context.Context) ([]*model.Subscriber, error)
@@ -2671,6 +2673,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PurchasedOrder.UserID(childComplexity), true
+
+	case "Query.allStores":
+		if e.complexity.Query.AllStores == nil {
+			break
+		}
+
+		args, err := ec.field_Query_allStores_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AllStores(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
 
 	case "Query.Cart":
 		if e.complexity.Query.Cart == nil {
@@ -6349,6 +6363,57 @@ func (ec *executionContext) field_Query___type_argsName(
 	}
 
 	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_allStores_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_allStores_argsLimit(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg0
+	arg1, err := ec.field_Query_allStores_argsOffset(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Query_allStores_argsLimit(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	if _, ok := rawArgs["limit"]; !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_allStores_argsOffset(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	if _, ok := rawArgs["offset"]; !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+	if tmp, ok := rawArgs["offset"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
 	return zeroVal, nil
 }
 
@@ -20890,6 +20955,68 @@ func (ec *executionContext) fieldContext_Query_getUsers(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_allStores(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_allStores(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AllStores(rctx, fc.Args["limit"].(*int), fc.Args["offset"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.StorePaginationData)
+	fc.Result = res
+	return ec.marshalOStorePaginationData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStorePaginationData(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_allStores(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_StorePaginationData_data(ctx, field)
+			case "current_page":
+				return ec.fieldContext_StorePaginationData_current_page(ctx, field)
+			case "per_page":
+				return ec.fieldContext_StorePaginationData_per_page(ctx, field)
+			case "total":
+				return ec.fieldContext_StorePaginationData_total(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StorePaginationData", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_allStores_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_Chats(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_Chats(ctx, field)
 	if err != nil {
@@ -34978,6 +35105,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "allStores":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_allStores(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "Chats":
 			field := field
 
@@ -39296,6 +39442,13 @@ func (ec *executionContext) marshalOStoreOrder2ᚖgithubᚗcomᚋChrisentechᚋa
 		return graphql.Null
 	}
 	return ec._StoreOrder(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOStorePaginationData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStorePaginationData(ctx context.Context, sel ast.SelectionSet, v *model.StorePaginationData) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._StorePaginationData(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOStoreProductInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreProductInput(ctx context.Context, v any) ([]*model.StoreProductInput, error) {
