@@ -2093,10 +2093,7 @@ func (r *queryResolver) SearchProducts(ctx context.Context, query string) ([]*mo
 // Stores is the resolver for the Stores field.
 func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offset *int) (*model.StorePaginationData, error) {
 	// Convert nullable parameters to concrete values
-	var userID uint32
-	if user != nil {
-		userID = uint32(*user)
-	}
+	userID := uint32(*user)
 	limitValue := 100
 	if limit != nil {
 		limitValue = *limit
