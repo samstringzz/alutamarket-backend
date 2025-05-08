@@ -1454,8 +1454,96 @@ func (r *mutationResolver) SubmitContactForm(ctx context.Context, input model.Co
 }
 
 // Users is the resolver for the Users field.
-func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented: Users - Users"))
+// Users is the resolver for the users field.
+func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) ([]*model.User, error) {
+	userHandler := user.NewHandler(user.NewService(user.NewRepository()))
+
+	// Get all users
+	users, err := userHandler.GetUsers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch users: %v", err)
+	}
+
+	// Handle pagination if offset and limit are provided
+	start := 0
+	if offset != nil {
+		start = *offset
+	}
+
+	end := len(users)
+	if limit != nil {
+		if start+*limit < end {
+			end = start + *limit
+		}
+	}
+
+	// Apply pagination
+	if start < len(users) {
+		users = users[start:end]
+	} else {
+		users = []*user.User{}
+	}
+
+	var userResponses []*model.User
+	for _, u := range users {
+		active := true
+		if u.Active != nil {
+			active = *u.Active
+		}
+
+		// Convert string to pointer for optional fields
+		var dobPtr, genderPtr, avatarPtr *string
+		if u.Dob != "" {
+			dobPtr = &u.Dob
+		}
+		if u.Gender != "" {
+			genderPtr = &u.Gender
+		}
+		if u.Avatar != "" {
+			avatarPtr = &u.Avatar
+		}
+
+		userResponse := &model.User{
+			ID:       strconv.FormatInt(int64(u.ID), 10),
+			UUID:     u.UUID,
+			Fullname: u.Fullname,
+			Email:    u.Email,
+			Phone:    u.Phone,
+			Campus:   u.Campus,
+			Usertype: u.Usertype,
+			Active:   active,
+			Avatar:   avatarPtr,
+			Dob:      dobPtr,
+			Gender:   genderPtr,
+			Online:   u.Online,
+		}
+
+		// If user is a seller, fetch their store
+		if u.Usertype == "seller" {
+			storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+			userStore, err := storeHandler.GetStore(ctx, u.ID)
+			if err == nil && userStore != nil {
+				userResponse.Stores = []*model.Store{{
+					ID:                 strconv.Itoa(int(userStore.ID)),
+					Name:               userStore.Name,
+					Link:               userStore.Link,
+					Description:        userStore.Description,
+					Address:            userStore.Address,
+					Phone:              userStore.Phone,
+					HasPhysicalAddress: userStore.HasPhysicalAddress,
+					Thumbnail:          userStore.Thumbnail,
+					Background:         userStore.Background,
+					Status:             userStore.Status,
+					User:               int(userStore.UserID),
+					Wallet:             float64(userStore.Wallet),
+				}}
+			}
+		}
+
+		userResponses = append(userResponses, userResponse)
+	}
+
+	return userResponses, nil
 }
 
 // User is the resolver for the User field.
