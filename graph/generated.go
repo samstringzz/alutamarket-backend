@@ -409,6 +409,7 @@ type ComplexityRoot struct {
 		FollowedStores        func(childComplexity int, userID int) int
 		GetDVAAccount         func(childComplexity int, userID string) int
 		GetDVABalance         func(childComplexity int, accountNumber string) int
+		GetUsers              func(childComplexity int) int
 		HandledProducts       func(childComplexity int, user int, typeArg string) int
 		Messages              func(childComplexity int, chatID string) int
 		MyDownloads           func(childComplexity int, id string) int
@@ -715,6 +716,7 @@ type QueryResolver interface {
 	GetDVABalance(ctx context.Context, accountNumber string) (*string, error)
 	MyInvoices(ctx context.Context, storeID *int) ([]*model.Invoice, error)
 	MyDownloads(ctx context.Context, id string) ([]*model.Downloads, error)
+	GetUsers(ctx context.Context) ([]*model.User, error)
 	Chats(ctx context.Context, userID string) ([]*model.Chat, error)
 	Messages(ctx context.Context, chatID string) ([]*model.Message, error)
 	Subscribers(ctx context.Context) ([]*model.Subscriber, error)
@@ -2748,6 +2750,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetDVABalance(childComplexity, args["accountNumber"].(string)), true
+
+	case "Query.getUsers":
+		if e.complexity.Query.GetUsers == nil {
+			break
+		}
+
+		return e.complexity.Query.GetUsers(childComplexity), true
 
 	case "Query.HandledProducts":
 		if e.complexity.Query.HandledProducts == nil {
@@ -20795,6 +20804,92 @@ func (ec *executionContext) fieldContext_Query_MyDownloads(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_getUsers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getUsers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetUsers(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getUsers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "fullname":
+				return ec.fieldContext_User_fullname(ctx, field)
+			case "UUID":
+				return ec.fieldContext_User_UUID(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "campus":
+				return ec.fieldContext_User_campus(ctx, field)
+			case "avatar":
+				return ec.fieldContext_User_avatar(ctx, field)
+			case "dob":
+				return ec.fieldContext_User_dob(ctx, field)
+			case "gender":
+				return ec.fieldContext_User_gender(ctx, field)
+			case "password":
+				return ec.fieldContext_User_password(ctx, field)
+			case "phone":
+				return ec.fieldContext_User_phone(ctx, field)
+			case "usertype":
+				return ec.fieldContext_User_usertype(ctx, field)
+			case "stores":
+				return ec.fieldContext_User_stores(ctx, field)
+			case "active":
+				return ec.fieldContext_User_active(ctx, field)
+			case "access_token":
+				return ec.fieldContext_User_access_token(ctx, field)
+			case "refresh_token":
+				return ec.fieldContext_User_refresh_token(ctx, field)
+			case "twofa":
+				return ec.fieldContext_User_twofa(ctx, field)
+			case "online":
+				return ec.fieldContext_User_online(ctx, field)
+			case "code":
+				return ec.fieldContext_User_code(ctx, field)
+			case "paymentDetails":
+				return ec.fieldContext_User_paymentDetails(ctx, field)
+			case "codeexpiry":
+				return ec.fieldContext_User_codeexpiry(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_Chats(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_Chats(ctx, field)
 	if err != nil {
@@ -34852,6 +34947,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_MyDownloads(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getUsers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getUsers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
