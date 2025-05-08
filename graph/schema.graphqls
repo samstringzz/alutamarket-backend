@@ -866,6 +866,7 @@ type Query {
 	getDVABalance(accountNumber: String!): String
 	MyInvoices(storeID: Int): [Invoice]
 	MyDownloads(id: String!): [Downloads]
+	getUsers: [User!]!
 }
 
 type EmailSubscriptionResponse {
