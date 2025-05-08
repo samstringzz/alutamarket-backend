@@ -2193,6 +2193,105 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 	}, nil
 }
 
+// AllStores is the resolver for the allStores field.
+func (r *queryResolver) AllStores(ctx context.Context, limit *int, offset *int) (*model.StorePaginationData, error) {
+	// Convert nullable parameters to concrete values
+	limitValue := 100
+	if limit != nil {
+		limitValue = *limit
+	}
+	offsetValue := 0
+	if offset != nil {
+		offsetValue = *offset
+	}
+
+	// Get all stores from repository
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+	stores, err := storeHandler.GetStores(ctx, 0, limitValue, offsetValue) // Pass 0 for userID to fetch all stores
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch stores: %v", err)
+	}
+
+	// Convert to GraphQL model
+	var modelStores []*model.Store
+	for _, s := range stores {
+		if s == nil {
+			continue
+		}
+
+		// Convert followers
+		var followers []*model.StoreFollower
+		for _, f := range s.Followers {
+			followers = append(followers, &model.StoreFollower{
+				FollowerID:    int(f.FollowerID),
+				FollowerName:  f.FollowerName,
+				StoreID:       int(f.StoreID),
+				FollowerImage: f.FollowerImage,
+			})
+		}
+
+		// Convert products
+		var products []*model.Product
+		for _, p := range s.Products {
+			products = append(products, &model.Product{
+				ID:          int(p.ID),
+				Name:        p.Name,
+				Price:       p.Price,
+				Description: p.Description,
+				Discount:    p.Discount,
+				Image:       p.Images,
+				Slug:        p.Slug,
+				Quantity:    p.Quantity,
+				Status:      p.Status,
+				Thumbnail:   p.Thumbnail,
+				Store:       p.Store,
+				Category:    p.Category,
+				UnitsSold:   p.UnitsSold,
+				Subcategory: p.Subcategory,
+			})
+		}
+
+		// Convert withdrawal accounts
+		var accounts []*model.WithdrawAccount
+		for _, a := range s.Accounts {
+			accounts = append(accounts, &model.WithdrawAccount{
+				BankCode:      a.BankCode,
+				BankName:      a.BankName,
+				BankImage:     a.BankImage,
+				AccountNumber: a.AccountNumber,
+				AccountName:   a.AccountName,
+			})
+		}
+
+		modelStore := &model.Store{
+			ID:                 strconv.Itoa(int(s.ID)), // Convert ID to string
+			Link:               s.Link,
+			Name:               s.Name,
+			User:               int(s.UserID),
+			Description:        s.Description,
+			Thumbnail:          s.Thumbnail,
+			Phone:              s.Phone,
+			Background:         s.Background,
+			Address:            s.Address,
+			Status:             s.Status,
+			HasPhysicalAddress: s.HasPhysicalAddress,
+			Wallet:             float64(s.Wallet), // Convert Wallet to float64
+			Visitors:           s.Visitors,
+			Followers:          followers,
+			Product:            products,
+			Accounts:           accounts,
+		}
+		modelStores = append(modelStores, modelStore)
+	}
+
+	return &model.StorePaginationData{
+		Data:        modelStores,
+		CurrentPage: offsetValue + 1,
+		PerPage:     limitValue,
+		Total:       len(modelStores),
+	}, nil
+}
+
 // Store is the resolver for the Store field.
 func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error) {
 	panic(fmt.Errorf("not implemented: Store - Store"))
