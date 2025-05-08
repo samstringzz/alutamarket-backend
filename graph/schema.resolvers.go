@@ -1453,7 +1453,7 @@ func (r *mutationResolver) SubmitContactForm(ctx context.Context, input model.Co
 	return "Contact form submitted successfully", nil
 }
 
-// Users is the resolver for the Users field.
+// Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) ([]*model.User, error) {
 	userHandler := user.NewHandler(user.NewService(user.NewRepository()))
 	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
