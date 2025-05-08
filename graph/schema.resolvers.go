@@ -761,51 +761,49 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.Updat
 		return nil, fmt.Errorf("invalid product ID: %v", err)
 	}
 
-	// Create update request with only required fields
+	// Create update request with only the ID initially
 	updateReq := &product.NewProduct{
 		ID: strconv.FormatUint(uint64(productID), 10),
 	}
 
-	// Only set fields that are provided in the input
+	// Only set fields that are provided in the input, with proper dereferencing
 	if input.Name != nil {
 		updateReq.Name = *input.Name
-	}
-	if input.Description != nil {
-		updateReq.Description = *input.Description
 	}
 	if input.Price != nil {
 		updateReq.Price = *input.Price
 	}
+	if input.Description != nil {
+		updateReq.Description = *input.Description
+	}
 	if input.Discount != nil {
 		updateReq.Discount = *input.Discount
-	}
-	if input.Thumbnail != nil {
-		updateReq.Thumbnail = *input.Thumbnail
-	}
-	if input.Image != nil {
-		updateReq.Images = input.Image
 	}
 	if input.Quantity != nil {
 		updateReq.Quantity = *input.Quantity
 	}
-	if input.Store != nil {
-		updateReq.Store = *input.Store
-	}
 	if input.Status != nil {
-		status := *input.Status
-		updateReq.Status = &status
+		updateReq.Status = input.Status
+	}
+	if input.Thumbnail != nil {
+		updateReq.Thumbnail = *input.Thumbnail
 	}
 	if input.Category != nil {
 		updateReq.CategoryID = uint8(*input.Category)
 	}
-	if input.File != nil {
-		updateReq.File = *input.File
+	if input.Subcategory != nil {
+		// Convert string subcategory to uint8
+		subcategoryID, err := strconv.ParseUint(*input.Subcategory, 10, 8)
+		if err != nil {
+			return nil, fmt.Errorf("invalid subcategory ID: %v", err)
+		}
+		updateReq.SubCategoryID = uint8(subcategoryID)
 	}
 	if input.AlwaysAvailable != nil {
 		updateReq.AlwaysAvailbale = *input.AlwaysAvailable
 	}
 
-	// Call the product handler to update the product and use the result
+	// Call the product handler to update the product
 	updatedProduct, err := productHandler.UpdateProduct(ctx, updateReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update product: %v", err)
@@ -818,18 +816,12 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.Updat
 		Price:           updatedProduct.Price,
 		Description:     updatedProduct.Description,
 		Discount:        updatedProduct.Discount,
-		Image:           updatedProduct.Images,
-		Slug:            updatedProduct.Slug,
 		Quantity:        updatedProduct.Quantity,
 		Status:          updatedProduct.Status,
 		Thumbnail:       updatedProduct.Thumbnail,
-		Store:           updatedProduct.Store,
 		Category:        updatedProduct.Category,
 		Subcategory:     updatedProduct.Subcategory,
-		File:            &updatedProduct.File,
-		Type:            &updatedProduct.Type,
 		AlwaysAvailable: &updatedProduct.AlwaysAvailbale,
-		UnitsSold:       updatedProduct.UnitsSold,
 	}, nil
 }
 
