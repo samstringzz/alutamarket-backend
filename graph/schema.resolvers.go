@@ -761,22 +761,48 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.Updat
 		return nil, fmt.Errorf("invalid product ID: %v", err)
 	}
 
-	// Create update request
+	// Create update request with only required fields
 	updateReq := &product.NewProduct{
-		ID:              strconv.FormatUint(uint64(productID), 10),
-		Name:            *input.Name,
-		Description:     *input.Description,
-		Price:           *input.Price,
-		Discount:        *input.Discount,
-		Thumbnail:       *input.Thumbnail,
-		Images:          input.Image,
-		Quantity:        *input.Quantity,
-		Store:           *input.Store,
-		Status:          input.Status,
-		CategoryID:      uint8(*input.Category),
-		SubCategoryID:   0,
-		File:            *input.File,
-		AlwaysAvailbale: *input.AlwaysAvailable,
+		ID: strconv.FormatUint(uint64(productID), 10),
+	}
+
+	// Only set fields that are provided in the input
+	if input.Name != nil {
+		updateReq.Name = *input.Name
+	}
+	if input.Description != nil {
+		updateReq.Description = *input.Description
+	}
+	if input.Price != nil {
+		updateReq.Price = *input.Price
+	}
+	if input.Discount != nil {
+		updateReq.Discount = *input.Discount
+	}
+	if input.Thumbnail != nil {
+		updateReq.Thumbnail = *input.Thumbnail
+	}
+	if input.Image != nil {
+		updateReq.Images = input.Image
+	}
+	if input.Quantity != nil {
+		updateReq.Quantity = *input.Quantity
+	}
+	if input.Store != nil {
+		updateReq.Store = *input.Store
+	}
+	if input.Status != nil {
+		status := *input.Status
+		updateReq.Status = &status
+	}
+	if input.Category != nil {
+		updateReq.CategoryID = uint8(*input.Category)
+	}
+	if input.File != nil {
+		updateReq.File = *input.File
+	}
+	if input.AlwaysAvailable != nil {
+		updateReq.AlwaysAvailbale = *input.AlwaysAvailable
 	}
 
 	// Call the product handler to update the product
