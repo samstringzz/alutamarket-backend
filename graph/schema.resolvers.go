@@ -792,12 +792,7 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input *model.Updat
 		updateReq.CategoryID = uint8(*input.Category)
 	}
 	if input.Subcategory != nil {
-		// Convert string subcategory to uint8
-		subcategoryID, err := strconv.ParseUint(*input.Subcategory, 10, 8)
-		if err != nil {
-			return nil, fmt.Errorf("invalid subcategory ID: %v", err)
-		}
-		updateReq.SubCategoryID = uint8(subcategoryID)
+		updateReq.SubCategoryName = *input.Subcategory
 	}
 	if input.AlwaysAvailable != nil {
 		updateReq.AlwaysAvailbale = *input.AlwaysAvailable
