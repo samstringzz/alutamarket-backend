@@ -763,3 +763,14 @@ func (r *repository) UpdateProductUnitsSold(ctx context.Context, productID uint3
 		UpdateColumn("units_sold", gorm.Expr("units_sold + ?", 1))
 	return result.Error
 }
+
+func (r *repository) GetAllStores(ctx context.Context, limit, offset int) ([]*Store, error) {
+	var stores []*Store
+	if err := r.db.WithContext(ctx).
+		Limit(limit).
+		Offset(offset).
+		Find(&stores).Error; err != nil {
+		return nil, err
+	}
+	return stores, nil
+}
