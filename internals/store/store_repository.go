@@ -93,11 +93,46 @@ func (r *repository) GetStoreByName(ctx context.Context, name string) (*Store, e
 	return store, nil
 }
 
-func (r *repository) GetStores(ctx context.Context, user uint32, limit, offset int) ([]*Store, error) {
+func (r *repository) GetStores(ctx context.Context, userID uint32, limit int, offset int) ([]*Store, error) {
 	var stores []*Store
-	if err := r.db.Where("user_id=?", user).Limit(limit).Offset(offset).Find(&stores).Error; err != nil {
-		return nil, err
+
+	// Create the base query
+	query := r.db.Table("stores")
+
+	// Only add userID filter if it's not 0 (which means fetch all stores)
+	if userID != 0 {
+		query = query.Where("user_id = ?", userID)
 	}
+
+	// Add pagination if limit is greater than 0
+	if limit > 0 {
+		query = query.Limit(limit).Offset(offset)
+	}
+
+	// Execute the query
+	result := query.Find(&stores)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	// For each store, fetch related data
+	for _, store := range stores {
+		// Fetch followers
+		if err := r.db.Table("store_followers").Where("store_id = ?", store.ID).Find(&store.Followers).Error; err != nil {
+			log.Printf("Error fetching followers for store %d: %v", store.ID, err)
+		}
+
+		// Fetch products
+		if err := r.db.Table("products").Where("store = ?", store.ID).Find(&store.Products).Error; err != nil {
+			log.Printf("Error fetching products for store %d: %v", store.ID, err)
+		}
+
+		// Fetch accounts
+		if err := r.db.Table("withdraw_accounts").Where("store_id = ?", store.ID).Find(&store.Accounts).Error; err != nil {
+			log.Printf("Error fetching accounts for store %d: %v", store.ID, err)
+		}
+	}
+
 	return stores, nil
 }
 
