@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/database"
@@ -182,11 +183,12 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 			visitorMap[v] = true
 		}
 
-		// Convert map back to slice
+		// Convert map back to slice and sort for consistent array representation
 		existingStore.Visitors = make([]string, 0, len(visitorMap))
 		for v := range visitorMap {
 			existingStore.Visitors = append(existingStore.Visitors, v)
 		}
+		sort.Strings(existingStore.Visitors)
 	}
 
 	if req.HasPhysicalAddress != existingStore.HasPhysicalAddress {
