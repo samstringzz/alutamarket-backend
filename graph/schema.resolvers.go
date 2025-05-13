@@ -2570,6 +2570,7 @@ func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
 	return userResponses, nil
 }
 
+// AllStores is the resolver for the allStores field.
 func (r *queryResolver) AllStores(ctx context.Context, limit *int, offset *int) (*model.StorePaginationData, error) {
 	// Convert nullable parameters to concrete values
 	limitValue := 100
