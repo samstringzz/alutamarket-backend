@@ -127,8 +127,8 @@ func (r *repository) GetStores(ctx context.Context, userID uint32, limit int, of
 			log.Printf("Error fetching products for store %d: %v", store.ID, err)
 		}
 
-		// Fetch accounts
-		if err := r.db.Table("withdraw_accounts").Where("store_id = ?", store.ID).Find(&store.Accounts).Error; err != nil {
+		// Fetch accounts with correct column name
+		if err := r.db.Table("dva_accounts").Where("store = ?", store.ID).Find(&store.Accounts).Error; err != nil {
 			log.Printf("Error fetching accounts for store %d: %v", store.ID, err)
 		}
 	}
@@ -201,9 +201,27 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 
 	// Handle account update only if account information is provided
 	if req.Account != nil {
-		if err := r.UpdateStoreBankDetails(ctx, req.ID, req.Account); err != nil {
-			return nil, err
+		// Create a new account record directly in dva_accounts table
+		account := map[string]interface{}{
+			"store":          req.ID,
+			"account_number": req.Account.AccountNumber,
+			"account_name":   req.Account.AccountName,
+			"bank_name":      req.Account.BankName,
+			"bank_code":      req.Account.BankCode,
+			"bank_image":     req.Account.BankImage,
 		}
+
+		// Use dva_accounts table
+		if err := r.db.Table("dva_accounts").Create(account).Error; err != nil {
+			return nil, fmt.Errorf("failed to create account: %v", err)
+		}
+
+		// Fetch accounts using the correct column name
+		var accounts []*WithdrawalAccount
+		if err := r.db.Table("dva_accounts").Where("store = ?", req.ID).Find(&accounts).Error; err != nil {
+			log.Printf("Error fetching accounts for store %d: %v", req.ID, err)
+		}
+		existingStore.Accounts = accounts
 	}
 
 	// Update the Store in the repository
