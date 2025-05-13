@@ -1083,7 +1083,7 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 		updateStore.Status = *input.Status
 	}
 
-	// Handle visitor array - convert to single string
+	// Handle visitor array - convert to string array
 	if input.Visitor != nil && len(input.Visitor) > 0 {
 		visitorStrings := make([]string, 0, len(input.Visitor))
 		for _, v := range input.Visitor {

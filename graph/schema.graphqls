@@ -389,7 +389,7 @@ input UpdateStoreInput {
 	email: String
 	thumbnail: String
 	background: String
-	visitor: [String]
+	visitor: [ID]
 	account: withdrawAccountInput
 }
 
