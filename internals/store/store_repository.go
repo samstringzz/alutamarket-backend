@@ -201,29 +201,27 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 
 	// Handle account update only if account information is provided
 	if req.Account != nil {
-		// Create a new DVAAccount record
-		dvaAccount := &DVAAccount{
-			AccountNumber: req.Account.AccountNumber,
-			AccountName:   req.Account.AccountName,
-			Bank: DVABank{
-				Name: req.Account.BankName,
-				Slug: req.Account.BankCode,
-			},
+		// Create a new account record directly in dva_accounts table
+		account := map[string]interface{}{
+			"store_id":       req.ID,
+			"bank_name":      req.Account.BankName,
+			"bank_code":      req.Account.BankCode,
+			"account_number": req.Account.AccountNumber,
+			"account_name":   req.Account.AccountName,
+			"bank_image":     req.Account.BankImage,
 		}
 
 		// Save the account to the dva_accounts table
-		if err := r.db.Table("dva_accounts").Create(dvaAccount).Error; err != nil {
-			return nil, fmt.Errorf("failed to create DVA account: %v", err)
+		if err := r.db.Table("dva_accounts").Create(account).Error; err != nil {
+			return nil, fmt.Errorf("failed to create account: %v", err)
 		}
 
-		// Associate the account with the store
-		existingStore.Accounts = append(existingStore.Accounts, &WithdrawalAccount{
-			BankName:      req.Account.BankName,
-			BankCode:      req.Account.BankCode,
-			AccountNumber: req.Account.AccountNumber,
-			AccountName:   req.Account.AccountName,
-			BankImage:     req.Account.BankImage,
-		})
+		// Fetch the updated accounts
+		var accounts []*WithdrawalAccount
+		if err := r.db.Table("dva_accounts").Where("store_id = ?", req.ID).Find(&accounts).Error; err != nil {
+			return nil, fmt.Errorf("failed to fetch accounts: %v", err)
+		}
+		existingStore.Accounts = accounts
 	}
 
 	// Update the Store in the repository
@@ -231,13 +229,7 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 		return nil, err
 	}
 
-	// Make sure to return the store with accounts loaded
-	var updatedStore Store
-	if err := r.db.Preload("Accounts").First(&updatedStore, existingStore.ID).Error; err != nil {
-		return nil, fmt.Errorf("failed to reload store: %v", err)
-	}
-
-	return &updatedStore, nil
+	return existingStore, nil
 }
 
 func (r *repository) CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error) {
