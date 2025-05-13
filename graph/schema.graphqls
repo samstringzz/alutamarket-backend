@@ -393,6 +393,22 @@ input UpdateStoreInput {
 	account: withdrawAccountInput
 }
 
+type WithdrawalAccount {
+  bankName: String!
+  bankCode: String!
+  bankImage: String
+  accountNumber: String!
+  accountName: String!
+}
+
+input WithdrawalAccountInput {
+  bankName: String!
+  bankCode: String!
+  bankImage: String
+  accountNumber: String!
+  accountName: String!
+}
+
 input UpdateStoreOrderInput {
 	id: ID
 	status: String
