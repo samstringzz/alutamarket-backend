@@ -212,13 +212,13 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 		}
 
 		// Use withdraw_accounts table instead of dva_accounts
-		if err := r.db.Table("withdraw_accounts").Create(account).Error; err != nil {
+		if err := r.db.Table("dva_accounts").Create(account).Error; err != nil {
 			return nil, fmt.Errorf("failed to create account: %v", err)
 		}
 
 		// Fetch from withdraw_accounts table
 		var accounts []*WithdrawalAccount
-		if err := r.db.Table("withdraw_accounts").Where("store_id = ?", req.ID).Find(&accounts).Error; err != nil {
+		if err := r.db.Table("dva_accounts").Where("store_id = ?", req.ID).Find(&accounts).Error; err != nil {
 			return nil, fmt.Errorf("failed to fetch accounts: %v", err)
 		}
 		existingStore.Accounts = accounts
