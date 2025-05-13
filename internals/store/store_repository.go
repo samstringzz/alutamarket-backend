@@ -201,27 +201,9 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 
 	// Handle account update only if account information is provided
 	if req.Account != nil {
-		// Create a new account record directly in dva_accounts table
-		account := map[string]interface{}{
-			"store_id":       req.ID,
-			"bank_name":      req.Account.BankName,
-			"bank_code":      req.Account.BankCode,
-			"account_number": req.Account.AccountNumber,
-			"account_name":   req.Account.AccountName,
-			"bank_image":     req.Account.BankImage,
+		if err := r.UpdateStoreBankDetails(ctx, req.ID, req.Account); err != nil {
+			return nil, err
 		}
-
-		// Use withdraw_accounts table instead of dva_accounts
-		if err := r.db.Table("dva_accounts").Create(account).Error; err != nil {
-			return nil, fmt.Errorf("failed to create account: %v", err)
-		}
-
-		// Fetch from withdraw_accounts table
-		var accounts []*WithdrawalAccount
-		if err := r.db.Table("dva_accounts").Where("store_id = ?", req.ID).Find(&accounts).Error; err != nil {
-			return nil, fmt.Errorf("failed to fetch accounts: %v", err)
-		}
-		existingStore.Accounts = accounts
 	}
 
 	// Update the Store in the repository
@@ -229,7 +211,18 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 		return nil, err
 	}
 
-	return existingStore, nil
+	// Fetch the updated store with accounts
+	var updatedStore Store
+	if err := r.db.First(&updatedStore, existingStore.ID).Error; err != nil {
+		return nil, fmt.Errorf("failed to reload store: %v", err)
+	}
+
+	// Manually fetch accounts
+	if err := r.db.Table("dva_accounts").Where("store_id = ?", updatedStore.ID).Find(&updatedStore.Accounts).Error; err != nil {
+		log.Printf("Error fetching accounts for store %d: %v", updatedStore.ID, err)
+	}
+
+	return &updatedStore, nil
 }
 
 func (r *repository) CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error) {
@@ -829,4 +822,35 @@ func (r *repository) GetAllStores(ctx context.Context, limit, offset int) ([]*St
 		return nil, err
 	}
 	return stores, nil
+}
+
+// UpdateStoreBankDetails updates or creates bank details for a store
+func (r *repository) UpdateStoreBankDetails(ctx context.Context, storeID uint32, account *WithdrawalAccount) error {
+	// Create a new account record directly in dva_accounts table
+	bankDetails := map[string]interface{}{
+		"store_id":       storeID,
+		"account_number": account.AccountNumber,
+		"account_name":   account.AccountName,
+		"bank_name":      account.BankName,
+		"bank_code":      account.BankCode,
+		"bank_image":     account.BankImage,
+	}
+
+	// Try to update existing record first
+	result := r.db.Table("dva_accounts").
+		Where("store_id = ?", storeID).
+		Updates(bankDetails)
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to update bank details: %v", result.Error)
+	}
+
+	// If no record was updated, create a new one
+	if result.RowsAffected == 0 {
+		if err := r.db.Table("dva_accounts").Create(bankDetails).Error; err != nil {
+			return fmt.Errorf("failed to create bank details: %v", err)
+		}
+	}
+
+	return nil
 }
