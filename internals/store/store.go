@@ -103,7 +103,7 @@ type Store struct {
 	Phone              string               `json:"phone" db:"phone"`
 	Email              string               `json:"email" db:"email"`
 	Background         string               `json:"background" db:"background"`
-	Visitors           []string             `gorm:"serializer:json" json:"visitors" db:"visitors"`
+	Visitors           pq.StringArray       `gorm:"type:text[]" json:"visitors"`
 	Accounts           []*WithdrawalAccount `gorm:"serializer:json" json:"accounts" db:"accounts"`
 	Orders             []*StoreOrder        `gorm:"serializer:json"`
 }
