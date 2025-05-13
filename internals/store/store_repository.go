@@ -173,7 +173,20 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 		existingStore.Description = req.Description
 	}
 	if len(req.Visitors) > 0 {
-		existingStore.Visitors = append(existingStore.Visitors, req.Visitors...)
+		// Convert visitor IDs to strings and ensure no duplicates
+		visitorMap := make(map[string]bool)
+		for _, v := range existingStore.Visitors {
+			visitorMap[v] = true
+		}
+		for _, v := range req.Visitors {
+			visitorMap[v] = true
+		}
+
+		// Convert map back to slice
+		existingStore.Visitors = make([]string, 0, len(visitorMap))
+		for v := range visitorMap {
+			existingStore.Visitors = append(existingStore.Visitors, v)
+		}
 	}
 
 	if req.HasPhysicalAddress != existingStore.HasPhysicalAddress {
