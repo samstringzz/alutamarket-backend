@@ -201,22 +201,29 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 
 	// Handle account update only if account information is provided
 	if req.Account != nil {
-		// Create a new WithdrawalAccount record
-		account := &WithdrawalAccount{
+		// Create a new DVAAccount record
+		dvaAccount := &DVAAccount{
+			AccountNumber: req.Account.AccountNumber,
+			AccountName:   req.Account.AccountName,
+			Bank: DVABank{
+				Name: req.Account.BankName,
+				Slug: req.Account.BankCode,
+			},
+		}
+
+		// Save the account to the dva_accounts table
+		if err := r.db.Table("dva_accounts").Create(dvaAccount).Error; err != nil {
+			return nil, fmt.Errorf("failed to create DVA account: %v", err)
+		}
+
+		// Associate the account with the store
+		existingStore.Accounts = append(existingStore.Accounts, &WithdrawalAccount{
 			BankName:      req.Account.BankName,
 			BankCode:      req.Account.BankCode,
 			AccountNumber: req.Account.AccountNumber,
 			AccountName:   req.Account.AccountName,
 			BankImage:     req.Account.BankImage,
-		}
-
-		// Save the account to the withdraw_accounts table
-		if err := r.db.Create(account).Error; err != nil {
-			return nil, fmt.Errorf("failed to create withdraw account: %v", err)
-		}
-
-		// Append the new account to the existing store's accounts
-		existingStore.Accounts = append(existingStore.Accounts, account)
+		})
 	}
 
 	// Update the Store in the repository
@@ -224,7 +231,7 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 		return nil, err
 	}
 
-	// Reload the store with all relationships
+	// Make sure to return the store with accounts loaded
 	var updatedStore Store
 	if err := r.db.Preload("Accounts").First(&updatedStore, existingStore.ID).Error; err != nil {
 		return nil, fmt.Errorf("failed to reload store: %v", err)
