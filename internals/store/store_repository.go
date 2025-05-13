@@ -202,13 +202,38 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 	}
 	existingStore.Wallet += req.Wallet
 
+	// Create a new WithdrawAccount record
+	account := &WithdrawalAccount{
+		BankName:      req.Account.BankName,
+		BankCode:      req.Account.BankCode,
+		AccountNumber: req.Account.AccountNumber,
+		AccountName:   req.Account.AccountName,
+		BankImage:     req.Account.BankImage,
+	}
+
+	// Save the account to the withdraw_accounts table
+	if err := r.db.Create(account).Error; err != nil {
+		return nil, fmt.Errorf("failed to create withdraw account: %v", err)
+	}
+
+	// Reload the store with accounts
+	if err := r.db.Preload("Accounts").First(existingStore, req.ID).Error; err != nil {
+		return nil, fmt.Errorf("failed to reload store with accounts: %v", err)
+	}
+
 	// Update the Store in the repository
 	err = r.db.Save(existingStore).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return existingStore, nil
+	// Make sure to return the store with accounts loaded
+	var updatedStore Store
+	if err := r.db.Preload("Accounts").First(&updatedStore, existingStore.ID).Error; err != nil {
+		return nil, err
+	}
+
+	return &updatedStore, nil
 }
 
 func (r *repository) CreateOrder(ctx context.Context, req *StoreOrder) (*StoreOrder, error) {
