@@ -176,9 +176,6 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 		existingStore.Visitors = append(existingStore.Visitors, req.Visitors...)
 	}
 
-	if req.Account != nil {
-		existingStore.Accounts = append(existingStore.Accounts, req.Account)
-	}
 	if req.HasPhysicalAddress != existingStore.HasPhysicalAddress {
 		existingStore.HasPhysicalAddress = req.HasPhysicalAddress
 	}
@@ -202,35 +199,35 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 	}
 	existingStore.Wallet += req.Wallet
 
-	// Create a new WithdrawAccount record
-	account := &WithdrawalAccount{
-		BankName:      req.Account.BankName,
-		BankCode:      req.Account.BankCode,
-		AccountNumber: req.Account.AccountNumber,
-		AccountName:   req.Account.AccountName,
-		BankImage:     req.Account.BankImage,
-	}
+	// Handle account update only if account information is provided
+	if req.Account != nil {
+		// Create a new WithdrawalAccount record
+		account := &WithdrawalAccount{
+			BankName:      req.Account.BankName,
+			BankCode:      req.Account.BankCode,
+			AccountNumber: req.Account.AccountNumber,
+			AccountName:   req.Account.AccountName,
+			BankImage:     req.Account.BankImage,
+		}
 
-	// Save the account to the withdraw_accounts table
-	if err := r.db.Create(account).Error; err != nil {
-		return nil, fmt.Errorf("failed to create withdraw account: %v", err)
-	}
+		// Save the account to the withdraw_accounts table
+		if err := r.db.Create(account).Error; err != nil {
+			return nil, fmt.Errorf("failed to create withdraw account: %v", err)
+		}
 
-	// Reload the store with accounts
-	if err := r.db.Preload("Accounts").First(existingStore, req.ID).Error; err != nil {
-		return nil, fmt.Errorf("failed to reload store with accounts: %v", err)
+		// Append the new account to the existing store's accounts
+		existingStore.Accounts = append(existingStore.Accounts, account)
 	}
 
 	// Update the Store in the repository
-	err = r.db.Save(existingStore).Error
-	if err != nil {
+	if err := r.db.Save(existingStore).Error; err != nil {
 		return nil, err
 	}
 
-	// Make sure to return the store with accounts loaded
+	// Reload the store with all relationships
 	var updatedStore Store
 	if err := r.db.Preload("Accounts").First(&updatedStore, existingStore.ID).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to reload store: %v", err)
 	}
 
 	return &updatedStore, nil
