@@ -1127,6 +1127,7 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 			Thumbnail:   p.Thumbnail,
 			Store:       p.Store,
 			Category:    p.Category,
+			UnitsSold:   p.UnitsSold,
 			Subcategory: p.Subcategory,
 		})
 	}
