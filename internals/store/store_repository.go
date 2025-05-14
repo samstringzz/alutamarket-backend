@@ -128,7 +128,9 @@ func (r *repository) GetStores(ctx context.Context, userID uint32, limit int, of
 
 		// Fetch products with error handling
 		var products []Product
-		if err := r.db.Table("products").Where("store = ?", store.ID).Find(&products).Error; err != nil {
+		if err := r.db.Table("products").
+			Where("store = ? AND deleted_at IS NULL", store.Name). // Add store name condition and check for soft deletes
+			Find(&products).Error; err != nil {
 			log.Printf("Warning: Error fetching products for store %d: %v", store.ID, err)
 			store.Products = []Product{} // Initialize empty array instead of nil
 		} else {
@@ -153,74 +155,89 @@ func (r *repository) GetStores(ctx context.Context, userID uint32, limit int, of
 			Find(&orders).Error; err != nil {
 			log.Printf("Warning: Error fetching orders for store %d: %v", store.ID, err)
 			store.Orders = []*StoreOrder{} // Initialize empty array instead of nil
-			continue
-		}
-
-		// Convert orders to store orders with proper error handling
-		var storeOrders []*StoreOrder
-		for _, order := range orders {
-			// Skip invalid orders
-			if order == nil {
-				continue
-			}
-
-			var details DeliveryDetails
-			var customer Customer
-			var storeProducts []*StoreProduct
-
-			// Safely unmarshal delivery details
-			if order.DeliveryDetailsJSON != "" {
-				if err := json.Unmarshal([]byte(order.DeliveryDetailsJSON), &details); err != nil {
-					log.Printf("Warning: Error unmarshaling delivery details for order %s: %v", order.UUID, err)
+		} else {
+			// Convert orders to store orders with proper error handling
+			var storeOrders []*StoreOrder
+			for _, order := range orders {
+				// Skip invalid orders
+				if order == nil {
 					continue
 				}
-				order.DeliveryDetails = &details
-			}
 
-			// Safely unmarshal customer details
-			if order.CustomerJSON != "" {
-				if err := json.Unmarshal([]byte(order.CustomerJSON), &customer); err != nil {
-					log.Printf("Warning: Error unmarshaling customer for order %s: %v", order.UUID, err)
+				var details DeliveryDetails
+				var customer Customer
+				var storeProducts []*StoreProduct
+
+				// Safely unmarshal delivery details
+				if order.DeliveryDetailsJSON != "" {
+					if err := json.Unmarshal([]byte(order.DeliveryDetailsJSON), &details); err != nil {
+						log.Printf("Warning: Error unmarshaling delivery details for order %s: %v", order.UUID, err)
+						continue
+					}
+					order.DeliveryDetails = &details
+				}
+
+				// Safely unmarshal customer details
+				if order.CustomerJSON != "" {
+					if err := json.Unmarshal([]byte(order.CustomerJSON), &customer); err != nil {
+						log.Printf("Warning: Error unmarshaling customer for order %s: %v", order.UUID, err)
+						continue
+					}
+					order.Customer = &customer
+				}
+
+				// Skip if required data is missing
+				if order.Customer == nil {
+					log.Printf("Warning: Missing customer data for order %s", order.UUID)
 					continue
 				}
-				order.Customer = &customer
-			}
 
-			// Skip if required data is missing
-			if order.Customer == nil {
-				log.Printf("Warning: Missing customer data for order %s", order.UUID)
-				continue
-			}
+				// Fetch product details for each order
+				for _, p := range order.Products {
+					if p.ID == 0 {
+						continue // Skip invalid products
+					}
 
-			// Convert products safely
-			for _, p := range order.Products {
-				if p.ID == 0 {
-					continue // Skip invalid products
+					// Get full product details from products table
+					var fullProduct Product
+					if err := r.db.Table("products").Where("id = ?", p.ID).First(&fullProduct).Error; err != nil {
+						log.Printf("Warning: Error fetching product details for ID %d: %v", p.ID, err)
+						continue
+					}
+
+					status := "inactive"
+					if fullProduct.Status {
+						status = "active"
+					}
+
+					storeProducts = append(storeProducts, &StoreProduct{
+						ID:        fullProduct.ID,
+						Name:      fullProduct.Name,
+						Thumbnail: fullProduct.Thumbnail,
+						Price:     fullProduct.Price,
+						Quantity:  fullProduct.Quantity,
+						Status:    status,
+					})
 				}
-				storeProducts = append(storeProducts, &StoreProduct{
-					ID:        p.ID,
-					Name:      p.Name,
-					Thumbnail: p.Thumbnail,
-					Price:     p.Price,
-					Quantity:  p.Quantity,
-					Status:    p.Status,
-				})
+
+				storeOrder := &StoreOrder{
+					StoreID:   strconv.FormatUint(uint64(store.ID), 10),
+					Products:  storeProducts,
+					Status:    order.Status,
+					TransRef:  order.TransRef,
+					UUID:      order.UUID,
+					Customer:  *order.Customer,
+					CreatedAt: order.CreatedAt,
+					UpdatedAt: order.UpdatedAt,
+				}
+				storeOrders = append(storeOrders, storeOrder)
 			}
 
-			storeOrder := &StoreOrder{
-				StoreID:   strconv.FormatUint(uint64(store.ID), 10),
-				Products:  storeProducts,
-				Status:    order.Status,
-				TransRef:  order.TransRef,
-				UUID:      order.UUID,
-				Customer:  *order.Customer,
-				CreatedAt: order.CreatedAt,
-				UpdatedAt: order.UpdatedAt,
-			}
-			storeOrders = append(storeOrders, storeOrder)
+			store.Orders = storeOrders
 		}
 
-		store.Orders = storeOrders
+		// Log the data being returned for debugging
+		log.Printf("Store %s: %d products, %d orders", store.Name, len(store.Products), len(store.Orders))
 	}
 
 	return stores, nil
