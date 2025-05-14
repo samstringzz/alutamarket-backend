@@ -193,31 +193,28 @@ func (r *repository) GetStores(ctx context.Context, userID uint32, limit int, of
 				}
 
 				// Fetch product details for each order
-				for _, p := range order.Products {
-					if p.ID == 0 {
-						continue // Skip invalid products
-					}
+				if len(order.Products) > 0 {
+					for _, p := range order.Products {
+						if p.ID == 0 {
+							continue // Skip invalid products
+						}
 
-					// Get full product details from products table
-					var fullProduct Product
-					if err := r.db.Table("products").Where("id = ?", p.ID).First(&fullProduct).Error; err != nil {
-						log.Printf("Warning: Error fetching product details for ID %d: %v", p.ID, err)
-						continue
-					}
+						// Get full product details from products table
+						var fullProduct Product
+						if err := r.db.Table("products").Where("id = ?", p.ID).First(&fullProduct).Error; err != nil {
+							log.Printf("Warning: Error fetching product details for ID %d: %v", p.ID, err)
+							continue
+						}
 
-					status := "inactive"
-					if fullProduct.Status {
-						status = "active"
+						storeProducts = append(storeProducts, &StoreProduct{
+							ID:        fullProduct.ID,
+							Name:      fullProduct.Name,
+							Thumbnail: fullProduct.Thumbnail,
+							Price:     fullProduct.Price,
+							Quantity:  p.Quantity, // Use quantity from order
+							Status:    "active",   // Default to active since it was ordered
+						})
 					}
-
-					storeProducts = append(storeProducts, &StoreProduct{
-						ID:        fullProduct.ID,
-						Name:      fullProduct.Name,
-						Thumbnail: fullProduct.Thumbnail,
-						Price:     fullProduct.Price,
-						Quantity:  fullProduct.Quantity,
-						Status:    status,
-					})
 				}
 
 				storeOrder := &StoreOrder{
@@ -231,9 +228,17 @@ func (r *repository) GetStores(ctx context.Context, userID uint32, limit int, of
 					UpdatedAt: order.UpdatedAt,
 				}
 				storeOrders = append(storeOrders, storeOrder)
+
+				// Debug log for each order
+				log.Printf("Processing order %s with %d products for store %s",
+					order.UUID,
+					len(storeProducts),
+					store.Name)
 			}
 
 			store.Orders = storeOrders
+			// Debug log for store orders
+			log.Printf("Store %s: Added %d orders", store.Name, len(storeOrders))
 		}
 
 		// Log the data being returned for debugging
