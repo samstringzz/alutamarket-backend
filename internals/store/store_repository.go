@@ -120,78 +120,107 @@ func (r *repository) GetStores(ctx context.Context, userID uint32, limit int, of
 
 	// For each store, fetch related data
 	for _, store := range stores {
-		// Fetch followers
+		// Fetch followers with error handling
 		if err := r.db.Table("store_followers").Where("store_id = ?", store.ID).Find(&store.Followers).Error; err != nil {
-			log.Printf("Error fetching followers for store %d: %v", store.ID, err)
+			log.Printf("Warning: Error fetching followers for store %d: %v", store.ID, err)
+			store.Followers = []*Follower{} // Initialize empty array instead of nil
 		}
 
-		// Fetch products
-		if err := r.db.Table("products").Where("store = ?", store.ID).Find(&store.Products).Error; err != nil {
-			log.Printf("Error fetching products for store %d: %v", store.ID, err)
+		// Fetch products with error handling
+		var products []Product
+		if err := r.db.Table("products").Where("store = ?", store.ID).Find(&products).Error; err != nil {
+			log.Printf("Warning: Error fetching products for store %d: %v", store.ID, err)
+			store.Products = []Product{} // Initialize empty array instead of nil
+		} else {
+			store.Products = products
 		}
 
-		// Fetch accounts with correct column name
-		if err := r.db.Table("dva_accounts").Where("store = ?", store.ID).Find(&store.Accounts).Error; err != nil {
-			log.Printf("Error fetching accounts for store %d: %v", store.ID, err)
+		// Fetch accounts with error handling
+		if err := r.db.Table("dva_accounts").Where("store_id = ?", store.ID).Find(&store.Accounts).Error; err != nil {
+			log.Printf("Warning: Error fetching accounts for store %d: %v", store.ID, err)
+			store.Accounts = []*WithdrawalAccount{} // Initialize empty array instead of nil
 		}
 
-		// Fetch orders for this store
+		// Initialize empty arrays if they're nil
+		if store.Visitors == nil {
+			store.Visitors = []string{}
+		}
+
+		// Fetch orders for this store with proper error handling
 		var orders []*Order
 		if err := r.db.Table("orders").
 			Where("? = ANY(stores_id)", store.Name).
 			Find(&orders).Error; err != nil {
-			log.Printf("Error fetching orders for store %d: %v", store.ID, err)
-		} else {
-			// Convert orders to store orders
-			var storeOrders []*StoreOrder
-			for _, order := range orders {
-				// Unmarshal delivery details
-				if order.DeliveryDetailsJSON != "" {
-					var details DeliveryDetails
-					if err := json.Unmarshal([]byte(order.DeliveryDetailsJSON), &details); err != nil {
-						log.Printf("Error unmarshaling delivery details: %v", err)
-						continue
-					}
-					order.DeliveryDetails = &details
-				}
-
-				// Unmarshal customer details
-				if order.CustomerJSON != "" {
-					var customer Customer
-					if err := json.Unmarshal([]byte(order.CustomerJSON), &customer); err != nil {
-						log.Printf("Error unmarshaling customer: %v", err)
-						continue
-					}
-					order.Customer = &customer
-				}
-
-				// Convert products to store products
-				var storeProducts []*StoreProduct
-				for _, p := range order.Products {
-					storeProducts = append(storeProducts, &StoreProduct{
-						ID:        p.ID,
-						Name:      p.Name,
-						Thumbnail: p.Thumbnail,
-						Price:     p.Price,
-						Quantity:  p.Quantity,
-						Status:    p.Status,
-					})
-				}
-
-				storeOrder := &StoreOrder{
-					StoreID:   strconv.FormatUint(uint64(store.ID), 10),
-					Products:  storeProducts,
-					Status:    order.Status,
-					TransRef:  order.TransRef,
-					UUID:      order.UUID,
-					Customer:  *order.Customer,
-					CreatedAt: order.CreatedAt,
-					UpdatedAt: order.UpdatedAt,
-				}
-				storeOrders = append(storeOrders, storeOrder)
-			}
-			store.Orders = storeOrders
+			log.Printf("Warning: Error fetching orders for store %d: %v", store.ID, err)
+			store.Orders = []*StoreOrder{} // Initialize empty array instead of nil
+			continue
 		}
+
+		// Convert orders to store orders with proper error handling
+		var storeOrders []*StoreOrder
+		for _, order := range orders {
+			// Skip invalid orders
+			if order == nil {
+				continue
+			}
+
+			var details DeliveryDetails
+			var customer Customer
+			var storeProducts []*StoreProduct
+
+			// Safely unmarshal delivery details
+			if order.DeliveryDetailsJSON != "" {
+				if err := json.Unmarshal([]byte(order.DeliveryDetailsJSON), &details); err != nil {
+					log.Printf("Warning: Error unmarshaling delivery details for order %s: %v", order.UUID, err)
+					continue
+				}
+				order.DeliveryDetails = &details
+			}
+
+			// Safely unmarshal customer details
+			if order.CustomerJSON != "" {
+				if err := json.Unmarshal([]byte(order.CustomerJSON), &customer); err != nil {
+					log.Printf("Warning: Error unmarshaling customer for order %s: %v", order.UUID, err)
+					continue
+				}
+				order.Customer = &customer
+			}
+
+			// Skip if required data is missing
+			if order.Customer == nil {
+				log.Printf("Warning: Missing customer data for order %s", order.UUID)
+				continue
+			}
+
+			// Convert products safely
+			for _, p := range order.Products {
+				if p.ID == 0 {
+					continue // Skip invalid products
+				}
+				storeProducts = append(storeProducts, &StoreProduct{
+					ID:        p.ID,
+					Name:      p.Name,
+					Thumbnail: p.Thumbnail,
+					Price:     p.Price,
+					Quantity:  p.Quantity,
+					Status:    p.Status,
+				})
+			}
+
+			storeOrder := &StoreOrder{
+				StoreID:   strconv.FormatUint(uint64(store.ID), 10),
+				Products:  storeProducts,
+				Status:    order.Status,
+				TransRef:  order.TransRef,
+				UUID:      order.UUID,
+				Customer:  *order.Customer,
+				CreatedAt: order.CreatedAt,
+				UpdatedAt: order.UpdatedAt,
+			}
+			storeOrders = append(storeOrders, storeOrder)
+		}
+
+		store.Orders = storeOrders
 	}
 
 	return stores, nil
