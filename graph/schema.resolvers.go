@@ -1094,6 +1094,17 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 		updateStore.Visitors = visitorStrings
 	}
 
+	// Handle account information if provided
+	if input.Account != nil {
+		updateStore.Account = &store.WithdrawalAccount{
+			BankName:      input.Account.BankName,
+			BankCode:      input.Account.BankCode,
+			BankImage:     input.Account.BankImage,
+			AccountNumber: input.Account.AccountNumber,
+			AccountName:   input.Account.AccountName,
+		}
+	}
+
 	// Update the store
 	updatedStore, err := storeHandler.UpdateStore(ctx, updateStore)
 	if err != nil {
@@ -1132,6 +1143,20 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 		})
 	}
 
+	// Convert accounts to GraphQL model
+	var accounts []*model.WithdrawAccount
+	if updatedStore.Accounts != nil {
+		for _, a := range updatedStore.Accounts {
+			accounts = append(accounts, &model.WithdrawAccount{
+				BankCode:      a.BankCode,
+				BankName:      a.BankName,
+				BankImage:     a.BankImage,
+				AccountNumber: a.AccountNumber,
+				AccountName:   a.AccountName,
+			})
+		}
+	}
+
 	return &model.Store{
 		ID:                 strconv.Itoa(int(updatedStore.ID)),
 		Link:               updatedStore.Link,
@@ -1148,6 +1173,7 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 		Visitors:           updatedStore.Visitors,
 		Followers:          followers,
 		Product:            products,
+		Accounts:           accounts,
 	}, nil
 }
 
