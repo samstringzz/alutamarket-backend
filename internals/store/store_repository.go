@@ -14,6 +14,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/database"
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/utils"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -159,7 +160,6 @@ func (r *repository) DeleteStore(ctx context.Context, id uint32) error {
 }
 
 func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store, error) {
-
 	// First, check if the Store exists by its ID or another unique identifier
 	existingStore, err := r.GetStore(ctx, req.ID)
 	if err != nil {
@@ -183,22 +183,15 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 			visitorMap[v] = true
 		}
 
-		// Convert map back to slice and sort for consistent array representation
-		existingStore.Visitors = make([]string, 0, len(visitorMap))
+		// Convert map back to slice
+		existingStore.Visitors = make(pq.StringArray, 0, len(visitorMap))
 		for v := range visitorMap {
 			existingStore.Visitors = append(existingStore.Visitors, v)
 		}
 		sort.Strings(existingStore.Visitors)
 	}
-
-	if req.HasPhysicalAddress != existingStore.HasPhysicalAddress {
-		existingStore.HasPhysicalAddress = req.HasPhysicalAddress
-	}
-	if req.Status != existingStore.Status {
-		existingStore.Status = req.Status
-	}
-	if req.Address != "" {
-		existingStore.Address = req.Address
+	if req.Link != "" {
+		existingStore.Link = req.Link
 	}
 	if req.Phone != "" {
 		existingStore.Phone = req.Phone
@@ -217,8 +210,8 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 	// Handle account update only if account information is provided
 	if req.Account != nil {
 		// Create a new account record directly in dva_accounts table
-		account := map[string]interface{}{
-			"store":          req.ID,
+		bankDetails := map[string]interface{}{
+			"store_id":       req.ID,
 			"account_number": req.Account.AccountNumber,
 			"account_name":   req.Account.AccountName,
 			"bank_name":      req.Account.BankName,
@@ -226,14 +219,25 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 			"bank_image":     req.Account.BankImage,
 		}
 
-		// Use dva_accounts table
-		if err := r.db.Table("dva_accounts").Create(account).Error; err != nil {
-			return nil, fmt.Errorf("failed to create account: %v", err)
+		// Try to update existing record first
+		result := r.db.Table("dva_accounts").
+			Where("store_id = ?", req.ID).
+			Updates(bankDetails)
+
+		if result.Error != nil {
+			return nil, fmt.Errorf("failed to update bank details: %v", result.Error)
+		}
+
+		// If no record was updated, create a new one
+		if result.RowsAffected == 0 {
+			if err := r.db.Table("dva_accounts").Create(bankDetails).Error; err != nil {
+				return nil, fmt.Errorf("failed to create bank details: %v", err)
+			}
 		}
 
 		// Fetch accounts using the correct column name
 		var accounts []*WithdrawalAccount
-		if err := r.db.Table("dva_accounts").Where("store = ?", req.ID).Find(&accounts).Error; err != nil {
+		if err := r.db.Table("dva_accounts").Where("store_id = ?", req.ID).Find(&accounts).Error; err != nil {
 			log.Printf("Error fetching accounts for store %d: %v", req.ID, err)
 		}
 		existingStore.Accounts = accounts
