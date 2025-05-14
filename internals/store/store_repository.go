@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/database"
@@ -132,6 +133,64 @@ func (r *repository) GetStores(ctx context.Context, userID uint32, limit int, of
 		// Fetch accounts with correct column name
 		if err := r.db.Table("dva_accounts").Where("store = ?", store.ID).Find(&store.Accounts).Error; err != nil {
 			log.Printf("Error fetching accounts for store %d: %v", store.ID, err)
+		}
+
+		// Fetch orders for this store
+		var orders []*Order
+		if err := r.db.Table("orders").
+			Where("? = ANY(stores_id)", store.Name).
+			Find(&orders).Error; err != nil {
+			log.Printf("Error fetching orders for store %d: %v", store.ID, err)
+		} else {
+			// Convert orders to store orders
+			var storeOrders []*StoreOrder
+			for _, order := range orders {
+				// Unmarshal delivery details
+				if order.DeliveryDetailsJSON != "" {
+					var details DeliveryDetails
+					if err := json.Unmarshal([]byte(order.DeliveryDetailsJSON), &details); err != nil {
+						log.Printf("Error unmarshaling delivery details: %v", err)
+						continue
+					}
+					order.DeliveryDetails = &details
+				}
+
+				// Unmarshal customer details
+				if order.CustomerJSON != "" {
+					var customer Customer
+					if err := json.Unmarshal([]byte(order.CustomerJSON), &customer); err != nil {
+						log.Printf("Error unmarshaling customer: %v", err)
+						continue
+					}
+					order.Customer = &customer
+				}
+
+				// Convert products to store products
+				var storeProducts []*StoreProduct
+				for _, p := range order.Products {
+					storeProducts = append(storeProducts, &StoreProduct{
+						ID:        p.ID,
+						Name:      p.Name,
+						Thumbnail: p.Thumbnail,
+						Price:     p.Price,
+						Quantity:  p.Quantity,
+						Status:    p.Status,
+					})
+				}
+
+				storeOrder := &StoreOrder{
+					StoreID:   strconv.FormatUint(uint64(store.ID), 10),
+					Products:  storeProducts,
+					Status:    order.Status,
+					TransRef:  order.TransRef,
+					UUID:      order.UUID,
+					Customer:  *order.Customer,
+					CreatedAt: order.CreatedAt,
+					UpdatedAt: order.UpdatedAt,
+				}
+				storeOrders = append(storeOrders, storeOrder)
+			}
+			store.Orders = storeOrders
 		}
 	}
 
