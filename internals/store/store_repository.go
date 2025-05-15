@@ -467,19 +467,62 @@ func (r *repository) GetPurchasedOrders(ctx context.Context, userID string) ([]*
 }
 
 func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status, transStatus string) error {
-	result := r.db.WithContext(ctx).Model(&Order{}).
+	// Get the order first
+	order, err := r.GetOrderByUUID(ctx, uuid)
+	if err != nil {
+		return fmt.Errorf("failed to get order: %v", err)
+	}
+
+	// Update the order status
+	if err := r.db.Model(&Order{}).
 		Where("uuid = ?", uuid).
 		Updates(map[string]interface{}{
 			"status":       status,
 			"trans_status": transStatus,
-		})
-
-	if result.Error != nil {
-		return fmt.Errorf("failed to update order status: %v", result.Error)
+		}).Error; err != nil {
+		return fmt.Errorf("failed to update order status: %v", err)
 	}
 
-	if result.RowsAffected == 0 {
-		return fmt.Errorf("no order found with UUID: %s", uuid)
+	// If the order is delivered, add earnings for each store
+	if status == "delivered" {
+		// Parse order amount
+		amount, err := strconv.ParseFloat(order.Amount, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse order amount: %v", err)
+		}
+
+		// Calculate earnings per store (divide amount by number of stores)
+		storeCount := len(order.StoresID)
+		if storeCount == 0 {
+			return fmt.Errorf("no stores found in order")
+		}
+		amountPerStore := amount / float64(storeCount)
+
+		// Add earnings for each store
+		for _, storeName := range order.StoresID {
+			// Get store ID from name
+			var store Store
+			if err := r.db.Where("name = ?", storeName).First(&store).Error; err != nil {
+				log.Printf("Warning: failed to find store %s: %v", storeName, err)
+				continue
+			}
+
+			// Create earnings record
+			earnings := &StoreEarnings{
+				StoreID:         store.ID,
+				OrderID:         order.UUID,
+				Amount:          amountPerStore,
+				Status:          "released", // Mark as released since order is delivered
+				TransactionType: "order",
+				CreatedAt:       time.Now(),
+				UpdatedAt:       time.Now(),
+			}
+
+			if err := r.AddStoreEarnings(ctx, earnings); err != nil {
+				log.Printf("Warning: failed to add earnings for store %s: %v", storeName, err)
+				continue
+			}
+		}
 	}
 
 	return nil
@@ -889,60 +932,32 @@ type PaystackDVAResponse struct {
 }
 
 func (r *repository) GetDVABalance(ctx context.Context, accountNumber string) (float64, error) {
-	url := "https://api.paystack.co/transaction"
-	method := "GET"
-
-	client := &http.Client{}
-	req, err := http.NewRequest(method, url, nil)
+	// Get PayStack DVA balance
+	paystackBalance, err := utils.GetPaystackDVABalance(accountNumber)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to get PayStack DVA balance: %v", err)
 	}
 
-	// Use virtual_account_number instead of recipient_account
-	q := req.URL.Query()
-	q.Add("virtual_account_number", accountNumber)
-	req.URL.RawQuery = q.Encode()
+	// Get store ID from account number
+	var store Store
+	if err := r.db.Where("accounts @> ?", fmt.Sprintf(`[{"account_number": "%s"}]`, accountNumber)).First(&store).Error; err != nil {
+		return 0, fmt.Errorf("failed to find store with account number %s: %v", accountNumber, err)
+	}
 
-	req.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := client.Do(req)
+	// Get store earnings
+	earnings, err := r.GetStoreEarnings(ctx, store.ID)
 	if err != nil {
-		return 0, err
-	}
-	defer res.Body.Close()
-
-	var response struct {
-		Status  bool   `json:"status"`
-		Message string `json:"message"`
-		Data    []struct {
-			Amount          float64 `json:"amount"`
-			Status          string  `json:"status"`
-			Currency        string  `json:"currency"`
-			Channel         string  `json:"channel"`
-			GatewayResponse string  `json:"gateway_response"`
-			Metadata        struct {
-				ReceiverAccountNumber string `json:"receiver_account_number"`
-			} `json:"metadata"`
-		} `json:"data"`
-		Meta struct {
-			TotalVolume float64 `json:"total_volume"`
-		} `json:"meta"`
+		return 0, fmt.Errorf("failed to get store earnings: %v", err)
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return 0, fmt.Errorf("error decoding response: %v", err)
+	// Calculate total earnings
+	var totalEarnings float64
+	for _, earning := range earnings {
+		totalEarnings += earning.Amount
 	}
 
-	if !response.Status {
-		return 0, fmt.Errorf("failed to get transactions: %s", response.Message)
-	}
-
-	// Use the total_volume from meta, which represents the total amount
-	// Convert from kobo to naira
-	balance := response.Meta.TotalVolume / 100
-
-	return balance, nil
+	// Return combined balance
+	return paystackBalance + totalEarnings, nil
 }
 
 func (r *repository) GetOrderByUUID(ctx context.Context, uuid string) (*Order, error) {
@@ -1000,4 +1015,21 @@ func (r *repository) UpdateStoreBankDetails(ctx context.Context, storeID uint32,
 	}
 
 	return nil
+}
+
+func (r *repository) AddStoreEarnings(ctx context.Context, earnings *StoreEarnings) error {
+	if err := r.db.WithContext(ctx).Create(earnings).Error; err != nil {
+		return fmt.Errorf("failed to add store earnings: %v", err)
+	}
+	return nil
+}
+
+func (r *repository) GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error) {
+	var earnings []*StoreEarnings
+	if err := r.db.WithContext(ctx).
+		Where("store_id = ? AND status = ?", storeID, "released").
+		Find(&earnings).Error; err != nil {
+		return nil, fmt.Errorf("failed to get store earnings: %v", err)
+	}
+	return earnings, nil
 }

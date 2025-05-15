@@ -267,6 +267,17 @@ type DVABank struct {
 	Slug string `json:"slug" gorm:"type:varchar(50)"`
 }
 
+type StoreEarnings struct {
+	gorm.Model
+	StoreID         uint32    `json:"store_id" db:"store_id"`
+	OrderID         string    `json:"order_id" db:"order_id"`
+	Amount          float64   `json:"amount" db:"amount"`
+	Status          string    `json:"status" db:"status"`                     // pending/released
+	TransactionType string    `json:"transaction_type" db:"transaction_type"` // order/direct_transfer
+	CreatedAt       time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at" db:"updated_at"`
+}
+
 type Repository interface {
 	CreateStore(ctx context.Context, req *Store) (*Store, error)
 	CreateInvoice(ctx context.Context, req *Invoice) (*Invoice, error)
@@ -296,6 +307,8 @@ type Repository interface {
 	UpdateProductUnitsSold(ctx context.Context, productID uint32) error
 	GetAllStores(ctx context.Context, limit, offset int) ([]*Store, error)
 	UpdateStoreBankDetails(ctx context.Context, storeID uint32, account *WithdrawalAccount) error
+	AddStoreEarnings(ctx context.Context, earnings *StoreEarnings) error
+	GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error)
 }
 
 type Service interface {
@@ -324,4 +337,6 @@ type Service interface {
 	GetFollowedStores(ctx context.Context, userID uint32) ([]*Store, error)
 	GetOrderByUUID(ctx context.Context, uuid string) (*Order, error)
 	UpdateProductUnitsSold(ctx context.Context, productID uint32) error
+	AddStoreEarnings(ctx context.Context, earnings *StoreEarnings) error
+	GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error)
 }
