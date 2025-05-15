@@ -1006,10 +1006,56 @@ func (r *repository) GetDVABalance(ctx context.Context, accountNumber string) (f
 
 func (r *repository) GetOrderByUUID(ctx context.Context, uuid string) (*Order, error) {
 	var order Order
-	result := r.db.Where("uuid = ?", uuid).Preload("Products").First(&order)
-	if result.Error != nil {
-		return nil, result.Error
+
+	// First get the basic order details
+	if err := r.db.Where("uuid = ?", uuid).First(&order).Error; err != nil {
+		return nil, err
 	}
+
+	// Unmarshal delivery details if present
+	if order.DeliveryDetailsJSON != "" {
+		var details DeliveryDetails
+		if err := json.Unmarshal([]byte(order.DeliveryDetailsJSON), &details); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal delivery details: %v", err)
+		}
+		order.DeliveryDetails = &details
+	}
+
+	// Unmarshal customer details if present
+	if order.CustomerJSON != "" {
+		var customer Customer
+		if err := json.Unmarshal([]byte(order.CustomerJSON), &customer); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal customer: %v", err)
+		}
+		order.Customer = &customer
+	}
+
+	// Get products for this order from the products table
+	var products []TrackedProduct
+	for _, storeID := range order.StoresID {
+		var storeProducts []Product
+		if err := r.db.Table("products").
+			Where("store = ? AND deleted_at IS NULL", storeID).
+			Find(&storeProducts).Error; err != nil {
+			return nil, fmt.Errorf("failed to get products for store %s: %v", storeID, err)
+		}
+
+		// Convert each product to TrackedProduct
+		for _, p := range storeProducts {
+			products = append(products, TrackedProduct{
+				ID:        p.ID,
+				Name:      p.Name,
+				Thumbnail: p.Thumbnail,
+				Price:     p.Price,
+				Store:     p.Store,
+				Status:    "active",
+				CreatedAt: p.CreatedAt,
+				UpdatedAt: p.UpdatedAt,
+			})
+		}
+	}
+	order.Products = products
+
 	return &order, nil
 }
 
