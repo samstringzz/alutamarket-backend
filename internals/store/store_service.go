@@ -281,3 +281,17 @@ func (s *service) GetAllStores(ctx context.Context, limit, offset int) ([]*Store
 	}
 	return stores, nil
 }
+
+func (s *service) AddStoreEarnings(ctx context.Context, earnings *StoreEarnings) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	return s.Repository.AddStoreEarnings(ctx, earnings)
+}
+
+func (s *service) GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	return s.Repository.GetStoreEarnings(ctx, storeID)
+}
