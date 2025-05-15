@@ -939,17 +939,31 @@ func (r *repository) GetDVABalance(ctx context.Context, accountNumber string) (f
 		return 0, fmt.Errorf("failed to get DVA balance: %v", err)
 	}
 
-	// Get store ID from orders table using the account number
+	// Get account details from Paystack
+	paystackAccount, err := r.getPaystackDVAAccount(accountNumber)
+	if err != nil {
+		// If we can't get Paystack account details, just return Paystack balance
+		return paystackBalance, nil
+	}
+
+	// First find the user by their full name
+	var userID uint32
+	if err := r.db.Table("users").
+		Select("id").
+		Where("fullname = ?", paystackAccount.AccountName).
+		First(&userID).Error; err != nil {
+		// If we can't find user, just return Paystack balance
+		return paystackBalance, nil
+	}
+
+	// Then find the store associated with this user
 	var store Store
-	if err := r.db.Table("stores").
-		Joins("JOIN orders ON orders.stores_id[1]::text = stores.id::text").
-		Where("orders.status = ? AND orders.trans_status = ?", "delivered", "paid").
-		First(&store).Error; err != nil {
+	if err := r.db.Where("user_id = ?", userID).First(&store).Error; err != nil {
 		// If we can't find store, just return Paystack balance
 		return paystackBalance, nil
 	}
 
-	// Get store earnings
+	// Get store earnings for this specific store
 	earnings, err := r.GetStoreEarnings(ctx, store.ID)
 	if err != nil {
 		// If error getting earnings, just return Paystack balance
