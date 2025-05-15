@@ -473,6 +473,9 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 		return fmt.Errorf("failed to get order: %v", err)
 	}
 
+	// Get the current order status before updating
+	currentStatus := order.Status
+
 	// Update the order status
 	if err := r.db.Model(&Order{}).
 		Where("uuid = ?", uuid).
@@ -483,8 +486,49 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 		return fmt.Errorf("failed to update order status: %v", err)
 	}
 
-	// If the order is delivered, add earnings for each store
-	if status == "delivered" {
+	// Handle store earnings based on status change
+	if currentStatus == "delivered" && status == "in progress" {
+		// If changing from delivered to in progress, reverse the earnings
+		// Parse order amount
+		amount, err := strconv.ParseFloat(order.Amount, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse order amount: %v", err)
+		}
+
+		// Calculate earnings per store (divide amount by number of stores)
+		storeCount := len(order.StoresID)
+		if storeCount == 0 {
+			return fmt.Errorf("no stores found in order")
+		}
+		amountPerStore := amount / float64(storeCount)
+
+		// Reverse earnings for each store
+		for _, storeName := range order.StoresID {
+			// Get store ID from name
+			var store Store
+			if err := r.db.Where("name = ?", storeName).First(&store).Error; err != nil {
+				log.Printf("Warning: failed to find store %s: %v", storeName, err)
+				continue
+			}
+
+			// Create negative earnings record to offset the previous earnings
+			earnings := &StoreEarnings{
+				StoreID:         store.ID,
+				OrderID:         order.UUID,
+				Amount:          -amountPerStore, // Negative amount to offset previous earnings
+				Status:          "released",
+				TransactionType: "order_reversal",
+				CreatedAt:       time.Now(),
+				UpdatedAt:       time.Now(),
+			}
+
+			if err := r.AddStoreEarnings(ctx, earnings); err != nil {
+				log.Printf("Warning: failed to add reversal earnings for store %s: %v", storeName, err)
+				continue
+			}
+		}
+	} else if status == "delivered" {
+		// If changing to delivered, add the earnings
 		// Parse order amount
 		amount, err := strconv.ParseFloat(order.Amount, 64)
 		if err != nil {
@@ -512,7 +556,7 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 				StoreID:         store.ID,
 				OrderID:         order.UUID,
 				Amount:          amountPerStore,
-				Status:          "released", // Mark as released since order is delivered
+				Status:          "released",
 				TransactionType: "order",
 				CreatedAt:       time.Now(),
 				UpdatedAt:       time.Now(),
