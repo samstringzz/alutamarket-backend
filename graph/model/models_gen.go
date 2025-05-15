@@ -823,6 +823,22 @@ type VerifyOtp struct {
 	Email *string `json:"email,omitempty"`
 }
 
+type WithdrawalAccount struct {
+	BankName      string  `json:"bankName"`
+	BankCode      string  `json:"bankCode"`
+	BankImage     *string `json:"bankImage,omitempty"`
+	AccountNumber string  `json:"accountNumber"`
+	AccountName   string  `json:"accountName"`
+}
+
+type WithdrawalAccountInput struct {
+	BankName      string  `json:"bankName"`
+	BankCode      string  `json:"bankCode"`
+	BankImage     *string `json:"bankImage,omitempty"`
+	AccountNumber string  `json:"accountNumber"`
+	AccountName   string  `json:"accountName"`
+}
+
 type ConfirmPasswordInput struct {
 	Password string `json:"password"`
 	UserID   string `json:"userId"`
