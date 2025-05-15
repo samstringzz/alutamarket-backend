@@ -979,29 +979,10 @@ func (r *repository) GetDVABalance(ctx context.Context, accountNumber string) (f
 	// Get PayStack DVA balance
 	paystackBalance, err := utils.GetPaystackDVABalance(accountNumber)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get PayStack DVA balance: %v", err)
+		return 0, fmt.Errorf("failed to get DVA balance: %v", err)
 	}
 
-	// Get store ID from account number
-	var store Store
-	if err := r.db.Where("accounts @> ?", fmt.Sprintf(`[{"account_number": "%s"}]`, accountNumber)).First(&store).Error; err != nil {
-		return 0, fmt.Errorf("failed to find store with account number %s: %v", accountNumber, err)
-	}
-
-	// Get store earnings
-	earnings, err := r.GetStoreEarnings(ctx, store.ID)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get store earnings: %v", err)
-	}
-
-	// Calculate total earnings
-	var totalEarnings float64
-	for _, earning := range earnings {
-		totalEarnings += earning.Amount
-	}
-
-	// Return combined balance
-	return paystackBalance + totalEarnings, nil
+	return paystackBalance, nil
 }
 
 func (r *repository) GetOrderByUUID(ctx context.Context, uuid string) (*Order, error) {
