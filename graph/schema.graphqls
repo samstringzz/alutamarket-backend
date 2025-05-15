@@ -879,7 +879,7 @@ type Query {
 	Skynets(id: String!): [Skynet!]
 	Skynet(id: String!): Skynet
 	MYDVA(email: String!): Account
-	getDVABalance(accountNumber: String!): String
+	getDVABalance(accountNumber: String!, storeID: Int): String
 	MyInvoices(storeID: Int): [Invoice]
 	MyDownloads(id: String!): [Downloads]
 	getUsers: [User!]!

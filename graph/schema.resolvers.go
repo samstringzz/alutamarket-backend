@@ -2501,15 +2501,31 @@ func (r *queryResolver) Mydva(ctx context.Context, email string) (*model.Account
 }
 
 // GetDVABalance is the resolver for the GetDVABalance field.
-func (r *queryResolver) GetDVABalance(ctx context.Context, accountNumber string) (*string, error) {
+func (r *queryResolver) GetDVABalance(ctx context.Context, accountNumber string, storeID *int) (*string, error) {
 	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
 
-	balance, err := storeHandler.GetDVABalance(ctx, accountNumber)
+	// Get PayStack DVA balance
+	paystackBalance, err := storeHandler.GetDVABalance(ctx, accountNumber)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch DVA balance: %v", err)
 	}
 
-	balanceStr := strconv.FormatFloat(balance, 'f', 2, 64)
+	totalBalance := paystackBalance
+
+	// If storeID is provided, add store earnings to the total
+	if storeID != nil {
+		earnings, err := storeHandler.GetStoreEarnings(ctx, uint32(*storeID))
+		if err == nil {
+			// Sum up all released earnings
+			for _, earning := range earnings {
+				if earning.Status == "released" {
+					totalBalance += earning.Amount
+				}
+			}
+		}
+	}
+
+	balanceStr := strconv.FormatFloat(totalBalance, 'f', 2, 64)
 	return &balanceStr, nil
 }
 
