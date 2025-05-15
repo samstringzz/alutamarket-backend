@@ -473,8 +473,18 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 		return fmt.Errorf("failed to get order: %v", err)
 	}
 
-	// Get the current order status before updating
-	currentStatus := order.Status
+	// If changing from delivered to another status, remove the earnings
+	if order.Status == "delivered" && status != "delivered" {
+		// Find and update store earnings to mark as reversed
+		var earnings StoreEarnings
+		if err := r.db.Where("order_id = ? AND status = ?", uuid, "released").
+			First(&earnings).Error; err == nil {
+			earnings.Status = "reversed"
+			if err := r.db.Save(&earnings).Error; err != nil {
+				return fmt.Errorf("failed to reverse store earnings: %v", err)
+			}
+		}
+	}
 
 	// Update the order status
 	if err := r.db.Model(&Order{}).
@@ -486,76 +496,24 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 		return fmt.Errorf("failed to update order status: %v", err)
 	}
 
-	// Handle store earnings based on status change
-	if currentStatus == "delivered" && status == "in progress" {
-		// If changing from delivered to in progress, reverse the earnings
-		// Parse order amount
+	// If the order is being marked as delivered, add to store earnings
+	if status == "delivered" {
 		amount, err := strconv.ParseFloat(order.Amount, 64)
 		if err != nil {
 			return fmt.Errorf("failed to parse order amount: %v", err)
 		}
 
-		// Calculate earnings per store (divide amount by number of stores)
-		storeCount := len(order.StoresID)
-		if storeCount == 0 {
-			return fmt.Errorf("no stores found in order")
-		}
-		amountPerStore := amount / float64(storeCount)
-
-		// Reverse earnings for each store
-		for _, storeName := range order.StoresID {
-			// Get store ID from name
-			var store Store
-			if err := r.db.Where("name = ?", storeName).First(&store).Error; err != nil {
-				log.Printf("Warning: failed to find store %s: %v", storeName, err)
+		// Add earnings for each store in the order
+		for _, storeID := range order.StoresID {
+			storeIDUint, err := strconv.ParseUint(storeID, 10, 32)
+			if err != nil {
 				continue
 			}
 
-			// Create negative earnings record to offset the previous earnings
 			earnings := &StoreEarnings{
-				StoreID:         store.ID,
-				OrderID:         order.UUID,
-				Amount:          -amountPerStore, // Negative amount to offset previous earnings
-				Status:          "released",
-				TransactionType: "order_reversal",
-				CreatedAt:       time.Now(),
-				UpdatedAt:       time.Now(),
-			}
-
-			if err := r.AddStoreEarnings(ctx, earnings); err != nil {
-				log.Printf("Warning: failed to add reversal earnings for store %s: %v", storeName, err)
-				continue
-			}
-		}
-	} else if status == "delivered" {
-		// If changing to delivered, add the earnings
-		// Parse order amount
-		amount, err := strconv.ParseFloat(order.Amount, 64)
-		if err != nil {
-			return fmt.Errorf("failed to parse order amount: %v", err)
-		}
-
-		// Calculate earnings per store (divide amount by number of stores)
-		storeCount := len(order.StoresID)
-		if storeCount == 0 {
-			return fmt.Errorf("no stores found in order")
-		}
-		amountPerStore := amount / float64(storeCount)
-
-		// Add earnings for each store
-		for _, storeName := range order.StoresID {
-			// Get store ID from name
-			var store Store
-			if err := r.db.Where("name = ?", storeName).First(&store).Error; err != nil {
-				log.Printf("Warning: failed to find store %s: %v", storeName, err)
-				continue
-			}
-
-			// Create earnings record
-			earnings := &StoreEarnings{
-				StoreID:         store.ID,
-				OrderID:         order.UUID,
-				Amount:          amountPerStore,
+				StoreID:         uint32(storeIDUint),
+				OrderID:         uuid,
+				Amount:          amount,
 				Status:          "released",
 				TransactionType: "order",
 				CreatedAt:       time.Now(),
@@ -563,8 +521,7 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 			}
 
 			if err := r.AddStoreEarnings(ctx, earnings); err != nil {
-				log.Printf("Warning: failed to add earnings for store %s: %v", storeName, err)
-				continue
+				return fmt.Errorf("failed to add store earnings: %v", err)
 			}
 		}
 	}
@@ -982,7 +939,37 @@ func (r *repository) GetDVABalance(ctx context.Context, accountNumber string) (f
 		return 0, fmt.Errorf("failed to get DVA balance: %v", err)
 	}
 
-	return paystackBalance, nil
+	// Get store ID from the virtual account number using Paystack API
+	paystackAccount, err := r.getPaystackDVAAccount(accountNumber)
+	if err != nil {
+		// If we can't get store details, just return Paystack balance
+		return paystackBalance, nil
+	}
+
+	// Find store by email (which is used to create DVA)
+	var store Store
+	if err := r.db.Where("email = ?", paystackAccount.AccountName).First(&store).Error; err != nil {
+		// If we can't find store, just return Paystack balance
+		return paystackBalance, nil
+	}
+
+	// Get store earnings
+	earnings, err := r.GetStoreEarnings(ctx, store.ID)
+	if err != nil {
+		// If error getting earnings, just return Paystack balance
+		return paystackBalance, nil
+	}
+
+	// Calculate total earnings
+	var totalEarnings float64
+	for _, earning := range earnings {
+		if earning.Status == "released" {
+			totalEarnings += earning.Amount
+		}
+	}
+
+	// Return combined balance
+	return paystackBalance + totalEarnings, nil
 }
 
 func (r *repository) GetOrderByUUID(ctx context.Context, uuid string) (*Order, error) {
