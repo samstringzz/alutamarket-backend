@@ -939,16 +939,12 @@ func (r *repository) GetDVABalance(ctx context.Context, accountNumber string) (f
 		return 0, fmt.Errorf("failed to get DVA balance: %v", err)
 	}
 
-	// Get store ID from the virtual account number using Paystack API
-	paystackAccount, err := r.getPaystackDVAAccount(accountNumber)
-	if err != nil {
-		// If we can't get store details, just return Paystack balance
-		return paystackBalance, nil
-	}
-
-	// Find store by email (which is used to create DVA)
+	// Get store ID from orders table using the account number
 	var store Store
-	if err := r.db.Where("email = ?", paystackAccount.AccountName).First(&store).Error; err != nil {
+	if err := r.db.Table("stores").
+		Joins("JOIN orders ON orders.stores_id[1]::text = stores.id::text").
+		Where("orders.status = ? AND orders.trans_status = ?", "delivered", "paid").
+		First(&store).Error; err != nil {
 		// If we can't find store, just return Paystack balance
 		return paystackBalance, nil
 	}
