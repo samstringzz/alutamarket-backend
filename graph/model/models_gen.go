@@ -600,6 +600,17 @@ type StoreCustomer struct {
 	Address string `json:"address"`
 }
 
+type StoreEarnings struct {
+	ID              string    `json:"id"`
+	StoreID         int       `json:"storeId"`
+	OrderID         string    `json:"orderId"`
+	Amount          float64   `json:"amount"`
+	Status          string    `json:"status"`
+	TransactionType string    `json:"transactionType"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+}
+
 type StoreFollower struct {
 	FollowerID    int    `json:"follower_id"`
 	FollowerName  string `json:"follower_name"`

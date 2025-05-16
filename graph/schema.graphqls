@@ -121,6 +121,7 @@ extend type Query {
   Messages(chatId: String!): [Message!]
   subscribers: [Subscriber!]!
   getDVAAccount(userID: ID!): DVAAccount
+  getStoreEarnings(storeId: Int!): [StoreEarnings!]!
 }
 
 type Message {
@@ -964,4 +965,15 @@ type StorePaginationData {
 	current_page: Int!
 	per_page: Int!
 	total: Int!
+}
+
+type StoreEarnings {
+  id: ID!
+  storeId: Int!
+  orderId: String!
+  amount: Float!
+  status: String!
+  transactionType: String!
+  createdAt: Time!
+  updatedAt: Time!
 }
