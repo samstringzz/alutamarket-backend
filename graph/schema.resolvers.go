@@ -2863,6 +2863,34 @@ func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query s
 	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
 }
 
+// GetStoreEarnings is the resolver for the getStoreEarnings field.
+func (r *queryResolver) GetStoreEarnings(ctx context.Context, storeID int) ([]*model.StoreEarnings, error) {
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+
+	// Get store earnings
+	earnings, err := storeHandler.GetStoreEarnings(ctx, uint32(storeID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch store earnings: %v", err)
+	}
+
+	// Convert to GraphQL model
+	var result []*model.StoreEarnings
+	for _, e := range earnings {
+		result = append(result, &model.StoreEarnings{
+			ID:              strconv.FormatUint(uint64(e.ID), 10),
+			StoreID:         int(e.StoreID),
+			OrderID:         e.OrderID,
+			Amount:          e.Amount,
+			Status:          e.Status,
+			TransactionType: e.TransactionType,
+			CreatedAt:       e.CreatedAt,
+			UpdatedAt:       e.UpdatedAt,
+		})
+	}
+
+	return result, nil
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
