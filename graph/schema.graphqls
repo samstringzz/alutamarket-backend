@@ -41,6 +41,7 @@ type Order {
     products: [Product!]
     deliveryDetails: DeliveryDetails
     textRef: String
+	createdAt: Time
 }
 type MessageUser {
 	id: Int!
@@ -565,6 +566,7 @@ type Product {
     type: String
     file: String
 	unitsSold: Int!
+	createdAt: Time
 }
 
 type Customer {

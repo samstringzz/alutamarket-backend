@@ -285,6 +285,7 @@ type ComplexityRoot struct {
 	Order struct {
 		Amount          func(childComplexity int) int
 		CartID          func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
 		Customer        func(childComplexity int) int
 		CustomerEmail   func(childComplexity int) int
 		Date            func(childComplexity int) int
@@ -357,6 +358,7 @@ type ComplexityRoot struct {
 	Product struct {
 		AlwaysAvailable func(childComplexity int) int
 		Category        func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
 		Description     func(childComplexity int) int
 		Discount        func(childComplexity int) int
 		File            func(childComplexity int) int
@@ -2113,6 +2115,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Order.CartID(childComplexity), true
 
+	case "Order.createdAt":
+		if e.complexity.Order.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Order.CreatedAt(childComplexity), true
+
 	case "Order.customer":
 		if e.complexity.Order.Customer == nil {
 			break
@@ -2448,6 +2457,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Product.Category(childComplexity), true
+
+	case "Product.createdAt":
+		if e.complexity.Product.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Product.CreatedAt(childComplexity), true
 
 	case "Product.description":
 		if e.complexity.Product.Description == nil {
@@ -7946,6 +7962,8 @@ func (ec *executionContext) fieldContext_CartItem_product(_ context.Context, fie
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -12613,6 +12631,8 @@ func (ec *executionContext) fieldContext_Mutation_updateOrderStatus(ctx context.
 				return ec.fieldContext_Order_deliveryDetails(ctx, field)
 			case "textRef":
 				return ec.fieldContext_Order_textRef(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Order_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Order", field.Name)
 		},
@@ -13663,6 +13683,8 @@ func (ec *executionContext) fieldContext_Mutation_createProduct(ctx context.Cont
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -13754,6 +13776,8 @@ func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Cont
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -13897,6 +13921,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteProduct(ctx context.Cont
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -15855,6 +15881,8 @@ func (ec *executionContext) fieldContext_Order_products(_ context.Context, field
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -15947,6 +15975,47 @@ func (ec *executionContext) fieldContext_Order_textRef(_ context.Context, field 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Order_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Order) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Order_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Order_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Order",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -18086,6 +18155,47 @@ func (ec *executionContext) fieldContext_Product_unitsSold(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Product_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ProductPaginationData_data(ctx context.Context, field graphql.CollectedField, obj *model.ProductPaginationData) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ProductPaginationData_data(ctx, field)
 	if err != nil {
@@ -18159,6 +18269,8 @@ func (ec *executionContext) fieldContext_ProductPaginationData_data(_ context.Co
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -19484,6 +19596,8 @@ func (ec *executionContext) fieldContext_Query_SellerOrders(ctx context.Context,
 				return ec.fieldContext_Order_deliveryDetails(ctx, field)
 			case "textRef":
 				return ec.fieldContext_Order_textRef(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Order_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Order", field.Name)
 		},
@@ -19769,6 +19883,8 @@ func (ec *executionContext) fieldContext_Query_Product(ctx context.Context, fiel
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -19933,6 +20049,8 @@ func (ec *executionContext) fieldContext_Query_RecommendedProducts(ctx context.C
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -20024,6 +20142,8 @@ func (ec *executionContext) fieldContext_Query_RecentlyAddedProducts(ctx context
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -20241,6 +20361,8 @@ func (ec *executionContext) fieldContext_Query_searchProducts(ctx context.Contex
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -21296,6 +21418,8 @@ func (ec *executionContext) fieldContext_Query_getAllProducts(_ context.Context,
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -21442,6 +21566,8 @@ func (ec *executionContext) fieldContext_Query_getAllOrders(_ context.Context, f
 				return ec.fieldContext_Order_deliveryDetails(ctx, field)
 			case "textRef":
 				return ec.fieldContext_Order_textRef(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Order_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Order", field.Name)
 		},
@@ -23835,6 +23961,8 @@ func (ec *executionContext) fieldContext_Store_product(_ context.Context, field 
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -25095,6 +25223,8 @@ func (ec *executionContext) fieldContext_StoreOrder_product(_ context.Context, f
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -26026,6 +26156,8 @@ func (ec *executionContext) fieldContext_Subscription_productSearchResults(ctx c
 				return ec.fieldContext_Product_file(ctx, field)
 			case "unitsSold":
 				return ec.fieldContext_Product_unitsSold(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
 		},
@@ -34970,6 +35102,8 @@ func (ec *executionContext) _Order(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Order_deliveryDetails(ctx, field, obj)
 		case "textRef":
 			out.Values[i] = ec._Order_textRef(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._Order_createdAt(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -35470,6 +35604,8 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createdAt":
+			out.Values[i] = ec._Product_createdAt(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
