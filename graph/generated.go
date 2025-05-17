@@ -33029,7 +33029,7 @@ func (ec *executionContext) unmarshalInputWithdrawalAccountInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"bankName", "bankCode", "bankImage", "accountNumber", "accountName"}
+	fieldsInOrder := [...]string{"bankName", "bankCode", "bankImage", "accountNumber", "accountName", "bankId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -33052,7 +33052,7 @@ func (ec *executionContext) unmarshalInputWithdrawalAccountInput(ctx context.Con
 			it.BankCode = data
 		case "bankImage":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bankImage"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33071,6 +33071,13 @@ func (ec *executionContext) unmarshalInputWithdrawalAccountInput(ctx context.Con
 				return it, err
 			}
 			it.AccountName = data
+		case "bankId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bankId"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BankID = data
 		}
 	}
 
