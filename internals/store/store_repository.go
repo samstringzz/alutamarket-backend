@@ -1080,13 +1080,34 @@ func (r *repository) GetAllStores(ctx context.Context, limit, offset int) ([]*St
 
 // UpdateStoreBankDetails updates or creates bank details for a store
 func (r *repository) UpdateStoreBankDetails(ctx context.Context, storeID uint32, account *WithdrawalAccount) error {
-	// First, get or create the bank record
+	// First, check how many accounts the store already has
+	var count int64
+	if err := r.db.Table("dva_accounts").Where("store_id = ?", storeID).Count(&count).Error; err != nil {
+		return fmt.Errorf("failed to count existing accounts: %v", err)
+	}
+
+	// Check if this account number already exists for this store
+	var existingAccount struct {
+		ID string
+	}
+	accountExists := r.db.Table("dva_accounts").
+		Where("store_id = ? AND account_number = ?", storeID, account.AccountNumber).
+		First(&existingAccount).Error == nil
+
+	// If account exists, we'll update it. If not, check if we can add a new one
+	if !accountExists && count >= 3 {
+		return fmt.Errorf("maximum number of bank accounts (3) reached for this store")
+	}
+
+	// Get or create the bank record
 	var bank DVABank
-	result := r.db.Where("name = ?", account.BankName).First(&bank)
+	bankID := fmt.Sprintf("BANK_%s", strings.ToLower(strings.ReplaceAll(account.BankName, " ", "_")))
+
+	result := r.db.Where("id = ? OR name = ?", bankID, account.BankName).First(&bank)
 	if result.Error != nil {
 		// If bank doesn't exist, create it
 		bank = DVABank{
-			ID:   fmt.Sprintf("BANK_%d_%s", time.Now().Unix(), utils.GenerateRandomString(8)),
+			ID:   bankID,
 			Name: account.BankName,
 			Slug: strings.ToLower(strings.ReplaceAll(account.BankName, " ", "-")),
 		}
@@ -1114,7 +1135,7 @@ func (r *repository) UpdateStoreBankDetails(ctx context.Context, storeID uint32,
 		return fmt.Errorf("failed to get user details: %v", err)
 	}
 
-	// Create a new account record directly in dva_accounts table
+	// Create bank details map
 	bankDetails := map[string]interface{}{
 		"store_id":       storeID,
 		"account_number": account.AccountNumber,
@@ -1126,17 +1147,16 @@ func (r *repository) UpdateStoreBankDetails(ctx context.Context, storeID uint32,
 		"customer_id":    user.UUID,
 	}
 
-	// Try to update existing record first
-	result = r.db.Table("dva_accounts").
-		Where("store_id = ?", storeID).
-		Updates(bankDetails)
-
-	if result.Error != nil {
-		return fmt.Errorf("failed to update bank details: %v", result.Error)
-	}
-
-	// If no record was updated, create a new one
-	if result.RowsAffected == 0 {
+	if accountExists {
+		// Update existing account
+		result = r.db.Table("dva_accounts").
+			Where("store_id = ? AND account_number = ?", storeID, account.AccountNumber).
+			Updates(bankDetails)
+		if result.Error != nil {
+			return fmt.Errorf("failed to update bank details: %v", result.Error)
+		}
+	} else {
+		// Create new account
 		if err := r.db.Table("dva_accounts").Create(bankDetails).Error; err != nil {
 			return fmt.Errorf("failed to create bank details: %v", err)
 		}
