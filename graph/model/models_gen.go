@@ -430,6 +430,8 @@ type Product struct {
 	Type            *string  `json:"type,omitempty"`
 	File            *string  `json:"file,omitempty"`
 	UnitsSold       int      `json:"unitsSold"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 type ProductInput struct {

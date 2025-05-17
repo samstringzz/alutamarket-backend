@@ -2836,6 +2836,7 @@ func (r *queryResolver) GetAllOrders(ctx context.Context) ([]*model.Order, error
 				Name:      p.Name,
 				Price:     p.Price,
 				Thumbnail: p.Thumbnail,
+				CreatedAt: p.CreatedAt,
 				Status:    p.Status == "active",
 			})
 		}
