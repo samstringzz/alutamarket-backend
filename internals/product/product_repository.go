@@ -583,3 +583,11 @@ func (r *repository) GetHandledProductsWithDetails(ctx context.Context, userID u
 
 	return handledProducts, nil
 }
+
+func (r *repository) GetAllProducts(ctx context.Context) ([]*Product, error) {
+	var products []*Product
+	if err := r.db.Find(&products).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch products: %v", err)
+	}
+	return products, nil
+}

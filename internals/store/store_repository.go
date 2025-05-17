@@ -1101,3 +1101,11 @@ func (r *repository) GetStoreEarnings(ctx context.Context, storeID uint32) ([]*S
 	}
 	return earnings, nil
 }
+
+func (r *repository) GetAllOrders(ctx context.Context) ([]*Order, error) {
+	var orders []*Order
+	if err := r.db.Find(&orders).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch orders: %v", err)
+	}
+	return orders, nil
+}

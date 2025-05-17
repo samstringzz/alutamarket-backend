@@ -185,3 +185,7 @@ func (h *Handler) GetOrderByUUID(ctx context.Context, uuid string) (*Order, erro
 func (h *Handler) UpdateProductUnitsSold(ctx context.Context, productID uint32) error {
 	return h.Service.UpdateProductUnitsSold(ctx, productID)
 }
+
+func (h *Handler) GetAllOrders(ctx context.Context) ([]*Order, error) {
+	return h.Service.GetAllOrders(ctx)
+}

@@ -237,6 +237,7 @@ type Repository interface {
 	AddReview(ctx context.Context, input *Review) (*Review, error)
 	GetProductReviews(ctx context.Context, productId uint32, sellerId string) ([]*Review, error)
 	Products(ctx context.Context, store *string, categorySlug *string, limit *int, offset *int) (*model.ProductPaginationData, error)
+	GetAllProducts(ctx context.Context) ([]*Product, error)
 }
 
 type Service interface {
@@ -245,16 +246,17 @@ type Service interface {
 	GetCategories(ctx context.Context) ([]*Category, error)
 	GetCategory(ctx context.Context, id uint32) (*Category, error)
 	CreateProduct(ctx context.Context, product *NewProduct) (*Product, error)
-	AddHandledProduct(ctx context.Context, userId, productId uint32, eventType string) (*HandledProduct, error)
-	GetProducts(ctx context.Context, store string, categorySlug string, limit int, offset int) ([]*Product, int, error)
 	GetProduct(ctx context.Context, productId, userId uint32) (*Product, error)
-	GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error)
-	// GetProductByFilter(ctx context.Context, filter string,filterOption string)(*Product,error)    //by slug,by store,by id,(by category||subcategory)
+	GetProducts(ctx context.Context, store string, categorySlug string, limit int, offset int) ([]*Product, int, error)
+	AddHandledProduct(ctx context.Context, userId, productId uint32, eventType string) (*HandledProduct, error)
+	AddSavedForLater(ctx context.Context, userId, productId uint32) (*HandledProduct, error)
 	GetHandledProducts(ctx context.Context, userId uint32, eventType string) ([]*HandledProduct, error)
-	SearchProducts(ctx context.Context, query string) ([]*Product, error)
-	UpdateProduct(ctx context.Context, req *NewProduct) (*Product, error)
 	RemoveHandledProduct(ctx context.Context, userId uint32, eventType string) error
+	DeleteProduct(ctx context.Context, id uint32) error
+	GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error)
+	SearchProducts(ctx context.Context, query string) ([]*Product, error)
 	AddReview(ctx context.Context, input *Review) (*Review, error)
 	GetProductReviews(ctx context.Context, productId uint32, sellerId string) ([]*Review, error)
-	DeleteProduct(ctx context.Context, id uint32) error
+	GetAllProducts(ctx context.Context) ([]*Product, error)
+	UpdateProduct(ctx context.Context, req *NewProduct) (*Product, error)
 }

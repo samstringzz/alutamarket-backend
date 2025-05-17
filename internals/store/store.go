@@ -309,6 +309,7 @@ type Repository interface {
 	UpdateStoreBankDetails(ctx context.Context, storeID uint32, account *WithdrawalAccount) error
 	AddStoreEarnings(ctx context.Context, earnings *StoreEarnings) error
 	GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error)
+	GetAllOrders(ctx context.Context) ([]*Order, error)
 }
 
 type Service interface {
@@ -339,4 +340,5 @@ type Service interface {
 	UpdateProductUnitsSold(ctx context.Context, productID uint32) error
 	AddStoreEarnings(ctx context.Context, earnings *StoreEarnings) error
 	GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error)
+	GetAllOrders(ctx context.Context) ([]*Order, error)
 }
