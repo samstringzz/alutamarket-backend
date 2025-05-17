@@ -33398,13 +33398,20 @@ func (ec *executionContext) unmarshalInputwithdrawAccountInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"bank_code", "bank_name", "bank_image", "account_number", "account_name"}
+	fieldsInOrder := [...]string{"bank_id", "bank_code", "bank_name", "bank_image", "account_number", "account_name"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "bank_id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bank_id"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BankID = data
 		case "bank_code":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bank_code"))
 			data, err := ec.unmarshalNString2string(ctx, v)
