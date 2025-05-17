@@ -122,7 +122,6 @@ extend type Query {
   subscribers: [Subscriber!]!
   getDVAAccount(userID: ID!): DVAAccount
   getStoreEarnings(storeId: Int!): [StoreEarnings!]!
-  getAllProducts: [Product!]!
 }
 
 type Message {
@@ -869,7 +868,6 @@ type Query {
 	HandledProducts(user: Int!, type: String!): [HandledProducts!]!
 	RecommendedProducts(query: String!): [Product!]!
 	RecentlyAddedProducts(user: Int!): [Product!]!
-	# ProductReviews(id: Int!, sellerStore: String!): [Review!]!
 	Cart(user: Int!): Cart!
 	SubscriptionBundle(serviceID: String!): SubscriptionBundle
 	searchProducts(query: String!): [Product!]
@@ -886,6 +884,9 @@ type Query {
 	MyDownloads(id: String!): [Downloads]
 	getUsers: [User!]!
 	allStores(limit: Int, offset: Int): StorePaginationData!
+	getAllProducts: [Product!]!
+	getAllReviews: [Review!]!
+	getAllOrders: [Order!]!
 }
 
 type EmailSubscriptionResponse {
