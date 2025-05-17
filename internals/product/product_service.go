@@ -212,3 +212,9 @@ func (s *service) GetProductReviews(ctx context.Context, productId uint32, selle
 	}
 	return reviews, nil
 }
+
+func (s *service) GetAllProducts(ctx context.Context) ([]*Product, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	return s.Repository.GetAllProducts(ctx)
+}

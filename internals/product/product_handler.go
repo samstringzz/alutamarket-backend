@@ -61,7 +61,7 @@ func (h *Handler) GetCategory(ctx context.Context, id uint32) (*Category, error)
 }
 
 func (h *Handler) GetProducts(ctx context.Context, store string, categorySlug string, limit int, offset int) ([]*Product, int, error) {
-    return h.Service.GetProducts(ctx, store, categorySlug, limit, offset)
+	return h.Service.GetProducts(ctx, store, categorySlug, limit, offset)
 }
 func (h *Handler) GetCategories(ctx context.Context) ([]*Category, error) {
 	item, err := h.Service.GetCategories(ctx)
@@ -131,6 +131,10 @@ func (h *Handler) AddReview(ctx context.Context, input *Review) (*Review, error)
 		return nil, err
 	}
 	return item, nil
+}
+
+func (h *Handler) GetAllProducts(ctx context.Context) ([]*Product, error) {
+	return h.Service.GetAllProducts(ctx)
 }
 
 // func (h *Handler) AddRecentlyViewedProducts(ctx context.Context, userId,productId uint3,eventType string2)error{

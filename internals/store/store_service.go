@@ -295,3 +295,9 @@ func (s *service) GetStoreEarnings(ctx context.Context, storeID uint32) ([]*Stor
 
 	return s.Repository.GetStoreEarnings(ctx, storeID)
 }
+
+func (s *service) GetAllOrders(ctx context.Context) ([]*Order, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	return s.Repository.GetAllOrders(ctx)
+}
