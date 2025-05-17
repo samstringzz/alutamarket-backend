@@ -372,6 +372,7 @@ input StoreInput {
 	background: String
 }
 input withdrawAccountInput {
+	bank_id: Int!
 	bank_code: String!
 	bank_name: String!
 	bank_image: String!
