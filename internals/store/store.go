@@ -78,11 +78,12 @@ type Downloads struct {
 }
 
 type WithdrawalAccount struct {
-	BankName      string `json:"bank_name" db:"bank_name"`
-	BankCode      string `json:"bank_code" db:"bank_code"`
-	BankImage     string `json:"bank_image" db:"bank_image"`
-	AccountNumber string `json:"account_number" db:"account_number"`
-	AccountName   string `json:"account_name" db:"account_name"`
+	BankID        int    `json:"bank_id"`
+	BankName      string `json:"bank_name"`
+	BankCode      string `json:"bank_code"`
+	BankImage     string `json:"bank_image"`
+	AccountNumber string `json:"account_number"`
+	AccountName   string `json:"account_name"`
 }
 type Store struct {
 	gorm.Model

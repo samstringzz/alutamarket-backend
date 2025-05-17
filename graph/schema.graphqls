@@ -406,9 +406,10 @@ type WithdrawalAccount {
 input WithdrawalAccountInput {
   bankName: String!
   bankCode: String!
-  bankImage: String
+  bankImage: String!
   accountNumber: String!
   accountName: String!
+  bankId: Int!
 }
 
 input UpdateStoreOrderInput {

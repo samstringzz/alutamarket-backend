@@ -845,11 +845,12 @@ type WithdrawalAccount struct {
 }
 
 type WithdrawalAccountInput struct {
-	BankName      string  `json:"bankName"`
-	BankCode      string  `json:"bankCode"`
-	BankImage     *string `json:"bankImage,omitempty"`
-	AccountNumber string  `json:"accountNumber"`
-	AccountName   string  `json:"accountName"`
+	BankName      string `json:"bankName"`
+	BankCode      string `json:"bankCode"`
+	BankImage     string `json:"bankImage"`
+	AccountNumber string `json:"accountNumber"`
+	AccountName   string `json:"accountName"`
+	BankID        int    `json:"bankId"`
 }
 
 type ConfirmPasswordInput struct {

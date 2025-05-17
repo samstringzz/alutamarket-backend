@@ -10,7 +10,6 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/database"
@@ -1100,31 +1099,6 @@ func (r *repository) UpdateStoreBankDetails(ctx context.Context, storeID uint32,
 		return fmt.Errorf("maximum number of bank accounts (3) reached for this store")
 	}
 
-	// Get or create the bank record
-	var bank struct {
-		ID   int    `gorm:"column:id"`
-		Name string `gorm:"column:name"`
-		Slug string `gorm:"column:slug"`
-	}
-
-	// First try to find the bank by name
-	result := r.db.Table("dva_banks").Where("name = ?", account.BankName).First(&bank)
-	if result.Error != nil {
-		// If bank doesn't exist, create it
-		bank = struct {
-			ID   int    `gorm:"column:id"`
-			Name string `gorm:"column:name"`
-			Slug string `gorm:"column:slug"`
-		}{
-			Name: account.BankName,
-			Slug: strings.ToLower(strings.ReplaceAll(account.BankName, " ", "-")),
-		}
-
-		if err := r.db.Table("dva_banks").Create(&bank).Error; err != nil {
-			return fmt.Errorf("failed to create bank record: %v", err)
-		}
-	}
-
 	// Generate a UUID for customer_id if not exists
 	customerID := uuid.New()
 
@@ -1132,7 +1106,7 @@ func (r *repository) UpdateStoreBankDetails(ctx context.Context, storeID uint32,
 	accountData := map[string]interface{}{
 		"store_id":       storeID,
 		"customer_id":    customerID,
-		"bank_id":        bank.ID,
+		"bank_id":        account.BankID,
 		"account_number": account.AccountNumber,
 		"account_name":   account.AccountName,
 		"bank_code":      account.BankCode,
