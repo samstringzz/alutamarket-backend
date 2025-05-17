@@ -122,6 +122,7 @@ extend type Query {
   subscribers: [Subscriber!]!
   getDVAAccount(userID: ID!): DVAAccount
   getStoreEarnings(storeId: Int!): [StoreEarnings!]!
+  getAllProducts: [Product!]!
 }
 
 type Message {
