@@ -2886,6 +2886,44 @@ func (r *queryResolver) GetStoreEarnings(ctx context.Context, storeID int) ([]*m
 	return result, nil
 }
 
+func (r *queryResolver) GetAllProducts(ctx context.Context) ([]*model.Product, error) {
+	productHandler := product.NewHandler(product.NewService(product.NewRepository()))
+
+	// Get all products without any filters
+	products, err := productHandler.GetAllProducts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch all products: %v", err)
+	}
+
+	// Convert to GraphQL model
+	var modelProducts []*model.Product
+	for _, p := range products {
+		if p == nil {
+			continue
+		}
+		modelProducts = append(modelProducts, &model.Product{
+			ID:              int(p.ID),
+			Name:            p.Name,
+			Slug:            p.Slug,
+			Description:     p.Description,
+			Price:           p.Price,
+			Discount:        p.Discount,
+			Status:          p.Status,
+			Quantity:        p.Quantity,
+			Thumbnail:       p.Thumbnail,
+			Image:           p.Images,
+			File:            &p.File,
+			Store:           p.Store,
+			Category:        p.Category,
+			Subcategory:     p.Subcategory,
+			AlwaysAvailable: &p.AlwaysAvailbale,
+			UnitsSold:       p.UnitsSold,
+		})
+	}
+
+	return modelProducts, nil
+}
+
 // ProductSearchResults is the resolver for the productSearchResults field.
 func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
 	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
