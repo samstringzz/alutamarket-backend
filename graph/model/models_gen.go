@@ -337,6 +337,7 @@ type Order struct {
 	Products        []*Product       `json:"products,omitempty"`
 	DeliveryDetails *DeliveryDetails `json:"deliveryDetails,omitempty"`
 	TextRef         *string          `json:"textRef,omitempty"`
+	CreatedAt       *time.Time       `json:"createdAt,omitempty"`
 }
 
 type PaymentData struct {
@@ -413,25 +414,24 @@ type PaystackDVAResponse struct {
 }
 
 type Product struct {
-	ID              int      `json:"id"`
-	Name            string   `json:"name"`
-	Price           float64  `json:"price"`
-	Description     string   `json:"description"`
-	Discount        float64  `json:"discount"`
-	Image           []string `json:"image,omitempty"`
-	Slug            string   `json:"slug"`
-	Quantity        int      `json:"quantity"`
-	Status          bool     `json:"status"`
-	Thumbnail       string   `json:"thumbnail"`
-	Store           string   `json:"store"`
-	Category        string   `json:"category"`
-	Subcategory     string   `json:"subcategory"`
-	AlwaysAvailable *bool    `json:"alwaysAvailable,omitempty"`
-	Type            *string  `json:"type,omitempty"`
-	File            *string  `json:"file,omitempty"`
-	UnitsSold       int      `json:"unitsSold"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
+	ID              int        `json:"id"`
+	Name            string     `json:"name"`
+	Price           float64    `json:"price"`
+	Description     string     `json:"description"`
+	Discount        float64    `json:"discount"`
+	Image           []string   `json:"image,omitempty"`
+	Slug            string     `json:"slug"`
+	Quantity        int        `json:"quantity"`
+	Status          bool       `json:"status"`
+	Thumbnail       string     `json:"thumbnail"`
+	Store           string     `json:"store"`
+	Category        string     `json:"category"`
+	Subcategory     string     `json:"subcategory"`
+	AlwaysAvailable *bool      `json:"alwaysAvailable,omitempty"`
+	Type            *string    `json:"type,omitempty"`
+	File            *string    `json:"file,omitempty"`
+	UnitsSold       int        `json:"unitsSold"`
+	CreatedAt       *time.Time `json:"createdAt,omitempty"`
 }
 
 type ProductInput struct {
