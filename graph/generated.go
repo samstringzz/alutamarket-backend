@@ -408,6 +408,9 @@ type ComplexityRoot struct {
 		Category              func(childComplexity int, id int) int
 		Chats                 func(childComplexity int, userID string) int
 		FollowedStores        func(childComplexity int, userID int) int
+		GetAllOrders          func(childComplexity int) int
+		GetAllProducts        func(childComplexity int) int
+		GetAllReviews         func(childComplexity int) int
 		GetDVAAccount         func(childComplexity int, userID string) int
 		GetDVABalance         func(childComplexity int, accountNumber string, storeID *int) int
 		GetStoreEarnings      func(childComplexity int, storeID int) int
@@ -739,6 +742,9 @@ type QueryResolver interface {
 	MyDownloads(ctx context.Context, id string) ([]*model.Downloads, error)
 	GetUsers(ctx context.Context) ([]*model.User, error)
 	AllStores(ctx context.Context, limit *int, offset *int) (*model.StorePaginationData, error)
+	GetAllProducts(ctx context.Context) ([]*model.Product, error)
+	GetAllReviews(ctx context.Context) ([]*model.Review, error)
+	GetAllOrders(ctx context.Context) ([]*model.Order, error)
 	Chats(ctx context.Context, userID string) ([]*model.Chat, error)
 	Messages(ctx context.Context, chatID string) ([]*model.Message, error)
 	Subscribers(ctx context.Context) ([]*model.Subscriber, error)
@@ -2761,6 +2767,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.FollowedStores(childComplexity, args["userId"].(int)), true
+
+	case "Query.getAllOrders":
+		if e.complexity.Query.GetAllOrders == nil {
+			break
+		}
+
+		return e.complexity.Query.GetAllOrders(childComplexity), true
+
+	case "Query.getAllProducts":
+		if e.complexity.Query.GetAllProducts == nil {
+			break
+		}
+
+		return e.complexity.Query.GetAllProducts(childComplexity), true
+
+	case "Query.getAllReviews":
+		if e.complexity.Query.GetAllReviews == nil {
+			break
+		}
+
+		return e.complexity.Query.GetAllReviews(childComplexity), true
 
 	case "Query.getDVAAccount":
 		if e.complexity.Query.GetDVAAccount == nil {
@@ -21196,6 +21223,232 @@ func (ec *executionContext) fieldContext_Query_allStores(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_getAllProducts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getAllProducts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetAllProducts(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Product)
+	fc.Result = res
+	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getAllProducts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Product_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Product_name(ctx, field)
+			case "price":
+				return ec.fieldContext_Product_price(ctx, field)
+			case "description":
+				return ec.fieldContext_Product_description(ctx, field)
+			case "discount":
+				return ec.fieldContext_Product_discount(ctx, field)
+			case "image":
+				return ec.fieldContext_Product_image(ctx, field)
+			case "slug":
+				return ec.fieldContext_Product_slug(ctx, field)
+			case "quantity":
+				return ec.fieldContext_Product_quantity(ctx, field)
+			case "status":
+				return ec.fieldContext_Product_status(ctx, field)
+			case "thumbnail":
+				return ec.fieldContext_Product_thumbnail(ctx, field)
+			case "store":
+				return ec.fieldContext_Product_store(ctx, field)
+			case "category":
+				return ec.fieldContext_Product_category(ctx, field)
+			case "subcategory":
+				return ec.fieldContext_Product_subcategory(ctx, field)
+			case "alwaysAvailable":
+				return ec.fieldContext_Product_alwaysAvailable(ctx, field)
+			case "type":
+				return ec.fieldContext_Product_type(ctx, field)
+			case "file":
+				return ec.fieldContext_Product_file(ctx, field)
+			case "unitsSold":
+				return ec.fieldContext_Product_unitsSold(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getAllReviews(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getAllReviews(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetAllReviews(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Review)
+	fc.Result = res
+	return ec.marshalNReview2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getAllReviews(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "store_id":
+				return ec.fieldContext_Review_store_id(ctx, field)
+			case "product_id":
+				return ec.fieldContext_Review_product_id(ctx, field)
+			case "order_id":
+				return ec.fieldContext_Review_order_id(ctx, field)
+			case "buyer":
+				return ec.fieldContext_Review_buyer(ctx, field)
+			case "seller_id":
+				return ec.fieldContext_Review_seller_id(ctx, field)
+			case "message":
+				return ec.fieldContext_Review_message(ctx, field)
+			case "username":
+				return ec.fieldContext_Review_username(ctx, field)
+			case "rating":
+				return ec.fieldContext_Review_rating(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Review_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Review_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Review", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getAllOrders(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getAllOrders(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetAllOrders(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Order)
+	fc.Result = res
+	return ec.marshalNOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrderᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getAllOrders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Order_id(ctx, field)
+			case "customer":
+				return ec.fieldContext_Order_customer(ctx, field)
+			case "customer_email":
+				return ec.fieldContext_Order_customer_email(ctx, field)
+			case "price":
+				return ec.fieldContext_Order_price(ctx, field)
+			case "status":
+				return ec.fieldContext_Order_status(ctx, field)
+			case "date":
+				return ec.fieldContext_Order_date(ctx, field)
+			case "store_id":
+				return ec.fieldContext_Order_store_id(ctx, field)
+			case "cartID":
+				return ec.fieldContext_Order_cartID(ctx, field)
+			case "uuid":
+				return ec.fieldContext_Order_uuid(ctx, field)
+			case "amount":
+				return ec.fieldContext_Order_amount(ctx, field)
+			case "paymentGateway":
+				return ec.fieldContext_Order_paymentGateway(ctx, field)
+			case "paymentMethod":
+				return ec.fieldContext_Order_paymentMethod(ctx, field)
+			case "transRef":
+				return ec.fieldContext_Order_transRef(ctx, field)
+			case "transStatus":
+				return ec.fieldContext_Order_transStatus(ctx, field)
+			case "products":
+				return ec.fieldContext_Order_products(ctx, field)
+			case "deliveryDetails":
+				return ec.fieldContext_Order_deliveryDetails(ctx, field)
+			case "textRef":
+				return ec.fieldContext_Order_textRef(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Order", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_Chats(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_Chats(ctx, field)
 	if err != nil {
@@ -36003,6 +36256,72 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getAllProducts":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getAllProducts(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getAllReviews":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getAllReviews(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getAllOrders":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getAllOrders(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "Chats":
 			field := field
 
@@ -38613,6 +38932,50 @@ func (ec *executionContext) unmarshalNNewVerifyOTP2githubᚗcomᚋChrisentechᚋ
 
 func (ec *executionContext) marshalNOrder2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v model.Order) graphql.Marshaler {
 	return ec._Order(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Order) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrder(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v *model.Order) graphql.Marshaler {

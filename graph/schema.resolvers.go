@@ -2721,6 +2721,153 @@ func (r *queryResolver) AllStores(ctx context.Context, limit *int, offset *int) 
 	}, nil
 }
 
+// GetAllProducts is the resolver for the getAllProducts field.
+func (r *queryResolver) GetAllProducts(ctx context.Context) ([]*model.Product, error) {
+	productHandler := product.NewHandler(product.NewService(product.NewRepository()))
+
+	// Get all products without any filters
+	products, err := productHandler.GetAllProducts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch all products: %v", err)
+	}
+
+	// Convert to GraphQL model
+	var modelProducts []*model.Product
+	for _, p := range products {
+		if p == nil {
+			continue
+		}
+		modelProducts = append(modelProducts, &model.Product{
+			ID:              int(p.ID),
+			Name:            p.Name,
+			Slug:            p.Slug,
+			Description:     p.Description,
+			Price:           p.Price,
+			Discount:        p.Discount,
+			Status:          p.Status,
+			Quantity:        p.Quantity,
+			Thumbnail:       p.Thumbnail,
+			Image:           p.Images,
+			File:            &p.File,
+			Store:           p.Store,
+			Category:        p.Category,
+			Subcategory:     p.Subcategory,
+			AlwaysAvailable: &p.AlwaysAvailbale,
+			UnitsSold:       p.UnitsSold,
+		})
+	}
+
+	return modelProducts, nil
+}
+
+// GetAllReviews is the resolver for the getAllReviews field.
+func (r *queryResolver) GetAllReviews(ctx context.Context) ([]*model.Review, error) {
+	db := database.GetDB()
+	if db == nil {
+		return nil, fmt.Errorf("database connection failed")
+	}
+
+	var reviews []*model.Review
+
+	// Query struct for database
+	type dbReview struct {
+		StoreID   int       `json:"store_id"`
+		ProductID int       `json:"product_id"`
+		OrderID   string    `json:"order_id"`
+		SellerID  int       `json:"seller_id"`
+		Rating    float64   `json:"rating"`
+		Message   string    `json:"message"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Nickname  string    `json:"nickname"`
+		Avatar    string    `json:"avatar"`
+		Comment   string    `json:"comment"`
+	}
+
+	// Get all reviews with user information
+	var dbReviews []dbReview
+	if err := db.Table("reviews").
+		Select("reviews.*, users.nickname, users.avatar").
+		Joins("LEFT JOIN users ON reviews.buyer_id = users.id").
+		Scan(&dbReviews).Error; err != nil {
+		return nil, fmt.Errorf("error fetching reviews: %v", err)
+	}
+
+	// Convert to model.Review objects
+	for _, r := range dbReviews {
+		review := &model.Review{
+			StoreID:   r.StoreID,
+			ProductID: r.ProductID,
+			OrderID:   r.OrderID,
+			SellerID:  r.SellerID,
+			Rating:    r.Rating,
+			Message:   &r.Message,
+			CreatedAt: &r.CreatedAt,
+			UpdatedAt: &r.UpdatedAt,
+			Buyer: &model.ReviewBuyer{
+				Nickname: r.Nickname,
+				Avatar:   r.Avatar,
+				Comment:  r.Comment,
+			},
+		}
+		reviews = append(reviews, review)
+	}
+
+	return reviews, nil
+}
+
+// GetAllOrders is the resolver for the getAllOrders field.
+func (r *queryResolver) GetAllOrders(ctx context.Context) ([]*model.Order, error) {
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+
+	// Get all orders
+	orders, err := storeHandler.GetAllOrders(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch all orders: %v", err)
+	}
+
+	var result []*model.Order
+	for _, order := range orders {
+		// Convert products
+		var products []*model.Product
+		for _, p := range order.Products {
+			products = append(products, &model.Product{
+				ID:        int(p.ID),
+				Name:      p.Name,
+				Price:     p.Price,
+				Thumbnail: p.Thumbnail,
+				Status:    p.Status == "active",
+			})
+		}
+
+		// Convert delivery details
+		var deliveryDetails *model.DeliveryDetails
+		if order.DeliveryDetails != nil {
+			deliveryDetails = &model.DeliveryDetails{
+				Method:  order.DeliveryDetails.Method,
+				Address: order.DeliveryDetails.Address,
+				Fee:     order.DeliveryDetails.Fee,
+			}
+		}
+
+		result = append(result, &model.Order{
+			CartID:          int(order.CartID),
+			UUID:            order.UUID,
+			Amount:          order.Amount,
+			Status:          order.Status,
+			PaymentGateway:  order.PaymentGateway,
+			PaymentMethod:   order.PaymentMethod,
+			TransRef:        order.TransRef,
+			TransStatus:     order.TransStatus,
+			Products:        products,
+			DeliveryDetails: deliveryDetails,
+			TextRef:         &order.TransRef,
+		})
+	}
+
+	return result, nil
+}
+
 // Add/Update the Chats query resolver
 func (r *queryResolver) Chats(ctx context.Context, userID string) ([]*model.Chat, error) {
 	// Convert userID string to uint32
@@ -2886,150 +3033,6 @@ func (r *queryResolver) GetStoreEarnings(ctx context.Context, storeID int) ([]*m
 	return result, nil
 }
 
-func (r *queryResolver) GetAllProducts(ctx context.Context) ([]*model.Product, error) {
-	productHandler := product.NewHandler(product.NewService(product.NewRepository()))
-
-	// Get all products without any filters
-	products, err := productHandler.GetAllProducts(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch all products: %v", err)
-	}
-
-	// Convert to GraphQL model
-	var modelProducts []*model.Product
-	for _, p := range products {
-		if p == nil {
-			continue
-		}
-		modelProducts = append(modelProducts, &model.Product{
-			ID:              int(p.ID),
-			Name:            p.Name,
-			Slug:            p.Slug,
-			Description:     p.Description,
-			Price:           p.Price,
-			Discount:        p.Discount,
-			Status:          p.Status,
-			Quantity:        p.Quantity,
-			Thumbnail:       p.Thumbnail,
-			Image:           p.Images,
-			File:            &p.File,
-			Store:           p.Store,
-			Category:        p.Category,
-			Subcategory:     p.Subcategory,
-			AlwaysAvailable: &p.AlwaysAvailbale,
-			UnitsSold:       p.UnitsSold,
-		})
-	}
-
-	return modelProducts, nil
-}
-
-func (r *queryResolver) GetAllReviews(ctx context.Context) ([]*model.Review, error) {
-	db := database.GetDB()
-	if db == nil {
-		return nil, fmt.Errorf("database connection failed")
-	}
-
-	var reviews []*model.Review
-
-	// Query struct for database
-	type dbReview struct {
-		StoreID   int       `json:"store_id"`
-		ProductID int       `json:"product_id"`
-		OrderID   string    `json:"order_id"`
-		SellerID  int       `json:"seller_id"`
-		Rating    float64   `json:"rating"`
-		Message   string    `json:"message"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Nickname  string    `json:"nickname"`
-		Avatar    string    `json:"avatar"`
-		Comment   string    `json:"comment"`
-	}
-
-	// Get all reviews with user information
-	var dbReviews []dbReview
-	if err := db.Table("reviews").
-		Select("reviews.*, users.nickname, users.avatar").
-		Joins("LEFT JOIN users ON reviews.buyer_id = users.id").
-		Scan(&dbReviews).Error; err != nil {
-		return nil, fmt.Errorf("error fetching reviews: %v", err)
-	}
-
-	// Convert to model.Review objects
-	for _, r := range dbReviews {
-		review := &model.Review{
-			StoreID:   r.StoreID,
-			ProductID: r.ProductID,
-			OrderID:   r.OrderID,
-			SellerID:  r.SellerID,
-			Rating:    r.Rating,
-			Message:   &r.Message,
-			CreatedAt: &r.CreatedAt,
-			UpdatedAt: &r.UpdatedAt,
-			Buyer: &model.ReviewBuyer{
-				Nickname: r.Nickname,
-				Avatar:   r.Avatar,
-				Comment:  r.Comment,
-			},
-		}
-		reviews = append(reviews, review)
-	}
-
-	return reviews, nil
-}
-
-func (r *queryResolver) GetAllOrders(ctx context.Context) ([]*model.Order, error) {
-	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
-
-	// Get all orders
-	orders, err := storeHandler.GetAllOrders(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch all orders: %v", err)
-	}
-
-	var result []*model.Order
-	for _, order := range orders {
-		// Convert products
-		var products []*model.Product
-		for _, p := range order.Products {
-			products = append(products, &model.Product{
-				ID:        int(p.ID),
-				Name:      p.Name,
-				Price:     p.Price,
-				Thumbnail: p.Thumbnail,
-				Status:    p.Status == "active",
-			})
-		}
-
-		// Convert delivery details
-		var deliveryDetails *model.DeliveryDetails
-		if order.DeliveryDetails != nil {
-			deliveryDetails = &model.DeliveryDetails{
-				Method:  order.DeliveryDetails.Method,
-				Address: order.DeliveryDetails.Address,
-				Fee:     order.DeliveryDetails.Fee,
-			}
-		}
-
-		result = append(result, &model.Order{
-			CartID:          int(order.CartID),
-			UUID:            order.UUID,
-			Amount:          order.Amount,
-			Status:          order.Status,
-			PaymentGateway:  order.PaymentGateway,
-			PaymentMethod:   order.PaymentMethod,
-			TransRef:        order.TransRef,
-			TransStatus:     order.TransStatus,
-			Products:        products,
-			DeliveryDetails: deliveryDetails,
-			TextRef:         &order.TransRef,
-		})
-	}
-
-	return result, nil
-}
-
 // ProductSearchResults is the resolver for the productSearchResults field.
 func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
 	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
@@ -3047,52 +3050,3 @@ func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionRes
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *queryResolver) GetAllProducts(ctx context.Context) ([]*model.Product, error) {
-	productHandler := product.NewHandler(product.NewService(product.NewRepository()))
-
-	// Get all products without any filters
-	products, err := productHandler.GetAllProducts(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch all products: %v", err)
-	}
-
-	// Convert to GraphQL model
-	var modelProducts []*model.Product
-	for _, p := range products {
-		if p == nil {
-			continue
-		}
-		modelProducts = append(modelProducts, &model.Product{
-			ID:              int(p.ID),
-			Name:            p.Name,
-			Slug:            p.Slug,
-			Description:     p.Description,
-			Price:           p.Price,
-			Discount:        p.Discount,
-			Status:          p.Status,
-			Quantity:        p.Quantity,
-			Thumbnail:       p.Thumbnail,
-			Image:           p.Images,
-			File:            &p.File,
-			Store:           p.Store,
-			Category:        p.Category,
-			Subcategory:     p.Subcategory,
-			AlwaysAvailable: &p.AlwaysAvailbale,
-			UnitsSold:       p.UnitsSold,
-			CreatedAt:       &p.CreatedAt,
-			UpdatedAt:       &p.UpdatedAt,
-		})
-	}
-
-	return modelProducts, nil
-}
-
-*/
