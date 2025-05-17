@@ -10,6 +10,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/database"
@@ -1079,6 +1080,40 @@ func (r *repository) GetAllStores(ctx context.Context, limit, offset int) ([]*St
 
 // UpdateStoreBankDetails updates or creates bank details for a store
 func (r *repository) UpdateStoreBankDetails(ctx context.Context, storeID uint32, account *WithdrawalAccount) error {
+	// First, get or create the bank record
+	var bank DVABank
+	result := r.db.Where("name = ?", account.BankName).First(&bank)
+	if result.Error != nil {
+		// If bank doesn't exist, create it
+		bank = DVABank{
+			ID:   fmt.Sprintf("BANK_%d_%s", time.Now().Unix(), utils.GenerateRandomString(8)),
+			Name: account.BankName,
+			Slug: strings.ToLower(strings.ReplaceAll(account.BankName, " ", "-")),
+		}
+		if err := r.db.Create(&bank).Error; err != nil {
+			return fmt.Errorf("failed to create bank record: %v", err)
+		}
+	}
+
+	// Get the existing store to get user details
+	existingStore, err := r.GetStore(ctx, storeID)
+	if err != nil {
+		return fmt.Errorf("failed to get store details: %v", err)
+	}
+
+	// Get the user details
+	var user struct {
+		ID       uint32 `json:"id"`
+		UUID     string `json:"uuid"`
+		Fullname string `json:"fullname"`
+		Email    string `json:"email"`
+	}
+	if err := r.db.Table("users").
+		Where("id = ?", existingStore.UserID).
+		First(&user).Error; err != nil {
+		return fmt.Errorf("failed to get user details: %v", err)
+	}
+
 	// Create a new account record directly in dva_accounts table
 	bankDetails := map[string]interface{}{
 		"store_id":       storeID,
@@ -1087,10 +1122,12 @@ func (r *repository) UpdateStoreBankDetails(ctx context.Context, storeID uint32,
 		"bank_name":      account.BankName,
 		"bank_code":      account.BankCode,
 		"bank_image":     account.BankImage,
+		"bank_id":        bank.ID,
+		"customer_id":    user.UUID,
 	}
 
 	// Try to update existing record first
-	result := r.db.Table("dva_accounts").
+	result = r.db.Table("dva_accounts").
 		Where("store_id = ?", storeID).
 		Updates(bankDetails)
 
