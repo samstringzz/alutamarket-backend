@@ -340,6 +340,29 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 
 		// If no record was updated, create a new one
 		if result.RowsAffected == 0 {
+			// Get the existing store to get user details
+			existingStore, err := r.GetStore(ctx, req.ID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get store details: %v", err)
+			}
+
+			// Get the user details
+			var user struct {
+				ID       string `json:"id"`
+				UUID     string `json:"uuid"`
+				Fullname string `json:"fullname"`
+				Email    string `json:"email"`
+			}
+			if err := r.db.Table("users").
+				Where("id = ?", existingStore.UserID).
+				First(&user).Error; err != nil {
+				return nil, fmt.Errorf("failed to get user details: %v", err)
+			}
+
+			// Add customer_id to bank details
+			bankDetails["customer_id"] = user.UUID
+
+			// Create new record
 			if err := r.db.Table("dva_accounts").Create(bankDetails).Error; err != nil {
 				return nil, fmt.Errorf("failed to create bank details: %v", err)
 			}

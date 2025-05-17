@@ -1096,6 +1096,7 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 
 	// Handle account information if provided
 	if input.Account != nil {
+		// Set the account details directly without creating a DVA account
 		updateStore.Account = &store.WithdrawalAccount{
 			BankName:      input.Account.BankName,
 			BankCode:      input.Account.BankCode,
