@@ -667,6 +667,7 @@ type ComplexityRoot struct {
 		AccountName   func(childComplexity int) int
 		AccountNumber func(childComplexity int) int
 		BankCode      func(childComplexity int) int
+		BankID        func(childComplexity int) int
 		BankImage     func(childComplexity int) int
 		BankName      func(childComplexity int) int
 	}
@@ -4166,6 +4167,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.WithdrawAccount.BankCode(childComplexity), true
+
+	case "withdrawAccount.bank_id":
+		if e.complexity.WithdrawAccount.BankID == nil {
+			break
+		}
+
+		return e.complexity.WithdrawAccount.BankID(childComplexity), true
 
 	case "withdrawAccount.bank_image":
 		if e.complexity.WithdrawAccount.BankImage == nil {
@@ -24432,6 +24440,8 @@ func (ec *executionContext) fieldContext_Store_accounts(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "bank_id":
+				return ec.fieldContext_withdrawAccount_bank_id(ctx, field)
 			case "bank_code":
 				return ec.fieldContext_withdrawAccount_bank_code(ctx, field)
 			case "bank_name":
@@ -30664,6 +30674,50 @@ func (ec *executionContext) fieldContext_fund_bank_code(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _withdrawAccount_bank_id(ctx context.Context, field graphql.CollectedField, obj *model.WithdrawAccount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_withdrawAccount_bank_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BankID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_withdrawAccount_bank_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "withdrawAccount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -38425,6 +38479,11 @@ func (ec *executionContext) _withdrawAccount(ctx context.Context, sel ast.Select
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("withdrawAccount")
+		case "bank_id":
+			out.Values[i] = ec._withdrawAccount_bank_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "bank_code":
 			out.Values[i] = ec._withdrawAccount_bank_code(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

@@ -900,6 +900,7 @@ type Verifyotpinput struct {
 }
 
 type WithdrawAccount struct {
+	BankID        int    `json:"bank_id"`
 	BankCode      string `json:"bank_code"`
 	BankName      string `json:"bank_name"`
 	BankImage     string `json:"bank_image"`
