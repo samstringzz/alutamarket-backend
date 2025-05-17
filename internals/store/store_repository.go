@@ -16,6 +16,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/database"
 	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/Chrisentech/aluta-market-api/utils"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
@@ -1100,64 +1101,55 @@ func (r *repository) UpdateStoreBankDetails(ctx context.Context, storeID uint32,
 	}
 
 	// Get or create the bank record
-	var bank DVABank
-	bankID := fmt.Sprintf("BANK_%s", strings.ToLower(strings.ReplaceAll(account.BankName, " ", "_")))
+	var bank struct {
+		ID   int    `gorm:"column:id"`
+		Name string `gorm:"column:name"`
+		Slug string `gorm:"column:slug"`
+	}
 
-	result := r.db.Where("id = ? OR name = ?", bankID, account.BankName).First(&bank)
+	// First try to find the bank by name
+	result := r.db.Table("dva_banks").Where("name = ?", account.BankName).First(&bank)
 	if result.Error != nil {
 		// If bank doesn't exist, create it
-		bank = DVABank{
-			ID:   bankID,
+		bank = struct {
+			ID   int    `gorm:"column:id"`
+			Name string `gorm:"column:name"`
+			Slug string `gorm:"column:slug"`
+		}{
 			Name: account.BankName,
 			Slug: strings.ToLower(strings.ReplaceAll(account.BankName, " ", "-")),
 		}
-		if err := r.db.Create(&bank).Error; err != nil {
+
+		if err := r.db.Table("dva_banks").Create(&bank).Error; err != nil {
 			return fmt.Errorf("failed to create bank record: %v", err)
 		}
 	}
 
-	// Get the existing store to get user details
-	existingStore, err := r.GetStore(ctx, storeID)
-	if err != nil {
-		return fmt.Errorf("failed to get store details: %v", err)
-	}
+	// Generate a UUID for customer_id if not exists
+	customerID := uuid.New()
 
-	// Get the user details
-	var user struct {
-		ID       uint32 `json:"id"`
-		UUID     string `json:"uuid"`
-		Fullname string `json:"fullname"`
-		Email    string `json:"email"`
-	}
-	if err := r.db.Table("users").
-		Where("id = ?", existingStore.UserID).
-		First(&user).Error; err != nil {
-		return fmt.Errorf("failed to get user details: %v", err)
-	}
-
-	// Create bank details map
-	bankDetails := map[string]interface{}{
+	// Create or update the account record
+	accountData := map[string]interface{}{
 		"store_id":       storeID,
+		"customer_id":    customerID,
+		"bank_id":        bank.ID,
 		"account_number": account.AccountNumber,
 		"account_name":   account.AccountName,
-		"bank_name":      account.BankName,
 		"bank_code":      account.BankCode,
+		"bank_name":      account.BankName,
 		"bank_image":     account.BankImage,
-		"bank_id":        bank.ID,
-		"customer_id":    user.UUID,
 	}
 
 	if accountExists {
 		// Update existing account
-		result = r.db.Table("dva_accounts").
+		if err := r.db.Table("dva_accounts").
 			Where("store_id = ? AND account_number = ?", storeID, account.AccountNumber).
-			Updates(bankDetails)
-		if result.Error != nil {
-			return fmt.Errorf("failed to update bank details: %v", result.Error)
+			Updates(accountData).Error; err != nil {
+			return fmt.Errorf("failed to update bank details: %v", err)
 		}
 	} else {
 		// Create new account
-		if err := r.db.Table("dva_accounts").Create(bankDetails).Error; err != nil {
+		if err := r.db.Table("dva_accounts").Create(accountData).Error; err != nil {
 			return fmt.Errorf("failed to create bank details: %v", err)
 		}
 	}
