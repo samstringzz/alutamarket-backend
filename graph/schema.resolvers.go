@@ -2924,6 +2924,112 @@ func (r *queryResolver) GetAllProducts(ctx context.Context) ([]*model.Product, e
 	return modelProducts, nil
 }
 
+func (r *queryResolver) GetAllReviews(ctx context.Context) ([]*model.Review, error) {
+	db := database.GetDB()
+	if db == nil {
+		return nil, fmt.Errorf("database connection failed")
+	}
+
+	var reviews []*model.Review
+
+	// Query struct for database
+	type dbReview struct {
+		StoreID   int       `json:"store_id"`
+		ProductID int       `json:"product_id"`
+		OrderID   string    `json:"order_id"`
+		SellerID  int       `json:"seller_id"`
+		Rating    float64   `json:"rating"`
+		Message   string    `json:"message"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Nickname  string    `json:"nickname"`
+		Avatar    string    `json:"avatar"`
+		Comment   string    `json:"comment"`
+	}
+
+	// Get all reviews with user information
+	var dbReviews []dbReview
+	if err := db.Table("reviews").
+		Select("reviews.*, users.nickname, users.avatar").
+		Joins("LEFT JOIN users ON reviews.buyer_id = users.id").
+		Scan(&dbReviews).Error; err != nil {
+		return nil, fmt.Errorf("error fetching reviews: %v", err)
+	}
+
+	// Convert to model.Review objects
+	for _, r := range dbReviews {
+		review := &model.Review{
+			StoreID:   r.StoreID,
+			ProductID: r.ProductID,
+			OrderID:   r.OrderID,
+			SellerID:  r.SellerID,
+			Rating:    r.Rating,
+			Message:   &r.Message,
+			CreatedAt: &r.CreatedAt,
+			UpdatedAt: &r.UpdatedAt,
+			Buyer: &model.ReviewBuyer{
+				Nickname: r.Nickname,
+				Avatar:   r.Avatar,
+				Comment:  r.Comment,
+			},
+		}
+		reviews = append(reviews, review)
+	}
+
+	return reviews, nil
+}
+
+func (r *queryResolver) GetAllOrders(ctx context.Context) ([]*model.Order, error) {
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+
+	// Get all orders
+	orders, err := storeHandler.GetAllOrders(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch all orders: %v", err)
+	}
+
+	var result []*model.Order
+	for _, order := range orders {
+		// Convert products
+		var products []*model.Product
+		for _, p := range order.Products {
+			products = append(products, &model.Product{
+				ID:        int(p.ID),
+				Name:      p.Name,
+				Price:     p.Price,
+				Thumbnail: p.Thumbnail,
+				Status:    p.Status == "active",
+			})
+		}
+
+		// Convert delivery details
+		var deliveryDetails *model.DeliveryDetails
+		if order.DeliveryDetails != nil {
+			deliveryDetails = &model.DeliveryDetails{
+				Method:  order.DeliveryDetails.Method,
+				Address: order.DeliveryDetails.Address,
+				Fee:     order.DeliveryDetails.Fee,
+			}
+		}
+
+		result = append(result, &model.Order{
+			CartID:          int(order.CartID),
+			UUID:            order.UUID,
+			Amount:          order.Amount,
+			Status:          order.Status,
+			PaymentGateway:  order.PaymentGateway,
+			PaymentMethod:   order.PaymentMethod,
+			TransRef:        order.TransRef,
+			TransStatus:     order.TransStatus,
+			Products:        products,
+			DeliveryDetails: deliveryDetails,
+			TextRef:         &order.TransRef,
+		})
+	}
+
+	return result, nil
+}
+
 // ProductSearchResults is the resolver for the productSearchResults field.
 func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
 	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
@@ -2988,110 +3094,5 @@ type subscriptionResolver struct{ *Resolver }
 
 	return modelProducts, nil
 }
-func (r *queryResolver) GetAllOrders(ctx context.Context) ([]*model.Order, error) {
-	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
 
-	// Get all orders
-	orders, err := storeHandler.GetAllOrders(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch all orders: %v", err)
-	}
-
-	var result []*model.Order
-	for _, order := range orders {
-		// Convert products
-		var products []*model.Product
-		for _, p := range order.Products {
-			products = append(products, &model.Product{
-				ID:        int(p.ID),
-				Name:      p.Name,
-				Price:     p.Price,
-				Thumbnail: p.Thumbnail,
-				Status:    p.Status == "active",
-			})
-		}
-
-		// Convert delivery details
-		var deliveryDetails *model.DeliveryDetails
-		if order.DeliveryDetails != nil {
-			deliveryDetails = &model.DeliveryDetails{
-				Method:  order.DeliveryDetails.Method,
-				Address: order.DeliveryDetails.Address,
-				Fee:     order.DeliveryDetails.Fee,
-			}
-		}
-
-		result = append(result, &model.Order{
-			CartID:          int(order.CartID),
-			UUID:            order.UUID,
-			Amount:          order.Amount,
-			Status:          order.Status,
-			PaymentGateway:  order.PaymentGateway,
-			PaymentMethod:   order.PaymentMethod,
-			TransRef:        order.TransRef,
-			TransStatus:     order.TransStatus,
-			Products:        products,
-			DeliveryDetails: deliveryDetails,
-			TextRef:         &order.TransRef,
-			CreatedAt:       &order.CreatedAt,
-			UpdatedAt:       &order.UpdatedAt,
-		})
-	}
-
-	return result, nil
-}
-func (r *queryResolver) GetAllReviews(ctx context.Context) ([]*model.Review, error) {
-	db := database.GetDB()
-	if db == nil {
-		return nil, fmt.Errorf("database connection failed")
-	}
-
-	var reviews []*model.Review
-
-	// Query struct for database
-	type dbReview struct {
-		StoreID   int       `json:"store_id"`
-		ProductID int       `json:"product_id"`
-		OrderID   string    `json:"order_id"`
-		SellerID  int       `json:"seller_id"`
-		Rating    float64   `json:"rating"`
-		Message   string    `json:"message"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Nickname  string    `json:"nickname"`
-		Avatar    string    `json:"avatar"`
-		Comment   string    `json:"comment"`
-	}
-
-	// Get all reviews with user information
-	var dbReviews []dbReview
-	if err := db.Table("reviews").
-		Select("reviews.*, users.nickname, users.avatar").
-		Joins("LEFT JOIN users ON reviews.buyer_id = users.id").
-		Scan(&dbReviews).Error; err != nil {
-		return nil, fmt.Errorf("error fetching reviews: %v", err)
-	}
-
-	// Convert to model.Review objects
-	for _, r := range dbReviews {
-		review := &model.Review{
-			StoreID:   r.StoreID,
-			ProductID: r.ProductID,
-			OrderID:   r.OrderID,
-			SellerID:  r.SellerID,
-			Rating:    r.Rating,
-			Message:   &r.Message,
-			CreatedAt: &r.CreatedAt,
-			UpdatedAt: &r.UpdatedAt,
-			Buyer: &model.ReviewBuyer{
-				Nickname: r.Nickname,
-				Avatar:   r.Avatar,
-				Comment:  r.Comment,
-			},
-		}
-		reviews = append(reviews, review)
-	}
-
-	return reviews, nil
-}
 */
