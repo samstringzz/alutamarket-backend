@@ -328,6 +328,7 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 			"bank_name":      req.Account.BankName,
 			"bank_code":      req.Account.BankCode,
 			"bank_image":     req.Account.BankImage,
+			"bank_id":        req.Account.BankID,
 		}
 
 		// Try to update existing record first
