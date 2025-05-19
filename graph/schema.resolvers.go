@@ -1082,6 +1082,9 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 	if input.Status != nil {
 		updateStore.Status = *input.Status
 	}
+	if input.MaintenanceMode != nil {
+		updateStore.MaintenanceMode = *input.MaintenanceMode
+	}
 
 	// Handle visitor array - convert to string array
 	if len(input.Visitor) > 0 {
@@ -1175,6 +1178,7 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 		Followers:          followers,
 		Product:            products,
 		Accounts:           accounts,
+		MaintenanceMode:    updatedStore.MaintenanceMode,
 	}, nil
 }
 

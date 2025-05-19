@@ -132,6 +132,7 @@ type UpdateStore struct {
 	Email              string             `json:"email" db:"email"`
 	Background         string             `json:"background" db:"background"`
 	Visitors           []string           `gorm:"serializer:json" json:"visitors" db:"visitors"`
+	MaintenanceMode    bool               `json:"maintenance_mode" db:"maintenance_mode"`
 }
 
 type TrackedProduct struct {
