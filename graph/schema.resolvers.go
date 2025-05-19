@@ -2208,11 +2208,12 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 			Address:            s.Address,
 			Status:             s.Status,
 			HasPhysicalAddress: s.HasPhysicalAddress,
-			Wallet:             float64(s.Wallet), // Convert Wallet to float64
+			Wallet:             float64(s.Wallet),
 			Visitors:           s.Visitors,
 			Followers:          followers,
 			Product:            products,
 			Accounts:           accounts,
+			MaintenanceMode:    s.MaintenanceMode,
 		}
 		modelStores = append(modelStores, modelStore)
 	}
@@ -2227,7 +2228,78 @@ func (r *queryResolver) Stores(ctx context.Context, user *int, limit *int, offse
 
 // Store is the resolver for the Store field.
 func (r *queryResolver) Store(ctx context.Context, id int) (*model.Store, error) {
-	panic(fmt.Errorf("not implemented: Store - Store"))
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+
+	// Get store by ID
+	s, err := storeHandler.GetStore(ctx, uint32(id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch store: %v", err)
+	}
+
+	// Convert followers to GraphQL model
+	var followers []*model.StoreFollower
+	for _, f := range s.Followers {
+		followers = append(followers, &model.StoreFollower{
+			FollowerID:    int(f.FollowerID),
+			FollowerName:  f.FollowerName,
+			StoreID:       int(f.StoreID),
+			FollowerImage: f.FollowerImage,
+		})
+	}
+
+	// Convert products to GraphQL model
+	var products []*model.Product
+	for _, p := range s.Products {
+		products = append(products, &model.Product{
+			ID:          int(p.ID),
+			Name:        p.Name,
+			Price:       p.Price,
+			Description: p.Description,
+			Discount:    p.Discount,
+			Image:       p.Images,
+			Slug:        p.Slug,
+			Quantity:    p.Quantity,
+			Status:      p.Status,
+			Thumbnail:   p.Thumbnail,
+			Store:       p.Store,
+			Category:    p.Category,
+			Subcategory: p.Subcategory,
+		})
+	}
+
+	// Convert accounts to GraphQL model
+	var accounts []*model.WithdrawAccount
+	if s.Accounts != nil {
+		for _, a := range s.Accounts {
+			accounts = append(accounts, &model.WithdrawAccount{
+				BankCode:      a.BankCode,
+				BankName:      a.BankName,
+				BankImage:     a.BankImage,
+				AccountNumber: a.AccountNumber,
+				AccountName:   a.AccountName,
+			})
+		}
+	}
+
+	return &model.Store{
+		ID:                 strconv.Itoa(int(s.ID)),
+		Link:               s.Link,
+		Name:               s.Name,
+		User:               int(s.UserID),
+		Description:        s.Description,
+		Thumbnail:          s.Thumbnail,
+		Phone:              s.Phone,
+		Background:         s.Background,
+		Address:            s.Address,
+		Status:             s.Status,
+		HasPhysicalAddress: s.HasPhysicalAddress,
+		Wallet:             float64(s.Wallet),
+		Visitors:           s.Visitors,
+		Followers:          followers,
+		Product:            products,
+		Accounts:           accounts,
+		MaintenanceMode:    s.MaintenanceMode,
+	}, nil
 }
 
 // Reviews is the resolver for the Reviews field.
