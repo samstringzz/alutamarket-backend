@@ -407,7 +407,7 @@ func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Produ
 	err := r.db.Select("DISTINCT ON (products.id) products.*").
 		Table("products").
 		Joins("LEFT JOIN categories ON LOWER(categories.name) = LOWER(products.category)").
-		Joins("LEFT JOIN stores ON CAST(products.store AS INTEGER) = stores.id"). // Fix: Cast store to integer
+		Joins("LEFT JOIN stores ON stores.name = products.store").
 		Where("products.deleted_at IS NULL").
 		Where("stores.maintenance_mode = ?", false).
 		Where("LOWER(products.name) ILIKE ? OR LOWER(products.category) ILIKE ? OR LOWER(COALESCE(categories.slug, '')) ILIKE ?",
@@ -438,8 +438,8 @@ func (r *repository) GetRecommendedProducts(ctx context.Context, query string) (
 	var products []*Product
 	err := r.db.
 		Table("products").
-		Joins("LEFT JOIN stores ON products.store = stores.id").
-		Where("stores.maintenance_mode = ?", false). // Exclude products from stores in maintenance mode
+		Joins("LEFT JOIN stores ON stores.name = products.store").
+		Where("stores.maintenance_mode = ?", false).
 		Where("category ILIKE ?", "%"+query+"%").
 		Find(&products).Error
 	if err != nil {
