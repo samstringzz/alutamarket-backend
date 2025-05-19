@@ -279,6 +279,7 @@ type Store {
 	has_physical_address: Boolean!
 	visitors: [String!]!
 	accounts: [withdrawAccount]
+	maintenance_mode: Boolean!
 }
 type VerifyOTP {
 	phone: String!

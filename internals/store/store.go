@@ -107,6 +107,7 @@ type Store struct {
 	Visitors           pq.StringArray       `gorm:"type:text[]" json:"visitors"`
 	Accounts           []*WithdrawalAccount `gorm:"serializer:json" json:"accounts" db:"accounts"`
 	Orders             []*StoreOrder        `gorm:"serializer:json"`
+	MaintenanceMode    bool                 `json:"maintenance_mode" db:"maintenance_mode"`
 }
 
 type UpdateStore struct {

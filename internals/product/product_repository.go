@@ -301,7 +301,9 @@ func (r *repository) GetProducts(ctx context.Context, store string, categorySlug
 	// Create base query
 	query := r.db.
 		Table("products").
-		Where("products.deleted_at IS NULL")
+		Joins("LEFT JOIN stores ON products.store = stores.id").
+		Where("products.deleted_at IS NULL").
+		Where("stores.maintenance_mode = ?", false) // Exclude products from stores in maintenance mode
 
 	if store != "" {
 		query = query.Where("store = ?", store)
@@ -393,11 +395,13 @@ func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Produ
 	// Sanitize and optimize the search query
 	formattedQuery := "%" + strings.ToLower(strings.TrimSpace(query)) + "%"
 
-	// Use more efficient query with indexes
+	// Use more efficient query with indexes and exclude products from stores in maintenance mode
 	err := r.db.Select("DISTINCT ON (products.id) products.*").
 		Table("products").
 		Joins("LEFT JOIN categories ON LOWER(categories.name) = LOWER(products.category)").
+		Joins("LEFT JOIN stores ON products.store = stores.id").
 		Where("products.deleted_at IS NULL").
+		Where("stores.maintenance_mode = ?", false). // Exclude products from stores in maintenance mode
 		Where("LOWER(products.name) ILIKE ? OR LOWER(products.category) ILIKE ? OR LOWER(COALESCE(categories.slug, '')) ILIKE ?",
 			formattedQuery, formattedQuery, formattedQuery).
 		Order("products.id, products.created_at DESC").
@@ -424,7 +428,13 @@ func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Produ
 
 func (r *repository) GetRecommendedProducts(ctx context.Context, query string) ([]*Product, error) {
 	var products []*Product
-	if err := r.db.Where("category ILIKE ?", "%"+query+"%").Find(&products).Error; err != nil {
+	err := r.db.
+		Table("products").
+		Joins("LEFT JOIN stores ON products.store = stores.id").
+		Where("stores.maintenance_mode = ?", false). // Exclude products from stores in maintenance mode
+		Where("category ILIKE ?", "%"+query+"%").
+		Find(&products).Error
+	if err != nil {
 		return nil, err
 	}
 
@@ -586,8 +596,30 @@ func (r *repository) GetHandledProductsWithDetails(ctx context.Context, userID u
 
 func (r *repository) GetAllProducts(ctx context.Context) ([]*Product, error) {
 	var products []*Product
-	if err := r.db.Find(&products).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch products: %v", err)
+	err := r.db.
+		Table("products").
+		Joins("LEFT JOIN stores ON products.store = stores.id").
+		Where("stores.maintenance_mode = ?", false). // Exclude products from stores in maintenance mode
+		Find(&products).Error
+	if err != nil {
+		return nil, err
 	}
+
+	// Initialize JSON fields
+	for _, p := range products {
+		if p.Images == nil {
+			p.Images = []string{}
+		}
+		if p.Variant == nil {
+			p.Variant = []*VariantType{}
+		}
+		if p.Views == nil {
+			p.Views = []uint32{}
+		}
+		if p.Reviews == nil {
+			p.Reviews = []Review{}
+		}
+	}
+
 	return products, nil
 }
