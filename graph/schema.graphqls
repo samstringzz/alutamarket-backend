@@ -397,6 +397,7 @@ input UpdateStoreInput {
 	background: String
 	visitor: [ID]
 	account: withdrawAccountInput
+	maintenance_mode: Boolean
 }
 
 type WithdrawalAccount {
