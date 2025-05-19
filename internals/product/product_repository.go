@@ -306,15 +306,8 @@ func (r *repository) GetProducts(ctx context.Context, storeName string, category
 		Where("stores.maintenance_mode = ?", false) // Exclude products from stores in maintenance mode
 
 	if storeName != "" {
-		// Get store ID from store name
-		var storeID uint32
-		if err := r.db.Table("stores").Where("name = ?", storeName).Select("id").Scan(&storeID).Error; err != nil {
-			return nil, 0, fmt.Errorf("failed to find store: %v", err)
-		}
-
-		// Convert storeID to string since products.store is character varying
-		storeIDStr := strconv.FormatUint(uint64(storeID), 10)
-		query = query.Where("products.store = ?", storeIDStr)
+		// Query directly using store name instead of converting to ID
+		query = query.Where("products.store = ?", storeName)
 	}
 
 	if categorySlug != "" {
