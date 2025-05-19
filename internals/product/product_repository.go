@@ -294,7 +294,7 @@ func (r *repository) RemoveWishListedProduct(ctx context.Context, id uint32) err
 	return err
 }
 
-func (r *repository) GetProducts(ctx context.Context, store string, categorySlug string, limit int, offset int) ([]*Product, int, error) {
+func (r *repository) GetProducts(ctx context.Context, storeName string, categorySlug string, limit int, offset int) ([]*Product, int, error) {
 	var products []*Product
 	var totalCount int64
 
@@ -305,8 +305,13 @@ func (r *repository) GetProducts(ctx context.Context, store string, categorySlug
 		Where("products.deleted_at IS NULL").
 		Where("stores.maintenance_mode = ?", false) // Exclude products from stores in maintenance mode
 
-	if store != "" {
-		query = query.Where("store = ?", store)
+	if storeName != "" {
+		// Get store ID from store name
+		var storeID uint32
+		if err := r.db.Table("stores").Where("name = ?", storeName).Select("id").Scan(&storeID).Error; err != nil {
+			return nil, 0, fmt.Errorf("failed to find store: %v", err)
+		}
+		query = query.Where("store = ?", storeID)
 	}
 
 	if categorySlug != "" {
@@ -328,7 +333,7 @@ func (r *repository) GetProducts(ctx context.Context, store string, categorySlug
 	}
 
 	// Apply pagination if not already limited by random selection
-	if categorySlug != "" || store != "" {
+	if categorySlug != "" || storeName != "" {
 		query = query.Limit(limit).Offset(offset * limit)
 	}
 
