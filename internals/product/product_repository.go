@@ -301,7 +301,7 @@ func (r *repository) GetProducts(ctx context.Context, storeName string, category
 	// Create base query
 	query := r.db.
 		Table("products").
-		Joins("LEFT JOIN stores ON CAST(products.store AS INTEGER) = stores.id").
+		Joins("LEFT JOIN stores ON stores.name = products.store").
 		Where("products.deleted_at IS NULL").
 		Where("stores.maintenance_mode = ?", false) // Exclude products from stores in maintenance mode
 
