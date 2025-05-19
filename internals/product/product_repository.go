@@ -311,7 +311,8 @@ func (r *repository) GetProducts(ctx context.Context, storeName string, category
 		if err := r.db.Table("stores").Where("name = ?", storeName).Select("id").Scan(&storeID).Error; err != nil {
 			return nil, 0, fmt.Errorf("failed to find store: %v", err)
 		}
-		query = query.Where("store = ?", storeID)
+		// Convert storeID to string since products.store is a string field
+		query = query.Where("products.store = ?", strconv.FormatUint(uint64(storeID), 10))
 	}
 
 	if categorySlug != "" {
@@ -320,7 +321,7 @@ func (r *repository) GetProducts(ctx context.Context, storeName string, category
 			Where("categories.slug = ?", categorySlug)
 	} else {
 		// For random ordering, use a different approach
-		query = query.Where("status = ?", true)
+		query = query.Where("products.status = ?", true)
 		if limit > 0 {
 			query = query.Order("random()").Limit(limit)
 		}
