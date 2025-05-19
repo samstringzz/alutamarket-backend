@@ -594,6 +594,7 @@ type Store struct {
 	HasPhysicalAddress bool               `json:"has_physical_address"`
 	Visitors           []string           `json:"visitors"`
 	Accounts           []*WithdrawAccount `json:"accounts,omitempty"`
+	MaintenanceMode    bool               `json:"maintenance_mode"`
 }
 
 type StoreCustomer struct {
@@ -765,6 +766,7 @@ type UpdateStoreInput struct {
 	Background         *string               `json:"background,omitempty"`
 	Visitor            []*string             `json:"visitor,omitempty"`
 	Account            *WithdrawAccountInput `json:"account,omitempty"`
+	MaintenanceMode    *bool                 `json:"maintenance_mode,omitempty"`
 }
 
 type UpdateStoreOrderInput struct {
