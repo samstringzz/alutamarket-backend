@@ -407,9 +407,9 @@ func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Produ
 	err := r.db.Select("DISTINCT ON (products.id) products.*").
 		Table("products").
 		Joins("LEFT JOIN categories ON LOWER(categories.name) = LOWER(products.category)").
-		Joins("LEFT JOIN stores ON products.store = stores.id").
+		Joins("LEFT JOIN stores ON CAST(products.store AS INTEGER) = stores.id"). // Fix: Cast store to integer
 		Where("products.deleted_at IS NULL").
-		Where("stores.maintenance_mode = ?", false). // Exclude products from stores in maintenance mode
+		Where("stores.maintenance_mode = ?", false).
 		Where("LOWER(products.name) ILIKE ? OR LOWER(products.category) ILIKE ? OR LOWER(COALESCE(categories.slug, '')) ILIKE ?",
 			formattedQuery, formattedQuery, formattedQuery).
 		Order("products.id, products.created_at DESC").
