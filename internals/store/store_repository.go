@@ -318,6 +318,9 @@ func (r *repository) UpdateStore(ctx context.Context, req *UpdateStore) (*Store,
 	}
 	existingStore.Wallet += req.Wallet
 
+	// Update maintenance mode if provided
+	existingStore.MaintenanceMode = req.MaintenanceMode
+
 	// Handle account update only if account information is provided
 	if req.Account != nil {
 		// Create a new account record directly in dva_accounts table
