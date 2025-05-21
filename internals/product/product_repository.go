@@ -302,12 +302,14 @@ func (r *repository) GetProducts(ctx context.Context, storeName string, category
 	query := r.db.
 		Table("products").
 		Joins("LEFT JOIN stores ON stores.name = products.store").
-		Where("products.deleted_at IS NULL").
-		Where("stores.maintenance_mode = ?", false) // Exclude products from stores in maintenance mode
+		Where("products.deleted_at IS NULL")
 
 	if storeName != "" {
-		// Query directly using store name instead of converting to ID
+		// If a specific store is requested, show its products regardless of maintenance mode
 		query = query.Where("products.store = ?", storeName)
+	} else {
+		// Only filter by maintenance mode when browsing all stores
+		query = query.Where("stores.maintenance_mode = ?", false)
 	}
 
 	if categorySlug != "" {
@@ -393,24 +395,35 @@ func filterReviewsBySeller(reviews []*Review, sellerId string) []*Review {
 func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Product, error) {
 	var products []*Product
 
-	// Sanitize and optimize the search query
-	formattedQuery := "%" + strings.ToLower(strings.TrimSpace(query)) + "%"
-
-	// Use more efficient query with indexes and exclude products from stores in maintenance mode
-	err := r.db.Select("DISTINCT ON (products.id) products.*").
+	// Create base query
+	baseQuery := r.db.Select("DISTINCT ON (products.id) products.*").
 		Table("products").
 		Joins("LEFT JOIN categories ON LOWER(categories.name) = LOWER(products.category)").
 		Joins("LEFT JOIN stores ON stores.name = products.store").
 		Where("products.deleted_at IS NULL").
-		Where("stores.maintenance_mode = ?", false).
-		Where("LOWER(products.name) ILIKE ? OR LOWER(products.category) ILIKE ? OR LOWER(COALESCE(categories.slug, '')) ILIKE ?",
-			formattedQuery, formattedQuery, formattedQuery).
-		Order("products.id, products.created_at DESC").
-		Find(&products).Error
+		Where("stores.maintenance_mode = ?", false)
 
-	if err != nil {
-		log.Printf("Search products error: %v", err)
-		return nil, fmt.Errorf("failed to search products: %v", err)
+	// If query is empty, return all products (similar to GetAllProducts)
+	if strings.TrimSpace(query) == "" {
+		err := baseQuery.
+			Order("products.id, products.created_at DESC").
+			Find(&products).Error
+		if err != nil {
+			log.Printf("Get all products error: %v", err)
+			return nil, fmt.Errorf("failed to get all products: %v", err)
+		}
+	} else {
+		// If query is provided, perform search
+		formattedQuery := "%" + strings.ToLower(strings.TrimSpace(query)) + "%"
+		err := baseQuery.
+			Where("LOWER(products.name) ILIKE ? OR LOWER(products.category) ILIKE ? OR LOWER(COALESCE(categories.slug, '')) ILIKE ?",
+				formattedQuery, formattedQuery, formattedQuery).
+			Order("products.id, products.created_at DESC").
+			Find(&products).Error
+		if err != nil {
+			log.Printf("Search products error: %v", err)
+			return nil, fmt.Errorf("failed to search products: %v", err)
+		}
 	}
 
 	// Batch initialize slices for better performance
