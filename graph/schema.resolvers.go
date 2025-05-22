@@ -2415,13 +2415,20 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 			}
 		}
 
-		// Convert delivery details with nil check
+		// Convert delivery details with nil check and default values
 		var deliveryDetails *model.DeliveryDetails
 		if order.DeliveryDetails != nil {
 			deliveryDetails = &model.DeliveryDetails{
 				Method:  order.DeliveryDetails.Method,
 				Address: order.DeliveryDetails.Address,
 				Fee:     order.DeliveryDetails.Fee,
+			}
+		} else {
+			// Provide default values when delivery details are missing
+			deliveryDetails = &model.DeliveryDetails{
+				Method:  "digital", // Default to digital delivery
+				Address: "N/A",     // Default address
+				Fee:     0,         // Default fee
 			}
 		}
 
@@ -2443,7 +2450,7 @@ func (r *queryResolver) PurchasedOrder(ctx context.Context, user int) ([]*model.
 			TransStatus:     order.TransStatus,
 			Products:        products,
 			CreatedAt:       order.CreatedAt,
-			DeliveryDetails: deliveryDetails,
+			DeliveryDetails: deliveryDetails, // Now this will never be nil
 			TextRef:         order.TransRef,
 		}
 		purchasedOrders = append(purchasedOrders, purchasedOrder)
