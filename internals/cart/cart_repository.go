@@ -323,7 +323,7 @@ func (r *repository) RemoveAllCart(ctx context.Context, id uint32) error {
 	return nil
 }
 
-func processPaymentGateway(gateway string, UUID string, cartTotal float64, redirectUrl string, customer *user.User) (string, error) {
+func processPaymentGateway(gateway string, UUID string, amount float64, redirectUrl string, customer *user.User) (string, error) {
 	var paymentLink string
 	var err error
 	var requestData map[string]interface{}
@@ -356,7 +356,7 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 	case "flutterwave":
 		requestData = map[string]interface{}{
 			"tx_ref":       UUID,
-			"amount":       cartTotal,
+			"amount":       amount,
 			"currency":     "NGN",
 			"redirect_url": redirectUrl,
 			"meta": map[string]interface{}{
@@ -380,7 +380,7 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 	case "paystack":
 		requestData = map[string]interface{}{
 			"email":        customer.Email,
-			"amount":       (cartTotal) * 100,
+			"amount":       (amount) * 100,
 			"currency":     "NGN",
 			"reference":    UUID,
 			"callback_url": redirectUrl,
@@ -412,7 +412,7 @@ func processPaymentGateway(gateway string, UUID string, cartTotal float64, redir
 			"initiate_type":   "inline",
 			"transaction_ref": UUID,
 			"callback_url":    redirectUrl,
-			"amount":          (cartTotal) * 100,
+			"amount":          (amount) * 100,
 			"email":           customer.Email,
 			"pass_charge":     true,
 			"customer_name":   customer.Fullname,
@@ -546,12 +546,9 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 		return "", fmt.Errorf("invalid amount: %v", err)
 	}
 
-	// Calculate total amount
-	totalAmount := cart.Total + amount
-
 	// Payment gateway processing
 	go func() {
-		paymentLink, err := processPaymentGateway(input.PaymentGateway, UUID, totalAmount, redirectUrl, customer)
+		paymentLink, err := processPaymentGateway(input.PaymentGateway, UUID, amount, redirectUrl, customer)
 		if err != nil {
 			paymentErrChan <- err
 		} else {
@@ -571,7 +568,7 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 	// log.Println("Payment link obtained:", paymentLink)
 
 	// Convert total amount back to string for the order
-	totalAmountStr := strconv.FormatFloat(totalAmount, 'f', 2, 64)
+	totalAmountStr := strconv.FormatFloat(amount, 'f', 2, 64)
 
 	// Convert []*string to pq.StringArray
 	var storeIDsArray pq.StringArray
