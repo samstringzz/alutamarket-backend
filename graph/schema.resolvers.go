@@ -1764,11 +1764,11 @@ func (r *queryResolver) SellerOrders(ctx context.Context, storeName string) ([]*
 	var result []*model.Order
 	for _, order := range orders {
 		// Verify transaction status with Paystack if needed
-		if order.PaymentGateway == "paystack" && order.Status == "" {
+		if order.PaymentGateway == "paystack" && (order.Status == "" || order.Status == "not completed" || order.TransStatus == "not paid") {
 			verificationResponse, err := utils.VerifyPaystackTransaction(order.UUID)
 			if err == nil && verificationResponse.Status {
 				if verificationResponse.Data.Status == "success" {
-					// Only update to pending if the order is new/empty status
+					// Update to pending if the order is new/empty status or not completed
 					err = storeHandler.UpdateOrderStatus(ctx, order.UUID, "pending", "paid")
 					if err == nil {
 						order.Status = "pending"
