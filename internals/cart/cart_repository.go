@@ -676,7 +676,6 @@ func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, 
 }
 
 func (r *repository) MakePayment(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
@@ -689,17 +688,53 @@ func (r *repository) MakePayment(ctx context.Context, w http.ResponseWriter, req
 		http.Error(w, "Failed to parse JSON data", http.StatusBadRequest)
 		return
 	}
-	var (
-		flwSecretKey     = os.Getenv("FLW_SECRET_KEY")
-		transactionID    = webhookPayload.Data.TransactionID
-		expectedAmount   = webhookPayload.Data.Amount
-		expectedCurrency = "NGN"
-	)
 
 	// Access the event field
 	event := webhookPayload.Event
-	//For Flutterwave Charge payment
+
+	// Handle Paystack webhook
+	if event == "charge.success" {
+		// Get the order using the transaction reference
+		order := &store.Order{}
+		err = r.db.Where("uuid = ?", webhookPayload.Data.TransactionRef).First(order).Error
+		if err != nil {
+			fmt.Println("Error getting order: ", err)
+			return
+		}
+
+		// Update order status to paid and pending
+		err = r.db.Model(order).Updates(map[string]interface{}{
+			"status":       "pending",
+			"trans_status": "paid",
+		}).Error
+		if err != nil {
+			fmt.Println("Error updating order status: ", err)
+			return
+		}
+
+		// Get the cart to process store credits
+		cart, _ := r.GetCart(ctx, order.CartID)
+		for _, item := range cart.Items {
+			// Convert order.Fee from string to float64
+			orderFee, _ := strconv.ParseFloat(order.Fee, 64)
+			priceDifference := item.Product.Price - orderFee
+			result, _ := store.NewRepository().GetStoreByName(ctx, item.Product.Store)
+			// Credit individual Store from the particular transaction
+			result.Wallet += priceDifference
+			r.db.Save(result)
+		}
+		fmt.Println("Paystack payment was successful!")
+	}
+
+	// Handle Flutterwave webhook
 	if event == "charge.completed" {
+		var (
+			flwSecretKey     = os.Getenv("FLW_SECRET_KEY")
+			transactionID    = webhookPayload.Data.TransactionID
+			expectedAmount   = webhookPayload.Data.Amount
+			expectedCurrency = "NGN"
+		)
+
 		// Check if transaction is successful/failed,by rehitting the verify transaction api
 		client := &http.Client{}
 		url := "https://api.flutterwave.com/v3/transactions/" + transactionID + "/verify"
@@ -757,16 +792,11 @@ func (r *repository) MakePayment(ctx context.Context, w http.ResponseWriter, req
 		}
 	}
 
-	// For Flutterwave Transfer Event
 	// Close the request body to avoid resource leaks
 	defer req.Body.Close()
 
-	// Process the request body (e.g., decode JSON or parse form data)
-
 	fmt.Fprint(w, "Webhook received successfully")
 	fmt.Println("Received Webhook Body:", string(body))
-
-	// If Successful, credit a store wallet,their quota
 
 	w.WriteHeader(http.StatusOK)
 }
