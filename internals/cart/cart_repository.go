@@ -487,7 +487,7 @@ func processPaymentGateway(gateway string, UUID string, amount float64, redirect
 // In the InitiatePayment function, modify how storeIDs is handled
 func (r *repository) InitiatePayment(ctx context.Context, input Order) (string, error) {
 	UUID := input.UUID
-	redirectUrl := os.Getenv("CLIENT_URL") + "/product/cart"
+	redirectUrl := os.Getenv("CLIENT_URL") + "/purchased/order"
 
 	// log.Println("Starting InitiatePayment process...")
 
