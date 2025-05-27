@@ -1004,3 +1004,9 @@ func (e *RoleType) UnmarshalGQL(v any) error {
 func (e RoleType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
+
+type UpdateUnitsSoldResponse struct {
+	Success      bool `json:"success"`
+	UpdatedCount int  `json:"updatedCount"`
+	ErrorCount   int  `json:"errorCount"`
+}

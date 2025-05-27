@@ -955,6 +955,7 @@ type Mutation {
 	confirmPassword(input: confirmPasswordInput): Boolean!
 	createInvoice(input: InvoiceInput!): Invoice
 	createPaystackAccount(email: String!, bvn: String!): PaystackAccount
+	updateExistingOrdersUnitsSold: UpdateUnitsSoldResponse!
 }
 
 type Subscription {
@@ -986,4 +987,10 @@ type StoreEarnings {
   transactionType: String!
   createdAt: Time!
   updatedAt: Time!
+}
+
+type UpdateUnitsSoldResponse {
+    success: Boolean!
+    updatedCount: Int!
+    errorCount: Int!
 }
