@@ -168,8 +168,8 @@ func (r *mutationResolver) UpdateOrderStatus(ctx context.Context, orderUUID stri
 		return nil, fmt.Errorf("failed to update order status: %v", err)
 	}
 
-	// If the status is being updated to "completed" or "delivered", update the units sold
-	if status == "completed" || status == "delivered" {
+	// If the status is being updated to "pending" or "processing", update the units sold
+	if status == "pending" || status == "processing" {
 		// Update units sold for each product in the order
 		for _, product := range order.Products {
 			err = storeHandler.UpdateProductUnitsSold(ctx, product.ID)
@@ -3050,6 +3050,46 @@ func (r *queryResolver) GetStoreEarnings(ctx context.Context, storeID int) ([]*m
 // ProductSearchResults is the resolver for the productSearchResults field.
 func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
 	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
+}
+
+// UpdateExistingOrdersUnitsSold updates the units sold for all existing orders
+func (r *mutationResolver) UpdateExistingOrdersUnitsSold(ctx context.Context) (*model.UpdateUnitsSoldResponse, error) {
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+
+	// Get all orders
+	orders, err := storeHandler.GetAllOrders(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get orders: %v", err)
+	}
+
+	updatedCount := 0
+	errorCount := 0
+
+	// Process each order
+	for _, order := range orders {
+		// Only process orders that are pending, processing, completed, or delivered
+		if order.Status == "pending" || order.Status == "processing" ||
+			order.Status == "completed" || order.Status == "delivered" {
+
+			// Update units sold for each product in the order
+			for _, product := range order.Products {
+				err = storeHandler.UpdateProductUnitsSold(ctx, product.ID)
+				if err != nil {
+					log.Printf("Error updating units sold for product %d in order %s: %v",
+						product.ID, order.UUID, err)
+					errorCount++
+					continue
+				}
+				updatedCount++
+			}
+		}
+	}
+
+	return &model.UpdateUnitsSoldResponse{
+		Success:      true,
+		UpdatedCount: updatedCount,
+		ErrorCount:   errorCount,
+	}, nil
 }
 
 // Mutation returns MutationResolver implementation.
