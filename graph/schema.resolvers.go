@@ -1812,6 +1812,7 @@ func (r *queryResolver) SellerOrders(ctx context.Context, storeName string) ([]*
 			Products:        products,
 			DeliveryDetails: deliveryDetails,
 			TextRef:         &order.TransRef,
+			CreatedAt:       &order.CreatedAt,
 		})
 	}
 
