@@ -1159,9 +1159,17 @@ func (r *repository) UpdateStoreBankDetails(ctx context.Context, storeID uint32,
 }
 
 func (r *repository) AddStoreEarnings(ctx context.Context, earnings *StoreEarnings) error {
+	// Log the earnings object before creating
+	log.Printf("AddStoreEarnings: Attempting to create earnings with StoreID=%d, OrderID=%s, Amount=%f, Status=%s", earnings.StoreID, earnings.OrderID, earnings.Amount, earnings.Status)
+
 	if err := r.db.WithContext(ctx).Create(earnings).Error; err != nil {
+		// Log the exact error from the Create operation
+		log.Printf("AddStoreEarnings: Failed to create earnings: %v", err)
 		return fmt.Errorf("failed to add store earnings: %v", err)
 	}
+	// Log success
+	log.Printf("AddStoreEarnings: Successfully created earnings with ID=%d", earnings.ID)
+
 	return nil
 }
 
