@@ -555,14 +555,16 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 					continue // Skip this store if not found
 				}
 
+				// Log the retrieved store ID
+				log.Printf("Retrieved Store ID %d for store name %s", store.ID, storeName)
+
 				earnings := &StoreEarnings{
-					StoreID:         store.ID, // Use the retrieved numeric store ID
-					OrderID:         uuid,
-					Amount:          amount,
-					Status:          "released",
-					TransactionType: "order",
-					CreatedAt:       time.Now(),
-					UpdatedAt:       time.Now(),
+					StoreID:   store.ID, // Use the retrieved numeric store ID
+					OrderID:   uuid,
+					Amount:    amount,
+					Status:    "released",
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
 				}
 
 				// Log before attempting to add store earnings
