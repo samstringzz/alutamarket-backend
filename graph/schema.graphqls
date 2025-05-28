@@ -123,6 +123,7 @@ extend type Query {
   subscribers: [Subscriber!]!
   getDVAAccount(userID: ID!): DVAAccount
   getStoreEarnings(storeId: Int!): [StoreEarnings!]!
+  checkStoreEarningsDiscrepancy(storeId: Int!): StoreEarningsDiscrepancy!
 }
 
 type Message {
@@ -993,4 +994,9 @@ type UpdateUnitsSoldResponse {
     success: Boolean!
     updatedCount: Int!
     errorCount: Int!
+}
+
+type StoreEarningsDiscrepancy {
+	deliveredOrdersCount: Int!
+	totalEarnings: Float!
 }

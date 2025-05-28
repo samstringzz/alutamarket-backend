@@ -313,6 +313,7 @@ type Repository interface {
 	AddStoreEarnings(ctx context.Context, earnings *StoreEarnings) error
 	GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error)
 	GetAllOrders(ctx context.Context) ([]*Order, error)
+	CheckStoreEarningsDiscrepancy(ctx context.Context, storeID uint32) (int, float64, error)
 }
 
 type Service interface {
@@ -344,4 +345,5 @@ type Service interface {
 	AddStoreEarnings(ctx context.Context, earnings *StoreEarnings) error
 	GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error)
 	GetAllOrders(ctx context.Context) ([]*Order, error)
+	CheckStoreEarningsDiscrepancy(ctx context.Context, storeID uint32) (int, float64, error)
 }

@@ -614,6 +614,11 @@ type StoreEarnings struct {
 	UpdatedAt       time.Time `json:"updatedAt"`
 }
 
+type StoreEarningsDiscrepancy struct {
+	DeliveredOrdersCount int     `json:"deliveredOrdersCount"`
+	TotalEarnings        float64 `json:"totalEarnings"`
+}
+
 type StoreFollower struct {
 	FollowerID    int    `json:"follower_id"`
 	FollowerName  string `json:"follower_name"`

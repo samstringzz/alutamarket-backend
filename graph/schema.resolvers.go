@@ -3105,3 +3105,19 @@ func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionRes
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+
+// CheckStoreEarningsDiscrepancy is the resolver for the checkStoreEarningsDiscrepancy field.
+func (r *queryResolver) CheckStoreEarningsDiscrepancy(ctx context.Context, storeID int) (*model.StoreEarningsDiscrepancy, error) {
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+
+	// Get discrepancy information
+	deliveredOrdersCount, totalEarnings, err := storeHandler.CheckStoreEarningsDiscrepancy(ctx, uint32(storeID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to check store earnings discrepancy: %v", err)
+	}
+
+	return &model.StoreEarningsDiscrepancy{
+		DeliveredOrdersCount: deliveredOrdersCount,
+		TotalEarnings:        totalEarnings,
+	}, nil
+}

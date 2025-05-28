@@ -189,3 +189,7 @@ func (h *Handler) UpdateProductUnitsSold(ctx context.Context, productID uint32) 
 func (h *Handler) GetAllOrders(ctx context.Context) ([]*Order, error) {
 	return h.Service.GetAllOrders(ctx)
 }
+
+func (h *Handler) CheckStoreEarningsDiscrepancy(ctx context.Context, storeID uint32) (int, float64, error) {
+	return h.Service.CheckStoreEarningsDiscrepancy(ctx, storeID)
+}

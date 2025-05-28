@@ -301,3 +301,10 @@ func (s *service) GetAllOrders(ctx context.Context) ([]*Order, error) {
 	defer cancel()
 	return s.Repository.GetAllOrders(ctx)
 }
+
+func (s *service) CheckStoreEarningsDiscrepancy(ctx context.Context, storeID uint32) (int, float64, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	return s.Repository.CheckStoreEarningsDiscrepancy(ctx, storeID)
+}
