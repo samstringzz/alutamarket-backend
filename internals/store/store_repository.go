@@ -542,6 +542,10 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 		} else if notFoundErr == gorm.ErrRecordNotFound {
 			// Log that no existing earnings were found, so new ones will be created
 			log.Printf("No existing released store earnings found for order %s. Proceeding to create.", uuid)
+
+			// Log the store IDs and amount before attempting to create earnings
+			log.Printf("Creating earnings for stores: %v, order amount: %f", order.StoresID, amount)
+
 			// Add earnings for each store in the order
 			for _, storeID := range order.StoresID {
 				storeIDUint, err := strconv.ParseUint(storeID, 10, 32)
@@ -560,15 +564,15 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 				}
 
 				// Log before attempting to add store earnings
-				log.Printf("Attempting to add store earnings for order %s, store %d with amount %f", earnings.OrderID, earnings.StoreID, earnings.Amount)
+				log.Printf("AddStoreEarnings: Attempting to create earnings with StoreID=%d, OrderID=%s, Amount=%f, Status=%s", earnings.StoreID, earnings.OrderID, earnings.Amount, earnings.Status)
 
 				if err := r.AddStoreEarnings(ctx, earnings); err != nil {
 					// Log the error if adding store earnings fails
-					log.Printf("Failed to add store earnings for order %s, store %d: %v", earnings.OrderID, earnings.StoreID, err)
+					log.Printf("AddStoreEarnings: Failed to create earnings: %v", err)
 					return fmt.Errorf("failed to add store earnings: %v", err)
 				} else {
 					// Log success message
-					log.Printf("Successfully added store earnings for order %s, store %d", earnings.OrderID, earnings.StoreID)
+					log.Printf("AddStoreEarnings: Successfully created earnings with ID=%d", earnings.ID)
 				}
 			}
 		} else { // notFoundErr == nil
