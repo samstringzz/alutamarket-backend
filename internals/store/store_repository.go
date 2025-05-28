@@ -1159,3 +1159,24 @@ func (r *repository) GetAllOrders(ctx context.Context) ([]*Order, error) {
 	}
 	return orders, nil
 }
+
+func (r *repository) CheckStoreEarningsDiscrepancy(ctx context.Context, storeID uint32) (int, float64, error) {
+	// Get count of delivered orders for this store
+	var deliveredOrdersCount int64
+	if err := r.db.Model(&Order{}).
+		Where("? = ANY(stores_id) AND status = ?", storeID, "delivered").
+		Count(&deliveredOrdersCount).Error; err != nil {
+		return 0, 0, fmt.Errorf("failed to count delivered orders: %v", err)
+	}
+
+	// Get total store earnings
+	var totalEarnings float64
+	if err := r.db.Model(&StoreEarnings{}).
+		Where("store_id = ? AND status = ?", storeID, "released").
+		Select("COALESCE(SUM(amount), 0)").
+		Scan(&totalEarnings).Error; err != nil {
+		return 0, 0, fmt.Errorf("failed to get total earnings: %v", err)
+	}
+
+	return int(deliveredOrdersCount), totalEarnings, nil
+}
