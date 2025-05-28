@@ -543,18 +543,20 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 			// Log that no existing earnings were found, so new ones will be created
 			log.Printf("No existing released store earnings found for order %s. Proceeding to create.", uuid)
 
-			// Log the store IDs and amount before attempting to create earnings
-			log.Printf("Creating earnings for stores: %v, order amount: %f", order.StoresID, amount)
+			// Log the store names and amount before attempting to create earnings
+			log.Printf("Creating earnings for stores (by name): %v, order amount: %f", order.StoresID, amount)
 
 			// Add earnings for each store in the order
-			for _, storeID := range order.StoresID {
-				storeIDUint, err := strconv.ParseUint(storeID, 10, 32)
-				if err != nil {
-					continue
+			for _, storeName := range order.StoresID {
+				// Fetch the store by name to get its ID
+				var store Store
+				if err := r.db.Where("name = ?", storeName).First(&store).Error; err != nil {
+					log.Printf("Error finding store with name %s for order %s: %v. Skipping earnings creation for this store.", storeName, uuid, err)
+					continue // Skip this store if not found
 				}
 
 				earnings := &StoreEarnings{
-					StoreID:         uint32(storeIDUint),
+					StoreID:         store.ID, // Use the retrieved numeric store ID
 					OrderID:         uuid,
 					Amount:          amount,
 					Status:          "released",
@@ -569,12 +571,12 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 				if err := r.AddStoreEarnings(ctx, earnings); err != nil {
 					// Log the error if adding store earnings fails
 					log.Printf("AddStoreEarnings: Failed to create earnings: %v", err)
-					return fmt.Errorf("failed to add store earnings: %v", err)
-				} else {
-					// Log success message
-					log.Printf("AddStoreEarnings: Successfully created earnings with ID=%d", earnings.ID)
+					// Do NOT return here, allow processing of other stores in the order
 				}
 			}
+			// Log after the loop finishes
+			log.Printf("Finished attempting to create earnings for order %s.", uuid)
+
 		} else { // notFoundErr == nil
 			// Log that existing released earnings were found, so no new ones will be created
 			log.Printf("Existing released store earnings found for order %s. Skipping creation.", uuid)
