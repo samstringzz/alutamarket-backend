@@ -531,26 +531,36 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 			return fmt.Errorf("failed to parse order amount: %v", err)
 		}
 
-		// Add earnings for each store in the order
-		for _, storeID := range order.StoresID {
-			storeIDUint, err := strconv.ParseUint(storeID, 10, 32)
-			if err != nil {
-				continue
-			}
+		// Check if earnings already exist for this order with status 'released'
+		var existingEarnings StoreEarnings
+		notFoundErr := r.db.Where("order_id = ? AND status = ?", uuid, "released").First(&existingEarnings).Error
 
-			earnings := &StoreEarnings{
-				StoreID:         uint32(storeIDUint),
-				OrderID:         uuid,
-				Amount:          amount,
-				Status:          "released",
-				TransactionType: "order",
-				CreatedAt:       time.Now(),
-				UpdatedAt:       time.Now(),
-			}
+		// If no existing released earnings found, create them
+		if notFoundErr == gorm.ErrRecordNotFound {
+			// Add earnings for each store in the order
+			for _, storeID := range order.StoresID {
+				storeIDUint, err := strconv.ParseUint(storeID, 10, 32)
+				if err != nil {
+					continue
+				}
 
-			if err := r.AddStoreEarnings(ctx, earnings); err != nil {
-				return fmt.Errorf("failed to add store earnings: %v", err)
+				earnings := &StoreEarnings{
+					StoreID:         uint32(storeIDUint),
+					OrderID:         uuid,
+					Amount:          amount,
+					Status:          "released",
+					TransactionType: "order",
+					CreatedAt:       time.Now(),
+					UpdatedAt:       time.Now(),
+				}
+
+				if err := r.AddStoreEarnings(ctx, earnings); err != nil {
+					return fmt.Errorf("failed to add store earnings: %v", err)
+				}
 			}
+		} else if notFoundErr != nil {
+			// Handle other potential errors during the check
+			return fmt.Errorf("failed to check for existing store earnings: %v", notFoundErr)
 		}
 	}
 
