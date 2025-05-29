@@ -2560,8 +2560,12 @@ func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
 		return nil, fmt.Errorf("failed to fetch users: %v", err)
 	}
 
+	log.Printf("Fetched %d users", len(users))
+
 	var userResponses []*model.User
 	for _, u := range users {
+		log.Printf("Processing user: ID=%d, Type=%s", u.ID, u.Usertype)
+
 		active := true
 		if u.Active != nil {
 			active = *u.Active
@@ -2602,42 +2606,49 @@ func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
 
 		// If user is a seller, fetch all their stores
 		if u.Usertype == "seller" {
+			log.Printf("Fetching stores for seller user ID: %d", u.ID)
 			storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
 			stores, err := storeHandler.GetStores(ctx, u.ID, 0, 0) // Fetch all stores for this user
-			if err == nil && len(stores) > 0 {
-				var storeModels []*model.Store
-				for _, s := range stores {
-					// Convert followers to GraphQL model
-					var followers []*model.StoreFollower
-					for _, f := range s.Followers {
-						followers = append(followers, &model.StoreFollower{
-							FollowerID:    int(f.FollowerID),
-							FollowerName:  f.FollowerName,
-							StoreID:       int(f.StoreID),
-							FollowerImage: f.FollowerImage,
-						})
-					}
+			if err != nil {
+				log.Printf("Error fetching stores for user %d: %v", u.ID, err)
+			} else {
+				log.Printf("Found %d stores for user %d", len(stores), u.ID)
+				if len(stores) > 0 {
+					var storeModels []*model.Store
+					for _, s := range stores {
+						log.Printf("Processing store: ID=%d, Name=%s", s.ID, s.Name)
+						// Convert followers to GraphQL model
+						var followers []*model.StoreFollower
+						for _, f := range s.Followers {
+							followers = append(followers, &model.StoreFollower{
+								FollowerID:    int(f.FollowerID),
+								FollowerName:  f.FollowerName,
+								StoreID:       int(f.StoreID),
+								FollowerImage: f.FollowerImage,
+							})
+						}
 
-					storeModel := &model.Store{
-						ID:                 strconv.Itoa(int(s.ID)),
-						Name:               s.Name,
-						Link:               s.Link,
-						Description:        s.Description,
-						Address:            s.Address,
-						Phone:              s.Phone,
-						HasPhysicalAddress: s.HasPhysicalAddress,
-						Thumbnail:          s.Thumbnail,
-						Background:         s.Background,
-						Status:             s.Status,
-						User:               int(s.UserID),
-						Wallet:             float64(s.Wallet),
-						Followers:          followers,
-						Email:              s.Email,
-						MaintenanceMode:    s.MaintenanceMode,
+						storeModel := &model.Store{
+							ID:                 strconv.Itoa(int(s.ID)),
+							Name:               s.Name,
+							Link:               s.Link,
+							Description:        s.Description,
+							Address:            s.Address,
+							Phone:              s.Phone,
+							HasPhysicalAddress: s.HasPhysicalAddress,
+							Thumbnail:          s.Thumbnail,
+							Background:         s.Background,
+							Status:             s.Status,
+							User:               int(s.UserID),
+							Wallet:             float64(s.Wallet),
+							Followers:          followers,
+							Email:              s.Email,
+							MaintenanceMode:    s.MaintenanceMode,
+						}
+						storeModels = append(storeModels, storeModel)
 					}
-					storeModels = append(storeModels, storeModel)
+					userResponse.Stores = storeModels
 				}
-				userResponse.Stores = storeModels
 			}
 		}
 
@@ -2758,40 +2769,41 @@ func (r *queryResolver) AllStores(ctx context.Context, limit *int, offset *int) 
 // GetAllProducts is the resolver for the getAllProducts field.
 func (r *queryResolver) GetAllProducts(ctx context.Context) ([]*model.Product, error) {
 	productHandler := product.NewHandler(product.NewService(product.NewRepository()))
-
-	// Get all products without any filters
 	products, err := productHandler.GetAllProducts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch all products: %v", err)
 	}
 
-	// Convert to GraphQL model
-	var modelProducts []*model.Product
+	var productResponses []*model.Product
 	for _, p := range products {
 		if p == nil {
 			continue
 		}
-		modelProducts = append(modelProducts, &model.Product{
-			ID:              int(p.ID),
-			Name:            p.Name,
-			Slug:            p.Slug,
-			Description:     p.Description,
-			Price:           p.Price,
-			Discount:        p.Discount,
-			Status:          p.Status,
-			Quantity:        p.Quantity,
-			Thumbnail:       p.Thumbnail,
-			Image:           p.Images,
-			File:            &p.File,
-			Store:           p.Store,
-			Category:        p.Category,
-			Subcategory:     p.Subcategory,
-			AlwaysAvailable: &p.AlwaysAvailbale,
-			UnitsSold:       p.UnitsSold,
-		})
+
+		// Convert images to string array
+		var images []string
+		if p.Thumbnail != "" {
+			images = []string{p.Thumbnail}
+		}
+
+		productResponse := &model.Product{
+			ID:          int(p.ID),
+			Name:        p.Name,
+			Description: p.Description,
+			Price:       p.Price,
+			Discount:    p.Discount,
+			Status:      p.Status,
+			Image:       images,
+			Quantity:    p.Quantity,
+			Store:       p.Store,
+			Category:    p.Category,
+			Subcategory: p.Subcategory,
+			UnitsSold:   p.UnitsSold,
+		}
+		productResponses = append(productResponses, productResponse)
 	}
 
-	return modelProducts, nil
+	return productResponses, nil
 }
 
 // GetAllReviews is the resolver for the getAllReviews field.
