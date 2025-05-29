@@ -2795,7 +2795,7 @@ func (r *queryResolver) GetAllProducts(ctx context.Context) ([]*model.Product, e
 			Status:      p.Status,
 			Image:       images,
 			Quantity:    p.Quantity,
-			Store:       p.Store,
+			Store:       p.Store, // Store is already a string in the database
 			Category:    p.Category,
 			Subcategory: p.Subcategory,
 			UnitsSold:   p.UnitsSold,
