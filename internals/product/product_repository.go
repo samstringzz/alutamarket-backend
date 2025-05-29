@@ -612,8 +612,8 @@ func (r *repository) GetAllProducts(ctx context.Context) ([]*Product, error) {
 	var products []*Product
 	err := r.db.
 		Table("products").
-		Joins("LEFT JOIN stores ON products.store = stores.id").
-		Where("stores.maintenance_mode = ?", false). // Exclude products from stores in maintenance mode
+		Joins("LEFT JOIN stores ON products.store = stores.name").
+		Where("stores.maintenance_mode = ?", false).
 		Find(&products).Error
 	if err != nil {
 		return nil, err
