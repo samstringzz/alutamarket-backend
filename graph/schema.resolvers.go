@@ -2600,24 +2600,44 @@ func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
 			Online:   u.Online,
 		}
 
-		// If user is a seller, fetch their store
+		// If user is a seller, fetch all their stores
 		if u.Usertype == "seller" {
 			storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
-			userStore, err := storeHandler.GetStore(ctx, u.ID)
-			if err == nil && userStore != nil {
-				userResponse.Stores = []*model.Store{{
-					ID:                 strconv.Itoa(int(userStore.ID)),
-					Name:               userStore.Name,
-					Link:               userStore.Link,
-					Description:        userStore.Description,
-					Address:            userStore.Address,
-					Phone:              userStore.Phone,
-					HasPhysicalAddress: userStore.HasPhysicalAddress,
-					Thumbnail:          userStore.Thumbnail,
-					Background:         userStore.Background,
-					Status:             userStore.Status,
-					User:               int(userStore.UserID),
-				}}
+			stores, err := storeHandler.GetStores(ctx, u.ID, 0, 0) // Fetch all stores for this user
+			if err == nil && len(stores) > 0 {
+				var storeModels []*model.Store
+				for _, s := range stores {
+					// Convert followers to GraphQL model
+					var followers []*model.StoreFollower
+					for _, f := range s.Followers {
+						followers = append(followers, &model.StoreFollower{
+							FollowerID:    int(f.FollowerID),
+							FollowerName:  f.FollowerName,
+							StoreID:       int(f.StoreID),
+							FollowerImage: f.FollowerImage,
+						})
+					}
+
+					storeModel := &model.Store{
+						ID:                 strconv.Itoa(int(s.ID)),
+						Name:               s.Name,
+						Link:               s.Link,
+						Description:        s.Description,
+						Address:            s.Address,
+						Phone:              s.Phone,
+						HasPhysicalAddress: s.HasPhysicalAddress,
+						Thumbnail:          s.Thumbnail,
+						Background:         s.Background,
+						Status:             s.Status,
+						User:               int(s.UserID),
+						Wallet:             float64(s.Wallet),
+						Followers:          followers,
+						Email:              s.Email,
+						MaintenanceMode:    s.MaintenanceMode,
+					}
+					storeModels = append(storeModels, storeModel)
+				}
+				userResponse.Stores = storeModels
 			}
 		}
 
