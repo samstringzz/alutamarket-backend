@@ -1414,19 +1414,6 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			continue
 		}
 
-		// Check if user already has a Paystack DVA account in our database
-		var count int64
-		if err := r.db.Table("paystack_dva_accounts").
-			Where("email = ?", user.Email).
-			Count(&count).Error; err != nil {
-			return fmt.Errorf("failed to check existing DVA account: %v", err)
-		}
-
-		// If user already has a DVA account in our database, skip it
-		if count > 0 {
-			continue
-		}
-
 		// Try to get the Paystack DVA account
 		paystackAccount, err := r.getPaystackDVAAccount(user.Email)
 		if err != nil {
