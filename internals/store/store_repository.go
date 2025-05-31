@@ -1429,13 +1429,14 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 		}
 
 		// Create a new Paystack DVA account record
-		dvaAccount := &PaystackDVAAccount{
+		paystack_dva_accounts := &PaystackDVAAccount{
+			ID:      store.ID,
 			StoreID: store.ID,
 			Email:   user.Email,
 		}
 
 		// Save to paystack_dva_accounts table
-		if err := r.db.Table("paystack_dva_accounts").Create(dvaAccount).Error; err != nil {
+		if err := r.db.Create(paystack_dva_accounts).Error; err != nil {
 			log.Printf("Warning: Failed to save DVA account for user %d: %v", user.ID, err)
 			continue
 		}
@@ -1447,6 +1448,7 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 }
 
 type PaystackDVAAccount struct {
+	ID      uint32 `gorm:"column:id;primaryKey;autoIncrement"`
 	StoreID uint32 `gorm:"column:store_id"`
 	Email   string `gorm:"column:email"`
 }
