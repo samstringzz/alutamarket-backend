@@ -1430,7 +1430,6 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 
 		// Create a new Paystack DVA account record
 		paystack_dva_accounts := &PaystackDVAAccount{
-			ID:      store.ID,
 			StoreID: store.ID,
 			Email:   user.Email,
 		}
