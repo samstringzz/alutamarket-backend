@@ -355,4 +355,5 @@ type Service interface {
 	CreatePaystackDVAAccount(ctx context.Context, storeID uint32, account *PaystackDVAResponse, email string) error
 	GetPaystackDVAAccount(ctx context.Context, storeID uint32) (*PaystackDVAResponse, error)
 	SyncExistingPaystackDVAAccounts(ctx context.Context) error
+	GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error)
 }
