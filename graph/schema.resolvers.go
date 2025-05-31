@@ -3153,3 +3153,12 @@ func (r *queryResolver) CheckStoreEarningsDiscrepancy(ctx context.Context, store
 		TotalEarnings:        totalEarnings,
 	}, nil
 }
+
+// SyncPaystackDVAAccounts is the resolver for the syncPaystackDVAAccounts field.
+func (r *mutationResolver) SyncPaystackDVAAccounts(ctx context.Context) (bool, error) {
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+	if err := storeHandler.SyncExistingPaystackDVAAccounts(ctx); err != nil {
+		return false, fmt.Errorf("failed to sync Paystack DVA accounts: %v", err)
+	}
+	return true, nil
+}
