@@ -2,6 +2,7 @@ package user
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,6 +13,63 @@ import (
 type PaystackClient interface {
 	GetDVAAccount(email string) (*Account, error)
 	CreateDVAAccount(details *DVADetails) (*Account, error)
+	InitiateTransfer(ctx context.Context, req *TransferRequest) (*Transfer, error)
+}
+
+type TransferRequest struct {
+	Amount    float64 `json:"amount"`
+	Recipient string  `json:"recipient"`
+	Reason    string  `json:"reason"`
+}
+
+type Transfer struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
+	Data    struct {
+		Reference     string  `json:"reference"`
+		Amount        float64 `json:"amount"`
+		Status        string  `json:"status"`
+		TransferCode  string  `json:"transfer_code"`
+		RecipientCode string  `json:"recipient_code"`
+	} `json:"data"`
+}
+
+// Add the implementation
+func (p *paystackClient) InitiateTransfer(ctx context.Context, req *TransferRequest) (*Transfer, error) {
+	url := "https://api.paystack.co/transfer"
+
+	payload := map[string]interface{}{
+		"amount":    req.Amount * 100, // Convert to kobo
+		"recipient": req.Recipient,
+		"reason":    req.Reason,
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal payload: %v", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	httpReq.Header.Set("Authorization", "Bearer "+p.secretKey)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var transfer Transfer
+	if err := json.NewDecoder(resp.Body).Decode(&transfer); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	return &transfer, nil
 }
 
 // paystackClient implements PaystackClient interface

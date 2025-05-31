@@ -99,6 +99,7 @@ type Store struct {
 	Followers          []*Follower          `gorm:"serializer:json"`
 	Products           []Product            `gorm:"serializer:json"`
 	Wallet             float64              `json:"wallet" db:"wallet"`
+	PaystackBalance    float64              `json:"paystack_balance" db:"paystack_balance"`
 	Status             bool                 `json:"status" db:"status"`
 	Thumbnail          string               `json:"thumbnail" db:"thumbnail"`
 	Phone              string               `json:"phone" db:"phone"`
@@ -126,6 +127,7 @@ type UpdateStore struct {
 	Account            *WithdrawalAccount `gorm:"serializer:json"`
 	Products           []Product          `gorm:"serializer:json"`
 	Wallet             float64            `json:"wallet" db:"wallet"`
+	PaystackBalance    float64            `json:"paystack_balance" db:"paystack_balance"`
 	Status             bool               `json:"status" db:"status"`
 	Thumbnail          string             `json:"thumbnail" db:"thumbnail"`
 	Phone              string             `json:"phone" db:"phone"`
@@ -314,6 +316,11 @@ type Repository interface {
 	GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error)
 	GetAllOrders(ctx context.Context) ([]*Order, error)
 	CheckStoreEarningsDiscrepancy(ctx context.Context, storeID uint32) (int, float64, error)
+	CreatePaystackDVAAccount(ctx context.Context, storeID uint32, account *PaystackDVAResponse, email string) error
+	GetPaystackDVAAccount(ctx context.Context, storeID uint32) (*PaystackDVAResponse, error)
+	SyncExistingPaystackDVAAccounts(ctx context.Context) error
+	UpdatePaystackBalance(ctx context.Context, storeID uint32, amount float64) error
+	UpdateWallet(ctx context.Context, storeID uint32, amount float64) error
 }
 
 type Service interface {
@@ -342,8 +349,10 @@ type Service interface {
 	GetFollowedStores(ctx context.Context, userID uint32) ([]*Store, error)
 	GetOrderByUUID(ctx context.Context, uuid string) (*Order, error)
 	UpdateProductUnitsSold(ctx context.Context, productID uint32) error
-	AddStoreEarnings(ctx context.Context, earnings *StoreEarnings) error
-	GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error)
 	GetAllOrders(ctx context.Context) ([]*Order, error)
+	AddStoreEarnings(ctx context.Context, earnings *StoreEarnings) error
 	CheckStoreEarningsDiscrepancy(ctx context.Context, storeID uint32) (int, float64, error)
+	CreatePaystackDVAAccount(ctx context.Context, storeID uint32, account *PaystackDVAResponse, email string) error
+	GetPaystackDVAAccount(ctx context.Context, storeID uint32) (*PaystackDVAResponse, error)
+	SyncExistingPaystackDVAAccounts(ctx context.Context) error
 }

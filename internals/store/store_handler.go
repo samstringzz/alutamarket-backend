@@ -193,3 +193,18 @@ func (h *Handler) GetAllOrders(ctx context.Context) ([]*Order, error) {
 func (h *Handler) CheckStoreEarningsDiscrepancy(ctx context.Context, storeID uint32) (int, float64, error) {
 	return h.Service.CheckStoreEarningsDiscrepancy(ctx, storeID)
 }
+
+// CreatePaystackDVAAccount creates and stores a Paystack DVA account for a store
+func (h *Handler) CreatePaystackDVAAccount(ctx context.Context, storeID uint32, account *PaystackDVAResponse, email string) error {
+	return h.Service.CreatePaystackDVAAccount(ctx, storeID, account, email)
+}
+
+// GetPaystackDVAAccount retrieves a store's Paystack DVA account
+func (h *Handler) GetPaystackDVAAccount(ctx context.Context, storeID uint32) (*PaystackDVAResponse, error) {
+	return h.Service.GetPaystackDVAAccount(ctx, storeID)
+}
+
+// SyncExistingPaystackDVAAccounts retrieves all existing Paystack DVA accounts and stores them in our database
+func (h *Handler) SyncExistingPaystackDVAAccounts(ctx context.Context) error {
+	return h.Service.SyncExistingPaystackDVAAccounts(ctx)
+}
