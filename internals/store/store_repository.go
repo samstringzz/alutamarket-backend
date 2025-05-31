@@ -944,6 +944,7 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 	// Add query parameters
 	q := req.URL.Query()
 	q.Add("email", email)
+	q.Add("active", "true") // Only get active accounts
 	req.URL.RawQuery = q.Encode()
 
 	req.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
@@ -969,6 +970,9 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 			Bank          struct {
 				Name string `json:"name"`
 			} `json:"bank"`
+			Customer struct {
+				Email string `json:"email"`
+			} `json:"customer"`
 		} `json:"data"`
 	}
 
@@ -985,8 +989,24 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 		return nil, fmt.Errorf("no DVA account found for email: %s", email)
 	}
 
-	// Return the first account (assuming it's the most relevant one)
-	account := &PaystackDVAResponse{
+	// Find the account that matches the email exactly
+	for _, account := range response.Data {
+		if account.Customer.Email == email {
+			return &PaystackDVAResponse{
+				AccountNumber: account.AccountNumber,
+				AccountName:   account.AccountName,
+				Bank: struct {
+					Name string `json:"name"`
+				}{
+					Name: account.Bank.Name,
+				},
+			}, nil
+		}
+	}
+
+	// If no exact match found, return the first account but log a warning
+	log.Printf("Warning: No exact email match found for %s, using first available account", email)
+	return &PaystackDVAResponse{
 		AccountNumber: response.Data[0].AccountNumber,
 		AccountName:   response.Data[0].AccountName,
 		Bank: struct {
@@ -994,9 +1014,7 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 		}{
 			Name: response.Data[0].Bank.Name,
 		},
-	}
-
-	return account, nil
+	}, nil
 }
 
 type PaystackDVAResponse struct {
