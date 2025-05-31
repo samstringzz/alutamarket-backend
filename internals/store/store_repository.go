@@ -1427,20 +1427,20 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			continue
 		}
 
-		// Get Paystack DVA account details
-		dvaResponse, err := r.getPaystackDVAAccount(user.Email)
+		// Get existing DVA account details
+		dvaAccount, err := r.GetDVAAccount(ctx, user.Email)
 		if err != nil {
-			log.Printf("Warning: Failed to get Paystack DVA account for user %d: %v", user.ID, err)
+			log.Printf("Warning: Failed to get DVA account for user %d: %v", user.ID, err)
 			continue
 		}
 
 		// Create a new Paystack DVA account record
 		paystack_dva_accounts := &PaystackDVAAccount{
-			ID:            dvaResponse.AccountNumber, // Use account number as ID
+			ID:            dvaAccount.AccountNumber, // Use account number as ID
 			StoreID:       store.ID,
-			AccountNumber: dvaResponse.AccountNumber,
-			AccountName:   dvaResponse.AccountName,
-			BankName:      dvaResponse.Bank.Name,
+			AccountNumber: dvaAccount.AccountNumber,
+			AccountName:   dvaAccount.AccountName,
+			BankName:      dvaAccount.Bank.Name,
 			Email:         user.Email,
 			CreatedAt:     time.Now(),
 			UpdatedAt:     time.Now(),
