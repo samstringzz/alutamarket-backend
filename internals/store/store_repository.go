@@ -950,7 +950,14 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 
 		// Add query parameters
 		q := req.URL.Query()
-		q.Add("email", email)
+		// Check if the input is an account number (numeric) or email
+		if _, err := strconv.Atoi(email); err == nil {
+			// If it's a number, use it as account_number
+			q.Add("account_number", email)
+		} else {
+			// If it's not a number, use it as email
+			q.Add("email", email)
+		}
 		q.Add("active", "true")
 		req.URL.RawQuery = q.Encode()
 
@@ -965,7 +972,7 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 		req.Header.Add("Content-Type", "application/json")
 
 		// Log the request details
-		log.Printf("Making Paystack API request to: %s with email: %s (attempt %d/%d)",
+		log.Printf("Making Paystack API request to: %s with identifier: %s (attempt %d/%d)",
 			req.URL.String(), email, attempt, maxRetries)
 
 		res, err := client.Do(req)
@@ -1028,12 +1035,12 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 		}
 
 		if len(response.Data) == 0 {
-			return nil, fmt.Errorf("no DVA account found for email: %s", email)
+			return nil, fmt.Errorf("no DVA account found for identifier: %s", email)
 		}
 
 		// Find the account that matches the email exactly
 		for _, account := range response.Data {
-			if account.Customer.Email == email {
+			if account.Customer.Email == email || account.AccountNumber == email {
 				return &PaystackDVAResponse{
 					AccountNumber: account.AccountNumber,
 					AccountName:   account.AccountName,
@@ -1047,7 +1054,7 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 		}
 
 		// If no exact match found, return the first account but log a warning
-		log.Printf("Warning: No exact email match found for %s, using first available account", email)
+		log.Printf("Warning: No exact match found for %s, using first available account", email)
 		return &PaystackDVAResponse{
 			AccountNumber: response.Data[0].AccountNumber,
 			AccountName:   response.Data[0].AccountName,
