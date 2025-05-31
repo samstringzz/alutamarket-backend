@@ -1427,10 +1427,23 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			continue
 		}
 
+		// Get Paystack DVA account details
+		dvaResponse, err := r.getPaystackDVAAccount(user.Email)
+		if err != nil {
+			log.Printf("Warning: Failed to get Paystack DVA account for user %d: %v", user.ID, err)
+			continue
+		}
+
 		// Create a new Paystack DVA account record
 		paystack_dva_accounts := &PaystackDVAAccount{
-			StoreID: store.ID,
-			Email:   user.Email,
+			ID:            dvaResponse.AccountNumber, // Use account number as ID
+			StoreID:       store.ID,
+			AccountNumber: dvaResponse.AccountNumber,
+			AccountName:   dvaResponse.AccountName,
+			BankName:      dvaResponse.Bank.Name,
+			Email:         user.Email,
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
 		}
 
 		// Save to paystack_dva_accounts table
@@ -1446,9 +1459,15 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 }
 
 type PaystackDVAAccount struct {
-	ID      uint32 `gorm:"column:id;primaryKey;autoIncrement"`
-	StoreID uint32 `gorm:"column:store_id"`
-	Email   string `gorm:"column:email"`
+	ID            string    `gorm:"column:id;primaryKey"`
+	StoreID       uint32    `gorm:"column:store_id"`
+	AccountNumber string    `gorm:"column:account_number"`
+	AccountName   string    `gorm:"column:account_name"`
+	BankName      string    `gorm:"column:bank_name"`
+	BankCode      string    `gorm:"column:bank_code"`
+	Email         string    `gorm:"column:email"`
+	CreatedAt     time.Time `gorm:"column:created_at"`
+	UpdatedAt     time.Time `gorm:"column:updated_at"`
 }
 
 // TableName specifies the table name for PaystackDVAAccount
