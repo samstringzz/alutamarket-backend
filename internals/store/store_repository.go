@@ -1358,7 +1358,7 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			ID uint32 `gorm:"column:id"`
 		}
 		if err := r.db.Table("stores").
-			Where("user = ?", user.ID).
+			Where("user_id = ?", user.ID).
 			Select("id").
 			First(&store).Error; err != nil {
 			// Log the error but continue with other users
