@@ -239,47 +239,49 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddEmailSubscriber      func(childComplexity int, email string) int
-		AddHandledProduct       func(childComplexity int, userID int, productID int, typeArg string) int
-		AddReview               func(childComplexity int, input model.ReviewInput) int
-		CheckStoreName          func(childComplexity int, input string) int
-		ConfirmPassword         func(childComplexity int, input *model.ConfirmPasswordInput) int
-		CreateCategory          func(childComplexity int, input model.NewCategory) int
-		CreateChat              func(childComplexity int, input model.ChatInput) int
-		CreateDVAAccount        func(childComplexity int, input model.DVAAccountInput) int
-		CreateInvoice           func(childComplexity int, input model.InvoiceInput) int
-		CreateOrder             func(childComplexity int, input model.StoreOrderInput) int
-		CreatePaystackAccount   func(childComplexity int, email string, bvn string) int
-		CreateProduct           func(childComplexity int, input model.ProductInput) int
-		CreateResetPasswordLink func(childComplexity int, input model.PasswordResetInput) int
-		CreateSkynet            func(childComplexity int, input *model.SkynetInput) int
-		CreateStore             func(childComplexity int, input model.StoreInput) int
-		CreateSubCategory       func(childComplexity int, input model.NewSubCategory) int
-		CreateTransaction       func(childComplexity int, input model.TransactionInput) int
-		CreateUser              func(childComplexity int, input model.NewUser) int
-		CreateVerifyOtp         func(childComplexity int, input model.NewVerifyOtp) int
-		DeleteProduct           func(childComplexity int, productID int) int
-		DeleteStore             func(childComplexity int, storeID int) int
-		InitializePayment       func(childComplexity int, input model.PaymentData) int
-		LoginUser               func(childComplexity int, input model.LoginReq) int
-		ModifyCart              func(childComplexity int, input model.ModifyCartItemInput) int
-		RemoveAllCart           func(childComplexity int, cartID int) int
-		RemoveHandledProduct    func(childComplexity int, prd int, typeArg *string) int
-		SendMessage             func(childComplexity int, input model.MessageInput) int
-		SubmitContactForm       func(childComplexity int, input model.ContactFormInput) int
-		SubscribeEmail          func(childComplexity int, email string) int
-		ToggleStoreFollowStatus func(childComplexity int, user int, store int) int
-		UnsubscribeEmail        func(childComplexity int, email string) int
-		UpdateOrder             func(childComplexity int, input model.UpdateStoreOrderInput) int
-		UpdateOrderStatus       func(childComplexity int, orderUUID string, status string) int
-		UpdateProduct           func(childComplexity int, input *model.UpdateProductInput) int
-		UpdateStore             func(childComplexity int, input *model.UpdateStoreInput) int
-		UpdateStoreFollower     func(childComplexity int, input *model.StoreFollowerInput) int
-		UpdateUser              func(childComplexity int, input *model.UpdateUserInput) int
-		UpdateUserPassword      func(childComplexity int, input model.PasswordUpdateInput) int
-		VerifyResetPasswordLink func(childComplexity int, input string) int
-		VerifySmartCard         func(childComplexity int, input model.SmartCardInput) int
-		WithdrawFund            func(childComplexity int, input model.FundInput) int
+		AddEmailSubscriber            func(childComplexity int, email string) int
+		AddHandledProduct             func(childComplexity int, userID int, productID int, typeArg string) int
+		AddReview                     func(childComplexity int, input model.ReviewInput) int
+		CheckStoreName                func(childComplexity int, input string) int
+		ConfirmPassword               func(childComplexity int, input *model.ConfirmPasswordInput) int
+		CreateCategory                func(childComplexity int, input model.NewCategory) int
+		CreateChat                    func(childComplexity int, input model.ChatInput) int
+		CreateDVAAccount              func(childComplexity int, input model.DVAAccountInput) int
+		CreateInvoice                 func(childComplexity int, input model.InvoiceInput) int
+		CreateOrder                   func(childComplexity int, input model.StoreOrderInput) int
+		CreatePaystackAccount         func(childComplexity int, email string, bvn string) int
+		CreateProduct                 func(childComplexity int, input model.ProductInput) int
+		CreateResetPasswordLink       func(childComplexity int, input model.PasswordResetInput) int
+		CreateSkynet                  func(childComplexity int, input *model.SkynetInput) int
+		CreateStore                   func(childComplexity int, input model.StoreInput) int
+		CreateSubCategory             func(childComplexity int, input model.NewSubCategory) int
+		CreateTransaction             func(childComplexity int, input model.TransactionInput) int
+		CreateUser                    func(childComplexity int, input model.NewUser) int
+		CreateVerifyOtp               func(childComplexity int, input model.NewVerifyOtp) int
+		DeleteProduct                 func(childComplexity int, productID int) int
+		DeleteStore                   func(childComplexity int, storeID int) int
+		InitializePayment             func(childComplexity int, input model.PaymentData) int
+		LoginUser                     func(childComplexity int, input model.LoginReq) int
+		ModifyCart                    func(childComplexity int, input model.ModifyCartItemInput) int
+		RemoveAllCart                 func(childComplexity int, cartID int) int
+		RemoveHandledProduct          func(childComplexity int, prd int, typeArg *string) int
+		SendMessage                   func(childComplexity int, input model.MessageInput) int
+		SubmitContactForm             func(childComplexity int, input model.ContactFormInput) int
+		SubscribeEmail                func(childComplexity int, email string) int
+		SyncPaystackDVAAccounts       func(childComplexity int) int
+		ToggleStoreFollowStatus       func(childComplexity int, user int, store int) int
+		UnsubscribeEmail              func(childComplexity int, email string) int
+		UpdateExistingOrdersUnitsSold func(childComplexity int) int
+		UpdateOrder                   func(childComplexity int, input model.UpdateStoreOrderInput) int
+		UpdateOrderStatus             func(childComplexity int, orderUUID string, status string) int
+		UpdateProduct                 func(childComplexity int, input *model.UpdateProductInput) int
+		UpdateStore                   func(childComplexity int, input *model.UpdateStoreInput) int
+		UpdateStoreFollower           func(childComplexity int, input *model.StoreFollowerInput) int
+		UpdateUser                    func(childComplexity int, input *model.UpdateUserInput) int
+		UpdateUserPassword            func(childComplexity int, input model.PasswordUpdateInput) int
+		VerifyResetPasswordLink       func(childComplexity int, input string) int
+		VerifySmartCard               func(childComplexity int, input model.SmartCardInput) int
+		WithdrawFund                  func(childComplexity int, input model.FundInput) int
 	}
 
 	Order struct {
@@ -404,42 +406,43 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AllStores             func(childComplexity int, limit *int, offset *int) int
-		Cart                  func(childComplexity int, user int) int
-		Categories            func(childComplexity int) int
-		Category              func(childComplexity int, id int) int
-		Chats                 func(childComplexity int, userID string) int
-		FollowedStores        func(childComplexity int, userID int) int
-		GetAllOrders          func(childComplexity int) int
-		GetAllProducts        func(childComplexity int) int
-		GetAllReviews         func(childComplexity int) int
-		GetDVAAccount         func(childComplexity int, userID string) int
-		GetDVABalance         func(childComplexity int, accountNumber string, storeID *int) int
-		GetStoreEarnings      func(childComplexity int, storeID int) int
-		GetUsers              func(childComplexity int) int
-		HandledProducts       func(childComplexity int, user int, typeArg string) int
-		Messages              func(childComplexity int, chatID string) int
-		MyDownloads           func(childComplexity int, id string) int
-		MyInvoices            func(childComplexity int, storeID *int) int
-		Mydva                 func(childComplexity int, email string) int
-		Product               func(childComplexity int, id int) int
-		Products              func(childComplexity int, store *string, categorySlug *string, limit *int, offset *int) int
-		PurchasedOrder        func(childComplexity int, user int) int
-		RecentlyAddedProducts func(childComplexity int, user int) int
-		RecommendedProducts   func(childComplexity int, query string) int
-		Reviews               func(childComplexity int, id string, value string) int
-		SearchProducts        func(childComplexity int, query string) int
-		SellerOrders          func(childComplexity int, storeName string) int
-		Skynet                func(childComplexity int, id string) int
-		Skynets               func(childComplexity int, id string) int
-		Store                 func(childComplexity int, id int) int
-		StoreByName           func(childComplexity int, name string) int
-		Stores                func(childComplexity int, user *int, limit *int, offset *int) int
-		SubCategory           func(childComplexity int, id string) int
-		Subscribers           func(childComplexity int) int
-		SubscriptionBundle    func(childComplexity int, serviceID string) int
-		User                  func(childComplexity int, id string) int
-		Users                 func(childComplexity int, limit *int, offset *int) int
+		AllStores                     func(childComplexity int, limit *int, offset *int) int
+		Cart                          func(childComplexity int, user int) int
+		Categories                    func(childComplexity int) int
+		Category                      func(childComplexity int, id int) int
+		Chats                         func(childComplexity int, userID string) int
+		CheckStoreEarningsDiscrepancy func(childComplexity int, storeID int) int
+		FollowedStores                func(childComplexity int, userID int) int
+		GetAllOrders                  func(childComplexity int) int
+		GetAllProducts                func(childComplexity int) int
+		GetAllReviews                 func(childComplexity int) int
+		GetDVAAccount                 func(childComplexity int, userID string) int
+		GetDVABalance                 func(childComplexity int, accountNumber string, storeID *int) int
+		GetStoreEarnings              func(childComplexity int, storeID int) int
+		GetUsers                      func(childComplexity int) int
+		HandledProducts               func(childComplexity int, user int, typeArg string) int
+		Messages                      func(childComplexity int, chatID string) int
+		MyDownloads                   func(childComplexity int, id string) int
+		MyInvoices                    func(childComplexity int, storeID *int) int
+		Mydva                         func(childComplexity int, email string) int
+		Product                       func(childComplexity int, id int) int
+		Products                      func(childComplexity int, store *string, categorySlug *string, limit *int, offset *int) int
+		PurchasedOrder                func(childComplexity int, user int) int
+		RecentlyAddedProducts         func(childComplexity int, user int) int
+		RecommendedProducts           func(childComplexity int, query string) int
+		Reviews                       func(childComplexity int, id string, value string) int
+		SearchProducts                func(childComplexity int, query string) int
+		SellerOrders                  func(childComplexity int, storeName string) int
+		Skynet                        func(childComplexity int, id string) int
+		Skynets                       func(childComplexity int, id string) int
+		Store                         func(childComplexity int, id int) int
+		StoreByName                   func(childComplexity int, name string) int
+		Stores                        func(childComplexity int, user *int, limit *int, offset *int) int
+		SubCategory                   func(childComplexity int, id string) int
+		Subscribers                   func(childComplexity int) int
+		SubscriptionBundle            func(childComplexity int, serviceID string) int
+		User                          func(childComplexity int, id string) int
+		Users                         func(childComplexity int, limit *int, offset *int) int
 	}
 
 	Review struct {
@@ -537,6 +540,11 @@ type ComplexityRoot struct {
 		UpdatedAt       func(childComplexity int) int
 	}
 
+	StoreEarningsDiscrepancy struct {
+		DeliveredOrdersCount func(childComplexity int) int
+		TotalEarnings        func(childComplexity int) int
+	}
+
 	StoreFollower struct {
 		FollowerID    func(childComplexity int) int
 		FollowerImage func(childComplexity int) int
@@ -605,6 +613,12 @@ type ComplexityRoot struct {
 		Type      func(childComplexity int) int
 		UUID      func(childComplexity int) int
 		User      func(childComplexity int) int
+	}
+
+	UpdateUnitsSoldResponse struct {
+		ErrorCount   func(childComplexity int) int
+		Success      func(childComplexity int) int
+		UpdatedCount func(childComplexity int) int
 	}
 
 	User struct {
@@ -715,7 +729,9 @@ type MutationResolver interface {
 	ConfirmPassword(ctx context.Context, input *model.ConfirmPasswordInput) (bool, error)
 	CreateInvoice(ctx context.Context, input model.InvoiceInput) (*model.Invoice, error)
 	CreatePaystackAccount(ctx context.Context, email string, bvn string) (*model.PaystackAccount, error)
+	UpdateExistingOrdersUnitsSold(ctx context.Context) (*model.UpdateUnitsSoldResponse, error)
 	SubmitContactForm(ctx context.Context, input model.ContactFormInput) (string, error)
+	SyncPaystackDVAAccounts(ctx context.Context) (bool, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error)
@@ -754,6 +770,7 @@ type QueryResolver interface {
 	Subscribers(ctx context.Context) ([]*model.Subscriber, error)
 	GetDVAAccount(ctx context.Context, userID string) (*model.DVAAccount, error)
 	GetStoreEarnings(ctx context.Context, storeID int) ([]*model.StoreEarnings, error)
+	CheckStoreEarningsDiscrepancy(ctx context.Context, storeID int) (*model.StoreEarningsDiscrepancy, error)
 }
 type SubscriptionResolver interface {
 	ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error)
@@ -1959,6 +1976,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SubscribeEmail(childComplexity, args["email"].(string)), true
 
+	case "Mutation.syncPaystackDVAAccounts":
+		if e.complexity.Mutation.SyncPaystackDVAAccounts == nil {
+			break
+		}
+
+		return e.complexity.Mutation.SyncPaystackDVAAccounts(childComplexity), true
+
 	case "Mutation.toggleStoreFollowStatus":
 		if e.complexity.Mutation.ToggleStoreFollowStatus == nil {
 			break
@@ -1982,6 +2006,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UnsubscribeEmail(childComplexity, args["email"].(string)), true
+
+	case "Mutation.updateExistingOrdersUnitsSold":
+		if e.complexity.Mutation.UpdateExistingOrdersUnitsSold == nil {
+			break
+		}
+
+		return e.complexity.Mutation.UpdateExistingOrdersUnitsSold(childComplexity), true
 
 	case "Mutation.updateOrder":
 		if e.complexity.Mutation.UpdateOrder == nil {
@@ -2773,6 +2804,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Chats(childComplexity, args["userID"].(string)), true
+
+	case "Query.checkStoreEarningsDiscrepancy":
+		if e.complexity.Query.CheckStoreEarningsDiscrepancy == nil {
+			break
+		}
+
+		args, err := ec.field_Query_checkStoreEarningsDiscrepancy_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CheckStoreEarningsDiscrepancy(childComplexity, args["storeId"].(int)), true
 
 	case "Query.followedStores":
 		if e.complexity.Query.FollowedStores == nil {
@@ -3576,6 +3619,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.StoreEarnings.UpdatedAt(childComplexity), true
 
+	case "StoreEarningsDiscrepancy.deliveredOrdersCount":
+		if e.complexity.StoreEarningsDiscrepancy.DeliveredOrdersCount == nil {
+			break
+		}
+
+		return e.complexity.StoreEarningsDiscrepancy.DeliveredOrdersCount(childComplexity), true
+
+	case "StoreEarningsDiscrepancy.totalEarnings":
+		if e.complexity.StoreEarningsDiscrepancy.TotalEarnings == nil {
+			break
+		}
+
+		return e.complexity.StoreEarningsDiscrepancy.TotalEarnings(childComplexity), true
+
 	case "StoreFollower.follower_id":
 		if e.complexity.StoreFollower.FollowerID == nil {
 			break
@@ -3881,6 +3938,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Transaction.User(childComplexity), true
+
+	case "UpdateUnitsSoldResponse.errorCount":
+		if e.complexity.UpdateUnitsSoldResponse.ErrorCount == nil {
+			break
+		}
+
+		return e.complexity.UpdateUnitsSoldResponse.ErrorCount(childComplexity), true
+
+	case "UpdateUnitsSoldResponse.success":
+		if e.complexity.UpdateUnitsSoldResponse.Success == nil {
+			break
+		}
+
+		return e.complexity.UpdateUnitsSoldResponse.Success(childComplexity), true
+
+	case "UpdateUnitsSoldResponse.updatedCount":
+		if e.complexity.UpdateUnitsSoldResponse.UpdatedCount == nil {
+			break
+		}
+
+		return e.complexity.UpdateUnitsSoldResponse.UpdatedCount(childComplexity), true
 
 	case "User.access_token":
 		if e.complexity.User.AccessToken == nil {
@@ -6598,6 +6676,34 @@ func (ec *executionContext) field_Query_allStores_argsOffset(
 	}
 
 	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_checkStoreEarningsDiscrepancy_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_checkStoreEarningsDiscrepancy_argsStoreID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["storeId"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_checkStoreEarningsDiscrepancy_argsStoreID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int, error) {
+	if _, ok := rawArgs["storeId"]; !ok {
+		var zeroVal int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("storeId"))
+	if tmp, ok := rawArgs["storeId"]; ok {
+		return ec.unmarshalNInt2int(ctx, tmp)
+	}
+
+	var zeroVal int
 	return zeroVal, nil
 }
 
@@ -15164,6 +15270,58 @@ func (ec *executionContext) fieldContext_Mutation_createPaystackAccount(ctx cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateExistingOrdersUnitsSold(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateExistingOrdersUnitsSold(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateExistingOrdersUnitsSold(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.UpdateUnitsSoldResponse)
+	fc.Result = res
+	return ec.marshalNUpdateUnitsSoldResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateUnitsSoldResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateExistingOrdersUnitsSold(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_UpdateUnitsSoldResponse_success(ctx, field)
+			case "updatedCount":
+				return ec.fieldContext_UpdateUnitsSoldResponse_updatedCount(ctx, field)
+			case "errorCount":
+				return ec.fieldContext_UpdateUnitsSoldResponse_errorCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateUnitsSoldResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_submitContactForm(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_submitContactForm(ctx, field)
 	if err != nil {
@@ -15215,6 +15373,50 @@ func (ec *executionContext) fieldContext_Mutation_submitContactForm(ctx context.
 	if fc.Args, err = ec.field_Mutation_submitContactForm_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_syncPaystackDVAAccounts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_syncPaystackDVAAccounts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SyncPaystackDVAAccounts(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_syncPaystackDVAAccounts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -21936,6 +22138,67 @@ func (ec *executionContext) fieldContext_Query_getStoreEarnings(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_checkStoreEarningsDiscrepancy(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_checkStoreEarningsDiscrepancy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CheckStoreEarningsDiscrepancy(rctx, fc.Args["storeId"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.StoreEarningsDiscrepancy)
+	fc.Result = res
+	return ec.marshalNStoreEarningsDiscrepancy2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreEarningsDiscrepancy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_checkStoreEarningsDiscrepancy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deliveredOrdersCount":
+				return ec.fieldContext_StoreEarningsDiscrepancy_deliveredOrdersCount(ctx, field)
+			case "totalEarnings":
+				return ec.fieldContext_StoreEarningsDiscrepancy_totalEarnings(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StoreEarningsDiscrepancy", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_checkStoreEarningsDiscrepancy_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query___type(ctx, field)
 	if err != nil {
@@ -25009,6 +25272,94 @@ func (ec *executionContext) fieldContext_StoreEarnings_updatedAt(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _StoreEarningsDiscrepancy_deliveredOrdersCount(ctx context.Context, field graphql.CollectedField, obj *model.StoreEarningsDiscrepancy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StoreEarningsDiscrepancy_deliveredOrdersCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeliveredOrdersCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StoreEarningsDiscrepancy_deliveredOrdersCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StoreEarningsDiscrepancy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StoreEarningsDiscrepancy_totalEarnings(ctx context.Context, field graphql.CollectedField, obj *model.StoreEarningsDiscrepancy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_StoreEarningsDiscrepancy_totalEarnings(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalEarnings, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_StoreEarningsDiscrepancy_totalEarnings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StoreEarningsDiscrepancy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _StoreFollower_follower_id(ctx context.Context, field graphql.CollectedField, obj *model.StoreFollower) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_StoreFollower_follower_id(ctx, field)
 	if err != nil {
@@ -27051,6 +27402,138 @@ func (ec *executionContext) fieldContext_Transaction_created_at(_ context.Contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateUnitsSoldResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.UpdateUnitsSoldResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateUnitsSoldResponse_success(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Success, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateUnitsSoldResponse_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateUnitsSoldResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateUnitsSoldResponse_updatedCount(ctx context.Context, field graphql.CollectedField, obj *model.UpdateUnitsSoldResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateUnitsSoldResponse_updatedCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateUnitsSoldResponse_updatedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateUnitsSoldResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateUnitsSoldResponse_errorCount(ctx context.Context, field graphql.CollectedField, obj *model.UpdateUnitsSoldResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateUnitsSoldResponse_errorCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ErrorCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateUnitsSoldResponse_errorCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateUnitsSoldResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -35130,9 +35613,23 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createPaystackAccount(ctx, field)
 			})
+		case "updateExistingOrdersUnitsSold":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateExistingOrdersUnitsSold(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "submitContactForm":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_submitContactForm(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "syncPaystackDVAAccounts":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_syncPaystackDVAAccounts(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -36704,6 +37201,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "checkStoreEarningsDiscrepancy":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_checkStoreEarningsDiscrepancy(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -37358,6 +37877,50 @@ func (ec *executionContext) _StoreEarnings(ctx context.Context, sel ast.Selectio
 	return out
 }
 
+var storeEarningsDiscrepancyImplementors = []string{"StoreEarningsDiscrepancy"}
+
+func (ec *executionContext) _StoreEarningsDiscrepancy(ctx context.Context, sel ast.SelectionSet, obj *model.StoreEarningsDiscrepancy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, storeEarningsDiscrepancyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StoreEarningsDiscrepancy")
+		case "deliveredOrdersCount":
+			out.Values[i] = ec._StoreEarningsDiscrepancy_deliveredOrdersCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalEarnings":
+			out.Values[i] = ec._StoreEarningsDiscrepancy_totalEarnings(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var storeFollowerImplementors = []string{"StoreFollower"}
 
 func (ec *executionContext) _StoreFollower(ctx context.Context, sel ast.SelectionSet, obj *model.StoreFollower) graphql.Marshaler {
@@ -37831,6 +38394,55 @@ func (ec *executionContext) _Transaction(ctx context.Context, sel ast.SelectionS
 			}
 		case "created_at":
 			out.Values[i] = ec._Transaction_created_at(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateUnitsSoldResponseImplementors = []string{"UpdateUnitsSoldResponse"}
+
+func (ec *executionContext) _UpdateUnitsSoldResponse(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateUnitsSoldResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateUnitsSoldResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateUnitsSoldResponse")
+		case "success":
+			out.Values[i] = ec._UpdateUnitsSoldResponse_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedCount":
+			out.Values[i] = ec._UpdateUnitsSoldResponse_updatedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "errorCount":
+			out.Values[i] = ec._UpdateUnitsSoldResponse_errorCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -39670,6 +40282,20 @@ func (ec *executionContext) marshalNStoreEarnings2ᚖgithubᚗcomᚋChrisentech�
 	return ec._StoreEarnings(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNStoreEarningsDiscrepancy2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreEarningsDiscrepancy(ctx context.Context, sel ast.SelectionSet, v model.StoreEarningsDiscrepancy) graphql.Marshaler {
+	return ec._StoreEarningsDiscrepancy(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNStoreEarningsDiscrepancy2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreEarningsDiscrepancy(ctx context.Context, sel ast.SelectionSet, v *model.StoreEarningsDiscrepancy) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StoreEarningsDiscrepancy(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNStoreFollower2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollower(ctx context.Context, sel ast.SelectionSet, v *model.StoreFollower) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -39926,6 +40552,20 @@ func (ec *executionContext) unmarshalNTransactionInput2githubᚗcomᚋChrisentec
 func (ec *executionContext) unmarshalNUpdateStoreOrderInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateStoreOrderInput(ctx context.Context, v any) (model.UpdateStoreOrderInput, error) {
 	res, err := ec.unmarshalInputUpdateStoreOrderInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateUnitsSoldResponse2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateUnitsSoldResponse(ctx context.Context, sel ast.SelectionSet, v model.UpdateUnitsSoldResponse) graphql.Marshaler {
+	return ec._UpdateUnitsSoldResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateUnitsSoldResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateUnitsSoldResponse(ctx context.Context, sel ast.SelectionSet, v *model.UpdateUnitsSoldResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateUnitsSoldResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {

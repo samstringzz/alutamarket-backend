@@ -1406,6 +1406,46 @@ func (r *mutationResolver) CreatePaystackAccount(ctx context.Context, email stri
 	panic(fmt.Errorf("not implemented: CreatePaystackAccount - createPaystackAccount"))
 }
 
+// UpdateExistingOrdersUnitsSold updates the units sold for all existing orders
+func (r *mutationResolver) UpdateExistingOrdersUnitsSold(ctx context.Context) (*model.UpdateUnitsSoldResponse, error) {
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+
+	// Get all orders
+	orders, err := storeHandler.GetAllOrders(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get orders: %v", err)
+	}
+
+	updatedCount := 0
+	errorCount := 0
+
+	// Process each order
+	for _, order := range orders {
+		// Only process orders that are pending, processing, completed, or delivered
+		if order.Status == "pending" || order.Status == "processing" ||
+			order.Status == "completed" || order.Status == "delivered" {
+
+			// Update units sold for each product in the order
+			for _, product := range order.Products {
+				err = storeHandler.UpdateProductUnitsSold(ctx, product.ID)
+				if err != nil {
+					log.Printf("Error updating units sold for product %d in order %s: %v",
+						product.ID, order.UUID, err)
+					errorCount++
+					continue
+				}
+				updatedCount++
+			}
+		}
+	}
+
+	return &model.UpdateUnitsSoldResponse{
+		Success:      true,
+		UpdatedCount: updatedCount,
+		ErrorCount:   errorCount,
+	}, nil
+}
+
 // SubmitContactForm handles contact form submissions
 func (r *mutationResolver) SubmitContactForm(ctx context.Context, input model.ContactFormInput) (string, error) {
 	// Initialize email client (using Termii since you have it in your .env)
@@ -1483,6 +1523,15 @@ func (r *mutationResolver) SubmitContactForm(ctx context.Context, input model.Co
 	}
 
 	return "Contact form submitted successfully", nil
+}
+
+// SyncPaystackDVAAccounts is the resolver for the syncPaystackDVAAccounts field.
+func (r *mutationResolver) SyncPaystackDVAAccounts(ctx context.Context) (bool, error) {
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+	if err := storeHandler.SyncExistingPaystackDVAAccounts(ctx); err != nil {
+		return false, fmt.Errorf("failed to sync Paystack DVA accounts: %v", err)
+	}
+	return true, nil
 }
 
 // Users is the resolver for the users field.
@@ -3080,64 +3129,6 @@ func (r *queryResolver) GetStoreEarnings(ctx context.Context, storeID int) ([]*m
 	return result, nil
 }
 
-// ProductSearchResults is the resolver for the productSearchResults field.
-func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
-	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
-}
-
-// UpdateExistingOrdersUnitsSold updates the units sold for all existing orders
-func (r *mutationResolver) UpdateExistingOrdersUnitsSold(ctx context.Context) (*model.UpdateUnitsSoldResponse, error) {
-	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
-
-	// Get all orders
-	orders, err := storeHandler.GetAllOrders(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get orders: %v", err)
-	}
-
-	updatedCount := 0
-	errorCount := 0
-
-	// Process each order
-	for _, order := range orders {
-		// Only process orders that are pending, processing, completed, or delivered
-		if order.Status == "pending" || order.Status == "processing" ||
-			order.Status == "completed" || order.Status == "delivered" {
-
-			// Update units sold for each product in the order
-			for _, product := range order.Products {
-				err = storeHandler.UpdateProductUnitsSold(ctx, product.ID)
-				if err != nil {
-					log.Printf("Error updating units sold for product %d in order %s: %v",
-						product.ID, order.UUID, err)
-					errorCount++
-					continue
-				}
-				updatedCount++
-			}
-		}
-	}
-
-	return &model.UpdateUnitsSoldResponse{
-		Success:      true,
-		UpdatedCount: updatedCount,
-		ErrorCount:   errorCount,
-	}, nil
-}
-
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
-
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
-// Subscription returns SubscriptionResolver implementation.
-func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
-
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-type subscriptionResolver struct{ *Resolver }
-
 // CheckStoreEarningsDiscrepancy is the resolver for the checkStoreEarningsDiscrepancy field.
 func (r *queryResolver) CheckStoreEarningsDiscrepancy(ctx context.Context, storeID int) (*model.StoreEarningsDiscrepancy, error) {
 	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
@@ -3154,11 +3145,20 @@ func (r *queryResolver) CheckStoreEarningsDiscrepancy(ctx context.Context, store
 	}, nil
 }
 
-// SyncPaystackDVAAccounts is the resolver for the syncPaystackDVAAccounts field.
-func (r *mutationResolver) SyncPaystackDVAAccounts(ctx context.Context) (bool, error) {
-	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
-	if err := storeHandler.SyncExistingPaystackDVAAccounts(ctx); err != nil {
-		return false, fmt.Errorf("failed to sync Paystack DVA accounts: %v", err)
-	}
-	return true, nil
+// ProductSearchResults is the resolver for the productSearchResults field.
+func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
+	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
 }
+
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
+// Subscription returns SubscriptionResolver implementation.
+func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
+
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }
