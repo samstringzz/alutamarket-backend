@@ -1382,7 +1382,8 @@ func (r *repository) GetPaystackDVAAccount(ctx context.Context, storeID uint32) 
 
 // DeleteExistingPaystackDVAAccounts deletes all existing Paystack DVA accounts from the database
 func (r *repository) DeleteExistingPaystackDVAAccounts(ctx context.Context) error {
-	if err := r.db.Table("paystack_dva_accounts").Delete(&struct{}{}).Error; err != nil {
+	// Use a WHERE clause with a condition that's always true
+	if err := r.db.Table("paystack_dva_accounts").Where("1=1").Delete(&struct{}{}).Error; err != nil {
 		return fmt.Errorf("failed to delete existing Paystack DVA accounts: %v", err)
 	}
 	return nil
@@ -1414,15 +1415,6 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			continue
 		}
 
-		// Try to get the Paystack DVA account
-		paystackAccount, err := r.getPaystackDVAAccount(user.Email)
-		if err != nil {
-			// Log the error but continue with other users
-			log.Printf("Warning: Failed to get Paystack DVA account for user %d (email: %s): %v",
-				user.ID, user.Email, err)
-			continue
-		}
-
 		// Get the store ID for this user
 		var store struct {
 			ID uint32 `gorm:"column:id"`
@@ -1434,6 +1426,26 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			// Log the error but continue with other users
 			log.Printf("Warning: Failed to get store for user %d: %v", user.ID, err)
 			continue
+		}
+
+		// Try to get the DVA account directly from Paystack
+		dvaAccount, err := r.GetDVAAccount(ctx, user.Email)
+		if err != nil {
+			// Log the error but continue with other users
+			log.Printf("Warning: Failed to get DVA account for user %d (email: %s): %v",
+				user.ID, user.Email, err)
+			continue
+		}
+
+		// Convert DVAAccount to PaystackDVAResponse
+		paystackAccount := &PaystackDVAResponse{
+			AccountNumber: dvaAccount.AccountNumber,
+			AccountName:   dvaAccount.AccountName,
+			Bank: struct {
+				Name string `json:"name"`
+			}{
+				Name: dvaAccount.Bank.Name,
+			},
 		}
 
 		// Store the Paystack DVA account in our database
