@@ -936,19 +936,24 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 	paystackClient := paystack.NewClient(os.Getenv("PAYSTACK_SECRET_KEY"))
 
 	// Get DVA account using the client
-	account, err := paystackClient.GetDVAAccount(email)
+	accounts, err := paystackClient.GetDVAAccount(email)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Paystack DVA account: %v", err)
 	}
 
+	// If no accounts found, return error
+	if accounts == nil {
+		return nil, fmt.Errorf("no DVA account found for email: %s", email)
+	}
+
 	// Convert to our response format
 	return &PaystackDVAResponse{
-		AccountNumber: account.AccountNumber,
-		AccountName:   account.AccountName,
+		AccountNumber: accounts.AccountNumber,
+		AccountName:   accounts.AccountName,
 		Bank: struct {
 			Name string `json:"name"`
 		}{
-			Name: account.Bank.Name,
+			Name: accounts.Bank.Name,
 		},
 	}, nil
 }
