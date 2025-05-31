@@ -935,86 +935,131 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 	url := "https://api.paystack.co/dedicated_account"
 	method := "GET"
 
-	client := &http.Client{}
-	req, err := http.NewRequest(method, url, nil)
-	if err != nil {
-		return nil, err
-	}
+	// Add retry logic
+	maxRetries := 3
+	var lastErr error
 
-	// Add query parameters
-	q := req.URL.Query()
-	q.Add("email", email)
-	q.Add("active", "true") // Only get active accounts
-	req.URL.RawQuery = q.Encode()
-
-	req.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(res.Body)
-		return nil, fmt.Errorf("Paystack API error: %s", string(bodyBytes))
-	}
-
-	var response struct {
-		Status  bool   `json:"status"`
-		Message string `json:"message"`
-		Data    []struct {
-			AccountNumber string `json:"account_number"`
-			AccountName   string `json:"account_name"`
-			Bank          struct {
-				Name string `json:"name"`
-			} `json:"bank"`
-			Customer struct {
-				Email string `json:"email"`
-			} `json:"customer"`
-		} `json:"data"`
-	}
-
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return nil, err
-	}
-
-	if !response.Status {
-		return nil, fmt.Errorf("Paystack error: %s", response.Message)
-	}
-
-	// Check if there are any accounts returned
-	if len(response.Data) == 0 {
-		return nil, fmt.Errorf("no DVA account found for email: %s", email)
-	}
-
-	// Find the account that matches the email exactly
-	for _, account := range response.Data {
-		if account.Customer.Email == email {
-			return &PaystackDVAResponse{
-				AccountNumber: account.AccountNumber,
-				AccountName:   account.AccountName,
-				Bank: struct {
-					Name string `json:"name"`
-				}{
-					Name: account.Bank.Name,
-				},
-			}, nil
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		client := &http.Client{
+			Timeout: time.Second * 10, // Add timeout
 		}
+		req, err := http.NewRequest(method, url, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %v", err)
+		}
+
+		// Add query parameters
+		q := req.URL.Query()
+		q.Add("email", email)
+		q.Add("active", "true")
+		req.URL.RawQuery = q.Encode()
+
+		// Log the API key being used (first few characters only)
+		apiKey := os.Getenv("PAYSTACK_SECRET_KEY")
+		if apiKey == "" {
+			return nil, fmt.Errorf("PAYSTACK_SECRET_KEY environment variable is not set")
+		}
+		log.Printf("Using Paystack API key starting with: %s...", apiKey[:8])
+
+		req.Header.Add("Authorization", "Bearer "+apiKey)
+		req.Header.Add("Content-Type", "application/json")
+
+		// Log the request details
+		log.Printf("Making Paystack API request to: %s with email: %s (attempt %d/%d)",
+			req.URL.String(), email, attempt, maxRetries)
+
+		res, err := client.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("request failed: %v", err)
+			log.Printf("Request failed (attempt %d/%d): %v", attempt, maxRetries, err)
+			time.Sleep(time.Second * time.Duration(attempt)) // Exponential backoff
+			continue
+		}
+
+		bodyBytes, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+
+		// Log the response
+		log.Printf("Paystack API response (attempt %d/%d): %s", attempt, maxRetries, string(bodyBytes))
+
+		if res.StatusCode != http.StatusOK {
+			lastErr = fmt.Errorf("Paystack API error: %s", string(bodyBytes))
+			if res.StatusCode == http.StatusTooManyRequests {
+				log.Printf("Rate limit hit, waiting before retry...")
+				time.Sleep(time.Second * time.Duration(attempt*2)) // Longer wait for rate limits
+				continue
+			}
+			if attempt == maxRetries {
+				return nil, lastErr
+			}
+			time.Sleep(time.Second * time.Duration(attempt))
+			continue
+		}
+
+		var response struct {
+			Status  bool   `json:"status"`
+			Message string `json:"message"`
+			Data    []struct {
+				AccountNumber string `json:"account_number"`
+				AccountName   string `json:"account_name"`
+				Bank          struct {
+					Name string `json:"name"`
+				} `json:"bank"`
+				Customer struct {
+					Email string `json:"email"`
+				} `json:"customer"`
+			} `json:"data"`
+		}
+
+		if err := json.Unmarshal(bodyBytes, &response); err != nil {
+			lastErr = fmt.Errorf("failed to parse response: %v", err)
+			if attempt == maxRetries {
+				return nil, lastErr
+			}
+			continue
+		}
+
+		if !response.Status {
+			lastErr = fmt.Errorf("Paystack error: %s", response.Message)
+			if attempt == maxRetries {
+				return nil, lastErr
+			}
+			continue
+		}
+
+		if len(response.Data) == 0 {
+			return nil, fmt.Errorf("no DVA account found for email: %s", email)
+		}
+
+		// Find the account that matches the email exactly
+		for _, account := range response.Data {
+			if account.Customer.Email == email {
+				return &PaystackDVAResponse{
+					AccountNumber: account.AccountNumber,
+					AccountName:   account.AccountName,
+					Bank: struct {
+						Name string `json:"name"`
+					}{
+						Name: account.Bank.Name,
+					},
+				}, nil
+			}
+		}
+
+		// If no exact match found, return the first account but log a warning
+		log.Printf("Warning: No exact email match found for %s, using first available account", email)
+		return &PaystackDVAResponse{
+			AccountNumber: response.Data[0].AccountNumber,
+			AccountName:   response.Data[0].AccountName,
+			Bank: struct {
+				Name string `json:"name"`
+			}{
+				Name: response.Data[0].Bank.Name,
+			},
+		}, nil
 	}
 
-	// If no exact match found, return the first account but log a warning
-	log.Printf("Warning: No exact email match found for %s, using first available account", email)
-	return &PaystackDVAResponse{
-		AccountNumber: response.Data[0].AccountNumber,
-		AccountName:   response.Data[0].AccountName,
-		Bank: struct {
-			Name string `json:"name"`
-		}{
-			Name: response.Data[0].Bank.Name,
-		},
-	}, nil
+	return nil, fmt.Errorf("all retry attempts failed: %v", lastErr)
 }
 
 type PaystackDVAResponse struct {
@@ -1328,8 +1373,21 @@ func (r *repository) GetPaystackDVAAccount(ctx context.Context, storeID uint32) 
 	}, nil
 }
 
+// DeleteExistingPaystackDVAAccounts deletes all existing Paystack DVA accounts from the database
+func (r *repository) DeleteExistingPaystackDVAAccounts(ctx context.Context) error {
+	if err := r.db.Table("paystack_dva_accounts").Delete(&struct{}{}).Error; err != nil {
+		return fmt.Errorf("failed to delete existing Paystack DVA accounts: %v", err)
+	}
+	return nil
+}
+
 // SyncExistingPaystackDVAAccounts retrieves all existing Paystack DVA accounts and stores them in our database
 func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error {
+	// First delete existing accounts
+	if err := r.DeleteExistingPaystackDVAAccounts(ctx); err != nil {
+		return fmt.Errorf("failed to delete existing accounts: %v", err)
+	}
+
 	// Get all users with type "seller" from our database
 	var users []struct {
 		ID    uint32 `gorm:"column:id"`
