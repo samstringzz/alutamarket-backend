@@ -308,3 +308,27 @@ func (s *service) CheckStoreEarningsDiscrepancy(ctx context.Context, storeID uin
 
 	return s.Repository.CheckStoreEarningsDiscrepancy(ctx, storeID)
 }
+
+// CreatePaystackDVAAccount creates and stores a Paystack DVA account for a store
+func (s *service) CreatePaystackDVAAccount(ctx context.Context, storeID uint32, account *PaystackDVAResponse, email string) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	return s.Repository.CreatePaystackDVAAccount(ctx, storeID, account, email)
+}
+
+// GetPaystackDVAAccount retrieves a store's Paystack DVA account
+func (s *service) GetPaystackDVAAccount(ctx context.Context, storeID uint32) (*PaystackDVAResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	return s.Repository.GetPaystackDVAAccount(ctx, storeID)
+}
+
+// SyncExistingPaystackDVAAccounts retrieves all existing Paystack DVA accounts and stores them in our database
+func (s *service) SyncExistingPaystackDVAAccounts(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	return s.Repository.SyncExistingPaystackDVAAccounts(ctx)
+}

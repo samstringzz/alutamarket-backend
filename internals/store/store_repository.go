@@ -50,22 +50,38 @@ func (r *repository) CreateStore(ctx context.Context, req *Store) (*Store, error
 		return nil, errors.NewAppError(http.StatusConflict, "CONFLICT", "Store already exists")
 	}
 
-	newStore := &Store{
+	resp := &Store{
 		Name:               req.Name,
+		Email:              req.Email,
 		Link:               req.Link,
-		HasPhysicalAddress: req.HasPhysicalAddress,
 		UserID:             req.UserID,
-		Wallet:             0,
-		Address:            req.Address,
 		Description:        req.Description,
+		HasPhysicalAddress: req.HasPhysicalAddress,
+		Address:            req.Address,
+		Wallet:             0,
 		Status:             true,
+		Background:         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQLbvWGTFQh6OGWPfkLx2xBS_OP3oZJzQubA&s",
 		Phone:              req.Phone,
 	}
-
-	if err := r.db.Create(newStore).Error; err != nil {
+	if err := r.db.Create(resp).Error; err != nil {
+		r.db.Rollback()
 		return nil, err
 	}
-	return newStore, nil
+
+	// Create Paystack DVA account
+	paystackAccount, err := r.getPaystackDVAAccount(req.Email)
+	if err != nil {
+		log.Printf("Warning: Failed to create Paystack DVA account: %v", err)
+		return resp, nil // Return store even if DVA creation fails
+	}
+
+	// Store the Paystack DVA account details
+	if err := r.CreatePaystackDVAAccount(ctx, resp.ID, paystackAccount, req.Email); err != nil {
+		log.Printf("Warning: Failed to store Paystack DVA account: %v", err)
+		return resp, nil // Return store even if DVA storage fails
+	}
+
+	return resp, nil
 }
 
 func (r *repository) CreateInvoice(ctx context.Context, req *Invoice) (*Invoice, error) {
@@ -1218,4 +1234,129 @@ func (r *repository) CheckStoreEarningsDiscrepancy(ctx context.Context, storeID 
 	}
 
 	return int(deliveredOrdersCount), totalEarnings, nil
+}
+
+func (r *repository) UpdateWallet(ctx context.Context, storeID uint32, amount float64) error {
+	result := r.db.Model(&Store{}).
+		Where("id = ?", storeID).
+		Update("wallet", gorm.Expr("wallet + ?", amount))
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to update store wallet: %v", result.Error)
+	}
+	return nil
+}
+
+func (r *repository) UpdatePaystackBalance(ctx context.Context, storeID uint32, amount float64) error {
+	result := r.db.Model(&Store{}).
+		Where("id = ?", storeID).
+		Update("paystack_balance", gorm.Expr("paystack_balance + ?", amount))
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to update store Paystack balance: %v", result.Error)
+	}
+	return nil
+}
+
+// CreatePaystackDVAAccount creates and stores a Paystack DVA account for a store
+func (r *repository) CreatePaystackDVAAccount(ctx context.Context, storeID uint32, account *PaystackDVAResponse, email string) error {
+	// Generate a unique ID for the DVA account
+	timestamp := time.Now().Unix()
+	dvaID := fmt.Sprintf("DVA_%d_%s", timestamp, utils.GenerateRandomString(8))
+
+	// Create the DVA account record
+	dvaAccount := map[string]interface{}{
+		"id":             dvaID,
+		"store_id":       storeID,
+		"account_number": account.AccountNumber,
+		"account_name":   account.AccountName,
+		"bank_name":      account.Bank.Name,
+		"email":          email,
+		"created_at":     time.Now(),
+		"updated_at":     time.Now(),
+	}
+
+	// Insert the record
+	if err := r.db.Table("paystack_dva_accounts").Create(dvaAccount).Error; err != nil {
+		return fmt.Errorf("failed to create Paystack DVA account: %v", err)
+	}
+
+	return nil
+}
+
+// GetPaystackDVAAccount retrieves a store's Paystack DVA account
+func (r *repository) GetPaystackDVAAccount(ctx context.Context, storeID uint32) (*PaystackDVAResponse, error) {
+	var dvaAccount struct {
+		AccountNumber string `json:"account_number"`
+		AccountName   string `json:"account_name"`
+		BankName      string `json:"bank_name"`
+		Email         string `json:"email"`
+	}
+
+	if err := r.db.Table("paystack_dva_accounts").
+		Where("store_id = ?", storeID).
+		First(&dvaAccount).Error; err != nil {
+		return nil, fmt.Errorf("failed to get Paystack DVA account: %v", err)
+	}
+
+	return &PaystackDVAResponse{
+		AccountNumber: dvaAccount.AccountNumber,
+		AccountName:   dvaAccount.AccountName,
+		Bank: struct {
+			Name string `json:"name"`
+		}{
+			Name: dvaAccount.BankName,
+		},
+	}, nil
+}
+
+// SyncExistingPaystackDVAAccounts retrieves all existing Paystack DVA accounts and stores them in our database
+func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error {
+	// Get all stores from our database
+	var stores []*Store
+	if err := r.db.Find(&stores).Error; err != nil {
+		return fmt.Errorf("failed to fetch stores: %v", err)
+	}
+
+	// For each store, check if it has a Paystack DVA account
+	for _, store := range stores {
+		// Skip if store has no email
+		if store.Email == "" {
+			continue
+		}
+
+		// Check if store already has a Paystack DVA account in our database
+		var count int64
+		if err := r.db.Table("paystack_dva_accounts").
+			Where("store_id = ?", store.ID).
+			Count(&count).Error; err != nil {
+			return fmt.Errorf("failed to check existing DVA account: %v", err)
+		}
+
+		// If store already has a DVA account in our database, skip it
+		if count > 0 {
+			continue
+		}
+
+		// Try to get the Paystack DVA account
+		paystackAccount, err := r.getPaystackDVAAccount(store.Email)
+		if err != nil {
+			// Log the error but continue with other stores
+			log.Printf("Warning: Failed to get Paystack DVA account for store %d (email: %s): %v",
+				store.ID, store.Email, err)
+			continue
+		}
+
+		// Store the Paystack DVA account in our database
+		if err := r.CreatePaystackDVAAccount(ctx, store.ID, paystackAccount, store.Email); err != nil {
+			// Log the error but continue with other stores
+			log.Printf("Warning: Failed to store Paystack DVA account for store %d: %v",
+				store.ID, err)
+			continue
+		}
+
+		log.Printf("Successfully synced Paystack DVA account for store %d", store.ID)
+	}
+
+	return nil
 }
