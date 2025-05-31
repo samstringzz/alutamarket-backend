@@ -1312,50 +1312,69 @@ func (r *repository) GetPaystackDVAAccount(ctx context.Context, storeID uint32) 
 
 // SyncExistingPaystackDVAAccounts retrieves all existing Paystack DVA accounts and stores them in our database
 func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error {
-	// Get all stores from our database
-	var stores []*Store
-	if err := r.db.Find(&stores).Error; err != nil {
-		return fmt.Errorf("failed to fetch stores: %v", err)
+	// Get all users with type "seller" from our database
+	var users []struct {
+		ID    uint32 `gorm:"column:id"`
+		Email string `gorm:"column:email"`
+	}
+	if err := r.db.Table("users").
+		Where("usertype = ?", "seller").
+		Select("id, email").
+		Find(&users).Error; err != nil {
+		return fmt.Errorf("failed to fetch seller users: %v", err)
 	}
 
-	// For each store, check if it has a Paystack DVA account
-	for _, store := range stores {
-		// Skip if store has no email
-		if store.Email == "" {
+	// For each seller user, check if they have a Paystack DVA account
+	for _, user := range users {
+		// Skip if user has no email
+		if user.Email == "" {
 			continue
 		}
 
-		// Check if store already has a Paystack DVA account in our database
+		// Check if user already has a Paystack DVA account in our database
 		var count int64
 		if err := r.db.Table("paystack_dva_accounts").
-			Where("store_id = ?", store.ID).
+			Where("email = ?", user.Email).
 			Count(&count).Error; err != nil {
 			return fmt.Errorf("failed to check existing DVA account: %v", err)
 		}
 
-		// If store already has a DVA account in our database, skip it
+		// If user already has a DVA account in our database, skip it
 		if count > 0 {
 			continue
 		}
 
 		// Try to get the Paystack DVA account
-		paystackAccount, err := r.getPaystackDVAAccount(store.Email)
+		paystackAccount, err := r.getPaystackDVAAccount(user.Email)
 		if err != nil {
-			// Log the error but continue with other stores
-			log.Printf("Warning: Failed to get Paystack DVA account for store %d (email: %s): %v",
-				store.ID, store.Email, err)
+			// Log the error but continue with other users
+			log.Printf("Warning: Failed to get Paystack DVA account for user %d (email: %s): %v",
+				user.ID, user.Email, err)
+			continue
+		}
+
+		// Get the store ID for this user
+		var store struct {
+			ID uint32 `gorm:"column:id"`
+		}
+		if err := r.db.Table("stores").
+			Where("user = ?", user.ID).
+			Select("id").
+			First(&store).Error; err != nil {
+			// Log the error but continue with other users
+			log.Printf("Warning: Failed to get store for user %d: %v", user.ID, err)
 			continue
 		}
 
 		// Store the Paystack DVA account in our database
-		if err := r.CreatePaystackDVAAccount(ctx, store.ID, paystackAccount, store.Email); err != nil {
-			// Log the error but continue with other stores
-			log.Printf("Warning: Failed to store Paystack DVA account for store %d: %v",
-				store.ID, err)
+		if err := r.CreatePaystackDVAAccount(ctx, store.ID, paystackAccount, user.Email); err != nil {
+			// Log the error but continue with other users
+			log.Printf("Warning: Failed to store Paystack DVA account for user %d: %v",
+				user.ID, err)
 			continue
 		}
 
-		log.Printf("Successfully synced Paystack DVA account for store %d", store.ID)
+		log.Printf("Successfully synced Paystack DVA account for user %d (store %d)", user.ID, store.ID)
 	}
 
 	return nil
