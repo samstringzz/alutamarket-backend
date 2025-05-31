@@ -986,9 +986,6 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 		bodyBytes, _ := io.ReadAll(res.Body)
 		res.Body.Close()
 
-		// Log the response
-		log.Printf("Paystack API response (attempt %d/%d): %s", attempt, maxRetries, string(bodyBytes))
-
 		if res.StatusCode != http.StatusOK {
 			lastErr = fmt.Errorf("Paystack API error: %s", string(bodyBytes))
 			if res.StatusCode == http.StatusTooManyRequests {
@@ -1427,20 +1424,20 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			continue
 		}
 
-		// Get existing DVA account details
-		dvaAccount, err := r.GetDVAAccount(ctx, user.Email)
+		// Get DVA account directly from Paystack
+		paystackAccount, err := r.getPaystackDVAAccount(user.Email)
 		if err != nil {
-			log.Printf("Warning: Failed to get DVA account for user %d: %v", user.ID, err)
+			log.Printf("Warning: Failed to get Paystack DVA account for user %d: %v", user.ID, err)
 			continue
 		}
 
 		// Create a new Paystack DVA account record
 		paystack_dva_accounts := &PaystackDVAAccount{
-			ID:            dvaAccount.AccountNumber, // Use account number as ID
+			ID:            paystackAccount.AccountNumber, // Use account number as ID
 			StoreID:       store.ID,
-			AccountNumber: dvaAccount.AccountNumber,
-			AccountName:   dvaAccount.AccountName,
-			BankName:      dvaAccount.Bank.Name,
+			AccountNumber: paystackAccount.AccountNumber,
+			AccountName:   paystackAccount.AccountName,
+			BankName:      paystackAccount.Bank.Name,
 			Email:         user.Email,
 			CreatedAt:     time.Now(),
 			UpdatedAt:     time.Now(),
