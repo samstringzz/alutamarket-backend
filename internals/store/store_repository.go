@@ -1424,7 +1424,34 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			continue
 		}
 
-		// Get DVA account directly from Paystack
+		// First try to get from paystack_dva_accounts table
+		var existingAccount PaystackDVAAccount
+		err := r.db.Table("paystack_dva_accounts").
+			Where("email = ?", user.Email).
+			First(&existingAccount).Error
+
+		if err == nil {
+			// Account exists in paystack_dva_accounts, use it
+			paystack_dva_accounts := &PaystackDVAAccount{
+				ID:            existingAccount.AccountNumber,
+				StoreID:       store.ID,
+				AccountNumber: existingAccount.AccountNumber,
+				AccountName:   existingAccount.AccountName,
+				BankName:      existingAccount.BankName,
+				Email:         user.Email,
+				CreatedAt:     time.Now(),
+				UpdatedAt:     time.Now(),
+			}
+
+			if err := r.db.Create(paystack_dva_accounts).Error; err != nil {
+				log.Printf("Warning: Failed to save DVA account for user %d: %v", user.ID, err)
+				continue
+			}
+			log.Printf("Successfully synced existing DVA account for user %d (store %d)", user.ID, store.ID)
+			continue
+		}
+
+		// If not found in paystack_dva_accounts, try Paystack API
 		paystackAccount, err := r.getPaystackDVAAccount(user.Email)
 		if err != nil {
 			log.Printf("Warning: Failed to get Paystack DVA account for user %d: %v", user.ID, err)
@@ -1433,7 +1460,7 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 
 		// Create a new Paystack DVA account record
 		paystack_dva_accounts := &PaystackDVAAccount{
-			ID:            paystackAccount.AccountNumber, // Use account number as ID
+			ID:            paystackAccount.AccountNumber,
 			StoreID:       store.ID,
 			AccountNumber: paystackAccount.AccountNumber,
 			AccountName:   paystackAccount.AccountName,
@@ -1449,7 +1476,7 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			continue
 		}
 
-		log.Printf("Successfully synced DVA account for user %d (store %d)", user.ID, store.ID)
+		log.Printf("Successfully synced new DVA account for user %d (store %d)", user.ID, store.ID)
 	}
 
 	return nil
