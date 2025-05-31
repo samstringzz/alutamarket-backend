@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"github.com/Chrisentech/aluta-market-api/internals/models"
 	"gorm.io/gorm"
 )
 
@@ -229,7 +229,7 @@ type Repository interface {
 	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error
 	UpdateUser(ctx context.Context, user *User) (*User, error)
 	CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error)
-	CreateStore(ctx context.Context, req *store.Store) (*store.Store, error)
+	CreateStore(ctx context.Context, req *models.Store) (*models.Store, error)
 	GetMyDVA(ctx context.Context, userEmail string) (*Account, error)
 	SetPaymentDetais(ctx context.Context, req *PaymentDetails, userId uint32) error
 	SendPasswordResetLink(ctx context.Context, req *PasswordReset) error
@@ -237,7 +237,7 @@ type Repository interface {
 	VerifyResetLink(ctx context.Context, token string) error
 	GetBalance(ctx context.Context, userId string) error
 	ConfirmPassword(ctx context.Context, password, userId string) error
-	GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error)
+	GetMyDownloads(ctx context.Context, userId string) ([]*models.Downloads, error)
 	SendMaintenanceMail(ctx context.Context, userId string, active bool) error
 	GetDB() *gorm.DB
 }
@@ -252,14 +252,14 @@ type Service interface {
 	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error
 	CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error)
 	GetMyDVA(ctx context.Context, userEmail string) (*Account, error)
-	CreateStore(ctx context.Context, req *store.Store) (*store.Store, error)
+	CreateStore(ctx context.Context, req *models.Store) (*models.Store, error)
 	SetPaymentDetais(ctx context.Context, req *PaymentDetails, userId uint32) error
 	SendPasswordResetLink(ctx context.Context, req *PasswordReset) error
 	UpdatePassword(ctx context.Context, req *PasswordReset) error
 	GetBalance(ctx context.Context, userId string) error
 	ConfirmPassword(ctx context.Context, password, userId string) error
 	VerifyResetLink(ctx context.Context, token string) error
-	GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error)
+	GetMyDownloads(ctx context.Context, userId string) ([]*models.Downloads, error)
 	SendMaintenanceMail(ctx context.Context, userId string, active bool) error
 	GetDB() *gorm.DB
 }

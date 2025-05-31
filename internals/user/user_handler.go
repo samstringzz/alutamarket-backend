@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"github.com/Chrisentech/aluta-market-api/internals/models"
 	"gorm.io/gorm"
 )
 
@@ -57,7 +57,6 @@ func (h *Handler) ToggleStoreFollowStatus(ctx context.Context, userId, storeId u
 	return nil
 }
 
-
 func (h *Handler) UpdateUser(ctx context.Context, req *UpdateUserReq) (*User, error) {
 	// Convert UpdateUserReq to User for backward compatibility
 	user := &User{
@@ -78,7 +77,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *UpdateUserReq) (*User, er
 	return usr, nil
 }
 
-func (h *Handler) CreateStore(ctx context.Context, user *store.Store) (*store.Store, error) {
+func (h *Handler) CreateStore(ctx context.Context, user *models.Store) (*models.Store, error) {
 	usr, err := h.Service.CreateStore(ctx, user)
 	if err != nil {
 		return nil, err
@@ -142,7 +141,7 @@ func (h *Handler) ConfirmPassword(ctx context.Context, password, userId string) 
 	return nil
 }
 
-func (h *Handler) GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error) {
+func (h *Handler) GetMyDownloads(ctx context.Context, userId string) ([]*models.Downloads, error) {
 	d, err := h.Service.GetMyDownloads(ctx, userId)
 	if err != nil {
 		return nil, err

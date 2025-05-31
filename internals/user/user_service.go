@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"github.com/Chrisentech/aluta-market-api/internals/models"
 	"gorm.io/gorm"
 
 	"github.com/Chrisentech/aluta-market-api/utils"
@@ -93,7 +93,7 @@ func (s *service) GetUsers(c context.Context) ([]*User, error) {
 	}
 	return r, nil
 }
-func (s *service) CreateStore(c context.Context, req *store.Store) (*store.Store, error) {
+func (s *service) CreateStore(c context.Context, req *models.Store) (*models.Store, error) {
 	ctx, cancel := context.WithTimeout(c, s.timeout)
 	defer cancel()
 	r, err := s.Repository.CreateStore(ctx, req)
@@ -223,7 +223,7 @@ func (s *service) ConfirmPassword(ctx context.Context, password, userId string) 
 	return nil
 }
 
-func (s *service) GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error) {
+func (s *service) GetMyDownloads(ctx context.Context, userId string) ([]*models.Downloads, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 

@@ -18,7 +18,7 @@ import (
 
 	"github.com/Chrisentech/aluta-market-api/database"
 	"github.com/Chrisentech/aluta-market-api/errors"
-	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"github.com/Chrisentech/aluta-market-api/internals/models"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
 	"gorm.io/gorm"
@@ -76,11 +76,11 @@ func (r *repository) GetUserByEmailOrPhone(ctx context.Context, identifier strin
 	}
 	return &u, nil
 }
-func (r *repository) CreateStore(ctx context.Context, req *store.Store) (*store.Store, error) {
+func (r *repository) CreateStore(ctx context.Context, req *models.Store) (*models.Store, error) {
 	// Convert userId to a string
 	userIdStr := strconv.FormatUint(uint64(req.UserID), 10)
 	foundUser, _ := r.GetUser(ctx, userIdStr)
-	resp := &store.Store{
+	resp := &models.Store{
 		Name:               req.Name,
 		Email:              req.Email,
 		Link:               req.Link,
@@ -97,9 +97,7 @@ func (r *repository) CreateStore(ctx context.Context, req *store.Store) (*store.
 		r.db.Rollback()
 		return nil, err
 	}
-	// user: &User{
-	// 	// Fullname: req.,
-	// }
+
 	// Create DVA for seller link for user
 	_, err := r.CreateDVAAccount(ctx, &DVADetails{User: *foundUser, StoreName: req.Name, StoreEmail: req.Email})
 	if err != nil {
@@ -188,7 +186,7 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserReq) (*User,
 
 	// Continue with email sending regardless of SMS status
 	if req.Usertype == "seller" {
-		createdStore := &store.Store{
+		createdStore := &models.Store{
 			Name:               req.StoreName,
 			Link:               req.StoreLink,
 			UserID:             newUser.ID,
@@ -559,7 +557,7 @@ func (r *repository) TwoFa(ctx context.Context, req *User) (bool, error) {
 
 func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error {
 	// Retrieve the store with the given storeId
-	foundStore := &store.Store{}
+	foundStore := &models.Store{}
 	if err := r.db.First(foundStore, storeId).Error; err != nil {
 		return err
 	}
@@ -583,7 +581,7 @@ func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeI
 	// Toggle the follow status
 	if isFollowing {
 		// If already following, unfollow
-		newFollowers := make([]*store.Follower, 0)
+		newFollowers := make([]*models.Follower, 0)
 		for _, follower := range foundStore.Followers {
 			if follower.FollowerID != userId {
 				newFollowers = append(newFollowers, follower)
@@ -601,7 +599,7 @@ func (r *repository) ToggleStoreFollowStatus(ctx context.Context, userId, storeI
 		foundUser.FollowedStores = newFollowedStores
 	} else {
 		// If not following, follow
-		foundStore.Followers = append(foundStore.Followers, &store.Follower{
+		foundStore.Followers = append(foundStore.Followers, &models.Follower{
 			FollowerID:    userId,
 			FollowerName:  foundUser.Fullname,
 			FollowerImage: foundUser.Avatar,
@@ -938,8 +936,8 @@ func (r *repository) ConfirmPassword(ctx context.Context, password, userId strin
 	return nil
 }
 
-func (r *repository) GetMyDownloads(ctx context.Context, userId string) ([]*store.Downloads, error) {
-	var downloads []*store.Downloads
+func (r *repository) GetMyDownloads(ctx context.Context, userId string) ([]*models.Downloads, error) {
+	var downloads []*models.Downloads
 
 	// Use the LIKE operator to check if the userId is contained in the users string
 	err := r.db.Where("users LIKE ?", fmt.Sprintf(`%%"%s"%%`, userId)).Find(&downloads).Error
