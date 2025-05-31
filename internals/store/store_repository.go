@@ -1220,7 +1220,7 @@ func (r *repository) UpdatePaystackBalance(ctx context.Context, storeID uint32, 
 func (r *repository) CreatePaystackDVAAccount(ctx context.Context, storeID uint32, account *PaystackDVAResponse, email string) error {
 	// Generate a unique ID for the DVA account
 	timestamp := time.Now().Unix()
-	dvaID := fmt.Sprintf("DVA_%d_%s", timestamp, utils.GenerateRandomString(8))
+	dvaID := fmt.Sprintf("PDVA_%d_%s", timestamp, utils.GenerateRandomString(8))
 
 	// Create the DVA account record
 	dvaAccount := map[string]interface{}{
@@ -1351,8 +1351,12 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 		}
 
 		// Create a new Paystack DVA account record
+		// Generate a unique ID for the DVA account
+		timestamp := time.Now().Unix()
+		dvaID := fmt.Sprintf("PDVA_%d_%s", timestamp, utils.GenerateRandomString(8))
+
 		paystack_dva_accounts := &PaystackDVAAccount{
-			ID:            paystackAccount.AccountNumber,
+			ID:            dvaID, // Use a generated unique ID
 			StoreID:       store.ID,
 			AccountNumber: paystackAccount.AccountNumber,
 			AccountName:   paystackAccount.AccountName,
