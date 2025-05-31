@@ -1408,7 +1408,7 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 		return fmt.Errorf("failed to fetch seller users: %v", err)
 	}
 
-	// For each seller user, check if they have a Paystack DVA account
+	// For each seller user, get their store and save their email to paystack_dva_accounts
 	for _, user := range users {
 		// Skip if user has no email
 		if user.Email == "" {
@@ -1428,36 +1428,25 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			continue
 		}
 
-		// Try to get the DVA account directly from Paystack
-		dvaAccount, err := r.GetDVAAccount(ctx, user.Email)
-		if err != nil {
-			// Log the error but continue with other users
-			log.Printf("Warning: Failed to get DVA account for user %d (email: %s): %v",
-				user.ID, user.Email, err)
+		// Create a new Paystack DVA account record
+		dvaAccount := &PaystackDVAAccount{
+			StoreID: store.ID,
+			Email:   user.Email,
+		}
+
+		// Save to paystack_dva_accounts table
+		if err := r.db.Table("paystack_dva_accounts").Create(dvaAccount).Error; err != nil {
+			log.Printf("Warning: Failed to save DVA account for user %d: %v", user.ID, err)
 			continue
 		}
 
-		// Convert DVAAccount to PaystackDVAResponse
-		paystackAccount := &PaystackDVAResponse{
-			AccountNumber: dvaAccount.AccountNumber,
-			AccountName:   dvaAccount.AccountName,
-			Bank: struct {
-				Name string `json:"name"`
-			}{
-				Name: dvaAccount.Bank.Name,
-			},
-		}
-
-		// Store the Paystack DVA account in our database
-		if err := r.CreatePaystackDVAAccount(ctx, store.ID, paystackAccount, user.Email); err != nil {
-			// Log the error but continue with other users
-			log.Printf("Warning: Failed to store Paystack DVA account for user %d: %v",
-				user.ID, err)
-			continue
-		}
-
-		log.Printf("Successfully synced Paystack DVA account for user %d (store %d)", user.ID, store.ID)
+		log.Printf("Successfully synced DVA account for user %d (store %d)", user.ID, store.ID)
 	}
 
 	return nil
+}
+
+type PaystackDVAAccount struct {
+	StoreID uint32 `gorm:"column:store_id"`
+	Email   string `gorm:"column:email"`
 }
