@@ -208,3 +208,7 @@ func (h *Handler) GetPaystackDVAAccount(ctx context.Context, storeID uint32) (*P
 func (h *Handler) SyncExistingPaystackDVAAccounts(ctx context.Context) error {
 	return h.Service.SyncExistingPaystackDVAAccounts(ctx)
 }
+
+func (h *Handler) GetStoreEarnings(ctx context.Context, storeID uint32) ([]*StoreEarnings, error) {
+	return h.Service.GetStoreEarnings(ctx, storeID)
+}
