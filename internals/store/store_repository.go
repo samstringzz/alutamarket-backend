@@ -1305,7 +1305,6 @@ func (r *repository) CheckStoreEarningsDiscrepancy(ctx context.Context, storeID 
 
 	return int(deliveredOrdersCount), totalEarnings, nil
 }
-
 func (r *repository) UpdateWallet(ctx context.Context, storeID uint32, amount float64) error {
 	result := r.db.Model(&Store{}).
 		Where("id = ?", storeID).
@@ -1450,4 +1449,9 @@ type PaystackDVAAccount struct {
 	ID      uint32 `gorm:"column:id;primaryKey;autoIncrement"`
 	StoreID uint32 `gorm:"column:store_id"`
 	Email   string `gorm:"column:email"`
+}
+
+// TableName specifies the table name for PaystackDVAAccount
+func (PaystackDVAAccount) TableName() string {
+	return "paystack_dva_accounts"
 }
