@@ -939,9 +939,18 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 	maxRetries := 3
 	var lastErr error
 
+	// First try to get account number from paystack_dva_accounts table
+	var existingAccount PaystackDVAAccount
+	if err := r.db.Table("paystack_dva_accounts").
+		Where("email = ?", email).
+		First(&existingAccount).Error; err == nil {
+		// If we found an account, use its account number for the query
+		email = existingAccount.AccountNumber
+	}
+
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		client := &http.Client{
-			Timeout: time.Second * 10, // Add timeout
+			Timeout: time.Second * 10,
 		}
 		req, err := http.NewRequest(method, url, nil)
 		if err != nil {
