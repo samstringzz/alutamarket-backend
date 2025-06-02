@@ -18,6 +18,7 @@ type Client interface {
 type Account struct {
 	AccountNumber string `json:"account_number"`
 	AccountName   string `json:"account_name"`
+	Email         string `json:"email"`
 	Bank          struct {
 		Name string `json:"name"`
 	} `json:"bank"`
@@ -96,7 +97,14 @@ func (p *paystackClient) GetDVAAccount(email string) (*Account, error) {
 		return nil, fmt.Errorf("no DVA account found for email: %s", email)
 	}
 
-	return &result.Data[0], nil
+	// Find the account that matches the email
+	for _, account := range result.Data {
+		if account.Email == email {
+			return &account, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no matching DVA account found for email: %s", email)
 }
 
 // CreateDVAAccount creates a new DVA account in Paystack
