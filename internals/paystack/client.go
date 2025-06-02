@@ -80,11 +80,9 @@ func (p *paystackClient) GetDVAAccount(email string) (*Account, error) {
 
 	// Parse response
 	var result struct {
-		Status  bool   `json:"status"`
-		Message string `json:"message"`
-		Data    struct {
-			Account Account `json:"account"`
-		} `json:"data"`
+		Status  bool      `json:"status"`
+		Message string    `json:"message"`
+		Data    []Account `json:"data"`
 	}
 
 	if err := json.Unmarshal(body, &result); err != nil {
@@ -95,7 +93,14 @@ func (p *paystackClient) GetDVAAccount(email string) (*Account, error) {
 		return nil, fmt.Errorf("paystack error: %s", result.Message)
 	}
 
-	return &result.Data.Account, nil
+	// Find the account matching the email
+	for _, account := range result.Data {
+		if account.Email == email {
+			return &account, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no matching DVA account found for email: %s", email)
 }
 
 // CreateDVAAccount creates a new DVA account in Paystack
