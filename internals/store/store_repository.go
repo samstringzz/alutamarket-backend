@@ -1296,7 +1296,7 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 		return fmt.Errorf("failed to fetch seller users: %v", err)
 	}
 
-	// For each seller user, get their store and save their email to paystack_dva_accounts
+	// For each seller user, get their store and create DVA account
 	for _, user := range users {
 		// Skip if user has no email
 		if user.Email == "" {
@@ -1311,52 +1311,24 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			Where("user_id = ?", user.ID).
 			Select("id").
 			First(&store).Error; err != nil {
-			// Log the error but continue with other users
 			log.Printf("Warning: Failed to get store for user %d: %v", user.ID, err)
 			continue
 		}
 
-		// First try to get from paystack_dva_accounts table
-		var existingAccount PaystackDVAAccount
-		err := r.db.Table("paystack_dva_accounts").
-			Where("email = ? AND store_id = ?", user.Email, store.ID).
-			First(&existingAccount).Error
-
-		if err == nil {
-			// Account exists in paystack_dva_accounts, use it
-			paystack_dva_accounts := &PaystackDVAAccount{
-				ID:            existingAccount.AccountNumber,
-				StoreID:       store.ID,
-				AccountNumber: existingAccount.AccountNumber,
-				AccountName:   existingAccount.AccountName,
-				BankName:      existingAccount.BankName,
-				Email:         user.Email,
-				CreatedAt:     time.Now(),
-				UpdatedAt:     time.Now(),
-			}
-
-			if err := r.db.Create(paystack_dva_accounts).Error; err != nil {
-				log.Printf("Warning: Failed to save DVA account for user %d: %v", user.ID, err)
-				continue
-			}
-			log.Printf("Successfully synced existing DVA account for user %d (store %d)", user.ID, store.ID)
-			continue
-		}
-
-		// If not found in paystack_dva_accounts, try Paystack API
+		// Get account from Paystack API directly
 		paystackAccount, err := r.getPaystackDVAAccount(user.Email)
 		if err != nil {
 			log.Printf("Warning: Failed to get Paystack DVA account for user %d: %v", user.ID, err)
 			continue
 		}
 
-		// Create a new Paystack DVA account record
 		// Generate a unique ID for the DVA account
 		timestamp := time.Now().Unix()
 		dvaID := fmt.Sprintf("PDVA_%d_%s", timestamp, utils.GenerateRandomString(8))
 
+		// Create new account record
 		paystack_dva_accounts := &PaystackDVAAccount{
-			ID:            dvaID, // Use a generated unique ID
+			ID:            dvaID,
 			StoreID:       store.ID,
 			AccountNumber: paystackAccount.AccountNumber,
 			AccountName:   paystackAccount.AccountName,
@@ -1366,13 +1338,13 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			UpdatedAt:     time.Now(),
 		}
 
-		// Save to paystack_dva_accounts table
+		// Save to database
 		if err := r.db.Create(paystack_dva_accounts).Error; err != nil {
 			log.Printf("Warning: Failed to save DVA account for user %d: %v", user.ID, err)
 			continue
 		}
 
-		log.Printf("Successfully synced new DVA account for user %d (store %d)", user.ID, store.ID)
+		log.Printf("Successfully synced DVA account for user %d (store %d)", user.ID, store.ID)
 	}
 
 	return nil
