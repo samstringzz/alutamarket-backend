@@ -1319,7 +1319,7 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 		// First try to get from paystack_dva_accounts table
 		var existingAccount PaystackDVAAccount
 		err := r.db.Table("paystack_dva_accounts").
-			Where("email = ?", user.Email).
+			Where("email = ? AND store_id = ?", user.Email, store.ID).
 			First(&existingAccount).Error
 
 		if err == nil {
