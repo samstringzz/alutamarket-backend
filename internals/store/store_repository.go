@@ -946,6 +946,11 @@ func (r *repository) getPaystackDVAAccount(email string) (*PaystackDVAResponse, 
 		return nil, fmt.Errorf("no DVA account found for email: %s", email)
 	}
 
+	// Verify that the account belongs to this email
+	if accounts.Email != email {
+		return nil, fmt.Errorf("account found does not match email: %s", email)
+	}
+
 	// Convert to our response format
 	return &PaystackDVAResponse{
 		AccountNumber: accounts.AccountNumber,
