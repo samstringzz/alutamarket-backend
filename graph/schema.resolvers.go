@@ -2632,14 +2632,7 @@ func (r *queryResolver) GetDVABalance(ctx context.Context, accountNumber string,
 			return nil, fmt.Errorf("failed to get store: %v", err)
 		}
 
-		// Update store wallet if balance is different
-		if store.Wallet != paystackBalance {
-			if err := storeRepo.UpdateWallet(ctx, uint32(*storeID), paystackBalance-store.Wallet); err != nil {
-				return nil, fmt.Errorf("failed to update store wallet: %v", err)
-			}
-		}
-
-		// Add store earnings to total
+		// Calculate total balance including released earnings
 		earnings, err := storeHandler.GetStoreEarnings(ctx, uint32(*storeID))
 		if err == nil {
 			// Sum up all released earnings
@@ -2647,6 +2640,13 @@ func (r *queryResolver) GetDVABalance(ctx context.Context, accountNumber string,
 				if earning.Status == "released" {
 					totalBalance += earning.Amount
 				}
+			}
+		}
+
+		// Update store wallet with total balance (Paystack + released earnings)
+		if store.Wallet != totalBalance {
+			if err := storeRepo.UpdateWallet(ctx, uint32(*storeID), totalBalance-store.Wallet); err != nil {
+				return nil, fmt.Errorf("failed to update store wallet: %v", err)
 			}
 		}
 	}
