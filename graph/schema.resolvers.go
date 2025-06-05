@@ -1393,7 +1393,17 @@ func (r *mutationResolver) WithdrawFund(ctx context.Context, input model.FundInp
 
 // ConfirmPassword is the resolver for the confirmPassword field.
 func (r *mutationResolver) ConfirmPassword(ctx context.Context, input *model.ConfirmPasswordInput) (bool, error) {
-	panic(fmt.Errorf("not implemented: ConfirmPassword - confirmPassword"))
+	if input == nil {
+		return false, fmt.Errorf("input cannot be nil")
+	}
+
+	userHandler := user.NewHandler(user.NewService(user.NewRepository()))
+	err := userHandler.ConfirmPassword(ctx, input.Password, input.UserID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // CreateInvoice is the resolver for the createInvoice field.
