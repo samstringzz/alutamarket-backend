@@ -22,6 +22,7 @@ type Repository interface {
 	ApproveWithdrawal(ctx context.Context, id uint32) error
 	RejectWithdrawal(ctx context.Context, id uint32, reason string) error
 	CompleteWithdrawal(ctx context.Context, id uint32, paystackTransferID string) error
+	GetWithdrawals(ctx context.Context, status *string) ([]*shared.Withdrawal, error)
 }
 
 type repository struct {
@@ -261,4 +262,19 @@ func min(a, b float64) float64 {
 		return a
 	}
 	return b
+}
+
+// Add a method to fetch all withdrawals or filter by status
+func (r *repository) GetWithdrawals(ctx context.Context, status *string) ([]*shared.Withdrawal, error) {
+	var withdrawals []*shared.Withdrawal
+	query := r.db.WithContext(ctx)
+
+	if status != nil && *status != "" {
+		query = query.Where("status = ?", *status)
+	}
+
+	if err := query.Order("created_at DESC").Find(&withdrawals).Error; err != nil {
+		return nil, fmt.Errorf("failed to get withdrawals: %v", err)
+	}
+	return withdrawals, nil
 }
