@@ -125,6 +125,7 @@ extend type Query {
   getStoreEarnings(storeId: Int!): [StoreEarnings!]!
   checkStoreEarningsDiscrepancy(storeId: Int!): StoreEarningsDiscrepancy!
   getWithdrawalsForAdmin(status: String): [AdminWithdrawal!]!
+  getWithdrawalDetails(id: ID!): AdminWithdrawal
 }
 
 type Message {

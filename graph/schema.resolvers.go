@@ -3259,24 +3259,7 @@ func (r *queryResolver) GetWithdrawalsForAdmin(ctx context.Context, status *stri
 	return adminWithdrawals, nil
 }
 
-// ProductSearchResults is the resolver for the productSearchResults field.
-func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
-	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
-}
-
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
-
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
-// Subscription returns SubscriptionResolver implementation.
-func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
-
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-type subscriptionResolver struct{ *Resolver }
-
+// GetWithdrawalDetails is the resolver for the getWithdrawalDetails field.
 func (r *queryResolver) GetWithdrawalDetails(ctx context.Context, id string) (*model.AdminWithdrawal, error) {
 	widrawalService := withdrawal.NewService(withdrawal.NewRepository())
 	storeRepo := store.NewRepository() // Need store repo to get store names
@@ -3317,3 +3300,21 @@ func (r *queryResolver) GetWithdrawalDetails(ctx context.Context, id string) (*m
 
 	return adminWithdrawal, nil
 }
+
+// ProductSearchResults is the resolver for the productSearchResults field.
+func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
+	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
+}
+
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
+// Subscription returns SubscriptionResolver implementation.
+func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
+
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }
