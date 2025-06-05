@@ -3,7 +3,10 @@ package store
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
+
+	"github.com/Chrisentech/aluta-market-api/errors"
 )
 
 type service struct {
@@ -201,13 +204,29 @@ func (s *service) CreateTransactions(ctx context.Context, req *Transactions) (*T
 }
 
 func (s *service) WithdrawFund(ctx context.Context, req *Fund) error {
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
-	defer cancel()
-
-	err := s.Repository.WithdrawFund(ctx, req)
+	// Get store to check balance
+	store, err := s.Repository.GetStore(ctx, req.StoreID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get store: %v", err)
 	}
+
+	// Check if user is store owner
+	if req.UserID != store.UserID {
+		return errors.NewAppError(http.StatusNotFound, "NOT_FOUND", "Oops, An error occurred in transaction")
+	}
+
+	// Get bank details from dva_accounts table
+	var bankDetails struct {
+		BankName      string
+		AccountName   string
+		AccountNumber string
+	}
+	if err := s.Repository.(*repository).db.Table("dva_accounts").
+		Where("store_id = ? AND account_number = ?", req.StoreID, req.AccountNumber).
+		First(&bankDetails).Error; err != nil {
+		return fmt.Errorf("failed to get bank details: %v", err)
+	}
+
 	return nil
 }
 

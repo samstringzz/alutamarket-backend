@@ -25,6 +25,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/subscriber"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
+	"github.com/Chrisentech/aluta-market-api/internals/withdrawal"
 	"github.com/Chrisentech/aluta-market-api/utils"
 )
 
@@ -1388,7 +1389,44 @@ func (r *mutationResolver) UpdateUserPassword(ctx context.Context, input model.P
 
 // WithdrawFund is the resolver for the withdrawFund field.
 func (r *mutationResolver) WithdrawFund(ctx context.Context, input model.FundInput) (bool, error) {
-	panic(fmt.Errorf("not implemented: WithdrawFund - withdrawFund"))
+	// Get store repository
+	storeRepo := store.NewRepository()
+
+	// Get store and validate user
+	storeObj, err := storeRepo.GetStore(ctx, uint32(input.StoreID))
+	if err != nil {
+		return false, fmt.Errorf("store not found: %w", err)
+	}
+	if storeObj.UserID != uint32(input.UserID) {
+		return false, fmt.Errorf("user not authorized for this store")
+	}
+
+	// Get bank details from dva_accounts table
+	var bankDetails struct {
+		BankName      string
+		AccountName   string
+		AccountNumber string
+	}
+	if err := storeRepo.GetDB().Table("dva_accounts").
+		Where("store_id = ? AND account_number = ?", input.StoreID, input.AccountNumber).
+		First(&bankDetails).Error; err != nil {
+		return false, fmt.Errorf("failed to get bank details: %w", err)
+	}
+
+	// Call withdrawal logic
+	withdrawalRepo := withdrawal.NewRepository()
+	newWithdrawal := &withdrawal.NewWithdrawal{
+		StoreID:       uint32(input.StoreID),
+		Amount:        float64(input.Amount),
+		BankName:      bankDetails.BankName,
+		AccountNumber: input.AccountNumber,
+		AccountName:   bankDetails.AccountName,
+	}
+	_, err = withdrawalRepo.CreateWithdrawal(ctx, newWithdrawal)
+	if err != nil {
+		return false, fmt.Errorf("failed to create withdrawal: %w", err)
+	}
+	return true, nil
 }
 
 // ConfirmPassword is the resolver for the confirmPassword field.
