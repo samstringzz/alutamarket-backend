@@ -22,6 +22,18 @@ type Account struct {
 	Assigned      bool         `json:"assigned"`
 }
 
+type AdminWithdrawal struct {
+	ID            string  `json:"id"`
+	SellerName    string  `json:"sellerName"`
+	AccountNumber string  `json:"accountNumber"`
+	BankName      string  `json:"bankName"`
+	Amount        float64 `json:"amount"`
+	Time          string  `json:"time"`
+	Date          string  `json:"date"`
+	Status        string  `json:"status"`
+	StoreID       string  `json:"storeID"`
+}
+
 type Bank struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
