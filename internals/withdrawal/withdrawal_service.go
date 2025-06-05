@@ -17,6 +17,7 @@ type Service interface {
 	GetStoreWithdrawals(ctx context.Context, storeID uint32) ([]*shared.Withdrawal, error)
 	GetPendingWithdrawals(ctx context.Context) ([]*shared.Withdrawal, error)
 	ProcessPendingWithdrawals(ctx context.Context) error
+	GetWithdrawals(ctx context.Context, status *string) ([]*shared.Withdrawal, error)
 }
 
 type service struct {
@@ -83,4 +84,8 @@ func (s *service) ProcessPendingWithdrawals(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *service) GetWithdrawals(ctx context.Context, status *string) ([]*shared.Withdrawal, error) {
+	return s.repo.GetWithdrawals(ctx, status)
 }
