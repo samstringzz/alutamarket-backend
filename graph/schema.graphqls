@@ -124,6 +124,7 @@ extend type Query {
   getDVAAccount(userID: ID!): DVAAccount
   getStoreEarnings(storeId: Int!): [StoreEarnings!]!
   checkStoreEarningsDiscrepancy(storeId: Int!): StoreEarningsDiscrepancy!
+  getWithdrawalsForAdmin(status: String): [AdminWithdrawal!]!
 }
 
 type Message {
@@ -716,6 +717,19 @@ type SmartcardContent {
 	currentBouquetCode: String!
 	renewalAmount: Float!
 }
+
+type AdminWithdrawal {
+  id: ID!
+  sellerName: String!
+  accountNumber: String!
+  bankName: String!
+  amount: Float!
+  time: String!
+  date: String!
+  status: String!
+  storeID: ID!
+}
+
 type TrackedProduct {
 	id: Int!
 	name: String!

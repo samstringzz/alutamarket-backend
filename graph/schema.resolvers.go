@@ -3221,6 +3221,11 @@ func (r *queryResolver) CheckStoreEarningsDiscrepancy(ctx context.Context, store
 	}, nil
 }
 
+// GetWithdrawalsForAdmin is the resolver for the getWithdrawalsForAdmin field.
+func (r *queryResolver) GetWithdrawalsForAdmin(ctx context.Context, status *string) ([]*model.AdminWithdrawal, error) {
+	panic(fmt.Errorf("not implemented: GetWithdrawalsForAdmin - getWithdrawalsForAdmin"))
+}
+
 // ProductSearchResults is the resolver for the productSearchResults field.
 func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
 	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
@@ -3238,59 +3243,3 @@ func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionRes
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	type AdminWithdrawal struct {
-	ID            string  `json:"id"`
-	SellerName    string  `json:"sellerName"`
-	AccountNumber string  `json:"accountNumber"`
-	BankName      string  `json:"bankName"`
-	Amount        float64 `json:"amount"`
-	Time          string  `json:"time"`
-	Date          string  `json:"date"`
-	Status        string  `json:"status"`
-	StoreID       string  `json:"storeID"` // Include storeID for "View" action
-}
-func (r *queryResolver) GetWithdrawalsForAdmin(ctx context.Context, status *string) ([]*model.AdminWithdrawal, error) {
-	widrawalService := withdrawal.NewService(withdrawal.NewRepository())
-	storeRepo := store.NewRepository() // Need store repo to get store names
-
-	// Fetch withdrawals using the new service method
-	withdrawals, err := widrawalService.GetWithdrawals(ctx, status)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch withdrawals: %v", err)
-	}
-
-	var adminWithdrawals []*model.AdminWithdrawal
-	for _, w := range withdrawals {
-		// Fetch store name for each withdrawal
-		storeObj, err := storeRepo.GetStore(ctx, w.StoreID)
-		sellerName := "Unknown Seller" // Default value
-		if err == nil {
-			sellerName = storeObj.Name
-		} else {
-			log.Printf("Warning: Failed to get store for withdrawal %d (storeID %d): %v", w.ID, w.StoreID, err)
-		}
-
-		adminWithdrawals = append(adminWithdrawals, &model.AdminWithdrawal{
-			ID:            strconv.FormatUint(uint64(w.ID), 10),
-			SellerName:    sellerName,
-			AccountNumber: w.AccountNumber,
-			BankName:      w.BankName,
-			Amount:        w.Amount,
-			Time:          w.CreatedAt.Format("03:04PM"),    // Format time
-			Date:          w.CreatedAt.Format("02-01-2006"), // Format date
-			Status:        w.Status,
-			StoreID:       strconv.FormatUint(uint64(w.StoreID), 10),
-		})
-	}
-
-	return adminWithdrawals, nil
-}
-*/
