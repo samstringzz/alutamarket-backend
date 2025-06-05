@@ -22,6 +22,7 @@ import (
 	"github.com/Chrisentech/aluta-market-api/internals/cart"
 	"github.com/Chrisentech/aluta-market-api/internals/messages"
 	"github.com/Chrisentech/aluta-market-api/internals/product"
+	"github.com/Chrisentech/aluta-market-api/internals/shared"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/internals/subscriber"
 	"github.com/Chrisentech/aluta-market-api/internals/user"
@@ -1415,7 +1416,7 @@ func (r *mutationResolver) WithdrawFund(ctx context.Context, input model.FundInp
 
 	// Call withdrawal logic
 	withdrawalRepo := withdrawal.NewRepository()
-	newWithdrawal := &withdrawal.NewWithdrawal{
+	newWithdrawal := &shared.NewWithdrawal{
 		StoreID:       uint32(input.StoreID),
 		Amount:        float64(input.Amount),
 		BankName:      bankDetails.BankName,
