@@ -3,6 +3,7 @@ package withdrawal
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/Chrisentech/aluta-market-api/database"
@@ -41,11 +42,19 @@ func (r *repository) CreateWithdrawal(ctx context.Context, req *shared.NewWithdr
 		return nil, fmt.Errorf("failed to get store: %v", err)
 	}
 
-	// Calculate total available balance (store earnings + Paystack balance)
-	totalBalance := store.Wallet + store.PaystackBalance
+	// Update wallet balance before checking
+	if err := storeRepo.UpdateWalletBalance(ctx, req.StoreID); err != nil {
+		return nil, fmt.Errorf("failed to update wallet balance: %v", err)
+	}
+
+	// Get updated store data
+	store, err = storeRepo.GetStore(ctx, req.StoreID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get updated store: %v", err)
+	}
 
 	// Check if store has sufficient balance
-	if totalBalance < req.Amount {
+	if store.Wallet < req.Amount {
 		return nil, errors.NewAppError(400, "INSUFFICIENT_BALANCE", "Insufficient balance for withdrawal")
 	}
 
@@ -82,13 +91,18 @@ func (r *repository) CreateWithdrawal(ctx context.Context, req *shared.NewWithdr
 		}
 	}
 
+	// Update wallet balance after withdrawal
+	if err := storeRepo.UpdateWalletBalance(ctx, req.StoreID); err != nil {
+		log.Printf("Warning: failed to update wallet balance after withdrawal: %v", err)
+	}
+
 	// Send notification to admin
 	utils.SendEmail("admin@alutamarket.com", "New Withdrawal Request", []string{}, map[string]string{
 		"store_name":       store.Name,
 		"amount":           fmt.Sprintf("%.2f", req.Amount),
 		"wallet_balance":   fmt.Sprintf("%.2f", store.Wallet),
 		"paystack_balance": fmt.Sprintf("%.2f", store.PaystackBalance),
-		"total_balance":    fmt.Sprintf("%.2f", totalBalance),
+		"total_balance":    fmt.Sprintf("%.2f", store.Wallet+store.PaystackBalance),
 	})
 
 	return withdrawal, nil
@@ -136,8 +150,13 @@ func (r *repository) ApproveWithdrawal(ctx context.Context, id uint32) error {
 		return fmt.Errorf("failed to approve withdrawal: %v", err)
 	}
 
-	// Send notification to store
+	// Update wallet balance after approval
 	storeRepo := store.NewRepository()
+	if err := storeRepo.UpdateWalletBalance(ctx, withdrawal.StoreID); err != nil {
+		log.Printf("Warning: failed to update wallet balance after approval: %v", err)
+	}
+
+	// Send notification to store
 	store, err := storeRepo.GetStore(ctx, withdrawal.StoreID)
 	if err != nil {
 		return fmt.Errorf("failed to get store: %v", err)
@@ -217,8 +236,13 @@ func (r *repository) CompleteWithdrawal(ctx context.Context, id uint32, paystack
 		return fmt.Errorf("failed to complete withdrawal: %v", err)
 	}
 
-	// Send notification to store
+	// Update wallet balance after completion
 	storeRepo := store.NewRepository()
+	if err := storeRepo.UpdateWalletBalance(ctx, withdrawal.StoreID); err != nil {
+		log.Printf("Warning: failed to update wallet balance after completion: %v", err)
+	}
+
+	// Send notification to store
 	store, err := storeRepo.GetStore(ctx, withdrawal.StoreID)
 	if err != nil {
 		return fmt.Errorf("failed to get store: %v", err)

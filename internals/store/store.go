@@ -354,6 +354,7 @@ type Repository interface {
 	SyncExistingPaystackDVAAccounts(ctx context.Context) error
 	UpdatePaystackBalance(ctx context.Context, storeID uint32, amount float64) error
 	UpdateWallet(ctx context.Context, storeID uint32, amount float64) error
+	UpdateWalletBalance(ctx context.Context, storeID uint32) error
 	GetDB() *gorm.DB
 }
 
