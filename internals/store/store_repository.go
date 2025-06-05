@@ -795,22 +795,11 @@ func (r *repository) CreateTransactions(ctx context.Context, req *Transactions) 
 }
 
 func (r *repository) WithdrawFund(ctx context.Context, req *Fund) error {
-	var store *Store
-	err := r.db.First(&store, req.StoreID).Error
-	if err != nil {
-		return err
-	}
-	if req.UserID != store.UserID {
-		return errors.NewAppError(http.StatusNotFound, "NOT_FOUND", "Oops, An error occurred in transaction")
-	}
-	if req.Amount > float32(store.Wallet) {
-		return errors.NewAppError(http.StatusBadRequest, "BAD REQUEST", "Your Wallet amount is not within range of withdrawal amount")
-	}
-	err = utils.PayFund(req.Amount, req.AccountNumber, req.BankCode)
-	if err != nil {
-		return err
-	}
-	return nil
+	// Create service
+	service := NewService(r)
+
+	// Process withdrawal
+	return service.WithdrawFund(ctx, req)
 }
 
 // AddReview adds a new review to the database
@@ -1375,4 +1364,8 @@ type PaystackDVAAccount struct {
 // TableName specifies the table name for PaystackDVAAccount
 func (PaystackDVAAccount) TableName() string {
 	return "paystack_dva_accounts"
+}
+
+func (r *repository) GetDB() *gorm.DB {
+	return r.db
 }

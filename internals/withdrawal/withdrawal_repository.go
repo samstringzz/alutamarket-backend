@@ -7,16 +7,17 @@ import (
 
 	"github.com/Chrisentech/aluta-market-api/database"
 	"github.com/Chrisentech/aluta-market-api/errors"
+	"github.com/Chrisentech/aluta-market-api/internals/shared"
 	"github.com/Chrisentech/aluta-market-api/internals/store"
 	"github.com/Chrisentech/aluta-market-api/utils"
 	"gorm.io/gorm"
 )
 
 type Repository interface {
-	CreateWithdrawal(ctx context.Context, req *NewWithdrawal) (*Withdrawal, error)
-	GetWithdrawal(ctx context.Context, id uint32) (*Withdrawal, error)
-	GetStoreWithdrawals(ctx context.Context, storeID uint32) ([]*Withdrawal, error)
-	GetPendingWithdrawals(ctx context.Context) ([]*Withdrawal, error)
+	CreateWithdrawal(ctx context.Context, req *shared.NewWithdrawal) (*shared.Withdrawal, error)
+	GetWithdrawal(ctx context.Context, id uint32) (*shared.Withdrawal, error)
+	GetStoreWithdrawals(ctx context.Context, storeID uint32) ([]*shared.Withdrawal, error)
+	GetPendingWithdrawals(ctx context.Context) ([]*shared.Withdrawal, error)
 	ApproveWithdrawal(ctx context.Context, id uint32) error
 	RejectWithdrawal(ctx context.Context, id uint32, reason string) error
 	CompleteWithdrawal(ctx context.Context, id uint32, paystackTransferID string) error
@@ -32,7 +33,7 @@ func NewRepository() Repository {
 	}
 }
 
-func (r *repository) CreateWithdrawal(ctx context.Context, req *NewWithdrawal) (*Withdrawal, error) {
+func (r *repository) CreateWithdrawal(ctx context.Context, req *shared.NewWithdrawal) (*shared.Withdrawal, error) {
 	// Get store to check balance
 	storeRepo := store.NewRepository()
 	store, err := storeRepo.GetStore(ctx, req.StoreID)
@@ -49,10 +50,10 @@ func (r *repository) CreateWithdrawal(ctx context.Context, req *NewWithdrawal) (
 	}
 
 	// Create withdrawal record
-	withdrawal := &Withdrawal{
+	withdrawal := &shared.Withdrawal{
 		StoreID:       req.StoreID,
 		Amount:        req.Amount,
-		Status:        string(StatusPending),
+		Status:        string(shared.StatusPending),
 		BankName:      req.BankName,
 		AccountNumber: req.AccountNumber,
 		AccountName:   req.AccountName,
@@ -93,25 +94,25 @@ func (r *repository) CreateWithdrawal(ctx context.Context, req *NewWithdrawal) (
 	return withdrawal, nil
 }
 
-func (r *repository) GetWithdrawal(ctx context.Context, id uint32) (*Withdrawal, error) {
-	var withdrawal Withdrawal
+func (r *repository) GetWithdrawal(ctx context.Context, id uint32) (*shared.Withdrawal, error) {
+	var withdrawal shared.Withdrawal
 	if err := r.db.First(&withdrawal, id).Error; err != nil {
 		return nil, fmt.Errorf("failed to get withdrawal: %v", err)
 	}
 	return &withdrawal, nil
 }
 
-func (r *repository) GetStoreWithdrawals(ctx context.Context, storeID uint32) ([]*Withdrawal, error) {
-	var withdrawals []*Withdrawal
+func (r *repository) GetStoreWithdrawals(ctx context.Context, storeID uint32) ([]*shared.Withdrawal, error) {
+	var withdrawals []*shared.Withdrawal
 	if err := r.db.Where("store_id = ?", storeID).Order("created_at DESC").Find(&withdrawals).Error; err != nil {
 		return nil, fmt.Errorf("failed to get store withdrawals: %v", err)
 	}
 	return withdrawals, nil
 }
 
-func (r *repository) GetPendingWithdrawals(ctx context.Context) ([]*Withdrawal, error) {
-	var withdrawals []*Withdrawal
-	if err := r.db.Where("status = ?", StatusPending).Order("created_at ASC").Find(&withdrawals).Error; err != nil {
+func (r *repository) GetPendingWithdrawals(ctx context.Context) ([]*shared.Withdrawal, error) {
+	var withdrawals []*shared.Withdrawal
+	if err := r.db.Where("status = ?", shared.StatusPending).Order("created_at ASC").Find(&withdrawals).Error; err != nil {
 		return nil, fmt.Errorf("failed to get pending withdrawals: %v", err)
 	}
 	return withdrawals, nil
@@ -123,12 +124,12 @@ func (r *repository) ApproveWithdrawal(ctx context.Context, id uint32) error {
 		return err
 	}
 
-	if withdrawal.Status != string(StatusPending) {
+	if withdrawal.Status != string(shared.StatusPending) {
 		return errors.NewAppError(400, "INVALID_STATUS", "Withdrawal is not in pending status")
 	}
 
 	now := time.Now()
-	withdrawal.Status = string(StatusApproved)
+	withdrawal.Status = string(shared.StatusApproved)
 	withdrawal.ApprovedAt = &now
 
 	if err := r.db.Save(withdrawal).Error; err != nil {
@@ -155,7 +156,7 @@ func (r *repository) RejectWithdrawal(ctx context.Context, id uint32, reason str
 		return err
 	}
 
-	if withdrawal.Status != string(StatusPending) {
+	if withdrawal.Status != string(shared.StatusPending) {
 		return errors.NewAppError(400, "INVALID_STATUS", "Withdrawal is not in pending status")
 	}
 
@@ -182,7 +183,7 @@ func (r *repository) RejectWithdrawal(ctx context.Context, id uint32, reason str
 		}
 	}
 
-	withdrawal.Status = string(StatusRejected)
+	withdrawal.Status = string(shared.StatusRejected)
 	withdrawal.RejectionReason = reason
 
 	if err := r.db.Save(withdrawal).Error; err != nil {
@@ -203,12 +204,12 @@ func (r *repository) CompleteWithdrawal(ctx context.Context, id uint32, paystack
 		return err
 	}
 
-	if withdrawal.Status != string(StatusApproved) {
+	if withdrawal.Status != string(shared.StatusApproved) {
 		return errors.NewAppError(400, "INVALID_STATUS", "Withdrawal is not in approved status")
 	}
 
 	now := time.Now()
-	withdrawal.Status = string(StatusCompleted)
+	withdrawal.Status = string(shared.StatusCompleted)
 	withdrawal.CompletedAt = &now
 	withdrawal.PaystackTransferID = paystackTransferID
 
