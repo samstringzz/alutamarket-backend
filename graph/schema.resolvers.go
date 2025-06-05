@@ -3276,3 +3276,44 @@ func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionRes
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+
+func (r *queryResolver) GetWithdrawalDetails(ctx context.Context, id string) (*model.AdminWithdrawal, error) {
+	widrawalService := withdrawal.NewService(withdrawal.NewRepository())
+	storeRepo := store.NewRepository() // Need store repo to get store names
+
+	// Convert the ID string to uint32
+	widrawalID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("invalid withdrawal ID: %v", err)
+	}
+
+	// Fetch the specific withdrawal using the service method
+	w, err := widrawalService.GetWithdrawal(ctx, uint32(widrawalID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch withdrawal details: %v", err)
+	}
+
+	// Fetch store name for the withdrawal
+	storeObj, err := storeRepo.GetStore(ctx, w.StoreID)
+	sellerName := "Unknown Seller" // Default value
+	if err == nil {
+		sellerName = storeObj.Name
+	} else {
+		log.Printf("Warning: Failed to get store for withdrawal %d (storeID %d): %v", w.ID, w.StoreID, err)
+	}
+
+	// Map the withdrawal data to the AdminWithdrawal type
+	adminWithdrawal := &model.AdminWithdrawal{
+		ID:            strconv.FormatUint(uint64(w.ID), 10),
+		SellerName:    sellerName,
+		AccountNumber: w.AccountNumber,
+		BankName:      w.BankName,
+		Amount:        w.Amount,
+		Time:          w.CreatedAt.Format("03:04PM"),    // Format time
+		Date:          w.CreatedAt.Format("02-01-2006"), // Format date
+		Status:        w.Status,
+		StoreID:       strconv.FormatUint(uint64(w.StoreID), 10),
+	}
+
+	return adminWithdrawal, nil
+}
