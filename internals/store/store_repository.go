@@ -1193,6 +1193,7 @@ func (r *repository) CheckStoreEarningsDiscrepancy(ctx context.Context, storeID 
 
 	return int(deliveredOrdersCount), totalEarnings, nil
 }
+
 func (r *repository) UpdateWallet(ctx context.Context, storeID uint32, amount float64) error {
 	result := r.db.Model(&Store{}).
 		Where("id = ?", storeID).
@@ -1368,4 +1369,48 @@ func (PaystackDVAAccount) TableName() string {
 
 func (r *repository) GetDB() *gorm.DB {
 	return r.db
+}
+
+// UpdateWalletBalance updates the store's wallet with the total balance (Paystack + earnings)
+func (r *repository) UpdateWalletBalance(ctx context.Context, storeID uint32) error {
+	store, err := r.GetStore(ctx, storeID)
+	if err != nil {
+		return fmt.Errorf("failed to get store: %v", err)
+	}
+
+	// Get store earnings
+	var totalEarnings float64
+	var earnings []*StoreEarnings
+	if err := r.db.Where("store_id = ? AND status = ?", storeID, "released").Find(&earnings).Error; err != nil {
+		return fmt.Errorf("failed to get store earnings: %v", err)
+	}
+
+	// Calculate total earnings
+	for _, earning := range earnings {
+		totalEarnings += earning.Amount
+	}
+
+	// Get total withdrawals
+	var totalWithdrawals float64
+	var withdrawals []*Withdrawal
+	if err := r.db.Where("store_id = ? AND status IN ?", storeID, []string{"pending", "approved", "completed"}).Find(&withdrawals).Error; err != nil {
+		return fmt.Errorf("failed to get withdrawals: %v", err)
+	}
+
+	// Calculate total withdrawals
+	for _, withdrawal := range withdrawals {
+		totalWithdrawals += withdrawal.Amount
+	}
+
+	// Calculate total balance
+	totalBalance := store.PaystackBalance + totalEarnings - totalWithdrawals
+
+	// Update wallet if different
+	if store.Wallet != totalBalance {
+		if err := r.UpdateWallet(ctx, storeID, totalBalance-store.Wallet); err != nil {
+			return fmt.Errorf("failed to update wallet: %v", err)
+		}
+	}
+
+	return nil
 }
