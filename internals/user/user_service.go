@@ -216,11 +216,7 @@ func (s *service) ConfirmPassword(ctx context.Context, password, userId string) 
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	err := s.Repository.ConfirmPassword(ctx, password, userId)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.Repository.ConfirmPassword(ctx, password, userId)
 }
 
 func (s *service) GetMyDownloads(ctx context.Context, userId string) ([]*models.Downloads, error) {

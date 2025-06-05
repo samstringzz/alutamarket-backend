@@ -134,11 +134,7 @@ func (h *Handler) GetBalance(ctx context.Context, req string) error {
 }
 
 func (h *Handler) ConfirmPassword(ctx context.Context, password, userId string) error {
-	err := h.Service.ConfirmPassword(ctx, password, userId)
-	if err != nil {
-		return err
-	}
-	return nil
+	return h.Service.ConfirmPassword(ctx, password, userId)
 }
 
 func (h *Handler) GetMyDownloads(ctx context.Context, userId string) ([]*models.Downloads, error) {

@@ -1012,8 +1012,18 @@ func (r *repository) GetDVABalance(ctx context.Context, accountNumber string) (f
 		}
 	}
 
+	// Calculate total balance
+	totalBalance := paystackBalance + totalEarnings
+
+	// Update store's wallet column with the total balance
+	if err := r.db.Model(&Store{}).
+		Where("id = ?", store.ID).
+		Update("wallet", totalBalance).Error; err != nil {
+		return totalBalance, fmt.Errorf("failed to update store wallet: %v", err)
+	}
+
 	// Return combined balance
-	return paystackBalance + totalEarnings, nil
+	return totalBalance, nil
 }
 
 func (r *repository) GetOrderByUUID(ctx context.Context, uuid string) (*Order, error) {
