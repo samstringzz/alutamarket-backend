@@ -2643,7 +2643,20 @@ func (r *queryResolver) GetDVABalance(ctx context.Context, accountNumber string,
 			}
 		}
 
-		// Update store wallet with total balance (Paystack + released earnings)
+		// Get total withdrawals
+		var totalWithdrawals float64
+		var withdrawals []*shared.Withdrawal
+		if err := storeRepo.GetDB().Where("store_id = ? AND status IN ?", *storeID, []string{"pending", "approved", "completed"}).Find(&withdrawals).Error; err == nil {
+			// Sum up all withdrawals
+			for _, withdrawal := range withdrawals {
+				totalWithdrawals += withdrawal.Amount
+			}
+		}
+
+		// Subtract withdrawals from total balance
+		totalBalance -= totalWithdrawals
+
+		// Update store wallet with total balance (Paystack + released earnings - withdrawals)
 		if store.Wallet != totalBalance {
 			if err := storeRepo.UpdateWallet(ctx, uint32(*storeID), totalBalance-store.Wallet); err != nil {
 				return nil, fmt.Errorf("failed to update store wallet: %v", err)
