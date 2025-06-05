@@ -3223,7 +3223,40 @@ func (r *queryResolver) CheckStoreEarningsDiscrepancy(ctx context.Context, store
 
 // GetWithdrawalsForAdmin is the resolver for the getWithdrawalsForAdmin field.
 func (r *queryResolver) GetWithdrawalsForAdmin(ctx context.Context, status *string) ([]*model.AdminWithdrawal, error) {
-	panic(fmt.Errorf("not implemented: GetWithdrawalsForAdmin - getWithdrawalsForAdmin"))
+	widrawalService := withdrawal.NewService(withdrawal.NewRepository())
+	storeRepo := store.NewRepository() // Need store repo to get store names
+
+	// Fetch withdrawals using the new service method
+	withdrawals, err := widrawalService.GetWithdrawals(ctx, status)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch withdrawals: %v", err)
+	}
+
+	var adminWithdrawals []*model.AdminWithdrawal
+	for _, w := range withdrawals {
+		// Fetch store name for each withdrawal
+		storeObj, err := storeRepo.GetStore(ctx, w.StoreID)
+		sellerName := "Unknown Seller" // Default value
+		if err == nil {
+			sellerName = storeObj.Name
+		} else {
+			log.Printf("Warning: Failed to get store for withdrawal %d (storeID %d): %v", w.ID, w.StoreID, err)
+		}
+
+		adminWithdrawals = append(adminWithdrawals, &model.AdminWithdrawal{
+			ID:            strconv.FormatUint(uint64(w.ID), 10),
+			SellerName:    sellerName,
+			AccountNumber: w.AccountNumber,
+			BankName:      w.BankName,
+			Amount:        w.Amount,
+			Time:          w.CreatedAt.Format("03:04PM"),    // Format time
+			Date:          w.CreatedAt.Format("02-01-2006"), // Format date
+			Status:        w.Status,
+			StoreID:       strconv.FormatUint(uint64(w.StoreID), 10),
+		})
+	}
+
+	return adminWithdrawals, nil
 }
 
 // ProductSearchResults is the resolver for the productSearchResults field.
