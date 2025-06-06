@@ -107,15 +107,31 @@ func (s *service) ProcessWithdrawal(ctx context.Context, withdrawalID uint32, ac
 			return errors.NewAppError(400, "INVALID_STATUS", "Withdrawal must be pending to be approved")
 		}
 
+		// First, create a Paystack recipient
+		recipient, err := s.paystackClient.CreateTransferRecipient(ctx, &user.RecipientRequest{
+			Type:          "nuban",
+			Name:          w.AccountName,
+			AccountNumber: w.AccountNumber,
+			BankCode:      w.BankName, // This should be the bank code, not bank name
+		})
+		if err != nil {
+			// If recipient creation fails, reject the withdrawal
+			if rejectErr := s.repo.RejectWithdrawal(ctx, withdrawalID,
+				fmt.Sprintf("Failed to create transfer recipient: %v", err)); rejectErr != nil {
+				log.Printf("Failed to reject withdrawal after recipient creation failure: %v", rejectErr)
+			}
+			return fmt.Errorf("failed to create transfer recipient: %v", err)
+		}
+
 		// Approve the withdrawal (updates status to 'approved')
 		if err := s.repo.ApproveWithdrawal(ctx, withdrawalID); err != nil {
 			return fmt.Errorf("failed to approve withdrawal: %v", err)
 		}
 
-		// Initiate Paystack transfer
+		// Initiate Paystack transfer using the recipient code
 		transfer, err := s.paystackClient.InitiateTransfer(ctx, &user.TransferRequest{
 			Amount:    w.Amount,
-			Recipient: w.AccountNumber, // Use AccountNumber as recipient
+			Recipient: recipient.Data.RecipientCode, // Use the recipient code from Paystack
 			Reason:    fmt.Sprintf("Withdrawal #%d from Aluta Market", w.ID),
 		})
 
@@ -125,7 +141,7 @@ func (s *service) ProcessWithdrawal(ctx context.Context, withdrawalID uint32, ac
 				fmt.Sprintf("Automated transfer failed: %v", err)); rejectErr != nil {
 				log.Printf("Failed to reject withdrawal after transfer failure: %v", rejectErr)
 			}
-			return fmt.Errorf("paystack transfer failed: %v", err) // Return original transfer error
+			return fmt.Errorf("paystack transfer failed: %v", err)
 		}
 
 		// If transfer is successful, complete the withdrawal
