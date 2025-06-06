@@ -15,6 +15,7 @@ type PaystackClient interface {
 	CreateDVAAccount(details *DVADetails) (*Account, error)
 	InitiateTransfer(ctx context.Context, req *TransferRequest) (*Transfer, error)
 	CreateTransferRecipient(ctx context.Context, req *RecipientRequest) (*RecipientResponse, error)
+	GetBanks(ctx context.Context) (*BanksResponse, error)
 }
 
 type TransferRequest struct {
@@ -48,6 +49,18 @@ type RecipientResponse struct {
 	Data    struct {
 		RecipientCode string `json:"recipient_code"`
 	} `json:"data"`
+}
+
+type PaystackBank struct {
+	Name string `json:"name"`
+	Code string `json:"code"`
+	Slug string `json:"slug"`
+}
+
+type BanksResponse struct {
+	Status  bool           `json:"status"`
+	Message string         `json:"message"`
+	Data    []PaystackBank `json:"data"`
 }
 
 // Add the implementation
@@ -244,6 +257,37 @@ func (p *paystackClient) CreateTransferRecipient(ctx context.Context, req *Recip
 	defer resp.Body.Close()
 
 	var result RecipientResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	if !result.Status {
+		return nil, fmt.Errorf("paystack error: %s", result.Message)
+	}
+
+	return &result, nil
+}
+
+// GetBanks fetches all supported banks from Paystack
+func (p *paystackClient) GetBanks(ctx context.Context) (*BanksResponse, error) {
+	url := "https://api.paystack.co/bank"
+
+	httpReq, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	httpReq.Header.Set("Authorization", "Bearer "+p.secretKey)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var result BanksResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %v", err)
 	}
