@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/internals/user"
+	"github.com/samstringzz/alutamarket-backend/internals/user"
 	"gorm.io/gorm"
 )
 

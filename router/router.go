@@ -6,13 +6,13 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/Chrisentech/aluta-market-api/graph"
-	"github.com/Chrisentech/aluta-market-api/internals/messages"
-	"github.com/Chrisentech/aluta-market-api/internals/product"
-	"github.com/Chrisentech/aluta-market-api/internals/user"
-	"github.com/Chrisentech/aluta-market-api/middlewares"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/samstringzz/alutamarket-backend/graph"
+	"github.com/samstringzz/alutamarket-backend/internals/messages"
+	"github.com/samstringzz/alutamarket-backend/internals/product"
+	"github.com/samstringzz/alutamarket-backend/internals/user"
+	"github.com/samstringzz/alutamarket-backend/middlewares"
 )
 
 var r *gin.Engine
@@ -50,12 +50,10 @@ func InitRouter(userHandler *user.Handler, productHandler *product.Handler, prod
 	r.Use(cors.New(config))
 
 	// Update GraphQL server configuration to include both handlers and service
-	// Ensure message handler is passed to GraphQL server configuration
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: &graph.Resolver{
-			UserHandler:    *userHandler,
+			UserHandler:    userHandler,
 			ProductHandler: productHandler,
-			ProductService: productService,
 			MessageHandler: messageHandler,
 		},
 	}))

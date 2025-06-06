@@ -6,11 +6,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/database"
-	"github.com/Chrisentech/aluta-market-api/errors"
-	"github.com/Chrisentech/aluta-market-api/internals/shared"
-	"github.com/Chrisentech/aluta-market-api/internals/store"
-	"github.com/Chrisentech/aluta-market-api/utils"
+	"github.com/samstringzz/alutamarket-backend/database"
+	"github.com/samstringzz/alutamarket-backend/errors"
+	"github.com/samstringzz/alutamarket-backend/internals/shared"
+	"github.com/samstringzz/alutamarket-backend/internals/store"
+	"github.com/samstringzz/alutamarket-backend/utils"
 	"gorm.io/gorm"
 )
 

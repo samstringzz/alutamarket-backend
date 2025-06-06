@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Chrisentech/aluta-market-api/database"
-	"github.com/Chrisentech/aluta-market-api/errors"
-	"github.com/Chrisentech/aluta-market-api/utils"
+	"github.com/samstringzz/alutamarket-backend/database"
+	"github.com/samstringzz/alutamarket-backend/errors"
+	"github.com/samstringzz/alutamarket-backend/utils"
 
 	"gorm.io/gorm"
 )

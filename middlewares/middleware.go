@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Chrisentech/aluta-market-api/errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin" // Add this import
+	"github.com/samstringzz/alutamarket-backend/errors"
 )
 
 func AuthMiddleware(requiredRole string, tokenString string) *errors.AppError {

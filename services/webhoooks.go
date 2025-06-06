@@ -14,10 +14,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/internals/store"
-	"github.com/Chrisentech/aluta-market-api/internals/user"
-	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/joho/godotenv"
+	"github.com/samstringzz/alutamarket-backend/internals/store"
+	"github.com/samstringzz/alutamarket-backend/internals/user"
+	"github.com/samstringzz/alutamarket-backend/utils"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

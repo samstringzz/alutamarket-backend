@@ -12,16 +12,15 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/Chrisentech/aluta-market-api/graph"
-	"github.com/Chrisentech/aluta-market-api/internals/messages"
-	"github.com/Chrisentech/aluta-market-api/internals/product"
-	"github.com/Chrisentech/aluta-market-api/internals/user"
-	"github.com/joho/godotenv"
-	"github.com/rs/cors"
-
-	// "github.com/Chrisentech/aluta-market-api/app"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
+	"github.com/samstringzz/alutamarket-backend/graph"
+	"github.com/samstringzz/alutamarket-backend/internals/messages"
+	"github.com/samstringzz/alutamarket-backend/internals/product"
+	"github.com/samstringzz/alutamarket-backend/internals/user"
+	// "github.com/samstringzz/alutamarket-backend/app"
 )
 
 const defaultPort = "8080"
@@ -63,10 +62,10 @@ func InitServer() error {
 	}
 
 	// Create a new CORS middleware with the desired options
-	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "https://www.alutamarket.com", "https://alutamarket.com", "https://alutamarket.vercel.app", "https://alutaa-market.vercel.app", "https://aluta-market-api-zns8.onrender.com/graphql"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+	corsMiddleware := cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "https://www.alutamarket.com", "https://alutamarket.com", "https://alutamarket.vercel.app", "https://alutaa-market.vercel.app", "https://aluta-market-api-zns8.onrender.com/graphql"},
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
 	})
 
@@ -119,8 +118,7 @@ func InitServer() error {
 
 	// Create resolver with all handlers using NewResolver
 	resolver := graph.NewResolver(
-		*userHandler,
-		productService,
+		userHandler,
 		productHandler,
 		messageHandler,
 	)
@@ -155,11 +153,7 @@ func InitServer() error {
 	router := gin.Default()
 
 	// Apply CORS middleware
-	router.Use(func(c *gin.Context) {
-		corsMiddleware.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			c.Next()
-		})).ServeHTTP(c.Writer, c.Request)
-	})
+	router.Use(corsMiddleware)
 
 	// Add root endpoint
 	router.GET("/", func(c *gin.Context) {

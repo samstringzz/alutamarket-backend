@@ -7,11 +7,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/internals/models"
+	"github.com/samstringzz/alutamarket-backend/internals/models"
 	"gorm.io/gorm"
 
-	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/samstringzz/alutamarket-backend/utils"
 )
 
 type service struct {

@@ -16,7 +16,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/Chrisentech/aluta-market-api/graph/model"
+	"github.com/samstringzz/alutamarket-backend/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -275,6 +275,7 @@ type ComplexityRoot struct {
 		InitializePayment             func(childComplexity int, input model.PaymentData) int
 		LoginUser                     func(childComplexity int, input model.LoginReq) int
 		ModifyCart                    func(childComplexity int, input model.ModifyCartItemInput) int
+		ProcessStoreWithdrawal        func(childComplexity int, id string, action string) int
 		RemoveAllCart                 func(childComplexity int, cartID int) int
 		RemoveHandledProduct          func(childComplexity int, prd int, typeArg *string) int
 		SendMessage                   func(childComplexity int, input model.MessageInput) int
@@ -746,6 +747,7 @@ type MutationResolver interface {
 	UpdateExistingOrdersUnitsSold(ctx context.Context) (*model.UpdateUnitsSoldResponse, error)
 	SubmitContactForm(ctx context.Context, input model.ContactFormInput) (string, error)
 	SyncPaystackDVAAccounts(ctx context.Context) (bool, error)
+	ProcessStoreWithdrawal(ctx context.Context, id string, action string) (bool, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error)
@@ -1994,6 +1996,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ModifyCart(childComplexity, args["input"].(model.ModifyCartItemInput)), true
+
+	case "Mutation.processStoreWithdrawal":
+		if e.complexity.Mutation.ProcessStoreWithdrawal == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_processStoreWithdrawal_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ProcessStoreWithdrawal(childComplexity, args["id"].(string), args["action"].(string)), true
 
 	case "Mutation.removeAllCart":
 		if e.complexity.Mutation.RemoveAllCart == nil {
@@ -4684,7 +4698,7 @@ func (ec *executionContext) field_Mutation_addReview_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNReviewInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewInput(ctx, tmp)
+		return ec.unmarshalNReviewInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReviewInput(ctx, tmp)
 	}
 
 	var zeroVal model.ReviewInput
@@ -4740,7 +4754,7 @@ func (ec *executionContext) field_Mutation_confirmPassword_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalOconfirmPasswordInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐConfirmPasswordInput(ctx, tmp)
+		return ec.unmarshalOconfirmPasswordInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐConfirmPasswordInput(ctx, tmp)
 	}
 
 	var zeroVal *model.ConfirmPasswordInput
@@ -4768,7 +4782,7 @@ func (ec *executionContext) field_Mutation_createCategory_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNNewCategory2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewCategory(ctx, tmp)
+		return ec.unmarshalNNewCategory2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewCategory(ctx, tmp)
 	}
 
 	var zeroVal model.NewCategory
@@ -4796,7 +4810,7 @@ func (ec *executionContext) field_Mutation_createChat_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNChatInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐChatInput(ctx, tmp)
+		return ec.unmarshalNChatInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐChatInput(ctx, tmp)
 	}
 
 	var zeroVal model.ChatInput
@@ -4824,7 +4838,7 @@ func (ec *executionContext) field_Mutation_createDVAAccount_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNDVAAccountInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDVAAccountInput(ctx, tmp)
+		return ec.unmarshalNDVAAccountInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDVAAccountInput(ctx, tmp)
 	}
 
 	var zeroVal model.DVAAccountInput
@@ -4852,7 +4866,7 @@ func (ec *executionContext) field_Mutation_createInvoice_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNInvoiceInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceInput(ctx, tmp)
+		return ec.unmarshalNInvoiceInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceInput(ctx, tmp)
 	}
 
 	var zeroVal model.InvoiceInput
@@ -4880,7 +4894,7 @@ func (ec *executionContext) field_Mutation_createOrder_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNStoreOrderInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreOrderInput(ctx, tmp)
+		return ec.unmarshalNStoreOrderInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreOrderInput(ctx, tmp)
 	}
 
 	var zeroVal model.StoreOrderInput
@@ -4959,7 +4973,7 @@ func (ec *executionContext) field_Mutation_createProduct_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNProductInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInput(ctx, tmp)
+		return ec.unmarshalNProductInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductInput(ctx, tmp)
 	}
 
 	var zeroVal model.ProductInput
@@ -4987,7 +5001,7 @@ func (ec *executionContext) field_Mutation_createResetPasswordLink_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNpasswordResetInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPasswordResetInput(ctx, tmp)
+		return ec.unmarshalNpasswordResetInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPasswordResetInput(ctx, tmp)
 	}
 
 	var zeroVal model.PasswordResetInput
@@ -5015,7 +5029,7 @@ func (ec *executionContext) field_Mutation_createSkynet_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalOSkynetInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynetInput(ctx, tmp)
+		return ec.unmarshalOSkynetInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSkynetInput(ctx, tmp)
 	}
 
 	var zeroVal *model.SkynetInput
@@ -5043,7 +5057,7 @@ func (ec *executionContext) field_Mutation_createStore_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNStoreInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreInput(ctx, tmp)
+		return ec.unmarshalNStoreInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreInput(ctx, tmp)
 	}
 
 	var zeroVal model.StoreInput
@@ -5071,7 +5085,7 @@ func (ec *executionContext) field_Mutation_createSubCategory_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNNewSubCategory2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewSubCategory(ctx, tmp)
+		return ec.unmarshalNNewSubCategory2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewSubCategory(ctx, tmp)
 	}
 
 	var zeroVal model.NewSubCategory
@@ -5099,7 +5113,7 @@ func (ec *executionContext) field_Mutation_createTransaction_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNTransactionInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTransactionInput(ctx, tmp)
+		return ec.unmarshalNTransactionInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTransactionInput(ctx, tmp)
 	}
 
 	var zeroVal model.TransactionInput
@@ -5127,7 +5141,7 @@ func (ec *executionContext) field_Mutation_createUser_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNNewUser2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewUser(ctx, tmp)
+		return ec.unmarshalNNewUser2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewUser(ctx, tmp)
 	}
 
 	var zeroVal model.NewUser
@@ -5155,7 +5169,7 @@ func (ec *executionContext) field_Mutation_createVerifyOTP_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNNewVerifyOTP2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVerifyOtp(ctx, tmp)
+		return ec.unmarshalNNewVerifyOTP2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewVerifyOtp(ctx, tmp)
 	}
 
 	var zeroVal model.NewVerifyOtp
@@ -5239,7 +5253,7 @@ func (ec *executionContext) field_Mutation_initializePayment_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNPaymentData2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaymentData(ctx, tmp)
+		return ec.unmarshalNPaymentData2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaymentData(ctx, tmp)
 	}
 
 	var zeroVal model.PaymentData
@@ -5267,7 +5281,7 @@ func (ec *executionContext) field_Mutation_loginUser_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNLoginReq2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐLoginReq(ctx, tmp)
+		return ec.unmarshalNLoginReq2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐLoginReq(ctx, tmp)
 	}
 
 	var zeroVal model.LoginReq
@@ -5295,10 +5309,61 @@ func (ec *executionContext) field_Mutation_modifyCart_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNModifyCartItemInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐModifyCartItemInput(ctx, tmp)
+		return ec.unmarshalNModifyCartItemInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐModifyCartItemInput(ctx, tmp)
 	}
 
 	var zeroVal model.ModifyCartItemInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_processStoreWithdrawal_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_processStoreWithdrawal_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := ec.field_Mutation_processStoreWithdrawal_argsAction(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_processStoreWithdrawal_argsID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["id"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_processStoreWithdrawal_argsAction(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["action"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("action"))
+	if tmp, ok := rawArgs["action"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -5402,7 +5467,7 @@ func (ec *executionContext) field_Mutation_sendMessage_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNMessageInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessageInput(ctx, tmp)
+		return ec.unmarshalNMessageInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessageInput(ctx, tmp)
 	}
 
 	var zeroVal model.MessageInput
@@ -5430,7 +5495,7 @@ func (ec *executionContext) field_Mutation_submitContactForm_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNContactFormInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐContactFormInput(ctx, tmp)
+		return ec.unmarshalNContactFormInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐContactFormInput(ctx, tmp)
 	}
 
 	var zeroVal model.ContactFormInput
@@ -5616,7 +5681,7 @@ func (ec *executionContext) field_Mutation_updateOrder_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNUpdateStoreOrderInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateStoreOrderInput(ctx, tmp)
+		return ec.unmarshalNUpdateStoreOrderInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUpdateStoreOrderInput(ctx, tmp)
 	}
 
 	var zeroVal model.UpdateStoreOrderInput
@@ -5644,7 +5709,7 @@ func (ec *executionContext) field_Mutation_updateProduct_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalOUpdateProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateProductInput(ctx, tmp)
+		return ec.unmarshalOUpdateProductInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUpdateProductInput(ctx, tmp)
 	}
 
 	var zeroVal *model.UpdateProductInput
@@ -5672,7 +5737,7 @@ func (ec *executionContext) field_Mutation_updateStoreFollower_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalOStoreFollowerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollowerInput(ctx, tmp)
+		return ec.unmarshalOStoreFollowerInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreFollowerInput(ctx, tmp)
 	}
 
 	var zeroVal *model.StoreFollowerInput
@@ -5700,7 +5765,7 @@ func (ec *executionContext) field_Mutation_updateStore_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalOUpdateStoreInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateStoreInput(ctx, tmp)
+		return ec.unmarshalOUpdateStoreInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUpdateStoreInput(ctx, tmp)
 	}
 
 	var zeroVal *model.UpdateStoreInput
@@ -5728,7 +5793,7 @@ func (ec *executionContext) field_Mutation_updateUserPassword_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNpasswordUpdateInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPasswordUpdateInput(ctx, tmp)
+		return ec.unmarshalNpasswordUpdateInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPasswordUpdateInput(ctx, tmp)
 	}
 
 	var zeroVal model.PasswordUpdateInput
@@ -5756,7 +5821,7 @@ func (ec *executionContext) field_Mutation_updateUser_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalOUpdateUserInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateUserInput(ctx, tmp)
+		return ec.unmarshalOUpdateUserInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUpdateUserInput(ctx, tmp)
 	}
 
 	var zeroVal *model.UpdateUserInput
@@ -5812,7 +5877,7 @@ func (ec *executionContext) field_Mutation_verifySmartCard_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNSmartCardInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartCardInput(ctx, tmp)
+		return ec.unmarshalNSmartCardInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSmartCardInput(ctx, tmp)
 	}
 
 	var zeroVal model.SmartCardInput
@@ -5840,7 +5905,7 @@ func (ec *executionContext) field_Mutation_withdrawFund_argsInput(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNfundInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐFundInput(ctx, tmp)
+		return ec.unmarshalNfundInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐFundInput(ctx, tmp)
 	}
 
 	var zeroVal model.FundInput
@@ -7205,7 +7270,7 @@ func (ec *executionContext) _Account_customer(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Customer)
 	fc.Result = res
-	return ec.marshalNCustomer2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCustomer(ctx, field.Selections, res)
+	return ec.marshalNCustomer2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCustomer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Account_customer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7259,7 +7324,7 @@ func (ec *executionContext) _Account_bank(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.Bank)
 	fc.Result = res
-	return ec.marshalNBank2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBank(ctx, field.Selections, res)
+	return ec.marshalNBank2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐBank(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Account_bank(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7531,7 +7596,7 @@ func (ec *executionContext) _Account_split_config(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.SplitConfig)
 	fc.Result = res
-	return ec.marshalNSplitConfig2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSplitConfig(ctx, field.Selections, res)
+	return ec.marshalNSplitConfig2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSplitConfig(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Account_split_config(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8371,7 +8436,7 @@ func (ec *executionContext) _Cart_items(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.([]*model.CartItem)
 	fc.Result = res
-	return ec.marshalNCartItem2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCartItemᚄ(ctx, field.Selections, res)
+	return ec.marshalNCartItem2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCartItemᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Cart_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8594,7 +8659,7 @@ func (ec *executionContext) _CartItem_product(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CartItem_product(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8975,7 +9040,7 @@ func (ec *executionContext) _Category_subcategories(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.SubCategory)
 	fc.Result = res
-	return ec.marshalOSubCategory2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubCategory(ctx, field.Selections, res)
+	return ec.marshalOSubCategory2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubCategory(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Category_subcategories(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9071,7 +9136,7 @@ func (ec *executionContext) _Chat_users(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Chat_users(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9157,7 +9222,7 @@ func (ec *executionContext) _Chat_messages(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Message)
 	fc.Result = res
-	return ec.marshalNMessage2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessageᚄ(ctx, field.Selections, res)
+	return ec.marshalNMessage2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessageᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Chat_messages(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9218,7 +9283,7 @@ func (ec *executionContext) _Chat_latest_message(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Message)
 	fc.Result = res
-	return ec.marshalOMessage2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
+	return ec.marshalOMessage2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Chat_latest_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9678,7 +9743,7 @@ func (ec *executionContext) _DVAAccount_customer(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Customer)
 	fc.Result = res
-	return ec.marshalNCustomer2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCustomer(ctx, field.Selections, res)
+	return ec.marshalNCustomer2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCustomer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DVAAccount_customer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9732,7 +9797,7 @@ func (ec *executionContext) _DVAAccount_bank(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.Bank)
 	fc.Result = res
-	return ec.marshalNBank2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBank(ctx, field.Selections, res)
+	return ec.marshalNBank2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐBank(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DVAAccount_bank(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11605,7 +11670,7 @@ func (ec *executionContext) _Invoice_customer(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.InvoiceCustomer)
 	fc.Result = res
-	return ec.marshalNInvoiceCustomer2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceCustomer(ctx, field.Selections, res)
+	return ec.marshalNInvoiceCustomer2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceCustomer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Invoice_customer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11701,7 +11766,7 @@ func (ec *executionContext) _Invoice_items(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.InvoiceItem)
 	fc.Result = res
-	return ec.marshalNInvoiceItem2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceItem(ctx, field.Selections, res)
+	return ec.marshalNInvoiceItem2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceItem(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Invoice_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11753,7 +11818,7 @@ func (ec *executionContext) _Invoice_delivery_details(ctx context.Context, field
 	}
 	res := resTmp.(*model.InvoiceDelivery)
 	fc.Result = res
-	return ec.marshalNInvoiceDelivery2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceDelivery(ctx, field.Selections, res)
+	return ec.marshalNInvoiceDelivery2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceDelivery(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Invoice_delivery_details(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12638,7 +12703,7 @@ func (ec *executionContext) _Message_users(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Message_users(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13026,7 +13091,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13120,7 +13185,7 @@ func (ec *executionContext) _Mutation_createOrder(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.StoreOrder)
 	fc.Result = res
-	return ec.marshalOStoreOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreOrder(ctx, field.Selections, res)
+	return ec.marshalOStoreOrder2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreOrder(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13190,7 +13255,7 @@ func (ec *executionContext) _Mutation_updateOrder(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.StoreOrder)
 	fc.Result = res
-	return ec.marshalOStoreOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreOrder(ctx, field.Selections, res)
+	return ec.marshalOStoreOrder2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreOrder(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13263,7 +13328,7 @@ func (ec *executionContext) _Mutation_updateOrderStatus(ctx context.Context, fie
 	}
 	res := resTmp.(*model.Order)
 	fc.Result = res
-	return ec.marshalNOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrder(ctx, field.Selections, res)
+	return ec.marshalNOrder2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐOrder(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateOrderStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13356,7 +13421,7 @@ func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13453,7 +13518,7 @@ func (ec *executionContext) _Mutation_addEmailSubscriber(ctx context.Context, fi
 	}
 	res := resTmp.(*model.EmailSubscriptionResponse)
 	fc.Result = res
-	return ec.marshalNEmailSubscriptionResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐEmailSubscriptionResponse(ctx, field.Selections, res)
+	return ec.marshalNEmailSubscriptionResponse2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐEmailSubscriptionResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addEmailSubscriber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13514,7 +13579,7 @@ func (ec *executionContext) _Mutation_subscribeEmail(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Subscriber)
 	fc.Result = res
-	return ec.marshalNSubscriber2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriber(ctx, field.Selections, res)
+	return ec.marshalNSubscriber2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubscriber(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_subscribeEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13636,7 +13701,7 @@ func (ec *executionContext) _Mutation_createVerifyOTP(ctx context.Context, field
 	}
 	res := resTmp.(*model.LoginRes)
 	fc.Result = res
-	return ec.marshalNLoginRes2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐLoginRes(ctx, field.Selections, res)
+	return ec.marshalNLoginRes2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐLoginRes(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createVerifyOTP(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13699,7 +13764,7 @@ func (ec *executionContext) _Mutation_loginUser(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.LoginRes)
 	fc.Result = res
-	return ec.marshalNLoginRes2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐLoginRes(ctx, field.Selections, res)
+	return ec.marshalNLoginRes2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐLoginRes(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_loginUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13762,7 +13827,7 @@ func (ec *executionContext) _Mutation_addHandledProduct(ctx context.Context, fie
 	}
 	res := resTmp.(*model.HandledProducts)
 	fc.Result = res
-	return ec.marshalNHandledProducts2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐHandledProducts(ctx, field.Selections, res)
+	return ec.marshalNHandledProducts2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐHandledProducts(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addHandledProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13835,7 +13900,7 @@ func (ec *executionContext) _Mutation_addReview(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Review)
 	fc.Result = res
-	return ec.marshalNReview2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReview(ctx, field.Selections, res)
+	return ec.marshalNReview2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReview(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addReview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13961,7 +14026,7 @@ func (ec *executionContext) _Mutation_updateStoreFollower(ctx context.Context, f
 	}
 	res := resTmp.(*model.Store)
 	fc.Result = res
-	return ec.marshalOStore2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
+	return ec.marshalOStore2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateStoreFollower(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14110,7 +14175,7 @@ func (ec *executionContext) _Mutation_removeHandledProduct(ctx context.Context, 
 	}
 	res := resTmp.(*model.HandledProducts)
 	fc.Result = res
-	return ec.marshalOHandledProducts2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐHandledProducts(ctx, field.Selections, res)
+	return ec.marshalOHandledProducts2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐHandledProducts(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_removeHandledProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14183,7 +14248,7 @@ func (ec *executionContext) _Mutation_createCategory(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Category)
 	fc.Result = res
-	return ec.marshalNCategory2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCategory(ctx, field.Selections, res)
+	return ec.marshalNCategory2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCategory(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createCategory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14254,7 +14319,7 @@ func (ec *executionContext) _Mutation_createSubCategory(ctx context.Context, fie
 	}
 	res := resTmp.(*model.SubCategory)
 	fc.Result = res
-	return ec.marshalNSubCategory2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubCategory(ctx, field.Selections, res)
+	return ec.marshalNSubCategory2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubCategory(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createSubCategory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14317,7 +14382,7 @@ func (ec *executionContext) _Mutation_createProduct(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14410,7 +14475,7 @@ func (ec *executionContext) _Mutation_updateProduct(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14555,7 +14620,7 @@ func (ec *executionContext) _Mutation_deleteProduct(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14648,7 +14713,7 @@ func (ec *executionContext) _Mutation_modifyCart(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Cart)
 	fc.Result = res
-	return ec.marshalNCart2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCart(ctx, field.Selections, res)
+	return ec.marshalNCart2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCart(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_modifyCart(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14715,7 +14780,7 @@ func (ec *executionContext) _Mutation_removeAllCart(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Cart)
 	fc.Result = res
-	return ec.marshalNCart2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCart(ctx, field.Selections, res)
+	return ec.marshalNCart2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCart(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_removeAllCart(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14782,7 +14847,7 @@ func (ec *executionContext) _Mutation_createStore(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Store)
 	fc.Result = res
-	return ec.marshalNStore2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
+	return ec.marshalNStore2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createStore(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14879,7 +14944,7 @@ func (ec *executionContext) _Mutation_updateStore(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Store)
 	fc.Result = res
-	return ec.marshalNStore2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
+	return ec.marshalNStore2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateStore(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14976,7 +15041,7 @@ func (ec *executionContext) _Mutation_deleteStore(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Store)
 	fc.Result = res
-	return ec.marshalNStore2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
+	return ec.marshalNStore2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deleteStore(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15177,7 +15242,7 @@ func (ec *executionContext) _Mutation_verifySmartCard(ctx context.Context, field
 	}
 	res := resTmp.(*model.SmartcardVerificationResponse)
 	fc.Result = res
-	return ec.marshalOSmartcardVerificationResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartcardVerificationResponse(ctx, field.Selections, res)
+	return ec.marshalOSmartcardVerificationResponse2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSmartcardVerificationResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_verifySmartCard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15238,7 +15303,7 @@ func (ec *executionContext) _Mutation_createChat(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Chat)
 	fc.Result = res
-	return ec.marshalNChat2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐChat(ctx, field.Selections, res)
+	return ec.marshalNChat2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐChat(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createChat(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15305,7 +15370,7 @@ func (ec *executionContext) _Mutation_sendMessage(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Message)
 	fc.Result = res
-	return ec.marshalNMessage2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
+	return ec.marshalNMessage2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_sendMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15377,7 +15442,7 @@ func (ec *executionContext) _Mutation_createTransaction(ctx context.Context, fie
 	}
 	res := resTmp.(*model.Transaction)
 	fc.Result = res
-	return ec.marshalOTransaction2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTransaction(ctx, field.Selections, res)
+	return ec.marshalOTransaction2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTransaction(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTransaction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15722,7 +15787,7 @@ func (ec *executionContext) _Mutation_createInvoice(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Invoice)
 	fc.Result = res
-	return ec.marshalOInvoice2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoice(ctx, field.Selections, res)
+	return ec.marshalOInvoice2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoice(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createInvoice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15786,7 +15851,7 @@ func (ec *executionContext) _Mutation_createPaystackAccount(ctx context.Context,
 	}
 	res := resTmp.(*model.PaystackAccount)
 	fc.Result = res
-	return ec.marshalOPaystackAccount2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaystackAccount(ctx, field.Selections, res)
+	return ec.marshalOPaystackAccount2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaystackAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createPaystackAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15853,7 +15918,7 @@ func (ec *executionContext) _Mutation_updateExistingOrdersUnitsSold(ctx context.
 	}
 	res := resTmp.(*model.UpdateUnitsSoldResponse)
 	fc.Result = res
-	return ec.marshalNUpdateUnitsSoldResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateUnitsSoldResponse(ctx, field.Selections, res)
+	return ec.marshalNUpdateUnitsSoldResponse2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUpdateUnitsSoldResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateExistingOrdersUnitsSold(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15972,6 +16037,61 @@ func (ec *executionContext) fieldContext_Mutation_syncPaystackDVAAccounts(_ cont
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_processStoreWithdrawal(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_processStoreWithdrawal(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ProcessStoreWithdrawal(rctx, fc.Args["id"].(string), fc.Args["action"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_processStoreWithdrawal(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_processStoreWithdrawal_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -16617,7 +16737,7 @@ func (ec *executionContext) _Order_products(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.Product)
 	fc.Result = res
-	return ec.marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+	return ec.marshalOProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Order_products(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16696,7 +16816,7 @@ func (ec *executionContext) _Order_deliveryDetails(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.DeliveryDetails)
 	fc.Result = res
-	return ec.marshalODeliveryDetails2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDeliveryDetails(ctx, field.Selections, res)
+	return ec.marshalODeliveryDetails2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDeliveryDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Order_deliveryDetails(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17886,7 +18006,7 @@ func (ec *executionContext) _PaystackDVAData_customer(ctx context.Context, field
 	}
 	res := resTmp.(*model.PaystackCustomer)
 	fc.Result = res
-	return ec.marshalNPaystackCustomer2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaystackCustomer(ctx, field.Selections, res)
+	return ec.marshalNPaystackCustomer2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaystackCustomer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PaystackDVAData_customer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18034,7 +18154,7 @@ func (ec *executionContext) _PaystackDVAData_bank(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.PaystackBank)
 	fc.Result = res
-	return ec.marshalNPaystackBank2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaystackBank(ctx, field.Selections, res)
+	return ec.marshalNPaystackBank2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaystackBank(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PaystackDVAData_bank(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18174,7 +18294,7 @@ func (ec *executionContext) _PaystackDVAResponse_data(ctx context.Context, field
 	}
 	res := resTmp.(*model.PaystackDVAData)
 	fc.Result = res
-	return ec.marshalNPaystackDVAData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaystackDVAData(ctx, field.Selections, res)
+	return ec.marshalNPaystackDVAData2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaystackDVAData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PaystackDVAResponse_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19005,7 +19125,7 @@ func (ec *executionContext) _ProductPaginationData_data(ctx context.Context, fie
 	}
 	res := resTmp.([]*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ProductPaginationData_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19791,7 +19911,7 @@ func (ec *executionContext) _PurchasedOrder_products(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.TrackedProduct)
 	fc.Result = res
-	return ec.marshalNTrackedProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTrackedProduct(ctx, field.Selections, res)
+	return ec.marshalNTrackedProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTrackedProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PurchasedOrder_products(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19849,7 +19969,7 @@ func (ec *executionContext) _PurchasedOrder_DeliveryDetails(ctx context.Context,
 	}
 	res := resTmp.(*model.DeliveryDetails)
 	fc.Result = res
-	return ec.marshalNDeliveryDetails2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDeliveryDetails(ctx, field.Selections, res)
+	return ec.marshalNDeliveryDetails2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDeliveryDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PurchasedOrder_DeliveryDetails(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19989,7 +20109,7 @@ func (ec *executionContext) _Query_Users(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20083,7 +20203,7 @@ func (ec *executionContext) _Query_User(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_User(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20180,7 +20300,7 @@ func (ec *executionContext) _Query_Categories(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model.Category)
 	fc.Result = res
-	return ec.marshalNCategory2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCategoryᚄ(ctx, field.Selections, res)
+	return ec.marshalNCategory2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCategoryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Categories(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20240,7 +20360,7 @@ func (ec *executionContext) _Query_followedStores(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.Store)
 	fc.Result = res
-	return ec.marshalNStore2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreᚄ(ctx, field.Selections, res)
+	return ec.marshalNStore2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_followedStores(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20334,7 +20454,7 @@ func (ec *executionContext) _Query_SellerOrders(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.Order)
 	fc.Result = res
-	return ec.marshalOOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrderᚄ(ctx, field.Selections, res)
+	return ec.marshalOOrder2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐOrderᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_SellerOrders(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20424,7 +20544,7 @@ func (ec *executionContext) _Query_Category(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.Category)
 	fc.Result = res
-	return ec.marshalOCategory2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCategory(ctx, field.Selections, res)
+	return ec.marshalOCategory2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCategory(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Category(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20492,7 +20612,7 @@ func (ec *executionContext) _Query_SubCategory(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.SubCategory)
 	fc.Result = res
-	return ec.marshalOSubCategory2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubCategory(ctx, field.Selections, res)
+	return ec.marshalOSubCategory2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubCategory(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_SubCategory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20555,7 +20675,7 @@ func (ec *executionContext) _Query_Products(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.ProductPaginationData)
 	fc.Result = res
-	return ec.marshalNProductPaginationData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductPaginationData(ctx, field.Selections, res)
+	return ec.marshalNProductPaginationData2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductPaginationData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Products(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20621,7 +20741,7 @@ func (ec *executionContext) _Query_Product(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalOProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalOProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Product(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20714,7 +20834,7 @@ func (ec *executionContext) _Query_HandledProducts(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.HandledProducts)
 	fc.Result = res
-	return ec.marshalNHandledProducts2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐHandledProductsᚄ(ctx, field.Selections, res)
+	return ec.marshalNHandledProducts2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐHandledProductsᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_HandledProducts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20787,7 +20907,7 @@ func (ec *executionContext) _Query_RecommendedProducts(ctx context.Context, fiel
 	}
 	res := resTmp.([]*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_RecommendedProducts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20880,7 +21000,7 @@ func (ec *executionContext) _Query_RecentlyAddedProducts(ctx context.Context, fi
 	}
 	res := resTmp.([]*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_RecentlyAddedProducts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20973,7 +21093,7 @@ func (ec *executionContext) _Query_Cart(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.Cart)
 	fc.Result = res
-	return ec.marshalNCart2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCart(ctx, field.Selections, res)
+	return ec.marshalNCart2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCart(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Cart(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21037,7 +21157,7 @@ func (ec *executionContext) _Query_SubscriptionBundle(ctx context.Context, field
 	}
 	res := resTmp.(*model.SubscriptionBundle)
 	fc.Result = res
-	return ec.marshalOSubscriptionBundle2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriptionBundle(ctx, field.Selections, res)
+	return ec.marshalOSubscriptionBundle2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubscriptionBundle(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_SubscriptionBundle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21099,7 +21219,7 @@ func (ec *executionContext) _Query_searchProducts(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.Product)
 	fc.Result = res
-	return ec.marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+	return ec.marshalOProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_searchProducts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21192,7 +21312,7 @@ func (ec *executionContext) _Query_Stores(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.StorePaginationData)
 	fc.Result = res
-	return ec.marshalNStorePaginationData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStorePaginationData(ctx, field.Selections, res)
+	return ec.marshalNStorePaginationData2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStorePaginationData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Stores(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21254,7 +21374,7 @@ func (ec *executionContext) _Query_Store(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.Store)
 	fc.Result = res
-	return ec.marshalOStore2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
+	return ec.marshalOStore2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Store(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21351,7 +21471,7 @@ func (ec *executionContext) _Query_Reviews(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Review)
 	fc.Result = res
-	return ec.marshalNReview2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewᚄ(ctx, field.Selections, res)
+	return ec.marshalNReview2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReviewᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Reviews(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21425,7 +21545,7 @@ func (ec *executionContext) _Query_StoreByName(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.Store)
 	fc.Result = res
-	return ec.marshalOStore2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
+	return ec.marshalOStore2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStore(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_StoreByName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21522,7 +21642,7 @@ func (ec *executionContext) _Query_PurchasedOrder(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.PurchasedOrder)
 	fc.Result = res
-	return ec.marshalNPurchasedOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPurchasedOrderᚄ(ctx, field.Selections, res)
+	return ec.marshalNPurchasedOrder2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPurchasedOrderᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_PurchasedOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21606,7 +21726,7 @@ func (ec *executionContext) _Query_Skynets(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Skynet)
 	fc.Result = res
-	return ec.marshalOSkynet2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynetᚄ(ctx, field.Selections, res)
+	return ec.marshalOSkynet2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSkynetᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Skynets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21674,7 +21794,7 @@ func (ec *executionContext) _Query_Skynet(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.Skynet)
 	fc.Result = res
-	return ec.marshalOSkynet2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynet(ctx, field.Selections, res)
+	return ec.marshalOSkynet2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSkynet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Skynet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21742,7 +21862,7 @@ func (ec *executionContext) _Query_MYDVA(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.Account)
 	fc.Result = res
-	return ec.marshalOAccount2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
+	return ec.marshalOAccount2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_MYDVA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21868,7 +21988,7 @@ func (ec *executionContext) _Query_MyInvoices(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model.Invoice)
 	fc.Result = res
-	return ec.marshalOInvoice2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoice(ctx, field.Selections, res)
+	return ec.marshalOInvoice2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoice(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_MyInvoices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21932,7 +22052,7 @@ func (ec *executionContext) _Query_MyDownloads(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.Downloads)
 	fc.Result = res
-	return ec.marshalODownloads2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDownloads(ctx, field.Selections, res)
+	return ec.marshalODownloads2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDownloads(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_MyDownloads(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22009,7 +22129,7 @@ func (ec *executionContext) _Query_getUsers(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getUsers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22095,7 +22215,7 @@ func (ec *executionContext) _Query_allStores(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.StorePaginationData)
 	fc.Result = res
-	return ec.marshalNStorePaginationData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStorePaginationData(ctx, field.Selections, res)
+	return ec.marshalNStorePaginationData2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStorePaginationData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_allStores(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22160,7 +22280,7 @@ func (ec *executionContext) _Query_getAllProducts(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getAllProducts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22242,7 +22362,7 @@ func (ec *executionContext) _Query_getAllReviews(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.Review)
 	fc.Result = res
-	return ec.marshalNReview2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewᚄ(ctx, field.Selections, res)
+	return ec.marshalNReview2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReviewᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getAllReviews(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22308,7 +22428,7 @@ func (ec *executionContext) _Query_getAllOrders(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.Order)
 	fc.Result = res
-	return ec.marshalNOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrderᚄ(ctx, field.Selections, res)
+	return ec.marshalNOrder2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐOrderᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getAllOrders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22387,7 +22507,7 @@ func (ec *executionContext) _Query_Chats(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Chat)
 	fc.Result = res
-	return ec.marshalOChat2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐChatᚄ(ctx, field.Selections, res)
+	return ec.marshalOChat2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐChatᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Chats(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22451,7 +22571,7 @@ func (ec *executionContext) _Query_Messages(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.Message)
 	fc.Result = res
-	return ec.marshalOMessage2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessageᚄ(ctx, field.Selections, res)
+	return ec.marshalOMessage2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessageᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_Messages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22526,7 +22646,7 @@ func (ec *executionContext) _Query_subscribers(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.Subscriber)
 	fc.Result = res
-	return ec.marshalNSubscriber2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriberᚄ(ctx, field.Selections, res)
+	return ec.marshalNSubscriber2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubscriberᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_subscribers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22579,7 +22699,7 @@ func (ec *executionContext) _Query_getDVAAccount(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.DVAAccount)
 	fc.Result = res
-	return ec.marshalODVAAccount2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDVAAccount(ctx, field.Selections, res)
+	return ec.marshalODVAAccount2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDVAAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getDVAAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22648,7 +22768,7 @@ func (ec *executionContext) _Query_getStoreEarnings(ctx context.Context, field g
 	}
 	res := resTmp.([]*model.StoreEarnings)
 	fc.Result = res
-	return ec.marshalNStoreEarnings2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreEarningsᚄ(ctx, field.Selections, res)
+	return ec.marshalNStoreEarnings2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreEarningsᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getStoreEarnings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22721,7 +22841,7 @@ func (ec *executionContext) _Query_checkStoreEarningsDiscrepancy(ctx context.Con
 	}
 	res := resTmp.(*model.StoreEarningsDiscrepancy)
 	fc.Result = res
-	return ec.marshalNStoreEarningsDiscrepancy2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreEarningsDiscrepancy(ctx, field.Selections, res)
+	return ec.marshalNStoreEarningsDiscrepancy2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreEarningsDiscrepancy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_checkStoreEarningsDiscrepancy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22782,7 +22902,7 @@ func (ec *executionContext) _Query_getWithdrawalsForAdmin(ctx context.Context, f
 	}
 	res := resTmp.([]*model.AdminWithdrawal)
 	fc.Result = res
-	return ec.marshalNAdminWithdrawal2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐAdminWithdrawalᚄ(ctx, field.Selections, res)
+	return ec.marshalNAdminWithdrawal2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐAdminWithdrawalᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getWithdrawalsForAdmin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22854,7 +22974,7 @@ func (ec *executionContext) _Query_getWithdrawalDetails(ctx context.Context, fie
 	}
 	res := resTmp.(*model.AdminWithdrawal)
 	fc.Result = res
-	return ec.marshalOAdminWithdrawal2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐAdminWithdrawal(ctx, field.Selections, res)
+	return ec.marshalOAdminWithdrawal2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐAdminWithdrawal(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getWithdrawalDetails(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23189,7 +23309,7 @@ func (ec *executionContext) _Review_buyer(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.ReviewBuyer)
 	fc.Result = res
-	return ec.marshalOReviewBuyer2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewBuyer(ctx, field.Selections, res)
+	return ec.marshalOReviewBuyer2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReviewBuyer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Review_buyer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24449,7 +24569,7 @@ func (ec *executionContext) _SmartcardVerificationResponse_content(ctx context.C
 	}
 	res := resTmp.(*model.SmartcardContent)
 	fc.Result = res
-	return ec.marshalNSmartcardContent2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartcardContent(ctx, field.Selections, res)
+	return ec.marshalNSmartcardContent2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSmartcardContent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SmartcardVerificationResponse_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24860,7 +24980,7 @@ func (ec *executionContext) _Store_followers(ctx context.Context, field graphql.
 	}
 	res := resTmp.([]*model.StoreFollower)
 	fc.Result = res
-	return ec.marshalOStoreFollower2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollowerᚄ(ctx, field.Selections, res)
+	return ec.marshalOStoreFollower2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreFollowerᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Store_followers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24911,7 +25031,7 @@ func (ec *executionContext) _Store_product(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Product)
 	fc.Result = res
-	return ec.marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+	return ec.marshalOProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Store_product(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24990,7 +25110,7 @@ func (ec *executionContext) _Store_transactions(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.Transaction)
 	fc.Result = res
-	return ec.marshalOTransaction2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTransactionᚄ(ctx, field.Selections, res)
+	return ec.marshalOTransaction2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTransactionᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Store_transactions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25049,7 +25169,7 @@ func (ec *executionContext) _Store_orders(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.([]*model.StoreOrder)
 	fc.Result = res
-	return ec.marshalOStoreOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreOrderᚄ(ctx, field.Selections, res)
+	return ec.marshalOStoreOrder2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreOrderᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Store_orders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25416,7 +25536,7 @@ func (ec *executionContext) _Store_accounts(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.WithdrawAccount)
 	fc.Result = res
-	return ec.marshalOwithdrawAccount2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐWithdrawAccount(ctx, field.Selections, res)
+	return ec.marshalOwithdrawAccount2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐWithdrawAccount(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Store_accounts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26307,7 +26427,7 @@ func (ec *executionContext) _StoreOrder_product(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.Product)
 	fc.Result = res
-	return ec.marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+	return ec.marshalOProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_StoreOrder_product(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26521,7 +26641,7 @@ func (ec *executionContext) _StoreOrder_customer(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.StoreCustomer)
 	fc.Result = res
-	return ec.marshalNStoreCustomer2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreCustomer(ctx, field.Selections, res)
+	return ec.marshalNStoreCustomer2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreCustomer(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_StoreOrder_customer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26661,7 +26781,7 @@ func (ec *executionContext) _StorePaginationData_data(ctx context.Context, field
 	}
 	res := resTmp.([]*model.Store)
 	fc.Result = res
-	return ec.marshalNStore2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreᚄ(ctx, field.Selections, res)
+	return ec.marshalNStore2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_StorePaginationData_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27236,7 +27356,7 @@ func (ec *executionContext) _Subscription_productSearchResults(ctx context.Conte
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalOProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -27467,7 +27587,7 @@ func (ec *executionContext) _SubscriptionBundle_variations(ctx context.Context, 
 	}
 	res := resTmp.([]*model.BundleVariation)
 	fc.Result = res
-	return ec.marshalNBundleVariation2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBundleVariationᚄ(ctx, field.Selections, res)
+	return ec.marshalNBundleVariation2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐBundleVariationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SubscriptionBundle_variations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28741,7 +28861,7 @@ func (ec *executionContext) _User_stores(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Store)
 	fc.Result = res
-	return ec.marshalOStore2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreᚄ(ctx, field.Selections, res)
+	return ec.marshalOStore2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_stores(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29082,7 +29202,7 @@ func (ec *executionContext) _User_paymentDetails(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.PaymentDetails)
 	fc.Result = res
-	return ec.marshalOPaymentDetails2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaymentDetails(ctx, field.Selections, res)
+	return ec.marshalOPaymentDetails2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaymentDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_paymentDetails(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29224,7 +29344,7 @@ func (ec *executionContext) _Variant_value(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.VariantValue)
 	fc.Result = res
-	return ec.marshalNVariantValue2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐVariantValueᚄ(ctx, field.Selections, res)
+	return ec.marshalNVariantValue2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐVariantValueᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Variant_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -32218,7 +32338,7 @@ func (ec *executionContext) unmarshalInputChatInput(ctx context.Context, obj any
 		switch k {
 		case "users":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("users"))
-			data, err := ec.unmarshalOMessageUserInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessageUserInput(ctx, v)
+			data, err := ec.unmarshalOMessageUserInput2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessageUserInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -32409,7 +32529,7 @@ func (ec *executionContext) unmarshalInputInvoiceInput(ctx context.Context, obj 
 		switch k {
 		case "customer":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customer"))
-			data, err := ec.unmarshalNInvoiceCustomerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceCustomerInput(ctx, v)
+			data, err := ec.unmarshalNInvoiceCustomerInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceCustomerInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -32423,14 +32543,14 @@ func (ec *executionContext) unmarshalInputInvoiceInput(ctx context.Context, obj 
 			it.DueDate = data
 		case "items":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("items"))
-			data, err := ec.unmarshalNInvoiceItemInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceItemInput(ctx, v)
+			data, err := ec.unmarshalNInvoiceItemInput2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceItemInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Items = data
 		case "delivery_details":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("delivery_details"))
-			data, err := ec.unmarshalNInvoiceDeliveryInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceDeliveryInput(ctx, v)
+			data, err := ec.unmarshalNInvoiceDeliveryInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceDeliveryInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -32567,7 +32687,7 @@ func (ec *executionContext) unmarshalInputMessageInput(ctx context.Context, obj 
 			it.Sender = data
 		case "media":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("media"))
-			data, err := ec.unmarshalOMediaType2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMediaType(ctx, v)
+			data, err := ec.unmarshalOMediaType2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMediaType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -32855,7 +32975,7 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj any) 
 			it.Password = data
 		case "stores":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stores"))
-			data, err := ec.unmarshalOStoreInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreInput(ctx, v)
+			data, err := ec.unmarshalOStoreInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -32917,7 +33037,7 @@ func (ec *executionContext) unmarshalInputNewVariant(ctx context.Context, obj an
 			it.Name = data
 		case "value":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			data, err := ec.unmarshalNNewVariantValue2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVariantValueᚄ(ctx, v)
+			data, err := ec.unmarshalNNewVariantValue2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewVariantValueᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33047,7 +33167,7 @@ func (ec *executionContext) unmarshalInputPaymentData(ctx context.Context, obj a
 			it.Status = data
 		case "product":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("product"))
-			data, err := ec.unmarshalOProductInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInputᚄ(ctx, v)
+			data, err := ec.unmarshalOProductInput2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33061,7 +33181,7 @@ func (ec *executionContext) unmarshalInputPaymentData(ctx context.Context, obj a
 			it.UserID = data
 		case "customer":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customer"))
-			data, err := ec.unmarshalOcustomerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCustomerInput(ctx, v)
+			data, err := ec.unmarshalOcustomerInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCustomerInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33241,14 +33361,14 @@ func (ec *executionContext) unmarshalInputProductInput(ctx context.Context, obj 
 			it.Quantity = data
 		case "variant":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("variant"))
-			data, err := ec.unmarshalONewVariant2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVariantᚄ(ctx, v)
+			data, err := ec.unmarshalONewVariant2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewVariantᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Variant = data
 		case "review":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("review"))
-			data, err := ec.unmarshalONewReview2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewReviewᚄ(ctx, v)
+			data, err := ec.unmarshalONewReview2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewReviewᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33372,7 +33492,7 @@ func (ec *executionContext) unmarshalInputReviewInput(ctx context.Context, obj a
 			it.OrderID = data
 		case "buyer":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("buyer"))
-			data, err := ec.unmarshalOReviewBuyerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewBuyerInput(ctx, v)
+			data, err := ec.unmarshalOReviewBuyerInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReviewBuyerInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33731,7 +33851,7 @@ func (ec *executionContext) unmarshalInputStoreOrderInput(ctx context.Context, o
 			it.StoreID = data
 		case "product":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("product"))
-			data, err := ec.unmarshalOStoreProductInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreProductInput(ctx, v)
+			data, err := ec.unmarshalOStoreProductInput2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreProductInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33745,7 +33865,7 @@ func (ec *executionContext) unmarshalInputStoreOrderInput(ctx context.Context, o
 			it.Status = data
 		case "customer":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customer"))
-			data, err := ec.unmarshalNcustomerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCustomerInput(ctx, v)
+			data, err := ec.unmarshalNcustomerInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCustomerInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33952,14 +34072,14 @@ func (ec *executionContext) unmarshalInputUpdateProductInput(ctx context.Context
 			it.Quantity = data
 		case "variant":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("variant"))
-			data, err := ec.unmarshalONewVariant2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVariantᚄ(ctx, v)
+			data, err := ec.unmarshalONewVariant2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewVariantᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Variant = data
 		case "review":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("review"))
-			data, err := ec.unmarshalONewReview2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewReviewᚄ(ctx, v)
+			data, err := ec.unmarshalONewReview2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewReviewᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34119,7 +34239,7 @@ func (ec *executionContext) unmarshalInputUpdateStoreInput(ctx context.Context, 
 			it.Visitor = data
 		case "account":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("account"))
-			data, err := ec.unmarshalOwithdrawAccountInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐWithdrawAccountInput(ctx, v)
+			data, err := ec.unmarshalOwithdrawAccountInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐWithdrawAccountInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34243,7 +34363,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			it.Password = data
 		case "stores":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stores"))
-			data, err := ec.unmarshalOStoreInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreInput(ctx, v)
+			data, err := ec.unmarshalOStoreInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34306,7 +34426,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			it.Avatar = data
 		case "paymentDetails":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paymentDetails"))
-			data, err := ec.unmarshalOPaymentDetailsInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaymentDetailsInput(ctx, v)
+			data, err := ec.unmarshalOPaymentDetailsInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaymentDetailsInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -36411,6 +36531,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "syncPaystackDVAAccounts":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_syncPaystackDVAAccounts(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "processStoreWithdrawal":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_processStoreWithdrawal(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -40059,7 +40186,7 @@ func (ec *executionContext) _withdrawAccount(ctx context.Context, sel ast.Select
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAdminWithdrawal2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐAdminWithdrawalᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AdminWithdrawal) graphql.Marshaler {
+func (ec *executionContext) marshalNAdminWithdrawal2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐAdminWithdrawalᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AdminWithdrawal) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -40083,7 +40210,7 @@ func (ec *executionContext) marshalNAdminWithdrawal2ᚕᚖgithubᚗcomᚋChrisen
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNAdminWithdrawal2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐAdminWithdrawal(ctx, sel, v[i])
+			ret[i] = ec.marshalNAdminWithdrawal2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐAdminWithdrawal(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -40103,7 +40230,7 @@ func (ec *executionContext) marshalNAdminWithdrawal2ᚕᚖgithubᚗcomᚋChrisen
 	return ret
 }
 
-func (ec *executionContext) marshalNAdminWithdrawal2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐAdminWithdrawal(ctx context.Context, sel ast.SelectionSet, v *model.AdminWithdrawal) graphql.Marshaler {
+func (ec *executionContext) marshalNAdminWithdrawal2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐAdminWithdrawal(ctx context.Context, sel ast.SelectionSet, v *model.AdminWithdrawal) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40113,7 +40240,7 @@ func (ec *executionContext) marshalNAdminWithdrawal2ᚖgithubᚗcomᚋChrisentec
 	return ec._AdminWithdrawal(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBank2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBank(ctx context.Context, sel ast.SelectionSet, v *model.Bank) graphql.Marshaler {
+func (ec *executionContext) marshalNBank2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐBank(ctx context.Context, sel ast.SelectionSet, v *model.Bank) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40138,7 +40265,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNBundleVariation2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBundleVariationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.BundleVariation) graphql.Marshaler {
+func (ec *executionContext) marshalNBundleVariation2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐBundleVariationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.BundleVariation) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -40162,7 +40289,7 @@ func (ec *executionContext) marshalNBundleVariation2ᚕᚖgithubᚗcomᚋChrisen
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBundleVariation2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBundleVariation(ctx, sel, v[i])
+			ret[i] = ec.marshalNBundleVariation2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐBundleVariation(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -40182,7 +40309,7 @@ func (ec *executionContext) marshalNBundleVariation2ᚕᚖgithubᚗcomᚋChrisen
 	return ret
 }
 
-func (ec *executionContext) marshalNBundleVariation2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐBundleVariation(ctx context.Context, sel ast.SelectionSet, v *model.BundleVariation) graphql.Marshaler {
+func (ec *executionContext) marshalNBundleVariation2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐBundleVariation(ctx context.Context, sel ast.SelectionSet, v *model.BundleVariation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40192,11 +40319,11 @@ func (ec *executionContext) marshalNBundleVariation2ᚖgithubᚗcomᚋChrisentec
 	return ec._BundleVariation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNCart2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCart(ctx context.Context, sel ast.SelectionSet, v model.Cart) graphql.Marshaler {
+func (ec *executionContext) marshalNCart2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCart(ctx context.Context, sel ast.SelectionSet, v model.Cart) graphql.Marshaler {
 	return ec._Cart(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCart2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCart(ctx context.Context, sel ast.SelectionSet, v *model.Cart) graphql.Marshaler {
+func (ec *executionContext) marshalNCart2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCart(ctx context.Context, sel ast.SelectionSet, v *model.Cart) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40206,7 +40333,7 @@ func (ec *executionContext) marshalNCart2ᚖgithubᚗcomᚋChrisentechᚋaluta�
 	return ec._Cart(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNCartItem2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCartItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CartItem) graphql.Marshaler {
+func (ec *executionContext) marshalNCartItem2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCartItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CartItem) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -40230,7 +40357,7 @@ func (ec *executionContext) marshalNCartItem2ᚕᚖgithubᚗcomᚋChrisentechᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCartItem2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCartItem(ctx, sel, v[i])
+			ret[i] = ec.marshalNCartItem2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCartItem(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -40250,7 +40377,7 @@ func (ec *executionContext) marshalNCartItem2ᚕᚖgithubᚗcomᚋChrisentechᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalNCartItem2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCartItem(ctx context.Context, sel ast.SelectionSet, v *model.CartItem) graphql.Marshaler {
+func (ec *executionContext) marshalNCartItem2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCartItem(ctx context.Context, sel ast.SelectionSet, v *model.CartItem) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40260,11 +40387,11 @@ func (ec *executionContext) marshalNCartItem2ᚖgithubᚗcomᚋChrisentechᚋalu
 	return ec._CartItem(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNCategory2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCategory(ctx context.Context, sel ast.SelectionSet, v model.Category) graphql.Marshaler {
+func (ec *executionContext) marshalNCategory2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCategory(ctx context.Context, sel ast.SelectionSet, v model.Category) graphql.Marshaler {
 	return ec._Category(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCategory2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCategoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Category) graphql.Marshaler {
+func (ec *executionContext) marshalNCategory2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCategoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Category) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -40288,7 +40415,7 @@ func (ec *executionContext) marshalNCategory2ᚕᚖgithubᚗcomᚋChrisentechᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCategory2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCategory(ctx, sel, v[i])
+			ret[i] = ec.marshalNCategory2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCategory(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -40308,7 +40435,7 @@ func (ec *executionContext) marshalNCategory2ᚕᚖgithubᚗcomᚋChrisentechᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalNCategory2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCategory(ctx context.Context, sel ast.SelectionSet, v *model.Category) graphql.Marshaler {
+func (ec *executionContext) marshalNCategory2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCategory(ctx context.Context, sel ast.SelectionSet, v *model.Category) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40318,11 +40445,11 @@ func (ec *executionContext) marshalNCategory2ᚖgithubᚗcomᚋChrisentechᚋalu
 	return ec._Category(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNChat2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐChat(ctx context.Context, sel ast.SelectionSet, v model.Chat) graphql.Marshaler {
+func (ec *executionContext) marshalNChat2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐChat(ctx context.Context, sel ast.SelectionSet, v model.Chat) graphql.Marshaler {
 	return ec._Chat(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNChat2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐChat(ctx context.Context, sel ast.SelectionSet, v *model.Chat) graphql.Marshaler {
+func (ec *executionContext) marshalNChat2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐChat(ctx context.Context, sel ast.SelectionSet, v *model.Chat) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40332,17 +40459,17 @@ func (ec *executionContext) marshalNChat2ᚖgithubᚗcomᚋChrisentechᚋaluta�
 	return ec._Chat(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNChatInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐChatInput(ctx context.Context, v any) (model.ChatInput, error) {
+func (ec *executionContext) unmarshalNChatInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐChatInput(ctx context.Context, v any) (model.ChatInput, error) {
 	res, err := ec.unmarshalInputChatInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNContactFormInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐContactFormInput(ctx context.Context, v any) (model.ContactFormInput, error) {
+func (ec *executionContext) unmarshalNContactFormInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐContactFormInput(ctx context.Context, v any) (model.ContactFormInput, error) {
 	res, err := ec.unmarshalInputContactFormInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCustomer2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCustomer(ctx context.Context, sel ast.SelectionSet, v *model.Customer) graphql.Marshaler {
+func (ec *executionContext) marshalNCustomer2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCustomer(ctx context.Context, sel ast.SelectionSet, v *model.Customer) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40352,12 +40479,12 @@ func (ec *executionContext) marshalNCustomer2ᚖgithubᚗcomᚋChrisentechᚋalu
 	return ec._Customer(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDVAAccountInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDVAAccountInput(ctx context.Context, v any) (model.DVAAccountInput, error) {
+func (ec *executionContext) unmarshalNDVAAccountInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDVAAccountInput(ctx context.Context, v any) (model.DVAAccountInput, error) {
 	res, err := ec.unmarshalInputDVAAccountInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeliveryDetails2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDeliveryDetails(ctx context.Context, sel ast.SelectionSet, v *model.DeliveryDetails) graphql.Marshaler {
+func (ec *executionContext) marshalNDeliveryDetails2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDeliveryDetails(ctx context.Context, sel ast.SelectionSet, v *model.DeliveryDetails) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40367,11 +40494,11 @@ func (ec *executionContext) marshalNDeliveryDetails2ᚖgithubᚗcomᚋChrisentec
 	return ec._DeliveryDetails(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNEmailSubscriptionResponse2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐEmailSubscriptionResponse(ctx context.Context, sel ast.SelectionSet, v model.EmailSubscriptionResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNEmailSubscriptionResponse2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐEmailSubscriptionResponse(ctx context.Context, sel ast.SelectionSet, v model.EmailSubscriptionResponse) graphql.Marshaler {
 	return ec._EmailSubscriptionResponse(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNEmailSubscriptionResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐEmailSubscriptionResponse(ctx context.Context, sel ast.SelectionSet, v *model.EmailSubscriptionResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNEmailSubscriptionResponse2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐEmailSubscriptionResponse(ctx context.Context, sel ast.SelectionSet, v *model.EmailSubscriptionResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40396,11 +40523,11 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) marshalNHandledProducts2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐHandledProducts(ctx context.Context, sel ast.SelectionSet, v model.HandledProducts) graphql.Marshaler {
+func (ec *executionContext) marshalNHandledProducts2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐHandledProducts(ctx context.Context, sel ast.SelectionSet, v model.HandledProducts) graphql.Marshaler {
 	return ec._HandledProducts(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNHandledProducts2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐHandledProductsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.HandledProducts) graphql.Marshaler {
+func (ec *executionContext) marshalNHandledProducts2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐHandledProductsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.HandledProducts) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -40424,7 +40551,7 @@ func (ec *executionContext) marshalNHandledProducts2ᚕᚖgithubᚗcomᚋChrisen
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNHandledProducts2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐHandledProducts(ctx, sel, v[i])
+			ret[i] = ec.marshalNHandledProducts2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐHandledProducts(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -40444,7 +40571,7 @@ func (ec *executionContext) marshalNHandledProducts2ᚕᚖgithubᚗcomᚋChrisen
 	return ret
 }
 
-func (ec *executionContext) marshalNHandledProducts2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐHandledProducts(ctx context.Context, sel ast.SelectionSet, v *model.HandledProducts) graphql.Marshaler {
+func (ec *executionContext) marshalNHandledProducts2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐHandledProducts(ctx context.Context, sel ast.SelectionSet, v *model.HandledProducts) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40484,7 +40611,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNInvoiceCustomer2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceCustomer(ctx context.Context, sel ast.SelectionSet, v *model.InvoiceCustomer) graphql.Marshaler {
+func (ec *executionContext) marshalNInvoiceCustomer2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceCustomer(ctx context.Context, sel ast.SelectionSet, v *model.InvoiceCustomer) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40494,12 +40621,12 @@ func (ec *executionContext) marshalNInvoiceCustomer2ᚖgithubᚗcomᚋChrisentec
 	return ec._InvoiceCustomer(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNInvoiceCustomerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceCustomerInput(ctx context.Context, v any) (*model.InvoiceCustomerInput, error) {
+func (ec *executionContext) unmarshalNInvoiceCustomerInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceCustomerInput(ctx context.Context, v any) (*model.InvoiceCustomerInput, error) {
 	res, err := ec.unmarshalInputInvoiceCustomerInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNInvoiceDelivery2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceDelivery(ctx context.Context, sel ast.SelectionSet, v *model.InvoiceDelivery) graphql.Marshaler {
+func (ec *executionContext) marshalNInvoiceDelivery2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceDelivery(ctx context.Context, sel ast.SelectionSet, v *model.InvoiceDelivery) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40509,17 +40636,17 @@ func (ec *executionContext) marshalNInvoiceDelivery2ᚖgithubᚗcomᚋChrisentec
 	return ec._InvoiceDelivery(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNInvoiceDeliveryInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceDeliveryInput(ctx context.Context, v any) (*model.InvoiceDeliveryInput, error) {
+func (ec *executionContext) unmarshalNInvoiceDeliveryInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceDeliveryInput(ctx context.Context, v any) (*model.InvoiceDeliveryInput, error) {
 	res, err := ec.unmarshalInputInvoiceDeliveryInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNInvoiceInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceInput(ctx context.Context, v any) (model.InvoiceInput, error) {
+func (ec *executionContext) unmarshalNInvoiceInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceInput(ctx context.Context, v any) (model.InvoiceInput, error) {
 	res, err := ec.unmarshalInputInvoiceInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNInvoiceItem2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceItem(ctx context.Context, sel ast.SelectionSet, v []*model.InvoiceItem) graphql.Marshaler {
+func (ec *executionContext) marshalNInvoiceItem2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceItem(ctx context.Context, sel ast.SelectionSet, v []*model.InvoiceItem) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -40543,7 +40670,7 @@ func (ec *executionContext) marshalNInvoiceItem2ᚕᚖgithubᚗcomᚋChrisentech
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOInvoiceItem2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceItem(ctx, sel, v[i])
+			ret[i] = ec.marshalOInvoiceItem2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceItem(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -40557,14 +40684,14 @@ func (ec *executionContext) marshalNInvoiceItem2ᚕᚖgithubᚗcomᚋChrisentech
 	return ret
 }
 
-func (ec *executionContext) unmarshalNInvoiceItemInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceItemInput(ctx context.Context, v any) ([]*model.InvoiceItemInput, error) {
+func (ec *executionContext) unmarshalNInvoiceItemInput2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceItemInput(ctx context.Context, v any) ([]*model.InvoiceItemInput, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.InvoiceItemInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOInvoiceItemInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceItemInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOInvoiceItemInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceItemInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -40572,16 +40699,16 @@ func (ec *executionContext) unmarshalNInvoiceItemInput2ᚕᚖgithubᚗcomᚋChri
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNLoginReq2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐLoginReq(ctx context.Context, v any) (model.LoginReq, error) {
+func (ec *executionContext) unmarshalNLoginReq2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐLoginReq(ctx context.Context, v any) (model.LoginReq, error) {
 	res, err := ec.unmarshalInputLoginReq(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNLoginRes2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐLoginRes(ctx context.Context, sel ast.SelectionSet, v model.LoginRes) graphql.Marshaler {
+func (ec *executionContext) marshalNLoginRes2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐLoginRes(ctx context.Context, sel ast.SelectionSet, v model.LoginRes) graphql.Marshaler {
 	return ec._LoginRes(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLoginRes2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐLoginRes(ctx context.Context, sel ast.SelectionSet, v *model.LoginRes) graphql.Marshaler {
+func (ec *executionContext) marshalNLoginRes2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐLoginRes(ctx context.Context, sel ast.SelectionSet, v *model.LoginRes) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40591,11 +40718,11 @@ func (ec *executionContext) marshalNLoginRes2ᚖgithubᚗcomᚋChrisentechᚋalu
 	return ec._LoginRes(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMessage2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v model.Message) graphql.Marshaler {
+func (ec *executionContext) marshalNMessage2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v model.Message) graphql.Marshaler {
 	return ec._Message(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessageᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Message) graphql.Marshaler {
+func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessageᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Message) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -40619,7 +40746,7 @@ func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMessage2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessage(ctx, sel, v[i])
+			ret[i] = ec.marshalNMessage2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessage(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -40639,7 +40766,7 @@ func (ec *executionContext) marshalNMessage2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 	return ret
 }
 
-func (ec *executionContext) marshalNMessage2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v *model.Message) graphql.Marshaler {
+func (ec *executionContext) marshalNMessage2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v *model.Message) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40649,49 +40776,49 @@ func (ec *executionContext) marshalNMessage2ᚖgithubᚗcomᚋChrisentechᚋalut
 	return ec._Message(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNMessageInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessageInput(ctx context.Context, v any) (model.MessageInput, error) {
+func (ec *executionContext) unmarshalNMessageInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessageInput(ctx context.Context, v any) (model.MessageInput, error) {
 	res, err := ec.unmarshalInputMessageInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNModifyCartItemInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐModifyCartItemInput(ctx context.Context, v any) (model.ModifyCartItemInput, error) {
+func (ec *executionContext) unmarshalNModifyCartItemInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐModifyCartItemInput(ctx context.Context, v any) (model.ModifyCartItemInput, error) {
 	res, err := ec.unmarshalInputModifyCartItemInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewCategory2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewCategory(ctx context.Context, v any) (model.NewCategory, error) {
+func (ec *executionContext) unmarshalNNewCategory2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewCategory(ctx context.Context, v any) (model.NewCategory, error) {
 	res, err := ec.unmarshalInputNewCategory(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewReview2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewReview(ctx context.Context, v any) (*model.NewReview, error) {
+func (ec *executionContext) unmarshalNNewReview2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewReview(ctx context.Context, v any) (*model.NewReview, error) {
 	res, err := ec.unmarshalInputNewReview(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewSubCategory2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewSubCategory(ctx context.Context, v any) (model.NewSubCategory, error) {
+func (ec *executionContext) unmarshalNNewSubCategory2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewSubCategory(ctx context.Context, v any) (model.NewSubCategory, error) {
 	res, err := ec.unmarshalInputNewSubCategory(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewUser2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewUser(ctx context.Context, v any) (model.NewUser, error) {
+func (ec *executionContext) unmarshalNNewUser2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewUser(ctx context.Context, v any) (model.NewUser, error) {
 	res, err := ec.unmarshalInputNewUser(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewVariant2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVariant(ctx context.Context, v any) (*model.NewVariant, error) {
+func (ec *executionContext) unmarshalNNewVariant2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewVariant(ctx context.Context, v any) (*model.NewVariant, error) {
 	res, err := ec.unmarshalInputNewVariant(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewVariantValue2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVariantValueᚄ(ctx context.Context, v any) ([]*model.NewVariantValue, error) {
+func (ec *executionContext) unmarshalNNewVariantValue2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewVariantValueᚄ(ctx context.Context, v any) ([]*model.NewVariantValue, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]*model.NewVariantValue, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNNewVariantValue2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVariantValue(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNNewVariantValue2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewVariantValue(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -40699,21 +40826,21 @@ func (ec *executionContext) unmarshalNNewVariantValue2ᚕᚖgithubᚗcomᚋChris
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNNewVariantValue2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVariantValue(ctx context.Context, v any) (*model.NewVariantValue, error) {
+func (ec *executionContext) unmarshalNNewVariantValue2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewVariantValue(ctx context.Context, v any) (*model.NewVariantValue, error) {
 	res, err := ec.unmarshalInputNewVariantValue(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewVerifyOTP2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVerifyOtp(ctx context.Context, v any) (model.NewVerifyOtp, error) {
+func (ec *executionContext) unmarshalNNewVerifyOTP2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewVerifyOtp(ctx context.Context, v any) (model.NewVerifyOtp, error) {
 	res, err := ec.unmarshalInputNewVerifyOTP(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNOrder2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v model.Order) graphql.Marshaler {
+func (ec *executionContext) marshalNOrder2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v model.Order) graphql.Marshaler {
 	return ec._Order(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Order) graphql.Marshaler {
+func (ec *executionContext) marshalNOrder2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Order) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -40737,7 +40864,7 @@ func (ec *executionContext) marshalNOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrder(ctx, sel, v[i])
+			ret[i] = ec.marshalNOrder2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐOrder(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -40757,7 +40884,7 @@ func (ec *executionContext) marshalNOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalu
 	return ret
 }
 
-func (ec *executionContext) marshalNOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v *model.Order) graphql.Marshaler {
+func (ec *executionContext) marshalNOrder2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v *model.Order) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40767,12 +40894,12 @@ func (ec *executionContext) marshalNOrder2ᚖgithubᚗcomᚋChrisentechᚋaluta�
 	return ec._Order(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPaymentData2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaymentData(ctx context.Context, v any) (model.PaymentData, error) {
+func (ec *executionContext) unmarshalNPaymentData2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaymentData(ctx context.Context, v any) (model.PaymentData, error) {
 	res, err := ec.unmarshalInputPaymentData(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPaystackBank2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaystackBank(ctx context.Context, sel ast.SelectionSet, v *model.PaystackBank) graphql.Marshaler {
+func (ec *executionContext) marshalNPaystackBank2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaystackBank(ctx context.Context, sel ast.SelectionSet, v *model.PaystackBank) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40782,7 +40909,7 @@ func (ec *executionContext) marshalNPaystackBank2ᚖgithubᚗcomᚋChrisentech�
 	return ec._PaystackBank(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPaystackCustomer2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaystackCustomer(ctx context.Context, sel ast.SelectionSet, v *model.PaystackCustomer) graphql.Marshaler {
+func (ec *executionContext) marshalNPaystackCustomer2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaystackCustomer(ctx context.Context, sel ast.SelectionSet, v *model.PaystackCustomer) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40792,7 +40919,7 @@ func (ec *executionContext) marshalNPaystackCustomer2ᚖgithubᚗcomᚋChrisente
 	return ec._PaystackCustomer(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPaystackDVAData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaystackDVAData(ctx context.Context, sel ast.SelectionSet, v *model.PaystackDVAData) graphql.Marshaler {
+func (ec *executionContext) marshalNPaystackDVAData2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaystackDVAData(ctx context.Context, sel ast.SelectionSet, v *model.PaystackDVAData) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40802,11 +40929,11 @@ func (ec *executionContext) marshalNPaystackDVAData2ᚖgithubᚗcomᚋChrisentec
 	return ec._PaystackDVAData(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNProduct2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNProduct2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v model.Product) graphql.Marshaler {
 	return ec._Product(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -40830,7 +40957,7 @@ func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx, sel, v[i])
+			ret[i] = ec.marshalNProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -40850,7 +40977,7 @@ func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 	return ret
 }
 
-func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40860,21 +40987,21 @@ func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋChrisentechᚋalut
 	return ec._Product(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNProductInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInput(ctx context.Context, v any) (model.ProductInput, error) {
+func (ec *executionContext) unmarshalNProductInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductInput(ctx context.Context, v any) (model.ProductInput, error) {
 	res, err := ec.unmarshalInputProductInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInput(ctx context.Context, v any) (*model.ProductInput, error) {
+func (ec *executionContext) unmarshalNProductInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductInput(ctx context.Context, v any) (*model.ProductInput, error) {
 	res, err := ec.unmarshalInputProductInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNProductPaginationData2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductPaginationData(ctx context.Context, sel ast.SelectionSet, v model.ProductPaginationData) graphql.Marshaler {
+func (ec *executionContext) marshalNProductPaginationData2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductPaginationData(ctx context.Context, sel ast.SelectionSet, v model.ProductPaginationData) graphql.Marshaler {
 	return ec._ProductPaginationData(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNProductPaginationData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductPaginationData(ctx context.Context, sel ast.SelectionSet, v *model.ProductPaginationData) graphql.Marshaler {
+func (ec *executionContext) marshalNProductPaginationData2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductPaginationData(ctx context.Context, sel ast.SelectionSet, v *model.ProductPaginationData) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40884,7 +41011,7 @@ func (ec *executionContext) marshalNProductPaginationData2ᚖgithubᚗcomᚋChri
 	return ec._ProductPaginationData(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPurchasedOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPurchasedOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PurchasedOrder) graphql.Marshaler {
+func (ec *executionContext) marshalNPurchasedOrder2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPurchasedOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PurchasedOrder) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -40908,7 +41035,7 @@ func (ec *executionContext) marshalNPurchasedOrder2ᚕᚖgithubᚗcomᚋChrisent
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPurchasedOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPurchasedOrder(ctx, sel, v[i])
+			ret[i] = ec.marshalNPurchasedOrder2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPurchasedOrder(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -40928,7 +41055,7 @@ func (ec *executionContext) marshalNPurchasedOrder2ᚕᚖgithubᚗcomᚋChrisent
 	return ret
 }
 
-func (ec *executionContext) marshalNPurchasedOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPurchasedOrder(ctx context.Context, sel ast.SelectionSet, v *model.PurchasedOrder) graphql.Marshaler {
+func (ec *executionContext) marshalNPurchasedOrder2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPurchasedOrder(ctx context.Context, sel ast.SelectionSet, v *model.PurchasedOrder) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40938,11 +41065,11 @@ func (ec *executionContext) marshalNPurchasedOrder2ᚖgithubᚗcomᚋChrisentech
 	return ec._PurchasedOrder(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNReview2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v model.Review) graphql.Marshaler {
+func (ec *executionContext) marshalNReview2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v model.Review) graphql.Marshaler {
 	return ec._Review(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNReview2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Review) graphql.Marshaler {
+func (ec *executionContext) marshalNReview2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReviewᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Review) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -40966,7 +41093,7 @@ func (ec *executionContext) marshalNReview2ᚕᚖgithubᚗcomᚋChrisentechᚋal
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNReview2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReview(ctx, sel, v[i])
+			ret[i] = ec.marshalNReview2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReview(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -40986,7 +41113,7 @@ func (ec *executionContext) marshalNReview2ᚕᚖgithubᚗcomᚋChrisentechᚋal
 	return ret
 }
 
-func (ec *executionContext) marshalNReview2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v *model.Review) graphql.Marshaler {
+func (ec *executionContext) marshalNReview2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v *model.Review) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -40996,12 +41123,12 @@ func (ec *executionContext) marshalNReview2ᚖgithubᚗcomᚋChrisentechᚋaluta
 	return ec._Review(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNReviewInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewInput(ctx context.Context, v any) (model.ReviewInput, error) {
+func (ec *executionContext) unmarshalNReviewInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReviewInput(ctx context.Context, v any) (model.ReviewInput, error) {
 	res, err := ec.unmarshalInputReviewInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSkynet2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynet(ctx context.Context, sel ast.SelectionSet, v *model.Skynet) graphql.Marshaler {
+func (ec *executionContext) marshalNSkynet2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSkynet(ctx context.Context, sel ast.SelectionSet, v *model.Skynet) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41011,12 +41138,12 @@ func (ec *executionContext) marshalNSkynet2ᚖgithubᚗcomᚋChrisentechᚋaluta
 	return ec._Skynet(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNSmartCardInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartCardInput(ctx context.Context, v any) (model.SmartCardInput, error) {
+func (ec *executionContext) unmarshalNSmartCardInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSmartCardInput(ctx context.Context, v any) (model.SmartCardInput, error) {
 	res, err := ec.unmarshalInputSmartCardInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSmartcardContent2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartcardContent(ctx context.Context, sel ast.SelectionSet, v *model.SmartcardContent) graphql.Marshaler {
+func (ec *executionContext) marshalNSmartcardContent2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSmartcardContent(ctx context.Context, sel ast.SelectionSet, v *model.SmartcardContent) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41026,7 +41153,7 @@ func (ec *executionContext) marshalNSmartcardContent2ᚖgithubᚗcomᚋChrisente
 	return ec._SmartcardContent(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSplitConfig2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSplitConfig(ctx context.Context, sel ast.SelectionSet, v *model.SplitConfig) graphql.Marshaler {
+func (ec *executionContext) marshalNSplitConfig2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSplitConfig(ctx context.Context, sel ast.SelectionSet, v *model.SplitConfig) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41036,11 +41163,11 @@ func (ec *executionContext) marshalNSplitConfig2ᚖgithubᚗcomᚋChrisentechᚋ
 	return ec._SplitConfig(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStore2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx context.Context, sel ast.SelectionSet, v model.Store) graphql.Marshaler {
+func (ec *executionContext) marshalNStore2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStore(ctx context.Context, sel ast.SelectionSet, v model.Store) graphql.Marshaler {
 	return ec._Store(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStore2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Store) graphql.Marshaler {
+func (ec *executionContext) marshalNStore2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Store) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -41064,7 +41191,7 @@ func (ec *executionContext) marshalNStore2ᚕᚖgithubᚗcomᚋChrisentechᚋalu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNStore2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx, sel, v[i])
+			ret[i] = ec.marshalNStore2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStore(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -41084,7 +41211,7 @@ func (ec *executionContext) marshalNStore2ᚕᚖgithubᚗcomᚋChrisentechᚋalu
 	return ret
 }
 
-func (ec *executionContext) marshalNStore2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx context.Context, sel ast.SelectionSet, v *model.Store) graphql.Marshaler {
+func (ec *executionContext) marshalNStore2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStore(ctx context.Context, sel ast.SelectionSet, v *model.Store) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41094,7 +41221,7 @@ func (ec *executionContext) marshalNStore2ᚖgithubᚗcomᚋChrisentechᚋaluta�
 	return ec._Store(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStoreCustomer2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreCustomer(ctx context.Context, sel ast.SelectionSet, v *model.StoreCustomer) graphql.Marshaler {
+func (ec *executionContext) marshalNStoreCustomer2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreCustomer(ctx context.Context, sel ast.SelectionSet, v *model.StoreCustomer) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41104,7 +41231,7 @@ func (ec *executionContext) marshalNStoreCustomer2ᚖgithubᚗcomᚋChrisentech�
 	return ec._StoreCustomer(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStoreEarnings2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreEarningsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StoreEarnings) graphql.Marshaler {
+func (ec *executionContext) marshalNStoreEarnings2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreEarningsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StoreEarnings) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -41128,7 +41255,7 @@ func (ec *executionContext) marshalNStoreEarnings2ᚕᚖgithubᚗcomᚋChrisente
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNStoreEarnings2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreEarnings(ctx, sel, v[i])
+			ret[i] = ec.marshalNStoreEarnings2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreEarnings(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -41148,7 +41275,7 @@ func (ec *executionContext) marshalNStoreEarnings2ᚕᚖgithubᚗcomᚋChrisente
 	return ret
 }
 
-func (ec *executionContext) marshalNStoreEarnings2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreEarnings(ctx context.Context, sel ast.SelectionSet, v *model.StoreEarnings) graphql.Marshaler {
+func (ec *executionContext) marshalNStoreEarnings2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreEarnings(ctx context.Context, sel ast.SelectionSet, v *model.StoreEarnings) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41158,11 +41285,11 @@ func (ec *executionContext) marshalNStoreEarnings2ᚖgithubᚗcomᚋChrisentech�
 	return ec._StoreEarnings(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStoreEarningsDiscrepancy2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreEarningsDiscrepancy(ctx context.Context, sel ast.SelectionSet, v model.StoreEarningsDiscrepancy) graphql.Marshaler {
+func (ec *executionContext) marshalNStoreEarningsDiscrepancy2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreEarningsDiscrepancy(ctx context.Context, sel ast.SelectionSet, v model.StoreEarningsDiscrepancy) graphql.Marshaler {
 	return ec._StoreEarningsDiscrepancy(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStoreEarningsDiscrepancy2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreEarningsDiscrepancy(ctx context.Context, sel ast.SelectionSet, v *model.StoreEarningsDiscrepancy) graphql.Marshaler {
+func (ec *executionContext) marshalNStoreEarningsDiscrepancy2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreEarningsDiscrepancy(ctx context.Context, sel ast.SelectionSet, v *model.StoreEarningsDiscrepancy) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41172,7 +41299,7 @@ func (ec *executionContext) marshalNStoreEarningsDiscrepancy2ᚖgithubᚗcomᚋC
 	return ec._StoreEarningsDiscrepancy(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStoreFollower2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollower(ctx context.Context, sel ast.SelectionSet, v *model.StoreFollower) graphql.Marshaler {
+func (ec *executionContext) marshalNStoreFollower2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreFollower(ctx context.Context, sel ast.SelectionSet, v *model.StoreFollower) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41182,12 +41309,12 @@ func (ec *executionContext) marshalNStoreFollower2ᚖgithubᚗcomᚋChrisentech�
 	return ec._StoreFollower(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNStoreInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreInput(ctx context.Context, v any) (model.StoreInput, error) {
+func (ec *executionContext) unmarshalNStoreInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreInput(ctx context.Context, v any) (model.StoreInput, error) {
 	res, err := ec.unmarshalInputStoreInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNStoreOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreOrder(ctx context.Context, sel ast.SelectionSet, v *model.StoreOrder) graphql.Marshaler {
+func (ec *executionContext) marshalNStoreOrder2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreOrder(ctx context.Context, sel ast.SelectionSet, v *model.StoreOrder) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41197,16 +41324,16 @@ func (ec *executionContext) marshalNStoreOrder2ᚖgithubᚗcomᚋChrisentechᚋa
 	return ec._StoreOrder(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNStoreOrderInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreOrderInput(ctx context.Context, v any) (model.StoreOrderInput, error) {
+func (ec *executionContext) unmarshalNStoreOrderInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreOrderInput(ctx context.Context, v any) (model.StoreOrderInput, error) {
 	res, err := ec.unmarshalInputStoreOrderInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNStorePaginationData2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStorePaginationData(ctx context.Context, sel ast.SelectionSet, v model.StorePaginationData) graphql.Marshaler {
+func (ec *executionContext) marshalNStorePaginationData2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStorePaginationData(ctx context.Context, sel ast.SelectionSet, v model.StorePaginationData) graphql.Marshaler {
 	return ec._StorePaginationData(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNStorePaginationData2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStorePaginationData(ctx context.Context, sel ast.SelectionSet, v *model.StorePaginationData) graphql.Marshaler {
+func (ec *executionContext) marshalNStorePaginationData2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStorePaginationData(ctx context.Context, sel ast.SelectionSet, v *model.StorePaginationData) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41285,11 +41412,11 @@ func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel
 	return ret
 }
 
-func (ec *executionContext) marshalNSubCategory2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubCategory(ctx context.Context, sel ast.SelectionSet, v model.SubCategory) graphql.Marshaler {
+func (ec *executionContext) marshalNSubCategory2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubCategory(ctx context.Context, sel ast.SelectionSet, v model.SubCategory) graphql.Marshaler {
 	return ec._SubCategory(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSubCategory2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubCategory(ctx context.Context, sel ast.SelectionSet, v *model.SubCategory) graphql.Marshaler {
+func (ec *executionContext) marshalNSubCategory2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubCategory(ctx context.Context, sel ast.SelectionSet, v *model.SubCategory) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41299,11 +41426,11 @@ func (ec *executionContext) marshalNSubCategory2ᚖgithubᚗcomᚋChrisentechᚋ
 	return ec._SubCategory(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSubscriber2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriber(ctx context.Context, sel ast.SelectionSet, v model.Subscriber) graphql.Marshaler {
+func (ec *executionContext) marshalNSubscriber2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubscriber(ctx context.Context, sel ast.SelectionSet, v model.Subscriber) graphql.Marshaler {
 	return ec._Subscriber(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSubscriber2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Subscriber) graphql.Marshaler {
+func (ec *executionContext) marshalNSubscriber2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubscriberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Subscriber) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -41327,7 +41454,7 @@ func (ec *executionContext) marshalNSubscriber2ᚕᚖgithubᚗcomᚋChrisentech�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSubscriber2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriber(ctx, sel, v[i])
+			ret[i] = ec.marshalNSubscriber2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubscriber(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -41347,7 +41474,7 @@ func (ec *executionContext) marshalNSubscriber2ᚕᚖgithubᚗcomᚋChrisentech�
 	return ret
 }
 
-func (ec *executionContext) marshalNSubscriber2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriber(ctx context.Context, sel ast.SelectionSet, v *model.Subscriber) graphql.Marshaler {
+func (ec *executionContext) marshalNSubscriber2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubscriber(ctx context.Context, sel ast.SelectionSet, v *model.Subscriber) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41372,7 +41499,7 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNTrackedProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTrackedProduct(ctx context.Context, sel ast.SelectionSet, v []*model.TrackedProduct) graphql.Marshaler {
+func (ec *executionContext) marshalNTrackedProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTrackedProduct(ctx context.Context, sel ast.SelectionSet, v []*model.TrackedProduct) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -41396,7 +41523,7 @@ func (ec *executionContext) marshalNTrackedProduct2ᚕᚖgithubᚗcomᚋChrisent
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTrackedProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTrackedProduct(ctx, sel, v[i])
+			ret[i] = ec.marshalOTrackedProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTrackedProduct(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -41410,7 +41537,7 @@ func (ec *executionContext) marshalNTrackedProduct2ᚕᚖgithubᚗcomᚋChrisent
 	return ret
 }
 
-func (ec *executionContext) marshalNTransaction2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTransaction(ctx context.Context, sel ast.SelectionSet, v *model.Transaction) graphql.Marshaler {
+func (ec *executionContext) marshalNTransaction2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTransaction(ctx context.Context, sel ast.SelectionSet, v *model.Transaction) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41420,21 +41547,21 @@ func (ec *executionContext) marshalNTransaction2ᚖgithubᚗcomᚋChrisentechᚋ
 	return ec._Transaction(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNTransactionInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTransactionInput(ctx context.Context, v any) (model.TransactionInput, error) {
+func (ec *executionContext) unmarshalNTransactionInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTransactionInput(ctx context.Context, v any) (model.TransactionInput, error) {
 	res, err := ec.unmarshalInputTransactionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateStoreOrderInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateStoreOrderInput(ctx context.Context, v any) (model.UpdateStoreOrderInput, error) {
+func (ec *executionContext) unmarshalNUpdateStoreOrderInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUpdateStoreOrderInput(ctx context.Context, v any) (model.UpdateStoreOrderInput, error) {
 	res, err := ec.unmarshalInputUpdateStoreOrderInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUpdateUnitsSoldResponse2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateUnitsSoldResponse(ctx context.Context, sel ast.SelectionSet, v model.UpdateUnitsSoldResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNUpdateUnitsSoldResponse2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUpdateUnitsSoldResponse(ctx context.Context, sel ast.SelectionSet, v model.UpdateUnitsSoldResponse) graphql.Marshaler {
 	return ec._UpdateUnitsSoldResponse(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUpdateUnitsSoldResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateUnitsSoldResponse(ctx context.Context, sel ast.SelectionSet, v *model.UpdateUnitsSoldResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNUpdateUnitsSoldResponse2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUpdateUnitsSoldResponse(ctx context.Context, sel ast.SelectionSet, v *model.UpdateUnitsSoldResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41444,11 +41571,11 @@ func (ec *executionContext) marshalNUpdateUnitsSoldResponse2ᚖgithubᚗcomᚋCh
 	return ec._UpdateUnitsSoldResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -41472,7 +41599,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋChrisentechᚋalut
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -41492,7 +41619,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋChrisentechᚋalut
 	return ret
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41502,7 +41629,7 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋChrisentechᚋaluta�
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNVariantValue2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐVariantValueᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.VariantValue) graphql.Marshaler {
+func (ec *executionContext) marshalNVariantValue2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐVariantValueᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.VariantValue) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -41526,7 +41653,7 @@ func (ec *executionContext) marshalNVariantValue2ᚕᚖgithubᚗcomᚋChrisentec
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNVariantValue2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐVariantValue(ctx, sel, v[i])
+			ret[i] = ec.marshalNVariantValue2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐVariantValue(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -41546,7 +41673,7 @@ func (ec *executionContext) marshalNVariantValue2ᚕᚖgithubᚗcomᚋChrisentec
 	return ret
 }
 
-func (ec *executionContext) marshalNVariantValue2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐVariantValue(ctx context.Context, sel ast.SelectionSet, v *model.VariantValue) graphql.Marshaler {
+func (ec *executionContext) marshalNVariantValue2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐVariantValue(ctx context.Context, sel ast.SelectionSet, v *model.VariantValue) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -41807,34 +41934,34 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalNcustomerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCustomerInput(ctx context.Context, v any) (*model.CustomerInput, error) {
+func (ec *executionContext) unmarshalNcustomerInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCustomerInput(ctx context.Context, v any) (*model.CustomerInput, error) {
 	res, err := ec.unmarshalInputcustomerInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNfundInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐFundInput(ctx context.Context, v any) (model.FundInput, error) {
+func (ec *executionContext) unmarshalNfundInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐFundInput(ctx context.Context, v any) (model.FundInput, error) {
 	res, err := ec.unmarshalInputfundInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNpasswordResetInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPasswordResetInput(ctx context.Context, v any) (model.PasswordResetInput, error) {
+func (ec *executionContext) unmarshalNpasswordResetInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPasswordResetInput(ctx context.Context, v any) (model.PasswordResetInput, error) {
 	res, err := ec.unmarshalInputpasswordResetInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNpasswordUpdateInput2githubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPasswordUpdateInput(ctx context.Context, v any) (model.PasswordUpdateInput, error) {
+func (ec *executionContext) unmarshalNpasswordUpdateInput2githubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPasswordUpdateInput(ctx context.Context, v any) (model.PasswordUpdateInput, error) {
 	res, err := ec.unmarshalInputpasswordUpdateInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAccount2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model.Account) graphql.Marshaler {
+func (ec *executionContext) marshalOAccount2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐAccount(ctx context.Context, sel ast.SelectionSet, v *model.Account) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Account(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOAdminWithdrawal2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐAdminWithdrawal(ctx context.Context, sel ast.SelectionSet, v *model.AdminWithdrawal) graphql.Marshaler {
+func (ec *executionContext) marshalOAdminWithdrawal2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐAdminWithdrawal(ctx context.Context, sel ast.SelectionSet, v *model.AdminWithdrawal) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -41867,14 +41994,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOCategory2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCategory(ctx context.Context, sel ast.SelectionSet, v *model.Category) graphql.Marshaler {
+func (ec *executionContext) marshalOCategory2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCategory(ctx context.Context, sel ast.SelectionSet, v *model.Category) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Category(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOChat2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐChatᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Chat) graphql.Marshaler {
+func (ec *executionContext) marshalOChat2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐChatᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Chat) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -41901,7 +42028,7 @@ func (ec *executionContext) marshalOChat2ᚕᚖgithubᚗcomᚋChrisentechᚋalut
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNChat2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐChat(ctx, sel, v[i])
+			ret[i] = ec.marshalNChat2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐChat(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -41921,21 +42048,21 @@ func (ec *executionContext) marshalOChat2ᚕᚖgithubᚗcomᚋChrisentechᚋalut
 	return ret
 }
 
-func (ec *executionContext) marshalODVAAccount2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDVAAccount(ctx context.Context, sel ast.SelectionSet, v *model.DVAAccount) graphql.Marshaler {
+func (ec *executionContext) marshalODVAAccount2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDVAAccount(ctx context.Context, sel ast.SelectionSet, v *model.DVAAccount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DVAAccount(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalODeliveryDetails2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDeliveryDetails(ctx context.Context, sel ast.SelectionSet, v *model.DeliveryDetails) graphql.Marshaler {
+func (ec *executionContext) marshalODeliveryDetails2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDeliveryDetails(ctx context.Context, sel ast.SelectionSet, v *model.DeliveryDetails) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._DeliveryDetails(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalODownloads2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDownloads(ctx context.Context, sel ast.SelectionSet, v []*model.Downloads) graphql.Marshaler {
+func (ec *executionContext) marshalODownloads2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDownloads(ctx context.Context, sel ast.SelectionSet, v []*model.Downloads) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -41962,7 +42089,7 @@ func (ec *executionContext) marshalODownloads2ᚕᚖgithubᚗcomᚋChrisentech�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalODownloads2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDownloads(ctx, sel, v[i])
+			ret[i] = ec.marshalODownloads2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDownloads(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -41976,7 +42103,7 @@ func (ec *executionContext) marshalODownloads2ᚕᚖgithubᚗcomᚋChrisentech�
 	return ret
 }
 
-func (ec *executionContext) marshalODownloads2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐDownloads(ctx context.Context, sel ast.SelectionSet, v *model.Downloads) graphql.Marshaler {
+func (ec *executionContext) marshalODownloads2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐDownloads(ctx context.Context, sel ast.SelectionSet, v *model.Downloads) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -41999,7 +42126,7 @@ func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel as
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) marshalOHandledProducts2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐHandledProducts(ctx context.Context, sel ast.SelectionSet, v *model.HandledProducts) graphql.Marshaler {
+func (ec *executionContext) marshalOHandledProducts2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐHandledProducts(ctx context.Context, sel ast.SelectionSet, v *model.HandledProducts) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42104,7 +42231,7 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalOInvoice2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoice(ctx context.Context, sel ast.SelectionSet, v []*model.Invoice) graphql.Marshaler {
+func (ec *executionContext) marshalOInvoice2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoice(ctx context.Context, sel ast.SelectionSet, v []*model.Invoice) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42131,7 +42258,7 @@ func (ec *executionContext) marshalOInvoice2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOInvoice2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoice(ctx, sel, v[i])
+			ret[i] = ec.marshalOInvoice2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoice(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -42145,21 +42272,21 @@ func (ec *executionContext) marshalOInvoice2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 	return ret
 }
 
-func (ec *executionContext) marshalOInvoice2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoice(ctx context.Context, sel ast.SelectionSet, v *model.Invoice) graphql.Marshaler {
+func (ec *executionContext) marshalOInvoice2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoice(ctx context.Context, sel ast.SelectionSet, v *model.Invoice) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Invoice(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOInvoiceItem2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceItem(ctx context.Context, sel ast.SelectionSet, v *model.InvoiceItem) graphql.Marshaler {
+func (ec *executionContext) marshalOInvoiceItem2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceItem(ctx context.Context, sel ast.SelectionSet, v *model.InvoiceItem) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._InvoiceItem(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOInvoiceItemInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐInvoiceItemInput(ctx context.Context, v any) (*model.InvoiceItemInput, error) {
+func (ec *executionContext) unmarshalOInvoiceItemInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐInvoiceItemInput(ctx context.Context, v any) (*model.InvoiceItemInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42167,7 +42294,7 @@ func (ec *executionContext) unmarshalOInvoiceItemInput2ᚖgithubᚗcomᚋChrisen
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOMediaType2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMediaType(ctx context.Context, v any) (*model.MediaType, error) {
+func (ec *executionContext) unmarshalOMediaType2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMediaType(ctx context.Context, v any) (*model.MediaType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42176,14 +42303,14 @@ func (ec *executionContext) unmarshalOMediaType2ᚖgithubᚗcomᚋChrisentechᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOMediaType2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMediaType(ctx context.Context, sel ast.SelectionSet, v *model.MediaType) graphql.Marshaler {
+func (ec *executionContext) marshalOMediaType2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMediaType(ctx context.Context, sel ast.SelectionSet, v *model.MediaType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) marshalOMessage2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessageᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Message) graphql.Marshaler {
+func (ec *executionContext) marshalOMessage2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessageᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Message) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42210,7 +42337,7 @@ func (ec *executionContext) marshalOMessage2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMessage2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessage(ctx, sel, v[i])
+			ret[i] = ec.marshalNMessage2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessage(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -42230,14 +42357,14 @@ func (ec *executionContext) marshalOMessage2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 	return ret
 }
 
-func (ec *executionContext) marshalOMessage2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v *model.Message) graphql.Marshaler {
+func (ec *executionContext) marshalOMessage2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v *model.Message) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Message(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOMessageUserInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessageUserInput(ctx context.Context, v any) ([]*model.MessageUserInput, error) {
+func (ec *executionContext) unmarshalOMessageUserInput2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessageUserInput(ctx context.Context, v any) ([]*model.MessageUserInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42247,7 +42374,7 @@ func (ec *executionContext) unmarshalOMessageUserInput2ᚕᚖgithubᚗcomᚋChri
 	res := make([]*model.MessageUserInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOMessageUserInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessageUserInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOMessageUserInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessageUserInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -42255,7 +42382,7 @@ func (ec *executionContext) unmarshalOMessageUserInput2ᚕᚖgithubᚗcomᚋChri
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOMessageUserInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐMessageUserInput(ctx context.Context, v any) (*model.MessageUserInput, error) {
+func (ec *executionContext) unmarshalOMessageUserInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐMessageUserInput(ctx context.Context, v any) (*model.MessageUserInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42263,7 +42390,7 @@ func (ec *executionContext) unmarshalOMessageUserInput2ᚖgithubᚗcomᚋChrisen
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalONewReview2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewReviewᚄ(ctx context.Context, v any) ([]*model.NewReview, error) {
+func (ec *executionContext) unmarshalONewReview2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewReviewᚄ(ctx context.Context, v any) ([]*model.NewReview, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42273,7 +42400,7 @@ func (ec *executionContext) unmarshalONewReview2ᚕᚖgithubᚗcomᚋChrisentech
 	res := make([]*model.NewReview, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNNewReview2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewReview(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNNewReview2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewReview(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -42281,7 +42408,7 @@ func (ec *executionContext) unmarshalONewReview2ᚕᚖgithubᚗcomᚋChrisentech
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalONewVariant2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVariantᚄ(ctx context.Context, v any) ([]*model.NewVariant, error) {
+func (ec *executionContext) unmarshalONewVariant2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewVariantᚄ(ctx context.Context, v any) ([]*model.NewVariant, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42291,7 +42418,7 @@ func (ec *executionContext) unmarshalONewVariant2ᚕᚖgithubᚗcomᚋChrisentec
 	res := make([]*model.NewVariant, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNNewVariant2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐNewVariant(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNNewVariant2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐNewVariant(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -42299,7 +42426,7 @@ func (ec *executionContext) unmarshalONewVariant2ᚕᚖgithubᚗcomᚋChrisentec
 	return res, nil
 }
 
-func (ec *executionContext) marshalOOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Order) graphql.Marshaler {
+func (ec *executionContext) marshalOOrder2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Order) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42326,7 +42453,7 @@ func (ec *executionContext) marshalOOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐOrder(ctx, sel, v[i])
+			ret[i] = ec.marshalNOrder2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐOrder(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -42346,14 +42473,14 @@ func (ec *executionContext) marshalOOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalu
 	return ret
 }
 
-func (ec *executionContext) marshalOPaymentDetails2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaymentDetails(ctx context.Context, sel ast.SelectionSet, v *model.PaymentDetails) graphql.Marshaler {
+func (ec *executionContext) marshalOPaymentDetails2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaymentDetails(ctx context.Context, sel ast.SelectionSet, v *model.PaymentDetails) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PaymentDetails(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOPaymentDetailsInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaymentDetailsInput(ctx context.Context, v any) (*model.PaymentDetailsInput, error) {
+func (ec *executionContext) unmarshalOPaymentDetailsInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaymentDetailsInput(ctx context.Context, v any) (*model.PaymentDetailsInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42361,14 +42488,14 @@ func (ec *executionContext) unmarshalOPaymentDetailsInput2ᚖgithubᚗcomᚋChri
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPaystackAccount2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐPaystackAccount(ctx context.Context, sel ast.SelectionSet, v *model.PaystackAccount) graphql.Marshaler {
+func (ec *executionContext) marshalOPaystackAccount2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐPaystackAccount(ctx context.Context, sel ast.SelectionSet, v *model.PaystackAccount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PaystackAccount(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalOProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42395,7 +42522,7 @@ func (ec *executionContext) marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx, sel, v[i])
+			ret[i] = ec.marshalOProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -42409,7 +42536,7 @@ func (ec *executionContext) marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 	return ret
 }
 
-func (ec *executionContext) marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalOProduct2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42436,7 +42563,7 @@ func (ec *executionContext) marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx, sel, v[i])
+			ret[i] = ec.marshalNProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -42456,14 +42583,14 @@ func (ec *executionContext) marshalOProduct2ᚕᚖgithubᚗcomᚋChrisentechᚋa
 	return ret
 }
 
-func (ec *executionContext) marshalOProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalOProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Product(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOProductInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInputᚄ(ctx context.Context, v any) ([]*model.ProductInput, error) {
+func (ec *executionContext) unmarshalOProductInput2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductInputᚄ(ctx context.Context, v any) ([]*model.ProductInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42473,7 +42600,7 @@ func (ec *executionContext) unmarshalOProductInput2ᚕᚖgithubᚗcomᚋChrisent
 	res := make([]*model.ProductInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐProductInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNProductInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐProductInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -42481,14 +42608,14 @@ func (ec *executionContext) unmarshalOProductInput2ᚕᚖgithubᚗcomᚋChrisent
 	return res, nil
 }
 
-func (ec *executionContext) marshalOReviewBuyer2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewBuyer(ctx context.Context, sel ast.SelectionSet, v *model.ReviewBuyer) graphql.Marshaler {
+func (ec *executionContext) marshalOReviewBuyer2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReviewBuyer(ctx context.Context, sel ast.SelectionSet, v *model.ReviewBuyer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._ReviewBuyer(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOReviewBuyerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐReviewBuyerInput(ctx context.Context, v any) (*model.ReviewBuyerInput, error) {
+func (ec *executionContext) unmarshalOReviewBuyerInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐReviewBuyerInput(ctx context.Context, v any) (*model.ReviewBuyerInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42496,7 +42623,7 @@ func (ec *executionContext) unmarshalOReviewBuyerInput2ᚖgithubᚗcomᚋChrisen
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSkynet2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Skynet) graphql.Marshaler {
+func (ec *executionContext) marshalOSkynet2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSkynetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Skynet) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42523,7 +42650,7 @@ func (ec *executionContext) marshalOSkynet2ᚕᚖgithubᚗcomᚋChrisentechᚋal
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSkynet2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynet(ctx, sel, v[i])
+			ret[i] = ec.marshalNSkynet2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSkynet(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -42543,14 +42670,14 @@ func (ec *executionContext) marshalOSkynet2ᚕᚖgithubᚗcomᚋChrisentechᚋal
 	return ret
 }
 
-func (ec *executionContext) marshalOSkynet2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynet(ctx context.Context, sel ast.SelectionSet, v *model.Skynet) graphql.Marshaler {
+func (ec *executionContext) marshalOSkynet2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSkynet(ctx context.Context, sel ast.SelectionSet, v *model.Skynet) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Skynet(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSkynetInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSkynetInput(ctx context.Context, v any) (*model.SkynetInput, error) {
+func (ec *executionContext) unmarshalOSkynetInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSkynetInput(ctx context.Context, v any) (*model.SkynetInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42558,14 +42685,14 @@ func (ec *executionContext) unmarshalOSkynetInput2ᚖgithubᚗcomᚋChrisentech�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSmartcardVerificationResponse2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSmartcardVerificationResponse(ctx context.Context, sel ast.SelectionSet, v *model.SmartcardVerificationResponse) graphql.Marshaler {
+func (ec *executionContext) marshalOSmartcardVerificationResponse2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSmartcardVerificationResponse(ctx context.Context, sel ast.SelectionSet, v *model.SmartcardVerificationResponse) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SmartcardVerificationResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOStore2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Store) graphql.Marshaler {
+func (ec *executionContext) marshalOStore2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Store) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42592,7 +42719,7 @@ func (ec *executionContext) marshalOStore2ᚕᚖgithubᚗcomᚋChrisentechᚋalu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNStore2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx, sel, v[i])
+			ret[i] = ec.marshalNStore2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStore(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -42612,14 +42739,14 @@ func (ec *executionContext) marshalOStore2ᚕᚖgithubᚗcomᚋChrisentechᚋalu
 	return ret
 }
 
-func (ec *executionContext) marshalOStore2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStore(ctx context.Context, sel ast.SelectionSet, v *model.Store) graphql.Marshaler {
+func (ec *executionContext) marshalOStore2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStore(ctx context.Context, sel ast.SelectionSet, v *model.Store) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Store(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOStoreFollower2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollowerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StoreFollower) graphql.Marshaler {
+func (ec *executionContext) marshalOStoreFollower2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreFollowerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StoreFollower) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42646,7 +42773,7 @@ func (ec *executionContext) marshalOStoreFollower2ᚕᚖgithubᚗcomᚋChrisente
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNStoreFollower2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollower(ctx, sel, v[i])
+			ret[i] = ec.marshalNStoreFollower2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreFollower(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -42666,7 +42793,7 @@ func (ec *executionContext) marshalOStoreFollower2ᚕᚖgithubᚗcomᚋChrisente
 	return ret
 }
 
-func (ec *executionContext) unmarshalOStoreFollowerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreFollowerInput(ctx context.Context, v any) (*model.StoreFollowerInput, error) {
+func (ec *executionContext) unmarshalOStoreFollowerInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreFollowerInput(ctx context.Context, v any) (*model.StoreFollowerInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42674,7 +42801,7 @@ func (ec *executionContext) unmarshalOStoreFollowerInput2ᚖgithubᚗcomᚋChris
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOStoreInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreInput(ctx context.Context, v any) (*model.StoreInput, error) {
+func (ec *executionContext) unmarshalOStoreInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreInput(ctx context.Context, v any) (*model.StoreInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42682,7 +42809,7 @@ func (ec *executionContext) unmarshalOStoreInput2ᚖgithubᚗcomᚋChrisentech�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOStoreOrder2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StoreOrder) graphql.Marshaler {
+func (ec *executionContext) marshalOStoreOrder2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StoreOrder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42709,7 +42836,7 @@ func (ec *executionContext) marshalOStoreOrder2ᚕᚖgithubᚗcomᚋChrisentech�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNStoreOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreOrder(ctx, sel, v[i])
+			ret[i] = ec.marshalNStoreOrder2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreOrder(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -42729,14 +42856,14 @@ func (ec *executionContext) marshalOStoreOrder2ᚕᚖgithubᚗcomᚋChrisentech�
 	return ret
 }
 
-func (ec *executionContext) marshalOStoreOrder2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreOrder(ctx context.Context, sel ast.SelectionSet, v *model.StoreOrder) graphql.Marshaler {
+func (ec *executionContext) marshalOStoreOrder2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreOrder(ctx context.Context, sel ast.SelectionSet, v *model.StoreOrder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._StoreOrder(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOStoreProductInput2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreProductInput(ctx context.Context, v any) ([]*model.StoreProductInput, error) {
+func (ec *executionContext) unmarshalOStoreProductInput2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreProductInput(ctx context.Context, v any) ([]*model.StoreProductInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42746,7 +42873,7 @@ func (ec *executionContext) unmarshalOStoreProductInput2ᚕᚖgithubᚗcomᚋChr
 	res := make([]*model.StoreProductInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOStoreProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreProductInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalOStoreProductInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreProductInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -42754,7 +42881,7 @@ func (ec *executionContext) unmarshalOStoreProductInput2ᚕᚖgithubᚗcomᚋChr
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOStoreProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐStoreProductInput(ctx context.Context, v any) (*model.StoreProductInput, error) {
+func (ec *executionContext) unmarshalOStoreProductInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐStoreProductInput(ctx context.Context, v any) (*model.StoreProductInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42814,7 +42941,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOSubCategory2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubCategory(ctx context.Context, sel ast.SelectionSet, v []*model.SubCategory) graphql.Marshaler {
+func (ec *executionContext) marshalOSubCategory2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubCategory(ctx context.Context, sel ast.SelectionSet, v []*model.SubCategory) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42841,7 +42968,7 @@ func (ec *executionContext) marshalOSubCategory2ᚕᚖgithubᚗcomᚋChrisentech
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSubCategory2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubCategory(ctx, sel, v[i])
+			ret[i] = ec.marshalOSubCategory2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubCategory(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -42855,14 +42982,14 @@ func (ec *executionContext) marshalOSubCategory2ᚕᚖgithubᚗcomᚋChrisentech
 	return ret
 }
 
-func (ec *executionContext) marshalOSubCategory2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubCategory(ctx context.Context, sel ast.SelectionSet, v *model.SubCategory) graphql.Marshaler {
+func (ec *executionContext) marshalOSubCategory2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubCategory(ctx context.Context, sel ast.SelectionSet, v *model.SubCategory) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._SubCategory(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSubscriptionBundle2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐSubscriptionBundle(ctx context.Context, sel ast.SelectionSet, v *model.SubscriptionBundle) graphql.Marshaler {
+func (ec *executionContext) marshalOSubscriptionBundle2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐSubscriptionBundle(ctx context.Context, sel ast.SelectionSet, v *model.SubscriptionBundle) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42885,14 +43012,14 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	return res
 }
 
-func (ec *executionContext) marshalOTrackedProduct2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTrackedProduct(ctx context.Context, sel ast.SelectionSet, v *model.TrackedProduct) graphql.Marshaler {
+func (ec *executionContext) marshalOTrackedProduct2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTrackedProduct(ctx context.Context, sel ast.SelectionSet, v *model.TrackedProduct) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TrackedProduct(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTransaction2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTransactionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Transaction) graphql.Marshaler {
+func (ec *executionContext) marshalOTransaction2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTransactionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Transaction) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -42919,7 +43046,7 @@ func (ec *executionContext) marshalOTransaction2ᚕᚖgithubᚗcomᚋChrisentech
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTransaction2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTransaction(ctx, sel, v[i])
+			ret[i] = ec.marshalNTransaction2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTransaction(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -42939,14 +43066,14 @@ func (ec *executionContext) marshalOTransaction2ᚕᚖgithubᚗcomᚋChrisentech
 	return ret
 }
 
-func (ec *executionContext) marshalOTransaction2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐTransaction(ctx context.Context, sel ast.SelectionSet, v *model.Transaction) graphql.Marshaler {
+func (ec *executionContext) marshalOTransaction2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐTransaction(ctx context.Context, sel ast.SelectionSet, v *model.Transaction) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Transaction(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOUpdateProductInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateProductInput(ctx context.Context, v any) (*model.UpdateProductInput, error) {
+func (ec *executionContext) unmarshalOUpdateProductInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUpdateProductInput(ctx context.Context, v any) (*model.UpdateProductInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42954,7 +43081,7 @@ func (ec *executionContext) unmarshalOUpdateProductInput2ᚖgithubᚗcomᚋChris
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOUpdateStoreInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateStoreInput(ctx context.Context, v any) (*model.UpdateStoreInput, error) {
+func (ec *executionContext) unmarshalOUpdateStoreInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUpdateStoreInput(ctx context.Context, v any) (*model.UpdateStoreInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42962,7 +43089,7 @@ func (ec *executionContext) unmarshalOUpdateStoreInput2ᚖgithubᚗcomᚋChrisen
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOUpdateUserInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUpdateUserInput(ctx context.Context, v any) (*model.UpdateUserInput, error) {
+func (ec *executionContext) unmarshalOUpdateUserInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUpdateUserInput(ctx context.Context, v any) (*model.UpdateUserInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -42970,7 +43097,7 @@ func (ec *executionContext) unmarshalOUpdateUserInput2ᚖgithubᚗcomᚋChrisent
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -43179,7 +43306,7 @@ func (ec *executionContext) marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgen�
 	return ec.___Type(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOconfirmPasswordInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐConfirmPasswordInput(ctx context.Context, v any) (*model.ConfirmPasswordInput, error) {
+func (ec *executionContext) unmarshalOconfirmPasswordInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐConfirmPasswordInput(ctx context.Context, v any) (*model.ConfirmPasswordInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -43187,7 +43314,7 @@ func (ec *executionContext) unmarshalOconfirmPasswordInput2ᚖgithubᚗcomᚋChr
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOcustomerInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐCustomerInput(ctx context.Context, v any) (*model.CustomerInput, error) {
+func (ec *executionContext) unmarshalOcustomerInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐCustomerInput(ctx context.Context, v any) (*model.CustomerInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -43195,7 +43322,7 @@ func (ec *executionContext) unmarshalOcustomerInput2ᚖgithubᚗcomᚋChrisentec
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOwithdrawAccount2ᚕᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐWithdrawAccount(ctx context.Context, sel ast.SelectionSet, v []*model.WithdrawAccount) graphql.Marshaler {
+func (ec *executionContext) marshalOwithdrawAccount2ᚕᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐWithdrawAccount(ctx context.Context, sel ast.SelectionSet, v []*model.WithdrawAccount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -43222,7 +43349,7 @@ func (ec *executionContext) marshalOwithdrawAccount2ᚕᚖgithubᚗcomᚋChrisen
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOwithdrawAccount2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐWithdrawAccount(ctx, sel, v[i])
+			ret[i] = ec.marshalOwithdrawAccount2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐWithdrawAccount(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -43236,14 +43363,14 @@ func (ec *executionContext) marshalOwithdrawAccount2ᚕᚖgithubᚗcomᚋChrisen
 	return ret
 }
 
-func (ec *executionContext) marshalOwithdrawAccount2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐWithdrawAccount(ctx context.Context, sel ast.SelectionSet, v *model.WithdrawAccount) graphql.Marshaler {
+func (ec *executionContext) marshalOwithdrawAccount2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐWithdrawAccount(ctx context.Context, sel ast.SelectionSet, v *model.WithdrawAccount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._withdrawAccount(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOwithdrawAccountInput2ᚖgithubᚗcomᚋChrisentechᚋalutaᚑmarketᚑapiᚋgraphᚋmodelᚐWithdrawAccountInput(ctx context.Context, v any) (*model.WithdrawAccountInput, error) {
+func (ec *executionContext) unmarshalOwithdrawAccountInput2ᚖgithubᚗcomᚋsamstringzzᚋalutamarketᚑbackendᚋgraphᚋmodelᚐWithdrawAccountInput(ctx context.Context, v any) (*model.WithdrawAccountInput, error) {
 	if v == nil {
 		return nil, nil
 	}

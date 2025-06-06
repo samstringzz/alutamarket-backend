@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/Chrisentech/aluta-market-api/database"
-	"github.com/Chrisentech/aluta-market-api/internals/store"
+	"github.com/samstringzz/alutamarket-backend/database"
+	"github.com/samstringzz/alutamarket-backend/internals/store"
 )
 
 func main() {

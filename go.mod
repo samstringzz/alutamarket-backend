@@ -1,4 +1,4 @@
-module github.com/Chrisentech/aluta-market-api
+module github.com/samstringzz/alutamarket-backend
 
 go 1.23.0
 
@@ -15,7 +15,6 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
-	github.com/rs/cors v1.10.0
 	github.com/sendgrid/sendgrid-go v3.12.0+incompatible
 	github.com/vektah/gqlparser/v2 v2.5.23
 	golang.org/x/crypto v0.36.0

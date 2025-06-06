@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/Chrisentech/aluta-market-api/internals/cart"
-	"github.com/Chrisentech/aluta-market-api/internals/messages"
-	"github.com/Chrisentech/aluta-market-api/internals/product"
-	"github.com/Chrisentech/aluta-market-api/internals/skynet"
-	"github.com/Chrisentech/aluta-market-api/internals/store"
-	"github.com/Chrisentech/aluta-market-api/internals/user"
+	"github.com/samstringzz/alutamarket-backend/internals/cart"
+	"github.com/samstringzz/alutamarket-backend/internals/messages"
+	"github.com/samstringzz/alutamarket-backend/internals/product"
+	"github.com/samstringzz/alutamarket-backend/internals/skynet"
+	"github.com/samstringzz/alutamarket-backend/internals/store"
+	"github.com/samstringzz/alutamarket-backend/internals/user"
 )
 
 type PackageType int

@@ -16,11 +16,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/database"
-	"github.com/Chrisentech/aluta-market-api/errors"
-	"github.com/Chrisentech/aluta-market-api/internals/models"
-	"github.com/Chrisentech/aluta-market-api/utils"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/samstringzz/alutamarket-backend/database"
+	"github.com/samstringzz/alutamarket-backend/errors"
+	"github.com/samstringzz/alutamarket-backend/internals/models"
+	"github.com/samstringzz/alutamarket-backend/utils"
 	"gorm.io/gorm"
 )
 

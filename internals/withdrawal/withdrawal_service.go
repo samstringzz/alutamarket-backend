@@ -7,8 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/internals/shared"
-	"github.com/Chrisentech/aluta-market-api/internals/user"
+	"github.com/samstringzz/alutamarket-backend/errors"
+	"github.com/samstringzz/alutamarket-backend/internals/shared"
+	"github.com/samstringzz/alutamarket-backend/internals/user"
 )
 
 type Service interface {
@@ -18,6 +19,7 @@ type Service interface {
 	GetPendingWithdrawals(ctx context.Context) ([]*shared.Withdrawal, error)
 	ProcessPendingWithdrawals(ctx context.Context) error
 	GetWithdrawals(ctx context.Context, status *string) ([]*shared.Withdrawal, error)
+	ProcessWithdrawal(ctx context.Context, withdrawalID uint32, action string) error
 }
 
 type service struct {
@@ -88,4 +90,62 @@ func (s *service) ProcessPendingWithdrawals(ctx context.Context) error {
 
 func (s *service) GetWithdrawals(ctx context.Context, status *string) ([]*shared.Withdrawal, error) {
 	return s.repo.GetWithdrawals(ctx, status)
+}
+
+// ProcessWithdrawal handles admin actions on withdrawals (approve/reject)
+func (s *service) ProcessWithdrawal(ctx context.Context, withdrawalID uint32, action string) error {
+	// Get the withdrawal details
+	w, err := s.repo.GetWithdrawal(ctx, withdrawalID)
+	if err != nil {
+		return fmt.Errorf("withdrawal not found: %v", err)
+	}
+
+	// Validate the action based on current status
+	switch action {
+	case "approve":
+		if w.Status != string(shared.StatusPending) {
+			return errors.NewAppError(400, "INVALID_STATUS", "Withdrawal must be pending to be approved")
+		}
+
+		// Approve the withdrawal (updates status to 'approved')
+		if err := s.repo.ApproveWithdrawal(ctx, withdrawalID); err != nil {
+			return fmt.Errorf("failed to approve withdrawal: %v", err)
+		}
+
+		// Initiate Paystack transfer
+		transfer, err := s.paystackClient.InitiateTransfer(ctx, &user.TransferRequest{
+			Amount:    w.Amount,
+			Recipient: w.AccountNumber, // Use AccountNumber as recipient
+			Reason:    fmt.Sprintf("Withdrawal #%d from Aluta Market", w.ID),
+		})
+
+		if err != nil {
+			// If transfer fails, reject the withdrawal and refund
+			if rejectErr := s.repo.RejectWithdrawal(ctx, withdrawalID,
+				fmt.Sprintf("Automated transfer failed: %v", err)); rejectErr != nil {
+				log.Printf("Failed to reject withdrawal after transfer failure: %v", rejectErr)
+			}
+			return fmt.Errorf("paystack transfer failed: %v", err) // Return original transfer error
+		}
+
+		// If transfer is successful, complete the withdrawal
+		if err := s.repo.CompleteWithdrawal(ctx, withdrawalID, transfer.Data.TransferCode); err != nil {
+			log.Printf("Warning: Failed to complete withdrawal after successful transfer: %v", err)
+			// TODO: Consider alerting/manual intervention if completion fails after transfer
+		}
+
+	case "reject":
+		if w.Status != string(shared.StatusPending) {
+			return errors.NewAppError(400, "INVALID_STATUS", "Withdrawal must be pending to be rejected")
+		}
+		// Reject the withdrawal (refunds and updates status to 'rejected')
+		if err := s.repo.RejectWithdrawal(ctx, withdrawalID, "Rejected by admin"); err != nil {
+			return fmt.Errorf("failed to reject withdrawal: %v", err)
+		}
+
+	default:
+		return errors.NewAppError(400, "INVALID_ACTION", "Invalid withdrawal action. Use 'approve' or 'reject'.")
+	}
+
+	return nil
 }
