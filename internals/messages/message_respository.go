@@ -12,10 +12,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/database"
-	"github.com/Chrisentech/aluta-market-api/internals/user"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/websocket"
+	"github.com/samstringzz/alutamarket-backend/database"
+	"github.com/samstringzz/alutamarket-backend/internals/user"
 	"gorm.io/gorm"
 )
 

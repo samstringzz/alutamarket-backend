@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Chrisentech/aluta-market-api/internals/messages"
-	"github.com/Chrisentech/aluta-market-api/internals/product"
-	"github.com/Chrisentech/aluta-market-api/internals/user"
-	"github.com/Chrisentech/aluta-market-api/router"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
+	"github.com/samstringzz/alutamarket-backend/internals/messages"
+	"github.com/samstringzz/alutamarket-backend/internals/product"
+	"github.com/samstringzz/alutamarket-backend/internals/user"
+	"github.com/samstringzz/alutamarket-backend/router"
 )
 
 var upgrader = websocket.Upgrader{

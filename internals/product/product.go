@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/graph/model"
 	"github.com/lib/pq"
+	"github.com/samstringzz/alutamarket-backend/graph/model"
 	"gorm.io/gorm"
 )
 

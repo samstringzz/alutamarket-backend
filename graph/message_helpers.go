@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/graph/model"
-	"github.com/Chrisentech/aluta-market-api/internals/messages"
+	"github.com/samstringzz/alutamarket-backend/graph/model"
+	"github.com/samstringzz/alutamarket-backend/internals/messages"
 )
 
 func convertMessageToGraphQL(m *messages.Message) *model.Message {

@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Chrisentech/aluta-market-api/internals/user"
+	"github.com/samstringzz/alutamarket-backend/internals/user"
 )
 
 type Handler struct {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/internals/product"
+	"github.com/samstringzz/alutamarket-backend/internals/product"
 )
 
 type service struct {

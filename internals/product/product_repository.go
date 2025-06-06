@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Chrisentech/aluta-market-api/database"
-	"github.com/Chrisentech/aluta-market-api/errors"
-	"github.com/Chrisentech/aluta-market-api/graph/model"
-	"github.com/Chrisentech/aluta-market-api/utils"
+	"github.com/samstringzz/alutamarket-backend/database"
+	"github.com/samstringzz/alutamarket-backend/errors"
+	"github.com/samstringzz/alutamarket-backend/graph/model"
+	"github.com/samstringzz/alutamarket-backend/utils"
 	"gorm.io/gorm"
 )
 

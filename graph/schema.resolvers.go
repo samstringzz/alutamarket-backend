@@ -17,17 +17,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/database"
-	"github.com/Chrisentech/aluta-market-api/graph/model"
-	"github.com/Chrisentech/aluta-market-api/internals/cart"
-	"github.com/Chrisentech/aluta-market-api/internals/messages"
-	"github.com/Chrisentech/aluta-market-api/internals/product"
-	"github.com/Chrisentech/aluta-market-api/internals/shared"
-	"github.com/Chrisentech/aluta-market-api/internals/store"
-	"github.com/Chrisentech/aluta-market-api/internals/subscriber"
-	"github.com/Chrisentech/aluta-market-api/internals/user"
-	"github.com/Chrisentech/aluta-market-api/internals/withdrawal"
-	"github.com/Chrisentech/aluta-market-api/utils"
+	"github.com/samstringzz/alutamarket-backend/database"
+	"github.com/samstringzz/alutamarket-backend/graph/model"
+	"github.com/samstringzz/alutamarket-backend/internals/cart"
+	"github.com/samstringzz/alutamarket-backend/internals/messages"
+	"github.com/samstringzz/alutamarket-backend/internals/product"
+	"github.com/samstringzz/alutamarket-backend/internals/shared"
+	"github.com/samstringzz/alutamarket-backend/internals/store"
+	"github.com/samstringzz/alutamarket-backend/internals/subscriber"
+	"github.com/samstringzz/alutamarket-backend/internals/user"
+	"github.com/samstringzz/alutamarket-backend/internals/withdrawal"
+	"github.com/samstringzz/alutamarket-backend/utils"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -1583,6 +1583,11 @@ func (r *mutationResolver) SyncPaystackDVAAccounts(ctx context.Context) (bool, e
 	return true, nil
 }
 
+// ProcessStoreWithdrawal is the resolver for the processStoreWithdrawal field.
+func (r *mutationResolver) ProcessStoreWithdrawal(ctx context.Context, id string, action string) (bool, error) {
+	panic(fmt.Errorf("not implemented: ProcessStoreWithdrawal - processStoreWithdrawal"))
+}
+
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error) {
 	userHandler := user.NewHandler(user.NewService(user.NewRepository()))
@@ -1980,13 +1985,13 @@ func (r *queryResolver) Products(ctx context.Context, store *string, categorySlu
 	if store != nil && strings.Contains(*store, "-") {
 		// This is a search query
 		searchQuery := strings.TrimSuffix(*store, "-")
-		products, err = r.ProductService.SearchProducts(ctx, searchQuery)
+		products, err = r.ProductHandler.SearchProducts(ctx, searchQuery)
 		if err != nil {
 			return nil, fmt.Errorf("failed to search products: %v", err)
 		}
 		total = len(products)
 	} else {
-		products, total, err = r.ProductService.GetProducts(ctx, storeValue, "", limitValue, offsetValue)
+		products, total, err = r.ProductHandler.GetProducts(ctx, storeValue, "", limitValue, offsetValue)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch products: %v", err)
 		}

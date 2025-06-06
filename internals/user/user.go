@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Chrisentech/aluta-market-api/internals/models"
+	"github.com/samstringzz/alutamarket-backend/internals/models"
 	"gorm.io/gorm"
 )
 

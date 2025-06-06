@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Chrisentech/aluta-market-api/internals/product"
-	"github.com/Chrisentech/aluta-market-api/internals/store"
-	"github.com/Chrisentech/aluta-market-api/internals/user"
+	"github.com/samstringzz/alutamarket-backend/internals/product"
+	"github.com/samstringzz/alutamarket-backend/internals/store"
+	"github.com/samstringzz/alutamarket-backend/internals/user"
 	"gorm.io/gorm"
 )
 
