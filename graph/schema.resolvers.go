@@ -1585,7 +1585,22 @@ func (r *mutationResolver) SyncPaystackDVAAccounts(ctx context.Context) (bool, e
 
 // ProcessStoreWithdrawal is the resolver for the processStoreWithdrawal field.
 func (r *mutationResolver) ProcessStoreWithdrawal(ctx context.Context, id string, action string) (bool, error) {
-	panic(fmt.Errorf("not implemented: ProcessStoreWithdrawal - processStoreWithdrawal"))
+	// Convert string ID to uint32
+	withdrawalID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		return false, fmt.Errorf("invalid withdrawal ID: %v", err)
+	}
+
+	// Create withdrawal service
+	withdrawalService := withdrawal.NewService(withdrawal.NewRepository())
+
+	// Process the withdrawal
+	err = withdrawalService.ProcessWithdrawal(ctx, uint32(withdrawalID), action)
+	if err != nil {
+		return false, fmt.Errorf("failed to process withdrawal: %v", err)
+	}
+
+	return true, nil
 }
 
 // Users is the resolver for the users field.
