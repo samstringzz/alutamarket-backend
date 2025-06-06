@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/samstringzz/alutamarket-backend/errors"
@@ -107,12 +108,36 @@ func (s *service) ProcessWithdrawal(ctx context.Context, withdrawalID uint32, ac
 			return errors.NewAppError(400, "INVALID_STATUS", "Withdrawal must be pending to be approved")
 		}
 
+		// Get list of supported banks from Paystack
+		banks, err := s.paystackClient.GetBanks(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get supported banks: %v", err)
+		}
+
+		// Find the bank code for the withdrawal's bank
+		var bankCode string
+		for _, bank := range banks.Data {
+			if strings.EqualFold(bank.Name, w.BankName) {
+				bankCode = bank.Code
+				break
+			}
+		}
+
+		if bankCode == "" {
+			// If bank code not found, reject the withdrawal
+			if rejectErr := s.repo.RejectWithdrawal(ctx, withdrawalID,
+				fmt.Sprintf("Unsupported bank: %s. Please contact support for assistance.", w.BankName)); rejectErr != nil {
+				log.Printf("Failed to reject withdrawal after bank code lookup failure: %v", rejectErr)
+			}
+			return fmt.Errorf("unsupported bank: %s", w.BankName)
+		}
+
 		// First, create a Paystack recipient
 		recipient, err := s.paystackClient.CreateTransferRecipient(ctx, &user.RecipientRequest{
 			Type:          "nuban",
 			Name:          w.AccountName,
 			AccountNumber: w.AccountNumber,
-			BankCode:      w.BankName, // This should be the bank code, not bank name
+			BankCode:      bankCode,
 		})
 		if err != nil {
 			// If recipient creation fails, reject the withdrawal
