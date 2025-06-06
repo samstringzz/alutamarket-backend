@@ -14,6 +14,7 @@ type PaystackClient interface {
 	GetDVAAccount(email string) (*Account, error)
 	CreateDVAAccount(details *DVADetails) (*Account, error)
 	InitiateTransfer(ctx context.Context, req *TransferRequest) (*Transfer, error)
+	CreateTransferRecipient(ctx context.Context, req *RecipientRequest) (*RecipientResponse, error)
 }
 
 type TransferRequest struct {
@@ -31,6 +32,21 @@ type Transfer struct {
 		Status        string  `json:"status"`
 		TransferCode  string  `json:"transfer_code"`
 		RecipientCode string  `json:"recipient_code"`
+	} `json:"data"`
+}
+
+type RecipientRequest struct {
+	Type          string `json:"type"`
+	Name          string `json:"name"`
+	AccountNumber string `json:"account_number"`
+	BankCode      string `json:"bank_code"`
+}
+
+type RecipientResponse struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
+	Data    struct {
+		RecipientCode string `json:"recipient_code"`
 	} `json:"data"`
 }
 
@@ -193,4 +209,48 @@ func (p *paystackClient) CreateDVAAccount(details *DVADetails) (*Account, error)
 	}
 
 	return &result.Data.Account, nil
+}
+
+// CreateTransferRecipient creates a new transfer recipient in Paystack
+func (p *paystackClient) CreateTransferRecipient(ctx context.Context, req *RecipientRequest) (*RecipientResponse, error) {
+	url := "https://api.paystack.co/transferrecipient"
+
+	payload := map[string]interface{}{
+		"type":           req.Type,
+		"name":           req.Name,
+		"account_number": req.AccountNumber,
+		"bank_code":      req.BankCode,
+		"currency":       "NGN",
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal payload: %v", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	httpReq.Header.Set("Authorization", "Bearer "+p.secretKey)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var result RecipientResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	if !result.Status {
+		return nil, fmt.Errorf("paystack error: %s", result.Message)
+	}
+
+	return &result, nil
 }
