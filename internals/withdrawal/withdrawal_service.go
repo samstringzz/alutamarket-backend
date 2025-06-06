@@ -161,12 +161,22 @@ func (s *service) ProcessWithdrawal(ctx context.Context, withdrawalID uint32, ac
 		})
 
 		if err != nil {
-			// If transfer fails, reject the withdrawal and refund
+			// If transfer initiation fails, reject the withdrawal and refund
 			if rejectErr := s.repo.RejectWithdrawal(ctx, withdrawalID,
-				fmt.Sprintf("Automated transfer failed: %v", err)); rejectErr != nil {
-				log.Printf("Failed to reject withdrawal after transfer failure: %v", rejectErr)
+				fmt.Sprintf("Automated transfer initiation failed: %v", err)); rejectErr != nil {
+				log.Printf("Failed to reject withdrawal after transfer initiation failure: %v", rejectErr)
 			}
-			return fmt.Errorf("paystack transfer failed: %v", err)
+			return fmt.Errorf("paystack transfer initiation failed: %v", err)
+		}
+
+		// Check the actual transfer status from Paystack
+		if transfer.Data.Status != "success" {
+			// If the transfer was not successful, reject the withdrawal
+			transferErr := fmt.Errorf("Paystack transfer status: %s. Message: %s", transfer.Data.Status, transfer.Message)
+			if rejectErr := s.repo.RejectWithdrawal(ctx, withdrawalID, transferErr.Error()); rejectErr != nil {
+				log.Printf("Failed to reject withdrawal after unsuccessful transfer: %v", rejectErr)
+			}
+			return transferErr
 		}
 
 		// If transfer is successful, complete the withdrawal
