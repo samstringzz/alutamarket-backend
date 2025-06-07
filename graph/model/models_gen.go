@@ -3,6 +3,7 @@
 package model
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -987,6 +988,20 @@ func (e MediaType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+func (e *MediaType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e MediaType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type RoleType string
 
 const (
@@ -1026,4 +1041,44 @@ func (e *RoleType) UnmarshalGQL(v any) error {
 
 func (e RoleType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *RoleType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e RoleType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type StoreTransactions struct {
+	Deposits    []*DepositTransaction    `json:"deposits"`
+	Withdrawals []*WithdrawalTransaction `json:"withdrawals"`
+}
+
+type DepositTransaction struct {
+	ID          string    `json:"id"`
+	Type        string    `json:"type"`
+	Amount      float64   `json:"amount"`
+	Reference   string    `json:"reference"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+	Description string    `json:"description"`
+}
+
+type WithdrawalTransaction struct {
+	ID            string     `json:"id"`
+	Amount        float64    `json:"amount"`
+	Status        string     `json:"status"`
+	BankName      string     `json:"bank_name"`
+	AccountNumber string     `json:"account_number"`
+	AccountName   string     `json:"account_name"`
+	CreatedAt     time.Time  `json:"created_at"`
+	CompletedAt   *time.Time `json:"completed_at"`
 }
