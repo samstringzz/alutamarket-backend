@@ -1043,4 +1043,5 @@ type WithdrawalTransaction {
 	accountName: String!
 	createdAt: Time!
 	completedAt: Time
+    approvedAt: Time!
 }
