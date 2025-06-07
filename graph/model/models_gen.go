@@ -145,6 +145,16 @@ type DeliveryDetails struct {
 	Fee     float64 `json:"fee"`
 }
 
+type DepositTransaction struct {
+	ID          string    `json:"id"`
+	Type        string    `json:"type"`
+	Amount      float64   `json:"amount"`
+	Reference   string    `json:"reference"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Description string    `json:"description"`
+}
+
 type Downloads struct {
 	ID        string     `json:"id"`
 	Thumbnail string     `json:"thumbnail"`
@@ -696,6 +706,11 @@ type StoreProductInput struct {
 	ID        *string `json:"id,omitempty"`
 }
 
+type StoreTransactions struct {
+	Deposits    []*DepositTransaction    `json:"deposits"`
+	Withdrawals []*WithdrawalTransaction `json:"withdrawals"`
+}
+
 type SubCategory struct {
 	Name     string `json:"name"`
 	Slug     string `json:"slug"`
@@ -879,6 +894,17 @@ type WithdrawalAccountInput struct {
 	BankID        int    `json:"bankId"`
 }
 
+type WithdrawalTransaction struct {
+	ID            string     `json:"id"`
+	Amount        float64    `json:"amount"`
+	Status        string     `json:"status"`
+	BankName      string     `json:"bankName"`
+	AccountNumber string     `json:"accountNumber"`
+	AccountName   string     `json:"accountName"`
+	CreatedAt     time.Time  `json:"createdAt"`
+	CompletedAt   *time.Time `json:"completedAt,omitempty"`
+}
+
 type ConfirmPasswordInput struct {
 	Password string `json:"password"`
 	UserID   string `json:"userId"`
@@ -1055,30 +1081,4 @@ func (e RoleType) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
-}
-
-type StoreTransactions struct {
-	Deposits    []*DepositTransaction    `json:"deposits"`
-	Withdrawals []*WithdrawalTransaction `json:"withdrawals"`
-}
-
-type DepositTransaction struct {
-	ID          string    `json:"id"`
-	Type        string    `json:"type"`
-	Amount      float64   `json:"amount"`
-	Reference   string    `json:"reference"`
-	Status      string    `json:"status"`
-	CreatedAt   time.Time `json:"created_at"`
-	Description string    `json:"description"`
-}
-
-type WithdrawalTransaction struct {
-	ID            string     `json:"id"`
-	Amount        float64    `json:"amount"`
-	Status        string     `json:"status"`
-	BankName      string     `json:"bank_name"`
-	AccountNumber string     `json:"account_number"`
-	AccountName   string     `json:"account_name"`
-	CreatedAt     time.Time  `json:"created_at"`
-	CompletedAt   *time.Time `json:"completed_at"`
 }
