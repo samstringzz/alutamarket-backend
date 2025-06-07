@@ -3329,25 +3329,6 @@ func (r *queryResolver) GetWithdrawalDetails(ctx context.Context, id string) (*m
 
 // GetStoreTransactions is the resolver for the getStoreTransactions field.
 func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (*model.StoreTransactions, error) {
-	// Get DVA deposits
-	var dvaTransactions []*model.DepositTransaction
-	if err := r.DB.Raw(`
-		SELECT
-			t.id::text as id,
-			'dva' as type,
-			t.amount::float as amount,
-			t.reference,
-			t.status,
-			t.created_at,
-			'Direct deposit to DVA account' as description
-		FROM transactions t
-		JOIN dva_accounts dva ON dva.customer_id = t.customer->>'customer_code'
-		WHERE dva.store_id = ?
-		ORDER BY t.created_at DESC
-	`, storeID).Scan(&dvaTransactions).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch DVA transactions: %v", err)
-	}
-
 	// Get order payments
 	var orderTransactions []*model.DepositTransaction
 	if err := r.DB.Raw(`
@@ -3355,13 +3336,13 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 			o.id::text as id,
 			'order' as type,
 			o.total_amount::float as amount,
-			o.reference,
+			o.reference, -- Assuming 'reference' column exists in orders table
 			o.status,
 			o.created_at,
 			'Payment for order #' || o.id::text as description
 		FROM orders o
 		WHERE o.store_id = ? AND o.status != 'cancelled'
-		ORDER BY o.created_at DESC
+			ORDER BY o.created_at DESC
 	`, storeID).Scan(&orderTransactions).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch order transactions: %v", err)
 	}
@@ -3385,8 +3366,8 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 		return nil, fmt.Errorf("failed to fetch withdrawals: %v", err)
 	}
 
-	// Combine DVA and order transactions
-	deposits := append(dvaTransactions, orderTransactions...)
+	// For now, deposits will only include order transactions
+	deposits := orderTransactions
 	// Sort deposits by created_at
 	sort.Slice(deposits, func(i, j int) bool {
 		return deposits[i].CreatedAt.After(deposits[j].CreatedAt)
