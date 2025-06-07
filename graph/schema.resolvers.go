@@ -3340,7 +3340,7 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 			o.created_at,
 			'Payment for order #' || o.id::text as description
 		FROM orders o
-		WHERE o.store_id = ? AND o.status != 'cancelled'
+		WHERE o.stores_id = ? AND o.status != 'cancelled'
 			ORDER BY o.created_at DESC
 	`, storeID).Scan(&orderTransactions).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch order transactions: %v", err)
