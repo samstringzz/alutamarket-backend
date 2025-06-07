@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -3326,32 +3327,8 @@ func (r *queryResolver) GetWithdrawalDetails(ctx context.Context, id string) (*m
 	return adminWithdrawal, nil
 }
 
-// ProductSearchResults is the resolver for the productSearchResults field.
-func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
-	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
-}
-
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
-
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
-// Subscription returns SubscriptionResolver implementation.
-func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
-
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-type subscriptionResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (*model.StoreTransactions, error) {
+// GetStoreTransactions is the resolver for the getStoreTransactions field.
+func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (*model.StoreTransactions, error) {
 	// Get DVA deposits
 	var dvaTransactions []*model.DepositTransaction
 	if err := r.DB.Raw(`
@@ -3420,4 +3397,21 @@ type subscriptionResolver struct{ *Resolver }
 		Withdrawals: withdrawals,
 	}, nil
 }
-*/
+
+// ProductSearchResults is the resolver for the productSearchResults field.
+func (r *subscriptionResolver) ProductSearchResults(ctx context.Context, query string) (<-chan []*model.Product, error) {
+	panic(fmt.Errorf("not implemented: ProductSearchResults - productSearchResults"))
+}
+
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
+// Subscription returns SubscriptionResolver implementation.
+func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
+
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

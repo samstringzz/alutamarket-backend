@@ -126,6 +126,7 @@ extend type Query {
   checkStoreEarningsDiscrepancy(storeId: Int!): StoreEarningsDiscrepancy!
   getWithdrawalsForAdmin(status: String): [AdminWithdrawal!]!
   getWithdrawalDetails(id: ID!): AdminWithdrawal
+  getStoreTransactions(storeID: Int!): StoreTransactions!
 }
 
 type Message {
@@ -1016,4 +1017,30 @@ type UpdateUnitsSoldResponse {
 type StoreEarningsDiscrepancy {
 	deliveredOrdersCount: Int!
 	totalEarnings: Float!
+}
+
+type StoreTransactions {
+	deposits: [DepositTransaction!]!
+	withdrawals: [WithdrawalTransaction!]!
+}
+
+type DepositTransaction {
+	id: ID!
+	type: String!
+	amount: Float!
+	reference: String!
+	status: String!
+	createdAt: Time!
+	description: String!
+}
+
+type WithdrawalTransaction {
+	id: ID!
+	amount: Float!
+	status: String!
+	bankName: String!
+	accountNumber: String!
+	accountName: String!
+	createdAt: Time!
+	completedAt: Time
 }
