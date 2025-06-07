@@ -1402,6 +1402,11 @@ func (r *mutationResolver) WithdrawFund(ctx context.Context, input model.FundInp
 		return false, fmt.Errorf("user not authorized for this store")
 	}
 
+	// Check if store has sufficient balance in wallet
+	if storeObj.Wallet < float64(input.Amount) {
+		return false, fmt.Errorf("insufficient funds in store wallet")
+	}
+
 	// Get bank details from dva_accounts table
 	var bankDetails struct {
 		BankName      string

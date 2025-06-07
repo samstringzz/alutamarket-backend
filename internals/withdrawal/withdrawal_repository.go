@@ -43,22 +43,6 @@ func (r *repository) CreateWithdrawal(ctx context.Context, req *shared.NewWithdr
 		return nil, fmt.Errorf("failed to get store: %v", err)
 	}
 
-	// Update wallet balance before checking
-	if err := storeRepo.UpdateWalletBalance(ctx, req.StoreID); err != nil {
-		return nil, fmt.Errorf("failed to update wallet balance: %v", err)
-	}
-
-	// Get updated store data
-	store, err = storeRepo.GetStore(ctx, req.StoreID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get updated store: %v", err)
-	}
-
-	// Check if store has sufficient balance
-	if store.Wallet < req.Amount {
-		return nil, errors.NewAppError(400, "INSUFFICIENT_BALANCE", "Insufficient balance for withdrawal")
-	}
-
 	// Create withdrawal record
 	withdrawal := &shared.Withdrawal{
 		StoreID:       req.StoreID,
