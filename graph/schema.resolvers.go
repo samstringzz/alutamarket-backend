@@ -3360,7 +3360,7 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 			created_at,
 			approved_at
 		FROM withdrawals
-		WHERE stores_id = ?
+		WHERE store_id = ?
 		ORDER BY created_at DESC
 	`, storeID).Scan(&withdrawals).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch withdrawals: %v", err)
