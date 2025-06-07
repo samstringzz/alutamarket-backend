@@ -3335,8 +3335,7 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 		SELECT
 			o.id::text as id,
 			'order' as type,
-			o.total_amount::float as amount,
-			o.reference, -- Assuming 'reference' column exists in orders table
+			o.fee::float as amount,
 			o.status,
 			o.created_at,
 			'Payment for order #' || o.id::text as description
