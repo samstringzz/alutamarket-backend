@@ -704,6 +704,7 @@ type ComplexityRoot struct {
 		AccountName   func(childComplexity int) int
 		AccountNumber func(childComplexity int) int
 		Amount        func(childComplexity int) int
+		ApprovedAt    func(childComplexity int) int
 		BankName      func(childComplexity int) int
 		CompletedAt   func(childComplexity int) int
 		CreatedAt     func(childComplexity int) int
@@ -4431,6 +4432,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.WithdrawalTransaction.Amount(childComplexity), true
+
+	case "WithdrawalTransaction.approvedAt":
+		if e.complexity.WithdrawalTransaction.ApprovedAt == nil {
+			break
+		}
+
+		return e.complexity.WithdrawalTransaction.ApprovedAt(childComplexity), true
 
 	case "WithdrawalTransaction.bankName":
 		if e.complexity.WithdrawalTransaction.BankName == nil {
@@ -27642,6 +27650,8 @@ func (ec *executionContext) fieldContext_StoreTransactions_withdrawals(_ context
 				return ec.fieldContext_WithdrawalTransaction_createdAt(ctx, field)
 			case "completedAt":
 				return ec.fieldContext_WithdrawalTransaction_completedAt(ctx, field)
+			case "approvedAt":
+				return ec.fieldContext_WithdrawalTransaction_approvedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type WithdrawalTransaction", field.Name)
 		},
@@ -30858,6 +30868,50 @@ func (ec *executionContext) _WithdrawalTransaction_completedAt(ctx context.Conte
 }
 
 func (ec *executionContext) fieldContext_WithdrawalTransaction_completedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WithdrawalTransaction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WithdrawalTransaction_approvedAt(ctx context.Context, field graphql.CollectedField, obj *model.WithdrawalTransaction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WithdrawalTransaction_approvedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ApprovedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WithdrawalTransaction_approvedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "WithdrawalTransaction",
 		Field:      field,
@@ -40933,6 +40987,11 @@ func (ec *executionContext) _WithdrawalTransaction(ctx context.Context, sel ast.
 			}
 		case "completedAt":
 			out.Values[i] = ec._WithdrawalTransaction_completedAt(ctx, field, obj)
+		case "approvedAt":
+			out.Values[i] = ec._WithdrawalTransaction_approvedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

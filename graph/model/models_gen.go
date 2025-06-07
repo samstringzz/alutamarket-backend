@@ -903,6 +903,7 @@ type WithdrawalTransaction struct {
 	AccountName   string     `json:"accountName"`
 	CreatedAt     time.Time  `json:"createdAt"`
 	CompletedAt   *time.Time `json:"completedAt,omitempty"`
+	ApprovedAt    time.Time  `json:"approvedAt"`
 }
 
 type ConfirmPasswordInput struct {
