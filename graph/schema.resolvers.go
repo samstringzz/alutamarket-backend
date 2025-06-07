@@ -7,6 +7,7 @@ package graph
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -3337,8 +3338,8 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 			'order' as type,
 			'approved' as status,
 			o.fee::float as amount,
-			o.trans_ref as reference,
-			o.created_at::timestamp as "createdAt",
+			'' as reference, -- Orders don't have a direct 'reference' to map to DepositTransaction
+			o.created_at::timestamp AT TIME ZONE 'UTC' as "createdAt",
 			'Payment for order #' || o.id::text as description
 		FROM orders o
 		WHERE o.stores_id @> ARRAY['%s']::text[] AND o.trans_status = 'paid'
@@ -3348,7 +3349,18 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 	}
 
 	// Get withdrawals
-	var withdrawals []*model.WithdrawalTransaction
+	// Intermediate struct for scanning from DB to handle nullable completed_at
+	var dbWithdrawals []struct {
+		ID            string       `db:"id"`
+		Amount        float64      `db:"amount"`
+		Status        string       `db:"status"`
+		BankName      string       `db:"bankName"`
+		AccountNumber string       `db:"accountNumber"`
+		AccountName   string       `db:"accountName"`
+		CreatedAt     time.Time    `db:"createdAt"`   // Non-nullable in schema
+		CompletedAt   sql.NullTime `db:"completedAt"` // Nullable in schema
+	}
+
 	if err := r.DB.Raw(`
 		SELECT
 			id::text as id,
@@ -3357,13 +3369,32 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 			bank_name as "bankName",
 			account_number as "accountNumber",
 			account_name as "accountName",
-			created_at::timestamp as "createdAt",
-			approved_at::timestamp as "completedAt"
+			created_at::timestamp AT TIME ZONE 'UTC' as "createdAt",
+			approved_at::timestamp AT TIME ZONE 'UTC' as "completedAt"
 		FROM withdrawals
 		WHERE store_id = ?
 		ORDER BY created_at DESC
-	`, storeID).Scan(&withdrawals).Error; err != nil {
+	`, storeID).Scan(&dbWithdrawals).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch withdrawals: %v", err)
+	}
+
+	var withdrawals []*model.WithdrawalTransaction
+	for _, w := range dbWithdrawals {
+		log.Printf("Withdrawal ID: %s, CreatedAt: %v", w.ID, w.CreatedAt) // Debug log
+		var completedAt *time.Time
+		if w.CompletedAt.Valid {
+			completedAt = &w.CompletedAt.Time
+		}
+		withdrawals = append(withdrawals, &model.WithdrawalTransaction{
+			ID:            w.ID,
+			Amount:        w.Amount,
+			Status:        w.Status,
+			BankName:      w.BankName,
+			AccountNumber: w.AccountNumber,
+			AccountName:   w.AccountName,
+			CreatedAt:     w.CreatedAt,
+			CompletedAt:   completedAt,
+		})
 	}
 
 	// For now, deposits will only include order transactions
