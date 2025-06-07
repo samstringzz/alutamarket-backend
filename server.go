@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
+	"github.com/samstringzz/alutamarket-backend/database"
 	"github.com/samstringzz/alutamarket-backend/graph"
 	"github.com/samstringzz/alutamarket-backend/internals/messages"
 	"github.com/samstringzz/alutamarket-backend/internals/product"
@@ -79,6 +80,12 @@ func InitServer() error {
 		port = defaultPort
 	}
 
+	// Initialize database
+	db := database.GetDB()
+	if db == nil {
+		return fmt.Errorf("failed to initialize database")
+	}
+
 	// Initialize user components with proper error handling
 	userRepo := user.NewRepository()
 	if userRepo == nil {
@@ -121,6 +128,7 @@ func InitServer() error {
 		userHandler,
 		productHandler,
 		messageHandler,
+		db,
 	)
 
 	// Debug log to verify resolver
