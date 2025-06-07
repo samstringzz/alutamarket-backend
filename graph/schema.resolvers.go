@@ -3331,7 +3331,7 @@ func (r *queryResolver) GetWithdrawalDetails(ctx context.Context, id string) (*m
 func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (*model.StoreTransactions, error) {
 	// First get the store to get its name
 	var store model.Store
-	if err := r.DB.First(&store, storeID).Error; err != nil {
+	if err := r.DB.Table("stores").First(&store, storeID).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch store: %v", err)
 	}
 
