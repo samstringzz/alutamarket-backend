@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin" // Add this import
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/samstringzz/alutamarket-backend/errors"
 )
 
