@@ -3329,21 +3329,26 @@ func (r *queryResolver) GetWithdrawalDetails(ctx context.Context, id string) (*m
 
 // GetStoreTransactions is the resolver for the getStoreTransactions field.
 func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (*model.StoreTransactions, error) {
-	// Get order payments
+	// First get the store to get its name
+	var store model.Store
+	if err := r.DB.First(&store, storeID).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch store: %v", err)
+	}
+
+	// Get order transactions
 	var orderTransactions []*model.DepositTransaction
-	if err := r.DB.Raw(fmt.Sprintf(`
+	if err := r.DB.Raw(`
 		SELECT
 			o.id::text as id,
-			'order' as type,
 			o.fee::float as amount,
 			o.trans_ref as reference,
 			o.status,
 			o.created_at,
 			'Payment for order #' || o.id::text as description
 		FROM orders o
-		WHERE o.stores_id @> ARRAY['%s']::text[] AND o.trans_status = 'paid'
+		WHERE ? = ANY(o.stores_id) AND o.trans_status = 'paid'
 		ORDER BY o.created_at DESC
-	`, strconv.Itoa(storeID))).Scan(&orderTransactions).Error; err != nil {
+	`, store.Name).Scan(&orderTransactions).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch order transactions: %v", err)
 	}
 
