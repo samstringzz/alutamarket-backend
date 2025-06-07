@@ -3338,7 +3338,7 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 			o.fee::float as amount,
 			o.trans_ref as reference,
 			o.trans_status as status,
-			o.created_at as "createdAt",
+			o.created_at::timestamp as "createdAt",
 			'Payment for order #' || o.id::text as description
 		FROM orders o
 		WHERE o.stores_id @> ARRAY['%s']::text[] AND o.trans_status = 'paid'
@@ -3357,8 +3357,8 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 			bank_name as "bankName",
 			account_number as "accountNumber",
 			account_name as "accountName",
-			created_at as "createdAt",
-			completed_at as "completedAt"
+			created_at::timestamp as "createdAt",
+			completed_at::timestamp as "completedAt"
 		FROM withdrawals
 		WHERE store_id = ?
 		ORDER BY created_at DESC
