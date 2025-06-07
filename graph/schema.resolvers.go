@@ -3358,7 +3358,7 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 			account_number,
 			account_name,
 			created_at,
-			completed_at
+			approved_at
 		FROM withdrawals
 		WHERE store_id = ?
 		ORDER BY created_at DESC
