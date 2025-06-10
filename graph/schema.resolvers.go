@@ -3329,7 +3329,7 @@ func (r *queryResolver) GetWithdrawalDetails(ctx context.Context, id string) (*m
 
 // GetStoreTransactions is the resolver for the getStoreTransactions field.
 func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (*model.StoreTransactions, error) {
-	// First get the store to get its name
+	// First get the store to get its name and user_id
 	var store model.Store
 	if err := r.DB.Table("stores").First(&store, storeID).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch store: %v", err)
@@ -3361,15 +3361,21 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 		return nil, fmt.Errorf("failed to fetch order transactions: %v", err)
 	}
 
-	// Get Paystack direct deposit transactions
-	paystackDeposits, err := r.UserHandler.GetPaystackDepositTransactions(ctx, store.Email)
-	if err != nil {
-		log.Printf("Warning: Failed to fetch Paystack direct deposits for store %s: %v", store.Name, err)
-		// Continue without Paystack deposits if there's an error
+	// Get user's email from users table
+	var userEmail string
+	if err := r.DB.Table("users").Where("id = ?", store.User).Select("email").Scan(&userEmail).Error; err != nil {
+		log.Printf("Warning: Failed to get user email for store %s: %v", store.Name, err)
+	} else {
+		// Get Paystack direct deposit transactions using user's email
+		paystackDeposits, err := r.UserHandler.GetPaystackDepositTransactions(ctx, userEmail)
+		if err != nil {
+			log.Printf("Warning: Failed to fetch Paystack direct deposits for store %s: %v", store.Name, err)
+			// Continue without Paystack deposits if there's an error
+		} else {
+			// Combine all deposits
+			orderTransactions = append(orderTransactions, paystackDeposits...)
+		}
 	}
-
-	// Combine all deposits
-	deposits := append(orderTransactions, paystackDeposits...)
 
 	// Get withdrawals
 	var withdrawals []*model.WithdrawalTransaction
@@ -3378,7 +3384,7 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 			id::text as id,
 			amount,
 			status,
-				bank_name,
+			bank_name,
 			account_number,
 			account_name,
 			created_at,
@@ -3391,12 +3397,12 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 	}
 
 	// Sort deposits by created_at
-	sort.Slice(deposits, func(i, j int) bool {
-		return deposits[i].CreatedAt.After(deposits[j].CreatedAt)
+	sort.Slice(orderTransactions, func(i, j int) bool {
+		return orderTransactions[i].CreatedAt.After(orderTransactions[j].CreatedAt)
 	})
 
 	return &model.StoreTransactions{
-		Deposits:    deposits,
+		Deposits:    orderTransactions,
 		Withdrawals: withdrawals,
 	}, nil
 }
