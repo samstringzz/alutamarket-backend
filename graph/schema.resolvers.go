@@ -3334,7 +3334,7 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 		Name   string
 		UserID uint32
 	}
-	if err := r.DB.Table("stores").Select("name, user_id").First(&store, storeID).Error; err != nil {
+	if err := r.DB.Table("stores").Select("name, user_id").Where("id = ?", storeID).First(&store).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch store: %v", err)
 	}
 
