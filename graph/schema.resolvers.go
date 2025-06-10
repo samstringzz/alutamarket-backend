@@ -3330,8 +3330,11 @@ func (r *queryResolver) GetWithdrawalDetails(ctx context.Context, id string) (*m
 // GetStoreTransactions is the resolver for the getStoreTransactions field.
 func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (*model.StoreTransactions, error) {
 	// First get the store to get its name and user_id
-	var store model.Store
-	if err := r.DB.Table("stores").First(&store, storeID).Error; err != nil {
+	var store struct {
+		Name   string
+		UserID uint32
+	}
+	if err := r.DB.Table("stores").Select("name, user_id").First(&store, storeID).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch store: %v", err)
 	}
 
@@ -3363,8 +3366,8 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 
 	// Get user's email from users table
 	var userEmail string
-	if err := r.DB.Table("users").Where("id = ?", store.User).Select("email").Scan(&userEmail).Error; err != nil {
-		log.Printf("Warning: Failed to get user email for store %s: %v", store.Name, err)
+	if err := r.DB.Table("users").Where("id = ?", store.UserID).Select("email").Scan(&userEmail).Error; err != nil {
+		log.Printf("Warning: Failed to get user email for store %s (user_id: %d): %v", store.Name, store.UserID, err)
 	} else {
 		// Get Paystack direct deposit transactions using user's email
 		paystackDeposits, err := r.UserHandler.GetPaystackDepositTransactions(ctx, userEmail)
