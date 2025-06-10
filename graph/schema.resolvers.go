@@ -3351,7 +3351,7 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 						SELECT STRING_AGG(product->>'name', ', ')
 						FROM jsonb_array_elements(o.products) AS product
 					) || ')'
-				ELSE '' 
+				ELSE ''
 			END as description
 		FROM orders o
 		WHERE ? = ANY(o.stores_id) AND o.trans_status = 'paid'
