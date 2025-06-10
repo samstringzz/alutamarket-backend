@@ -3340,10 +3340,11 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 	if err := r.DB.Raw(`
 		SELECT
 			o.id::text as id,
+			'order_payment' as type,
 			o.fee::float as amount,
 			o.trans_ref as reference,
-				o.status,
-				o.created_at,
+			o.status,
+			o.created_at,
 			'Payment for order #' || o.id::text || 
 			CASE 
 				WHEN o.products IS NOT NULL AND jsonb_array_length(o.products) > 0 THEN 
