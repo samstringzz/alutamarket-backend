@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/samstringzz/alutamarket-backend/graph/model"
 	"github.com/samstringzz/alutamarket-backend/internals/models"
 	"gorm.io/gorm"
 )
@@ -176,6 +177,10 @@ func (h *Handler) GetDVAAccount(ctx context.Context, email string) (*DVAAccount,
 			Slug: account.Bank.Slug,
 		},
 	}, nil
+}
+
+func (h *Handler) GetPaystackDepositTransactions(ctx context.Context, storeEmail string) ([]*model.DepositTransaction, error) {
+	return h.Service.GetPaystackDepositTransactions(ctx, storeEmail)
 }
 
 func (h *Handler) GetDB() *gorm.DB {

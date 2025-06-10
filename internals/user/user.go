@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/samstringzz/alutamarket-backend/graph/model"
 	"github.com/samstringzz/alutamarket-backend/internals/models"
 	"gorm.io/gorm"
 )
@@ -240,6 +241,7 @@ type Repository interface {
 	GetMyDownloads(ctx context.Context, userId string) ([]*models.Downloads, error)
 	SendMaintenanceMail(ctx context.Context, userId string, active bool) error
 	GetDB() *gorm.DB
+	GetTransactionsByCustomerID(customerID string) ([]Transaction, error)
 }
 
 type Service interface {
@@ -262,4 +264,5 @@ type Service interface {
 	GetMyDownloads(ctx context.Context, userId string) ([]*models.Downloads, error)
 	SendMaintenanceMail(ctx context.Context, userId string, active bool) error
 	GetDB() *gorm.DB
+	GetPaystackDepositTransactions(ctx context.Context, storeEmail string) ([]*model.DepositTransaction, error)
 }

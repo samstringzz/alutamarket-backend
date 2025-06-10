@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
+	"github.com/samstringzz/alutamarket-backend/graph/model"
 	"github.com/samstringzz/alutamarket-backend/internals/models"
 	"gorm.io/gorm"
 
@@ -243,4 +245,39 @@ func (s *service) SendMaintenanceMail(ctx context.Context, userId string, active
 
 func (s *service) GetDB() *gorm.DB {
 	return s.Repository.GetDB()
+}
+
+func (s *service) GetPaystackDepositTransactions(ctx context.Context, storeEmail string) ([]*model.DepositTransaction, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	// Get DVA account using the store's email
+	dvaAccount, err := s.Repository.GetMyDVA(ctx, storeEmail)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get DVA account for store email %s: %v", storeEmail, err)
+	}
+
+	// Get transactions from Paystack using the customer ID from DVA
+	customerIDStr := strconv.Itoa(dvaAccount.Customer.ID)
+	paystackTransactions, err := s.Repository.GetTransactionsByCustomerID(customerIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch Paystack transactions for customer %s: %v", customerIDStr, err)
+	}
+
+	var depositTransactions []*model.DepositTransaction
+	for _, pt := range paystackTransactions {
+		// Assuming 'success' status indicates a completed deposit
+		if pt.Status == "success" {
+			depositTransactions = append(depositTransactions, &model.DepositTransaction{
+				ID:          strconv.Itoa(pt.ID),
+				Type:        "direct_transfer",
+				Amount:      float64(pt.Amount) / 100, // Convert from kobo to naira
+				Reference:   pt.Reference,
+				Status:      pt.Status,
+				CreatedAt:   pt.CreatedAt,
+				Description: fmt.Sprintf("Direct Deposit via Paystack DVA (Ref: %s)", pt.Reference),
+			})
+		}
+	}
+	return depositTransactions, nil
 }

@@ -861,7 +861,7 @@ func (r *repository) UpdatePassword(ctx context.Context, req *PasswordReset) err
 	return nil
 }
 
-func (r *repository) getTransactionsByCustomerID(customerID string) ([]Transaction, error) {
+func (r *repository) GetTransactionsByCustomerID(customerID string) ([]Transaction, error) {
 	transactionURL := fmt.Sprintf("https://api.paystack.co/transaction?customer=%s", customerID)
 	method := "GET"
 	client := &http.Client{}
@@ -906,7 +906,7 @@ func (r *repository) getTransactionsByCustomerID(customerID string) ([]Transacti
 
 func (r *repository) GetBalance(ctx context.Context, userId string) error {
 	// Get the transactions by customer ID
-	transactions, err := r.getTransactionsByCustomerID(userId)
+	transactions, err := r.GetTransactionsByCustomerID(userId)
 	if err != nil {
 		return err
 	}

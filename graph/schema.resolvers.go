@@ -3351,7 +3351,7 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 						SELECT STRING_AGG(product->>'name', ', ')
 						FROM jsonb_array_elements(o.products) AS product
 					) || ')'
-				ELSE ''
+				ELSE '' 
 			END as description
 		FROM orders o
 		WHERE ? = ANY(o.stores_id) AND o.trans_status = 'paid'
@@ -3360,6 +3360,16 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 		return nil, fmt.Errorf("failed to fetch order transactions: %v", err)
 	}
 
+	// Get Paystack direct deposit transactions
+	paystackDeposits, err := r.UserHandler.GetPaystackDepositTransactions(ctx, store.Email)
+	if err != nil {
+		log.Printf("Warning: Failed to fetch Paystack direct deposits for store %s: %v", store.Name, err)
+		// Continue without Paystack deposits if there's an error
+	}
+
+	// Combine all deposits
+	deposits := append(orderTransactions, paystackDeposits...)
+
 	// Get withdrawals
 	var withdrawals []*model.WithdrawalTransaction
 	if err := r.DB.Raw(`
@@ -3367,7 +3377,7 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 			id::text as id,
 			amount,
 			status,
-			bank_name,
+				bank_name,
 			account_number,
 			account_name,
 			created_at,
@@ -3379,8 +3389,6 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 		return nil, fmt.Errorf("failed to fetch withdrawals: %v", err)
 	}
 
-	// For now, deposits will only include order transactions
-	deposits := orderTransactions
 	// Sort deposits by created_at
 	sort.Slice(deposits, func(i, j int) bool {
 		return deposits[i].CreatedAt.After(deposits[j].CreatedAt)
