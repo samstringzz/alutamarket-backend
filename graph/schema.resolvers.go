@@ -3342,9 +3342,17 @@ func (r *queryResolver) GetStoreTransactions(ctx context.Context, storeID int) (
 			o.id::text as id,
 			o.fee::float as amount,
 			o.trans_ref as reference,
-			o.status,
-			o.created_at,
-			'Payment for order #' || o.id::text as description
+				o.status,
+				o.created_at,
+			'Payment for order #' || o.id::text || 
+			CASE 
+				WHEN o.products IS NOT NULL AND jsonb_array_length(o.products) > 0 THEN 
+					' (' || (
+						SELECT STRING_AGG(product->>'name', ', ')
+						FROM jsonb_array_elements(o.products) AS product
+					) || ')'
+				ELSE '' 
+			END as description
 		FROM orders o
 		WHERE ? = ANY(o.stores_id) AND o.trans_status = 'paid'
 		ORDER BY o.created_at DESC
