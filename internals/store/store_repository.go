@@ -877,7 +877,7 @@ func convertTrackedToStoreProduct(tp TrackedProduct) *StoreProduct {
 func (r *repository) GetDVAAccount(ctx context.Context, email string) (*DVAAccount, error) {
 	var account DVAAccount
 
-	// First try to get from local database
+	// First try to get from local database using store_id
 	err := r.db.Table("dva_accounts").
 		Select("dva_accounts.id, dva_accounts.customer_id, dva_accounts.bank_id, dva_accounts.account_number, dva_accounts.account_name").
 		Preload("Customer").
@@ -962,32 +962,18 @@ func (r *repository) GetDVABalance(ctx context.Context, accountNumber string) (f
 		return 0, fmt.Errorf("failed to get DVA balance: %v", err)
 	}
 
-	// Get account details from Paystack
-	paystackAccount, err := r.getPaystackDVAAccount(accountNumber)
-	if err != nil {
-		// If we can't get Paystack account details, just return Paystack balance
-		return paystackBalance, nil
-	}
-
-	// First find the user by their full name
-	var userID uint32
-	if err := r.db.Table("users").
-		Select("id").
-		Where("fullname = ?", paystackAccount.AccountName).
-		First(&userID).Error; err != nil {
-		// If we can't find user, just return Paystack balance
-		return paystackBalance, nil
-	}
-
-	// Then find the store associated with this user
-	var store Store
-	if err := r.db.Where("user_id = ?", userID).First(&store).Error; err != nil {
-		// If we can't find store, just return Paystack balance
+	// Get store ID from paystack_dva_accounts table
+	var storeID uint32
+	if err := r.db.Table("paystack_dva_accounts").
+		Select("store_id").
+		Where("account_number = ?", accountNumber).
+		First(&storeID).Error; err != nil {
+		// If we can't find store ID, just return Paystack balance
 		return paystackBalance, nil
 	}
 
 	// Get store earnings for this specific store
-	earnings, err := r.GetStoreEarnings(ctx, store.ID)
+	earnings, err := r.GetStoreEarnings(ctx, storeID)
 	if err != nil {
 		// If error getting earnings, just return Paystack balance
 		return paystackBalance, nil
@@ -1001,12 +987,21 @@ func (r *repository) GetDVABalance(ctx context.Context, accountNumber string) (f
 		}
 	}
 
+	// Get total withdrawals for this store
+	var totalWithdrawals float64
+	var withdrawals []*Withdrawal
+	if err := r.db.Where("store_id = ? AND status IN ?", storeID, []string{"pending", "approved", "completed"}).Find(&withdrawals).Error; err == nil {
+		for _, withdrawal := range withdrawals {
+			totalWithdrawals += withdrawal.Amount
+		}
+	}
+
 	// Calculate total balance
-	totalBalance := paystackBalance + totalEarnings
+	totalBalance := paystackBalance + totalEarnings - totalWithdrawals
 
 	// Update store's wallet column with the total balance
 	if err := r.db.Model(&Store{}).
-		Where("id = ?", store.ID).
+		Where("id = ?", storeID).
 		Update("wallet", totalBalance).Error; err != nil {
 		return totalBalance, fmt.Errorf("failed to update store wallet: %v", err)
 	}
@@ -1222,6 +1217,12 @@ func (r *repository) CreatePaystackDVAAccount(ctx context.Context, storeID uint3
 	timestamp := time.Now().Unix()
 	dvaID := fmt.Sprintf("PDVA_%d_%s", timestamp, utils.GenerateRandomString(8))
 
+	// Get store details to ensure we have the correct store
+	var store Store
+	if err := r.db.Where("id = ?", storeID).First(&store).Error; err != nil {
+		return fmt.Errorf("failed to get store details: %v", err)
+	}
+
 	// Create the DVA account record
 	dvaAccount := map[string]interface{}{
 		"id":             dvaID,
@@ -1234,9 +1235,24 @@ func (r *repository) CreatePaystackDVAAccount(ctx context.Context, storeID uint3
 		"updated_at":     time.Now(),
 	}
 
-	// Insert the record
-	if err := r.db.Table("paystack_dva_accounts").Create(dvaAccount).Error; err != nil {
-		return fmt.Errorf("failed to create Paystack DVA account: %v", err)
+	// Check if a DVA account already exists for this store
+	var existingAccount struct {
+		ID string
+	}
+	if err := r.db.Table("paystack_dva_accounts").
+		Where("store_id = ?", storeID).
+		First(&existingAccount).Error; err == nil {
+		// Update existing account
+		if err := r.db.Table("paystack_dva_accounts").
+			Where("store_id = ?", storeID).
+			Updates(dvaAccount).Error; err != nil {
+			return fmt.Errorf("failed to update existing DVA account: %v", err)
+		}
+	} else {
+		// Create new account
+		if err := r.db.Table("paystack_dva_accounts").Create(dvaAccount).Error; err != nil {
+			return fmt.Errorf("failed to create DVA account: %v", err)
+		}
 	}
 
 	return nil
@@ -1284,41 +1300,31 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 		return fmt.Errorf("failed to delete existing accounts: %v", err)
 	}
 
-	// Get all users with type "seller" from our database
-	var users []struct {
+	// Get all stores with their user emails
+	var stores []struct {
 		ID    uint32 `gorm:"column:id"`
 		Email string `gorm:"column:email"`
 	}
-	if err := r.db.Table("users").
-		Where("usertype = ?", "seller").
-		Select("id, email").
-		Find(&users).Error; err != nil {
-		return fmt.Errorf("failed to fetch seller users: %v", err)
+	if err := r.db.Table("stores").
+		Select("stores.id, users.email").
+		Joins("JOIN users ON stores.user_id = users.id").
+		Where("users.usertype = ?", "seller").
+		Find(&stores).Error; err != nil {
+		return fmt.Errorf("failed to fetch stores: %v", err)
 	}
 
-	// For each seller user, get their store and create DVA account
-	for _, user := range users {
-		// Skip if user has no email
-		if user.Email == "" {
-			continue
-		}
-
-		// Get the store ID for this user
-		var store struct {
-			ID uint32 `gorm:"column:id"`
-		}
-		if err := r.db.Table("stores").
-			Where("user_id = ?", user.ID).
-			Select("id").
-			First(&store).Error; err != nil {
-			log.Printf("Warning: Failed to get store for user %d: %v", user.ID, err)
+	// For each store, get their Paystack DVA account
+	for _, store := range stores {
+		// Skip if store has no email
+		if store.Email == "" {
+			log.Printf("Warning: Store %d has no email", store.ID)
 			continue
 		}
 
 		// Get account from Paystack API directly
-		paystackAccount, err := r.getPaystackDVAAccount(user.Email)
+		paystackAccount, err := r.getPaystackDVAAccount(store.Email)
 		if err != nil {
-			log.Printf("Warning: Failed to get Paystack DVA account for user %d: %v", user.ID, err)
+			log.Printf("Warning: Failed to get Paystack DVA account for store %d: %v", store.ID, err)
 			continue
 		}
 
@@ -1333,18 +1339,18 @@ func (r *repository) SyncExistingPaystackDVAAccounts(ctx context.Context) error 
 			AccountNumber: paystackAccount.AccountNumber,
 			AccountName:   paystackAccount.AccountName,
 			BankName:      paystackAccount.Bank.Name,
-			Email:         user.Email,
+			Email:         store.Email,
 			CreatedAt:     time.Now(),
 			UpdatedAt:     time.Now(),
 		}
 
 		// Save to database
 		if err := r.db.Create(paystack_dva_accounts).Error; err != nil {
-			log.Printf("Warning: Failed to save DVA account for user %d: %v", user.ID, err)
+			log.Printf("Warning: Failed to save DVA account for store %d: %v", store.ID, err)
 			continue
 		}
 
-		log.Printf("Successfully synced DVA account for user %d (store %d)", user.ID, store.ID)
+		log.Printf("Successfully synced DVA account for store %d", store.ID)
 	}
 
 	return nil
