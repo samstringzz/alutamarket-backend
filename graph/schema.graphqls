@@ -597,6 +597,8 @@ extend type Mutation {
   submitContactForm(input: ContactFormInput!): String!
   syncPaystackDVAAccounts: Boolean!
   processStoreWithdrawal(id: ID!, action: String!): Boolean!
+  deleteStore(id: Int!): Boolean!
+  deleteUser(id: Int!): Boolean!
 }
 
 type DVACustomer {

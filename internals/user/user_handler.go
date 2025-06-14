@@ -186,3 +186,8 @@ func (h *Handler) GetPaystackDepositTransactions(ctx context.Context, storeEmail
 func (h *Handler) GetDB() *gorm.DB {
 	return h.Service.GetDB()
 }
+
+// DeleteUser deletes a user by ID
+func (h *Handler) DeleteUser(ctx context.Context, id uint32) error {
+	return h.Service.DeleteUser(ctx, id)
+}

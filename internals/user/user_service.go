@@ -281,3 +281,33 @@ func (s *service) GetPaystackDepositTransactions(ctx context.Context, storeEmail
 	}
 	return depositTransactions, nil
 }
+
+func (s *service) DeleteUser(ctx context.Context, id uint32) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	// First check if user exists
+	user, err := s.Repository.GetUser(ctx, strconv.Itoa(int(id)))
+	if err != nil {
+		return err
+	}
+
+	// Delete user's stores first
+	var stores []*models.Store
+	if err := s.Repository.GetDB().Where("user_id = ?", id).Find(&stores).Error; err != nil {
+		return err
+	}
+
+	for _, store := range stores {
+		if err := s.Repository.GetDB().Delete(store).Error; err != nil {
+			return err
+		}
+	}
+
+	// Delete the user
+	if err := s.Repository.GetDB().Delete(user).Error; err != nil {
+		return err
+	}
+
+	return nil
+}

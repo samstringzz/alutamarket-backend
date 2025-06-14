@@ -1185,9 +1185,82 @@ func (r *mutationResolver) UpdateStore(ctx context.Context, input *model.UpdateS
 	}, nil
 }
 
+// DeleteUser is the resolver for the deleteUser field.
+func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (bool, error) {
+	// Get the user from context
+	userID, err := utils.GetUserIDFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if the requesting user is an admin
+	user, err := r.UserHandler.GetUser(ctx, strconv.Itoa(int(userID)))
+	if err != nil {
+		return false, err
+	}
+
+	if user.Usertype != "admin" {
+		return false, fmt.Errorf("unauthorized: only admin can delete users")
+	}
+
+	// Delete the user
+	err = r.UserHandler.DeleteUser(ctx, uint32(id))
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // DeleteStore is the resolver for the deleteStore field.
-func (r *mutationResolver) DeleteStore(ctx context.Context, storeID int) (*model.Store, error) {
-	panic(fmt.Errorf("not implemented: DeleteStore - deleteStore"))
+func (r *mutationResolver) DeleteStore(ctx context.Context, id int) (*model.Store, error) {
+	// Get the user from context
+	userID, err := utils.GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the store handler
+	storeHandler := store.NewHandler(store.NewService(store.NewRepository()))
+
+	// Get the store to check ownership
+	storeObj, err := storeHandler.GetStore(ctx, uint32(id))
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if user is admin or store owner
+	user, err := r.UserHandler.GetUser(ctx, strconv.Itoa(int(userID)))
+	if err != nil {
+		return nil, err
+	}
+
+	if user.Usertype != "admin" && storeObj.UserID != userID {
+		return nil, fmt.Errorf("unauthorized: only store owner or admin can delete store")
+	}
+
+	// Delete the store
+	err = storeHandler.DeleteStore(ctx, uint32(id))
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the deleted store
+	return &model.Store{
+		ID:                 strconv.Itoa(int(storeObj.ID)),
+		Name:               storeObj.Name,
+		Link:               storeObj.Link,
+		User:               int(storeObj.UserID),
+		Description:        storeObj.Description,
+		Address:            storeObj.Address,
+		Phone:              storeObj.Phone,
+		HasPhysicalAddress: storeObj.HasPhysicalAddress,
+		Email:              storeObj.Email,
+		Thumbnail:          storeObj.Thumbnail,
+		Background:         storeObj.Background,
+		Status:             storeObj.Status,
+		Wallet:             storeObj.Wallet,
+	}, nil
 }
 
 // Update the CreateDVAAccount resolver

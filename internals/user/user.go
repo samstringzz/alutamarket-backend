@@ -245,13 +245,14 @@ type Repository interface {
 }
 
 type Service interface {
-	CreateUser(c context.Context, req *CreateUserReq) (*CreateUserRes, error) // Create a new user
-	GetUsers(ctx context.Context) ([]*User, error)
-	GetUser(ctx context.Context, filter string) (*User, error) // Create a new user
+	CreateUser(ctx context.Context, req *CreateUserReq) (*CreateUserRes, error)
 	VerifyOTP(ctx context.Context, req *VerifyOTPReq) (*LoginUserRes, error)
-	Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error) // Perform user login
-	UpdateUser(ctx context.Context, user *User) (*User, error)
+	GetUsers(ctx context.Context) ([]*User, error)
+	GetUser(ctx context.Context, filter string) (*User, error)
+	Login(ctx context.Context, req *LoginUserReq) (*LoginUserRes, error)
 	ToggleStoreFollowStatus(ctx context.Context, userId, storeId uint32) error
+	UpdateUser(ctx context.Context, user *User) (*User, error)
+	DeleteUser(ctx context.Context, id uint32) error
 	CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error)
 	GetMyDVA(ctx context.Context, userEmail string) (*Account, error)
 	CreateStore(ctx context.Context, req *models.Store) (*models.Store, error)
