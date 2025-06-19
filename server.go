@@ -175,7 +175,7 @@ func InitServer() error {
 	router.GET("/graphql", gin.WrapH(playground.Handler("GraphQL Playground", "/graphql")))
 
 	// GraphQL endpoint for queries/mutations
-	router.POST("/graphql", gin.WrapH(srv))
+	router.POST("/graphql", gin.WrapH(ExtractTokenMiddleware(srv)))
 
 	// WebSocket endpoint
 	router.GET("/ws", func(c *gin.Context) {
