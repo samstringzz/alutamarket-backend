@@ -302,7 +302,8 @@ func (r *repository) GetProducts(ctx context.Context, storeName string, category
 	query := r.db.
 		Table("products").
 		Joins("LEFT JOIN stores ON stores.name = products.store").
-		Where("products.deleted_at IS NULL")
+		Where("products.deleted_at IS NULL").
+		Where("stores.deleted_at IS NULL")
 
 	if storeName != "" {
 		// If a specific store is requested, show its products regardless of maintenance mode
@@ -401,6 +402,7 @@ func (r *repository) SearchProducts(ctx context.Context, query string) ([]*Produ
 		Joins("LEFT JOIN categories ON LOWER(categories.name) = LOWER(products.category)").
 		Joins("LEFT JOIN stores ON stores.name = products.store").
 		Where("products.deleted_at IS NULL").
+		Where("stores.deleted_at IS NULL").
 		Where("stores.maintenance_mode = ?", false)
 
 	// If query is empty, return all products (similar to GetAllProducts)
@@ -445,6 +447,8 @@ func (r *repository) GetRecommendedProducts(ctx context.Context, query string) (
 	err := r.db.
 		Table("products").
 		Joins("LEFT JOIN stores ON stores.name = products.store").
+		Where("products.deleted_at IS NULL").
+		Where("stores.deleted_at IS NULL").
 		Where("stores.maintenance_mode = ?", false).
 		Where("category ILIKE ?", "%"+query+"%").
 		Find(&products).Error
