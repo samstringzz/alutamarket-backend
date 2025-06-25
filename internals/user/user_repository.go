@@ -254,12 +254,8 @@ func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (str
 	// Create dedicated account
 	dedicatedAccountURL := "https://api.paystack.co/dedicated_account/assign"
 	method := "POST"
-	parts := strings.Fields(req.StoreName)
-	firstName := parts[0]
+	firstName := req.StoreName
 	lastName := ""
-	if len(parts) > 1 {
-		lastName = strings.Join(parts[1:], " ")
-	}
 	payload := map[string]interface{}{
 		"email":          getEmail(req.StoreEmail, req.User.Email),
 		"first_name":     firstName,
