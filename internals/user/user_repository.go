@@ -251,20 +251,19 @@ func getEmail(storeEmail, userEmail string) string {
 }
 
 func (r *repository) CreateDVAAccount(ctx context.Context, req *DVADetails) (string, error) {
-
 	// Create dedicated account
 	dedicatedAccountURL := "https://api.paystack.co/dedicated_account/assign"
 	method := "POST"
-	names := strings.Split(req.User.Fullname, " ")
-	if len(names) < 2 {
-		return "", fmt.Errorf("invalid user name")
+	parts := strings.Fields(req.StoreName)
+	firstName := parts[0]
+	lastName := ""
+	if len(parts) > 1 {
+		lastName = strings.Join(parts[1:], " ")
 	}
-
 	payload := map[string]interface{}{
 		"email":          getEmail(req.StoreEmail, req.User.Email),
-		"first_name":     names[0],
-		"middle_name":    names[1],
-		"last_name":      names[1],
+		"first_name":     firstName,
+		"last_name":      lastName,
 		"phone":          req.User.Phone,
 		"preferred_bank": "wema-bank",
 		"country":        "NG",
