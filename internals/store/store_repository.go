@@ -577,7 +577,7 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 				earnings := &StoreEarnings{
 					StoreID:   store.ID, // Use the retrieved numeric store ID
 					OrderID:   uuid,
-					Amount:    amount,
+					Amount:    amount * 0.97, // Deduct 3% before updating store earnings
 					Status:    "released",
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
