@@ -717,7 +717,8 @@ func (r *repository) MakePayment(ctx context.Context, w http.ResponseWriter, req
 		for _, item := range cart.Items {
 			// Convert order.Fee from string to float64
 			orderFee, _ := strconv.ParseFloat(order.Fee, 64)
-			priceDifference := item.Product.Price - orderFee
+			// Use discounted price instead of original price
+			priceDifference := (item.Product.Price - item.Product.Discount) - orderFee
 			result, _ := store.NewRepository().GetStoreByName(ctx, item.Product.Store)
 			// Credit individual Store from the particular transaction
 			result.Wallet += priceDifference
@@ -777,12 +778,11 @@ func (r *repository) MakePayment(ctx context.Context, w http.ResponseWriter, req
 			for _, item := range cart.Items {
 				// Convert order.Fee from string to float64
 				orderFee, _ := strconv.ParseFloat(order.Fee, 64)
-				priceDifference := item.Product.Price - orderFee
+				// Use discounted price instead of original price
+				priceDifference := (item.Product.Price - item.Product.Discount) - orderFee
 				result, _ := store.NewRepository().GetStoreByName(ctx, item.Product.Store)
-				//Credit individual Store from the particular transaction
-
+				// Credit individual Store from the particular transaction
 				result.Wallet += priceDifference
-
 				r.db.Save(result)
 			}
 			fmt.Println("Payment was successful!")

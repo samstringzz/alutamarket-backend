@@ -170,8 +170,8 @@ func (p *paystackClient) CreateDVAAccount(details *DVADetails) (*Account, error)
 
 	payload := map[string]interface{}{
 		"email":          details.StoreEmail,
-		"first_name":     details.User.Fullname,
-		"last_name":      details.StoreName,
+		"first_name":     details.StoreName,
+		"last_name":      "",
 		"phone":          details.User.Phone,
 		"preferred_bank": "wema-bank",
 	}
