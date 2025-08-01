@@ -540,6 +540,26 @@ func (r *repository) UpdateOrderStatus(ctx context.Context, uuid string, status,
 		return fmt.Errorf("failed to update order status: %v", err)
 	}
 
+	// Send email notifications concurrently
+	go func() {
+		// Ensure customer email is available
+		if order.Customer != nil && order.Customer.Email != "" {
+			to := []string{order.Customer.Email}
+			contents := map[string]string{
+				"buyer_name": order.Customer.Name,
+				"order_id":   order.UUID,
+			}
+
+			if status == "canceled" {
+				templateID := "bb57c0b0-cb2b-4cd7-9170-f2c536a3dfe2"
+				utils.SendEmail(templateID, "Your Order was Declined", to, contents)
+			} else if status == "processing" {
+				templateID := "04551de0-1db2-46bb-b48a-610b744ee3e9"
+				utils.SendEmail(templateID, "Your Order has been Confirmed", to, contents)
+			}
+		}
+	}()
+
 	// If the order is being marked as delivered, add to store earnings
 	if status == "delivered" {
 		amount, err := strconv.ParseFloat(order.Amount, 64)
